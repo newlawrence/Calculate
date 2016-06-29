@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.5)
+project(calculate)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build/")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  "${CMAKE_CURRENT_SOURCE_DIR}/build/")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build/")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
+file(GLOB sources "src/*.cpp")
+add_library(calculate ${sources})
+
+add_executable(test1 "test/test1.cpp")
+target_link_libraries(test1 LINK_PUBLIC calculate)
