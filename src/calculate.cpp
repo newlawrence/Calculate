@@ -3,11 +3,17 @@
 namespace calculate {
     qSymbol tokenize(const String &expression) {
         qSymbol infix;
-        Regex regex(String("-?[0-9.]+|[A-Za-z]+|") + symbols::symbolsRegex());
 
-        iRegex next(expression.begin(), expression.end(), regex), end;
+        auto regex = std::regex(
+            String("-?[0-9.]+|[A-Za-z]+|") + symbols::Operator::symbolsRegex()
+        );
+        auto next = std::sregex_iterator(
+            expression.begin(), expression.end(), regex
+        ),
+            end = std::sregex_iterator();
+
         while (next != end) {
-            Match match = *next;
+            auto match = *next;
             infix.push(symbols::newSymbol(match.str()));
             next++;
         }
@@ -18,10 +24,9 @@ namespace calculate {
     qSymbol shuntingYard(qSymbol &&infix) {
         qSymbol postfix;
         sSymbol operations;
-        pSymbol element, another;
 
         while(!infix.empty()) {
-            element = infix.front();
+            auto element = infix.front();
             infix.pop();
 
             if (element->is(Type::CONSTANT)) {
@@ -34,7 +39,7 @@ namespace calculate {
 
             else if (element->is(Type::SEPARATOR)) {
                 while (!operations.empty()) {
-                    another = operations.top();
+                    auto another = operations.top();
                     if (!another->is(Type::LEFTPARENS)) {
                         postfix.push(another);
                         operations.pop();
@@ -47,7 +52,7 @@ namespace calculate {
 
             else if (element->is(Type::OPERATOR)) {
                 while (!operations.empty()) {
-                    another = operations.top();
+                    auto another = operations.top();
                     if (another->is(Type::LEFTPARENS)) {
                         break;
                     }
@@ -57,8 +62,10 @@ namespace calculate {
                         break;
                     }
                     else {
-                        auto op1 = symbols::castOperator(element);
-                        auto op2 = symbols::castOperator(another);
+                        auto op1 =
+                            symbols::castChild<symbols::Operator>(element);
+                        auto op2 =
+                            symbols::castChild<symbols::Operator>(another);
                         if ((op1->left_assoc &&
                              op1->precedence <= op2->precedence) || 
                             (!op1->left_assoc &&
@@ -80,7 +87,7 @@ namespace calculate {
 
             else {
                 while (!operations.empty()) {
-                    another = operations.top();
+                    auto another = operations.top();
                     if (!another->is(Type::LEFTPARENS)) {
                         operations.pop();
                         postfix.push(another);
@@ -94,7 +101,7 @@ namespace calculate {
         }
 
         while(!operations.empty()) {
-            element = operations.top();
+            auto element = operations.top();
             operations.pop();
             postfix.push(element);
         }
@@ -115,23 +122,25 @@ namespace calculate {
             }
 
             else if (element->is(Type::FUNCTION)) {
-                auto args = symbols::castFunction(element)->args;
+                auto function = symbols::castChild<symbols::Function>(element);
+                auto args = function->args;
                 vSymbol ops(args);
-                for (size_t i = args; i > 0; i--) {
+                for (auto i = args; i > 0; i--) {
                     ops[i - 1] = operands.top();
                     operands.pop();
                 }
-                symbols::castFunction(element)->addBranches(std::move(ops));
+                function->addBranches(std::move(ops));
                 operands.push(element);
             }
 
             else {
-                pSymbol op1, op2;
-                op2 = operands.top();
+                auto binary = symbols::castChild<symbols::Operator>(element);
+                pSymbol a, b;
+                b = operands.top();
                 operands.pop();
-                op1 = operands.top();
+                a = operands.top();
                 operands.pop();
-                symbols::castOperator(element)->addBranches(op1, op2);
+                binary->addBranches(a, b);
                 operands.push(element);
             }        
         }
@@ -140,7 +149,7 @@ namespace calculate {
 
 
     double calculate(const String &expression) {
-        qSymbol symbols = tokenize(expression);
+        auto symbols = tokenize(expression);
         symbols = shuntingYard(std::move(symbols));
         return evaluate(std::move(symbols));
     }

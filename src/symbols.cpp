@@ -15,25 +15,8 @@ namespace symbols {
     mSymbolGen Function::_symbols;
 
 
-    void recordConstant(const String &t, double v) {
-        Constant::_symbols[t] = v;
-    }
-
-    String symbolsRegex() {
-        return String("[") + Operator::_regex_simple + ",()]+" +
-            Operator::_regex_composite;
-    }
-
-    Operator* castOperator(pSymbol o) {
-        return dynamic_cast<Operator *>(o.get());
-    }
-
-    Function* castFunction(pSymbol f) {
-        return dynamic_cast<Function *>(f.get());
-    }
-
     pSymbol newSymbol(const String &t) {
-        if ([&t]() {
+        if ([&t] {
                 try {std::stod(t); return true;}
                 catch (std::logic_error) {return false;}
             }())
@@ -43,9 +26,9 @@ namespace symbols {
                 new Constant(std::to_string(Constant::_symbols[t]))
             );
         else if (t == "(")
-            return pSymbol(new ParenthesisLeft);
+            return pSymbol(new Parenthesis<'('>);
         else if (t == ")")
-            return pSymbol(new ParenthesisRight);
+            return pSymbol(new Parenthesis<')'>);
         else if (t == ",")
             return pSymbol(new Separator);
         else if (Operator::_symbols.find(t) != Operator::_symbols.end())
@@ -68,6 +51,10 @@ namespace symbols {
     void Operator::addBranches(pSymbol l, pSymbol r) {
         _left_operand = l;
         _right_operand = r;
+    }
+
+    String Operator::symbolsRegex() {
+        return String("[") + _regex_simple + ",()]+" + _regex_composite;
     }
 
 

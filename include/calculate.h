@@ -8,17 +8,12 @@
 #include "symbols.h"
 
 namespace calculate {
-    typedef std::string String;
-    typedef std::regex Regex;
-    typedef std::smatch Match;
-    typedef std::sregex_iterator iRegex;
-
-    typedef symbols::pSymbol pSymbol;
-    typedef symbols::vSymbol vSymbol;
-    typedef symbols::Operator Operator;
-    typedef symbols::Type Type;
-    typedef std::queue<pSymbol> qSymbol;
-    typedef std::stack<pSymbol> sSymbol;
+    using String = std::string;
+    using pSymbol = symbols::pSymbol;
+    using vSymbol = symbols::vSymbol;
+    using qSymbol = std::queue<pSymbol>;
+    using sSymbol =std::stack<pSymbol>;
+    using Type = symbols::Type;
 
 
     qSymbol tokenize(const String &expression);

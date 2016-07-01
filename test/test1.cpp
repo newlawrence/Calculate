@@ -2,11 +2,8 @@
 
 #include "calculate.h"
 
-using namespace std;
-using namespace calculate;
-
 int main(int argc, char *argv[]) {
     if (argc > 1)
-        cout << evaluate(shuntingYard(tokenize(argv[1]))) << endl;
+        std::cout << calculate::calculate(argv[1]) << std::endl;
     return 0;
 }
