@@ -48,8 +48,13 @@ namespace symbols {
     };
 
 
-    class Constant final : public Symbol {
+    class Constant : public Symbol {
+    protected:
+        struct Recorder {
+            Recorder(const String &t, double v);
+        };
         static mValue _symbols;
+
         Constant(const String &s) :
             Symbol(s, Type::CONSTANT), value(std::stod(s)) {}
 
@@ -143,11 +148,20 @@ namespace symbols {
 }
 
 
+#define RECORD_CONSTANT(TOKEN,VALUE)                                          \
+class Constant##TOKEN final : public Constant {                               \
+    static const Constant::Recorder _recorder;                                \
+};                                                                            \
+const Constant::Recorder Constant##TOKEN::_recorder =                         \
+    Constant::Recorder(#TOKEN, VALUE);
+
 #define RECORD_OPERATOR(NAME,TOKEN,PREC,LASSOC,FUNC)                          \
 class Operator##NAME final : public Operator {                                \
     static const Operator::Recorder _recorder;                                \
     static pSymbol newOperator() {return pSymbol(new Operator##NAME);}        \
+                                                                              \
     Operator##NAME() : Operator(#TOKEN, PREC, LASSOC) {}                      \
+                                                                              \
 public:                                                                       \
     virtual double evaluate() const {                                         \
         double a = _left_operand->evaluate();                                 \
@@ -162,7 +176,9 @@ const Operator::Recorder Operator##NAME::_recorder =                          \
 class Function_##TOKEN final : public Function {                              \
     static const Function::Recorder _recorder;                                \
     static pSymbol newFunction() {return pSymbol(new Function_##TOKEN);}      \
+                                                                              \
     Function_##TOKEN() : Function(#TOKEN, ARGS) {}                            \
+                                                                              \
 public:                                                                       \
     virtual double evaluate() const {                                         \
         vName x(args);                                                        \

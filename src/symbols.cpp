@@ -1,17 +1,10 @@
 #include "symbols.h"
 
 namespace symbols {
-    mValue Constant::_symbols{
-        {"pi", 3.141592653589},
-        {"e", 2.718281828459},
-        {"phi", 1.618033988749},
-        {"gamma", 0.577215664901}
-    };
-
+    mValue Constant::_symbols;
     mSymbolGen Operator::_symbols;
     String Operator::_regex_simple;
     String Operator::_regex_composite;
-
     mSymbolGen Function::_symbols;
 
 
@@ -35,6 +28,11 @@ namespace symbols {
             return Operator::_symbols[t]();
         else
             return Function::_symbols[t]();
+    }
+
+
+    Constant::Recorder::Recorder(const String &t, double v) {
+        Constant::_symbols[t] = v;
     }
 
 
@@ -66,6 +64,11 @@ namespace symbols {
         _operands = std::move(x);
     }
 
+
+    RECORD_CONSTANT(pi,3.141592653589)
+    RECORD_CONSTANT(e,2.718281828459)
+    RECORD_CONSTANT(phi,1.618033988749)
+    RECORD_CONSTANT(gamma,0.577215664901)
 
     RECORD_OPERATOR(Sub,-,200,true,a-b)
     RECORD_OPERATOR(Add,+,200,true,a+b)
