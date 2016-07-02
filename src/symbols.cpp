@@ -8,6 +8,10 @@ namespace symbols {
     mSymbolGen Function::_symbols;
 
 
+    pSymbol newSymbol(double *v) {
+        return pSymbol(new Variable(v));
+    }
+
     pSymbol newSymbol(const String &t) {
         if ([&t] {
                 try {std::stod(t); return true;}
@@ -40,7 +44,7 @@ namespace symbols {
         Operator::_symbols[t] = g;
         if (std::all_of(
             t.begin(), t.end(), [&t](char ch) {return ch == t[0];})
-           )
+            )
             _regex_simple += t;
         else
             _regex_composite += "|" + t;

@@ -3,11 +3,11 @@
 
 #include <memory>
 #include <algorithm>
+#include <limits>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <limits>
-#include <cmath>
 
 namespace symbols {
     using String = std::string;
@@ -21,13 +21,14 @@ namespace symbols {
     using mSymbolGen = std::unordered_map<String, fSymbolGen>;
 
     enum Type {
-        CONSTANT, LEFTPARENS, RIGHTPARENS, SEPARATOR, OPERATOR, FUNCTION
+        VARIABLE, CONSTANT, LEFT, RIGHT, SEPARATOR, OPERATOR, FUNCTION
     };
 
     template<typename T>
     T* castChild(pSymbol o) {
         return dynamic_cast<T *>(o.get());
     }
+    pSymbol newSymbol(double *v);
     pSymbol newSymbol(const String &t);
 
 
@@ -45,6 +46,17 @@ namespace symbols {
         const Type type;
         bool is(Type y) {return type == y;}
         virtual double evaluate() const = 0;
+    };
+
+
+    class Variable final : public Symbol {
+        Variable(double *v) : Symbol("var", Type::CONSTANT), _value(v) {}
+
+    public:
+        const double *_value;
+        virtual double evaluate() const {return *_value;}
+
+        friend pSymbol newSymbol(double *v);
     };
 
 
@@ -70,7 +82,7 @@ namespace symbols {
     template<char s>
     class Parenthesis final : public Symbol {
         constexpr static const Type _type =
-            s == '(' ? Type::LEFTPARENS : Type::RIGHTPARENS;
+            s == '(' ? Type::LEFT : Type::RIGHT;
         constexpr static const char _symbol[2] = {s, '\0'};
 
         Parenthesis() : Symbol(_symbol, _type) {}
@@ -149,18 +161,18 @@ namespace symbols {
 
 
 #define RECORD_CONSTANT(TOKEN,VALUE)                                          \
-class Constant##TOKEN final : public Constant {                               \
+class Constant_##TOKEN final : public Constant {                              \
     static const Constant::Recorder _recorder;                                \
 };                                                                            \
-const Constant::Recorder Constant##TOKEN::_recorder =                         \
+const Constant::Recorder Constant_##TOKEN::_recorder =                        \
     Constant::Recorder(#TOKEN, VALUE);
 
 #define RECORD_OPERATOR(NAME,TOKEN,PREC,LASSOC,FUNC)                          \
-class Operator##NAME final : public Operator {                                \
+class Operator_##NAME final : public Operator {                               \
     static const Operator::Recorder _recorder;                                \
-    static pSymbol newOperator() {return pSymbol(new Operator##NAME);}        \
+    static pSymbol newOperator() {return pSymbol(new Operator_##NAME);}       \
                                                                               \
-    Operator##NAME() : Operator(#TOKEN, PREC, LASSOC) {}                      \
+    Operator_##NAME() : Operator(#TOKEN, PREC, LASSOC) {}                     \
                                                                               \
 public:                                                                       \
     virtual double evaluate() const {                                         \
@@ -169,8 +181,8 @@ public:                                                                       \
         return FUNC;                                                          \
     }                                                                         \
 };                                                                            \
-const Operator::Recorder Operator##NAME::_recorder =                          \
-    Operator::Recorder(#TOKEN, &Operator##NAME::newOperator);
+const Operator::Recorder Operator_##NAME::_recorder =                         \
+    Operator::Recorder(#TOKEN, &Operator_##NAME::newOperator);
 
 #define RECORD_FUNCTION(TOKEN,ARGS,FUNC)                                      \
 class Function_##TOKEN final : public Function {                              \
@@ -182,7 +194,7 @@ class Function_##TOKEN final : public Function {                              \
 public:                                                                       \
     virtual double evaluate() const {                                         \
         vName x(args);                                                        \
-        for (unsigned i = 0; i < args; i++)                                   \
+        for (auto i = 0; i < args; i++)                                       \
             x[i] = _operands[i]->evaluate();                                  \
         return FUNC;                                                          \
     }                                                                         \

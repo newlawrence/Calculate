@@ -3,7 +3,6 @@
 #include "calculate.h"
 
 int main(int argc, char *argv[]) {
-    if (argc > 1)
-        std::cout << calculate::calculate(argv[1]) << std::endl;
+    auto expression = calculate::Calculate("x + y + z", {"x", "y", "z"});
     return 0;
 }

@@ -1,27 +1,31 @@
 #include "calculate.h"
 
 namespace calculate {
-    qSymbol tokenize(const String &expression) {
+    qSymbol Calculate::tokenize(const String &expression) {
         qSymbol infix;
 
-        auto regex = std::regex(
-            String("-?[0-9.]+|[A-Za-z]+|") + symbols::Operator::symbolsRegex()
-        );
-        auto next = std::sregex_iterator(
-            expression.begin(), expression.end(), regex
-        ),
+        auto next =
+            std::sregex_iterator(
+                expression.begin(), expression.end(), _regex
+            ),
             end = std::sregex_iterator();
 
         while (next != end) {
-            auto match = *next;
-            infix.push(symbols::newSymbol(match.str()));
+            auto match = next->str();
+            auto it = std::find(_names.begin(), _names.end(), match);
+            if (it != _names.end()) {
+                auto position = it - _names.begin();
+                infix.push(symbols::newSymbol(_values.get() + position));
+            }
+            else {
+                infix.push(symbols::newSymbol(match));
+            }
             next++;
         }
         return infix;
     }
 
-
-    qSymbol shuntingYard(qSymbol &&infix) {
+    qSymbol Calculate::shuntingYard(qSymbol &&infix) {
         qSymbol postfix;
         sSymbol operations;
 
@@ -29,18 +33,18 @@ namespace calculate {
             auto element = infix.front();
             infix.pop();
 
-            if (element->is(Type::CONSTANT)) {
+            if (element->is(symbols::Type::CONSTANT)) {
                 postfix.push(element);
             }
 
-            else if (element->is(Type::FUNCTION)) {
+            else if (element->is(symbols::Type::FUNCTION)) {
                 operations.push(element);
             }
 
-            else if (element->is(Type::SEPARATOR)) {
+            else if (element->is(symbols::Type::SEPARATOR)) {
                 while (!operations.empty()) {
                     auto another = operations.top();
-                    if (!another->is(Type::LEFTPARENS)) {
+                    if (!another->is(symbols::Type::LEFT)) {
                         postfix.push(another);
                         operations.pop();
                     }
@@ -50,13 +54,13 @@ namespace calculate {
                 }
             }
 
-            else if (element->is(Type::OPERATOR)) {
+            else if (element->is(symbols::Type::OPERATOR)) {
                 while (!operations.empty()) {
                     auto another = operations.top();
-                    if (another->is(Type::LEFTPARENS)) {
+                    if (another->is(symbols::Type::LEFT)) {
                         break;
                     }
-                    else if (another->is(Type::FUNCTION)) {
+                    else if (another->is(symbols::Type::FUNCTION)) {
                         postfix.push(another);
                         operations.pop();
                         break;
@@ -67,9 +71,10 @@ namespace calculate {
                         auto op2 =
                             symbols::castChild<symbols::Operator>(another);
                         if ((op1->left_assoc &&
-                             op1->precedence <= op2->precedence) || 
+                                op1->precedence <= op2->precedence) ||
                             (!op1->left_assoc &&
-                             op1->precedence < op2->precedence)) {
+                                op1->precedence < op2->precedence)
+                            ) {
                             operations.pop();
                             postfix.push(another);
                         }
@@ -81,14 +86,14 @@ namespace calculate {
                 operations.push(element);
             }
 
-            else if (element->is(Type::LEFTPARENS)) {
+            else if (element->is(symbols::Type::LEFT)) {
                 operations.push(element);
             }
 
             else {
                 while (!operations.empty()) {
                     auto another = operations.top();
-                    if (!another->is(Type::LEFTPARENS)) {
+                    if (!another->is(symbols::Type::LEFT)) {
                         operations.pop();
                         postfix.push(another);
                     }
@@ -108,8 +113,7 @@ namespace calculate {
         return postfix;
     }
 
-
-    double evaluate(qSymbol &&postfix) {
+    pSymbol Calculate::buildTree(qSymbol &&postfix) {
         sSymbol operands;
         pSymbol element;
 
@@ -117,11 +121,11 @@ namespace calculate {
             element = postfix.front();
             postfix.pop();
 
-            if (element->is(Type::CONSTANT)) {
+            if (element->is(symbols::Type::CONSTANT)) {
                 operands.push(element);
             }
 
-            else if (element->is(Type::FUNCTION)) {
+            else if (element->is(symbols::Type::FUNCTION)) {
                 auto function = symbols::castChild<symbols::Function>(element);
                 auto args = function->args;
                 vSymbol ops(args);
@@ -144,13 +148,23 @@ namespace calculate {
                 operands.push(element);
             }        
         }
-        return operands.top()->evaluate();
+        return operands.top();
     }
 
+    Calculate::Calculate(const String &expression, const vString &vars) :
+        _names(vars), _values(new double[vars.size()]) {
+        for (auto i = 0; i < vars.size(); i++)
+            _values[i] = 0.;
 
-    double calculate(const String &expression) {
-        auto symbols = tokenize(expression);
-        symbols = shuntingYard(std::move(symbols));
-        return evaluate(std::move(symbols));
+        auto regex_string = String("-?[0-9.]+|[A-Za-z]+|") +
+            symbols::Operator::symbolsRegex();
+
+        for (const String &var : vars)
+            regex_string += String("|") + var;
+        _regex = std::regex(regex_string);
+
+        auto infix = tokenize(expression);
+        auto postfix = shuntingYard(std::move(infix));
+        _tree = buildTree(std::move(postfix));
     }
 }
