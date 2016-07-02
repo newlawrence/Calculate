@@ -1,12 +1,12 @@
 #include "calculate.h"
 
 namespace calculate {
-    qSymbol Calculate::tokenize(const String &expression) {
+    qSymbol Calculate::tokenize(const String &expr) {
         qSymbol infix;
 
         auto next =
             std::sregex_iterator(
-                expression.begin(), expression.end(), _regex
+                expr.begin(), expr.end(), _regex
             ),
             end = std::sregex_iterator();
 
@@ -151,19 +151,20 @@ namespace calculate {
         return operands.top();
     }
 
-    Calculate::Calculate(const String &expression, const vString &vars) :
+    Calculate::Calculate(const String &expr, const vString &vars) :
         _names(vars), _values(new double[vars.size()]) {
         for (auto i = 0; i < vars.size(); i++)
             _values[i] = 0.;
+        _arg = 0;
 
-        auto regex_string = String("-?[0-9.]+|[A-Za-z]+|") +
+        auto regex_string = "-?[0-9.]+|[A-Za-z]+|" +
             symbols::Operator::symbolsRegex();
 
         for (const String &var : vars)
-            regex_string += String("|") + var;
+            regex_string += "|" + var;
         _regex = std::regex(regex_string);
 
-        auto infix = tokenize(expression);
+        auto infix = tokenize(expr);
         auto postfix = shuntingYard(std::move(infix));
         _tree = buildTree(std::move(postfix));
     }
