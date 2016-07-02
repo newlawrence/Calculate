@@ -3,44 +3,43 @@
 
 #include <memory>
 #include <algorithm>
+#include <limits>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <limits>
-#include <cmath>
 
 namespace symbols {
+    using String = std::string;
+    using vName = std::vector<double>;
+    using mValue = std::unordered_map<String, double>;
+
     class Symbol;
-    class Operator;
-    class Function;
-
-    typedef std::string String;
-    typedef std::vector<double> vName;
-    typedef std::unordered_map<String, double> mValue;
-
-    typedef std::shared_ptr<Symbol> pSymbol;
-    typedef std::vector<pSymbol> vSymbol;
-    typedef pSymbol (*fSymbolGen)();
-    typedef std::unordered_map<String, fSymbolGen> mSymbolGen;
+    using pSymbol = std::shared_ptr<Symbol>;
+    using vSymbol = std::vector<pSymbol>;
+    using fSymbolGen = pSymbol (*)();
+    using mSymbolGen = std::unordered_map<String, fSymbolGen>;
 
     enum Type {
-        CONSTANT, LEFTPARENS, RIGHTPARENS, SEPARATOR, OPERATOR, FUNCTION
+        VARIABLE, CONSTANT, LEFT, RIGHT, SEPARATOR, OPERATOR, FUNCTION
     };
 
-    void recordConstant(const String &t, double v);
-    String symbolsRegex();
-    Operator* castOperator(pSymbol o);
-    Function* castFunction(pSymbol f);
+    template<typename T>
+    T* castChild(pSymbol o) {
+        return dynamic_cast<T *>(o.get());
+    }
+    pSymbol newSymbol(double *v);
     pSymbol newSymbol(const String &t);
 
 
     class Symbol {
-    protected:
-        Symbol(const String &t, Type y) : token(t), type(y) {}
         Symbol() = delete;
         Symbol(const Symbol&) = delete;
         Symbol(Symbol&&) = delete;
         Symbol& operator=(const Symbol&) = delete;
+
+    protected:
+        Symbol(const String &t, Type y) : token(t), type(y) {}
 
     public:
         const String token;
@@ -50,15 +49,26 @@ namespace symbols {
     };
 
 
-    class Constant final : public Symbol {
-    private:
+    class Variable final : public Symbol {
+        Variable(double *v) : Symbol("var", Type::CONSTANT), _value(v) {}
+
+    public:
+        const double *_value;
+        virtual double evaluate() const {return *_value;}
+
+        friend pSymbol newSymbol(double *v);
+    };
+
+
+    class Constant : public Symbol {
+    protected:
+        struct Recorder {
+            Recorder(const String &t, double v);
+        };
         static mValue _symbols;
+
         Constant(const String &s) :
             Symbol(s, Type::CONSTANT), value(std::stod(s)) {}
-        Constant() = delete;
-        Constant(const Constant&) = delete;
-        Constant(Constant&&) = delete;
-        Constant& operator=(const Constant&) = delete;
 
     public:
         const double value;
@@ -69,24 +79,13 @@ namespace symbols {
     };
 
 
-    class Parenthesis : public Symbol {
-    protected:
-        Parenthesis(const String &t, Type y) : Symbol(t, y) {}
-        Parenthesis() = delete;
-        Parenthesis(const Parenthesis&) = delete;
-        Parenthesis(Parenthesis&&) = delete;
-        Parenthesis& operator=(const Parenthesis&) = delete;
+    template<char s>
+    class Parenthesis final : public Symbol {
+        constexpr static const Type _type =
+            s == '(' ? Type::LEFT : Type::RIGHT;
+        constexpr static const char _symbol[2] = {s, '\0'};
 
-    public:
-        virtual double evaluate() const = 0;
-    };
-
-    class ParenthesisLeft final : public Parenthesis {
-    private:
-        ParenthesisLeft() : Parenthesis("(", Type::LEFTPARENS) {}
-        ParenthesisLeft(const ParenthesisLeft&) = delete;
-        ParenthesisLeft(ParenthesisLeft&&) = delete;
-        ParenthesisLeft& operator=(const ParenthesisLeft&) = delete;
+        Parenthesis() : Symbol(_symbol, _type) {}
 
     public:
         virtual double evaluate() const {
@@ -95,29 +94,14 @@ namespace symbols {
 
         friend pSymbol newSymbol(const String &t);
     };
+    template<char s> constexpr const char Parenthesis<s>::_symbol[2];
 
-    class ParenthesisRight final : public Parenthesis {
-    private:
-        ParenthesisRight() : Parenthesis(")", Type::RIGHTPARENS) {}
-        ParenthesisRight(const ParenthesisRight&) = delete;
-        ParenthesisRight(ParenthesisRight&&) = delete;
-        ParenthesisRight& operator=(const ParenthesisRight&) = delete;
-
-    public:
-        virtual double evaluate() const {
-            return std::numeric_limits<double>::quiet_NaN();
-        };
-
-        friend pSymbol newSymbol(const String &t);
-    };
+    template class Parenthesis<'('>;
+    template class Parenthesis<')'>;
 
 
     class Separator final : public Symbol {
-    private:
         Separator() : Symbol(",", Type::SEPARATOR) {}
-        Separator(const Separator&) = delete;
-        Separator(Separator&&) = delete;
-        Separator& operator=(const Separator&) = delete;
 
     public:
         virtual double evaluate() const {
@@ -140,20 +124,16 @@ namespace symbols {
         pSymbol _left_operand;
         pSymbol _right_operand;
 
-        Operator(const String &t, size_t p, bool l) :
+        Operator(const String &t, unsigned p, bool l) :
             Symbol(t, Type::OPERATOR), precedence(p), left_assoc(l) {}
-        Operator() = delete;\
-        Operator(const Operator&) = delete;\
-        Operator(Operator&&) = delete;\
-        Operator& operator=(const Operator&) = delete;
 
     public:
-        const size_t precedence;
+        const unsigned precedence;
         const bool left_assoc;
         void addBranches(pSymbol l, pSymbol r);
         virtual double evaluate() const = 0;
 
-        friend String symbolsRegex();
+        static String symbolsRegex();
         friend pSymbol newSymbol(const String &t);
     };
 
@@ -167,15 +147,11 @@ namespace symbols {
 
         vSymbol _operands;
 
-        Function(const String &t, size_t s) :
+        Function(const String &t, unsigned s) :
             Symbol(t, Type::FUNCTION), args(s), _operands(s) {}
-        Function() = delete;\
-        Function(const Function&) = delete;\
-        Function(Function&&) = delete;\
-        Function& operator=(const Function&) = delete;
 
     public:
-        const size_t args;
+        const unsigned args;
         void addBranches(vSymbol &&x);
         virtual double evaluate() const = 0;
 
@@ -184,43 +160,46 @@ namespace symbols {
 }
 
 
-#define RECORD_OPERATOR(NAME,TOKEN,PREC,LASSOC,FUNC)\
-class Operator##NAME final : public Operator {\
-private:\
-    static const Operator::Recorder _recorder;\
-    static pSymbol newOperator() {return pSymbol(new Operator##NAME);}\
-    Operator##NAME() : Operator(#TOKEN, PREC, LASSOC) {}\
-    Operator##NAME(const Operator##NAME&) = delete;\
-    Operator##NAME(Operator##NAME&&) = delete;\
-    Operator##NAME& operator=(const Operator##NAME&) = delete;\
-public:\
-    virtual double evaluate() const {\
-        double a = _left_operand->evaluate();\
-        double b = _right_operand->evaluate();\
-        return FUNC;\
-    }\
-};\
-const Operator::Recorder Operator##NAME::_recorder =\
-    Operator::Recorder(#TOKEN, &Operator##NAME::newOperator);
+#define RECORD_CONSTANT(TOKEN,VALUE)                                          \
+class Constant_##TOKEN final : public Constant {                              \
+    static const Constant::Recorder _recorder;                                \
+};                                                                            \
+const Constant::Recorder Constant_##TOKEN::_recorder =                        \
+    Constant::Recorder(#TOKEN, VALUE);
 
-#define RECORD_FUNCTION(TOKEN,ARGS,FUNC)\
-class Function_##TOKEN final : public Function {\
-private:\
-    static const Function::Recorder _recorder;\
-    static pSymbol newFunction() {return pSymbol(new Function_##TOKEN);}\
-    Function_##TOKEN() : Function(#TOKEN, ARGS) {}\
-    Function_##TOKEN(const Function_##TOKEN&) = delete;\
-    Function_##TOKEN(Function_##TOKEN&&) = delete;\
-    Function_##TOKEN& operator=(const Function_##TOKEN&) = delete;\
-public:\
-    virtual double evaluate() const {\
-        vName x(args);\
-        for (size_t i = 0; i < args; i++)\
-            x[i] = _operands[i]->evaluate();\
-        return FUNC;\
-    }\
-};\
-const Function::Recorder Function_##TOKEN::_recorder =\
+#define RECORD_OPERATOR(NAME,TOKEN,PREC,LASSOC,FUNC)                          \
+class Operator_##NAME final : public Operator {                               \
+    static const Operator::Recorder _recorder;                                \
+    static pSymbol newOperator() {return pSymbol(new Operator_##NAME);}       \
+                                                                              \
+    Operator_##NAME() : Operator(#TOKEN, PREC, LASSOC) {}                     \
+                                                                              \
+public:                                                                       \
+    virtual double evaluate() const {                                         \
+        double a = _left_operand->evaluate();                                 \
+        double b = _right_operand->evaluate();                                \
+        return FUNC;                                                          \
+    }                                                                         \
+};                                                                            \
+const Operator::Recorder Operator_##NAME::_recorder =                         \
+    Operator::Recorder(#TOKEN, &Operator_##NAME::newOperator);
+
+#define RECORD_FUNCTION(TOKEN,ARGS,FUNC)                                      \
+class Function_##TOKEN final : public Function {                              \
+    static const Function::Recorder _recorder;                                \
+    static pSymbol newFunction() {return pSymbol(new Function_##TOKEN);}      \
+                                                                              \
+    Function_##TOKEN() : Function(#TOKEN, ARGS) {}                            \
+                                                                              \
+public:                                                                       \
+    virtual double evaluate() const {                                         \
+        vName x(args);                                                        \
+        for (auto i = 0; i < args; i++)                                       \
+            x[i] = _operands[i]->evaluate();                                  \
+        return FUNC;                                                          \
+    }                                                                         \
+};                                                                            \
+const Function::Recorder Function_##TOKEN::_recorder =                        \
     Function::Recorder(#TOKEN, &Function_##TOKEN::newFunction);
 
 #endif

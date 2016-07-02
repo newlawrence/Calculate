@@ -1,39 +1,19 @@
 #include "symbols.h"
 
 namespace symbols {
-    mValue Constant::_symbols{
-        {"pi", 3.141592653589},
-        {"e", 2.718281828459},
-        {"phi", 1.618033988749},
-        {"gamma", 0.577215664901}
-    };
-
+    mValue Constant::_symbols;
     mSymbolGen Operator::_symbols;
     String Operator::_regex_simple;
     String Operator::_regex_composite;
-
     mSymbolGen Function::_symbols;
 
 
-    void recordConstant(const String &t, double v) {
-        Constant::_symbols[t] = v;
-    }
-
-    String symbolsRegex() {
-        return String("[") + Operator::_regex_simple + ",()]+" +
-            Operator::_regex_composite;
-    }
-
-    Operator* castOperator(pSymbol o) {
-        return dynamic_cast<Operator *>(o.get());
-    }
-
-    Function* castFunction(pSymbol f) {
-        return dynamic_cast<Function *>(f.get());
+    pSymbol newSymbol(double *v) {
+        return pSymbol(new Variable(v));
     }
 
     pSymbol newSymbol(const String &t) {
-        if ([&t]() {
+        if ([&t] {
                 try {std::stod(t); return true;}
                 catch (std::logic_error) {return false;}
             }())
@@ -43,9 +23,9 @@ namespace symbols {
                 new Constant(std::to_string(Constant::_symbols[t]))
             );
         else if (t == "(")
-            return pSymbol(new ParenthesisLeft);
+            return pSymbol(new Parenthesis<'('>);
         else if (t == ")")
-            return pSymbol(new ParenthesisRight);
+            return pSymbol(new Parenthesis<')'>);
         else if (t == ",")
             return pSymbol(new Separator);
         else if (Operator::_symbols.find(t) != Operator::_symbols.end())
@@ -55,11 +35,16 @@ namespace symbols {
     }
 
 
+    Constant::Recorder::Recorder(const String &t, double v) {
+        Constant::_symbols[t] = v;
+    }
+
+
     Operator::Recorder::Recorder(const String &t, fSymbolGen g) {
         Operator::_symbols[t] = g;
         if (std::all_of(
             t.begin(), t.end(), [&t](char ch) {return ch == t[0];})
-           )
+            )
             _regex_simple += t;
         else
             _regex_composite += "|" + t;
@@ -68,6 +53,10 @@ namespace symbols {
     void Operator::addBranches(pSymbol l, pSymbol r) {
         _left_operand = l;
         _right_operand = r;
+    }
+
+    String Operator::symbolsRegex() {
+        return String("[") + _regex_simple + ",()]+" + _regex_composite;
     }
 
 
@@ -79,6 +68,11 @@ namespace symbols {
         _operands = std::move(x);
     }
 
+
+    RECORD_CONSTANT(pi,3.141592653589)
+    RECORD_CONSTANT(e,2.718281828459)
+    RECORD_CONSTANT(phi,1.618033988749)
+    RECORD_CONSTANT(gamma,0.577215664901)
 
     RECORD_OPERATOR(Sub,-,200,true,a-b)
     RECORD_OPERATOR(Add,+,200,true,a+b)

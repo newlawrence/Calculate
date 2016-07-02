@@ -1,41 +1,50 @@
 #include "calculate.h"
 
 namespace calculate {
-    qSymbol tokenize(const String &expression) {
+    qSymbol Calculate::tokenize(const String &expr) const {
         qSymbol infix;
-        Regex regex(String("-?[0-9.]+|[A-Za-z]+|") + symbols::symbolsRegex());
 
-        iRegex next(expression.begin(), expression.end(), regex), end;
+        auto next =
+            std::sregex_iterator(
+                expr.begin(), expr.end(), _regex
+            ),
+            end = std::sregex_iterator();
+
         while (next != end) {
-            Match match = *next;
-            infix.push(symbols::newSymbol(match.str()));
+            auto match = next->str();
+            auto it = std::find(variables.begin(), variables.end(), match);
+            if (it != variables.end()) {
+                auto position = it - variables.begin();
+                infix.push(symbols::newSymbol(_values.get() + position));
+            }
+            else {
+                infix.push(symbols::newSymbol(match));
+            }
             next++;
         }
         return infix;
     }
 
-
-    qSymbol shuntingYard(qSymbol &&infix) {
+    qSymbol Calculate::shuntingYard(qSymbol &&infix) const {
         qSymbol postfix;
         sSymbol operations;
-        pSymbol element, another;
 
         while(!infix.empty()) {
-            element = infix.front();
+            auto element = infix.front();
             infix.pop();
 
-            if (element->is(Type::CONSTANT)) {
+            if (element->is(symbols::Type::CONSTANT)) {
                 postfix.push(element);
             }
 
-            else if (element->is(Type::FUNCTION)) {
+            else if (element->is(symbols::Type::FUNCTION)) {
                 operations.push(element);
             }
 
-            else if (element->is(Type::SEPARATOR)) {
+            else if (element->is(symbols::Type::SEPARATOR)) {
                 while (!operations.empty()) {
-                    another = operations.top();
-                    if (!another->is(Type::LEFTPARENS)) {
+                    auto another = operations.top();
+                    if (!another->is(symbols::Type::LEFT)) {
                         postfix.push(another);
                         operations.pop();
                     }
@@ -45,24 +54,27 @@ namespace calculate {
                 }
             }
 
-            else if (element->is(Type::OPERATOR)) {
+            else if (element->is(symbols::Type::OPERATOR)) {
                 while (!operations.empty()) {
-                    another = operations.top();
-                    if (another->is(Type::LEFTPARENS)) {
+                    auto another = operations.top();
+                    if (another->is(symbols::Type::LEFT)) {
                         break;
                     }
-                    else if (another->is(Type::FUNCTION)) {
+                    else if (another->is(symbols::Type::FUNCTION)) {
                         postfix.push(another);
                         operations.pop();
                         break;
                     }
                     else {
-                        auto op1 = symbols::castOperator(element);
-                        auto op2 = symbols::castOperator(another);
+                        auto op1 =
+                            symbols::castChild<symbols::Operator>(element);
+                        auto op2 =
+                            symbols::castChild<symbols::Operator>(another);
                         if ((op1->left_assoc &&
-                             op1->precedence <= op2->precedence) || 
+                                op1->precedence <= op2->precedence) ||
                             (!op1->left_assoc &&
-                             op1->precedence < op2->precedence)) {
+                                op1->precedence < op2->precedence)
+                            ) {
                             operations.pop();
                             postfix.push(another);
                         }
@@ -74,14 +86,14 @@ namespace calculate {
                 operations.push(element);
             }
 
-            else if (element->is(Type::LEFTPARENS)) {
+            else if (element->is(symbols::Type::LEFT)) {
                 operations.push(element);
             }
 
             else {
                 while (!operations.empty()) {
-                    another = operations.top();
-                    if (!another->is(Type::LEFTPARENS)) {
+                    auto another = operations.top();
+                    if (!another->is(symbols::Type::LEFT)) {
                         operations.pop();
                         postfix.push(another);
                     }
@@ -94,15 +106,14 @@ namespace calculate {
         }
 
         while(!operations.empty()) {
-            element = operations.top();
+            auto element = operations.top();
             operations.pop();
             postfix.push(element);
         }
         return postfix;
     }
 
-
-    double evaluate(qSymbol &&postfix) {
+    pSymbol Calculate::buildTree(qSymbol &&postfix) const {
         sSymbol operands;
         pSymbol element;
 
@@ -110,38 +121,65 @@ namespace calculate {
             element = postfix.front();
             postfix.pop();
 
-            if (element->is(Type::CONSTANT)) {
+            if (element->is(symbols::Type::CONSTANT)) {
                 operands.push(element);
             }
 
-            else if (element->is(Type::FUNCTION)) {
-                auto args = symbols::castFunction(element)->args;
+            else if (element->is(symbols::Type::FUNCTION)) {
+                auto function = symbols::castChild<symbols::Function>(element);
+                auto args = function->args;
                 vSymbol ops(args);
-                for (size_t i = args; i > 0; i--) {
+                for (auto i = args; i > 0; i--) {
                     ops[i - 1] = operands.top();
                     operands.pop();
                 }
-                symbols::castFunction(element)->addBranches(std::move(ops));
+                function->addBranches(std::move(ops));
                 operands.push(element);
             }
 
             else {
-                pSymbol op1, op2;
-                op2 = operands.top();
+                auto binary = symbols::castChild<symbols::Operator>(element);
+                pSymbol a, b;
+                b = operands.top();
                 operands.pop();
-                op1 = operands.top();
+                a = operands.top();
                 operands.pop();
-                symbols::castOperator(element)->addBranches(op1, op2);
+                binary->addBranches(a, b);
                 operands.push(element);
             }        
         }
-        return operands.top()->evaluate();
+        return operands.top();
     }
 
+    Calculate::Calculate(const String &expr, const vString &vars) :
+        expression(expr), variables(vars), _values(new double[vars.size()]) {
+        for (auto i = 0; i < vars.size(); i++)
+            _values[i] = 0.;
 
-    double calculate(const String &expression) {
-        qSymbol symbols = tokenize(expression);
-        symbols = shuntingYard(std::move(symbols));
-        return evaluate(std::move(symbols));
+        auto regex_string = "-?[0-9.]+|[A-Za-z]+|" +
+            symbols::Operator::symbolsRegex();
+
+        for (const String &var : vars)
+            regex_string += "|" + var;
+        _regex = std::regex(regex_string);
+
+        auto infix = tokenize(expr);
+        auto postfix = shuntingYard(std::move(infix));
+        _tree = buildTree(std::move(postfix));
+    }
+
+    Calculate::Calculate(const Calculate &other) :
+        Calculate(other.expression, other.variables) {
+    }
+
+    Calculate::Calculate(Calculate &&other) :
+        expression(other.expression), variables(other.variables),
+        _values(new double[other.variables.size()]) {
+        this->_regex = other._regex;
+        this->_tree = std::move(other._tree);
+    }
+
+    bool Calculate::operator==(const Calculate &other) const {
+        return this->expression == other.expression;
     }
 }
