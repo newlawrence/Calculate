@@ -3,13 +3,15 @@
 
 #include <memory>
 #include <algorithm>
-#include <limits>
+#include <exception>
 #include <cmath>
 #include <string>
 #include <vector>
 #include <unordered_map>
 
+
 namespace symbols {
+
     using String = std::string;
     using vName = std::vector<double>;
     using mValue = std::unordered_map<String, double>;
@@ -20,13 +22,37 @@ namespace symbols {
     using fSymbolGen = pSymbol (*)();
     using mSymbolGen = std::unordered_map<String, fSymbolGen>;
 
+
+    struct CastException : public std::exception {
+        const char* what() const noexcept {
+            return "Bad casting of Operator or Function";
+        }
+    };
+
+    struct NotEvaluableException : public std::exception {
+        const char* what() const noexcept {
+            return "Call to a non evaluable symbol";
+        }
+    };
+
+    struct UndefinedSymbolException : public std::exception {
+        const char* what() const noexcept {
+            return "Undefined symbol";
+        }
+    };
+
+
     enum Type {
         VARIABLE, CONSTANT, LEFT, RIGHT, SEPARATOR, OPERATOR, FUNCTION
     };
 
+
     template<typename T>
     T* castChild(pSymbol o) {
-        return dynamic_cast<T *>(o.get());
+        if (auto child = dynamic_cast<T *>(o.get()))
+            return child;
+        else
+            throw CastException();
     }
     pSymbol newSymbol(double *v);
     pSymbol newSymbol(const String &t);
@@ -92,7 +118,7 @@ namespace symbols {
 
     public:
         virtual double evaluate() const {
-            return std::numeric_limits<double>::quiet_NaN();
+            throw NotEvaluableException();
         };
 
         friend pSymbol newSymbol(const String &t);
@@ -109,7 +135,7 @@ namespace symbols {
 
     public:
         virtual double evaluate() const {
-            return std::numeric_limits<double>::quiet_NaN();
+            throw NotEvaluableException();
         };
 
         friend pSymbol newSymbol(const String &t);
@@ -161,6 +187,7 @@ namespace symbols {
 
         friend pSymbol newSymbol(const String &t);
     };
+
 }
 
 

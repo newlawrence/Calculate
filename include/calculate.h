@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <algorithm>
+#include <exception>
 #include <regex>
 #include <vector>
 #include <queue>
@@ -10,7 +11,9 @@
 
 #include "symbols.h"
 
+
 namespace calculate {
+
     using pValue = std::unique_ptr<double[]>;
     using vValue = std::vector<double>;
     using String = std::string;
@@ -65,6 +68,7 @@ namespace calculate {
             return this->operator() (tail...);
         };
     };
+
 }
 
 #endif

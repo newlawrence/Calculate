@@ -1,6 +1,8 @@
 #include "symbols.h"
 
+
 namespace symbols {
+
     mValue Constant::_symbols;
     mSymbolGen Operator::_symbols;
     String Operator::_regex_simple;
@@ -30,8 +32,10 @@ namespace symbols {
             return pSymbol(new Separator);
         else if (Operator::_symbols.find(t) != Operator::_symbols.end())
             return Operator::_symbols[t]();
-        else
+        else if (Function::_symbols.find(t) != Function::_symbols.end())
             return Function::_symbols[t]();
+        else
+            throw UndefinedSymbolException();
     }
 
 
@@ -134,4 +138,5 @@ namespace symbols {
     RECORD_FUNCTION(erfc,1,std::erfc(x[0]))
     RECORD_FUNCTION(tgamma,1,std::tgamma(x[0]))
     RECORD_FUNCTION(lgamma,1,std::lgamma(x[0]))
+
 }

@@ -1,6 +1,8 @@
 #include "calculate.h"
 
+
 namespace calculate {
+
     qSymbol Calculate::tokenize(const String &expr) const {
         qSymbol infix;
 
@@ -182,4 +184,5 @@ namespace calculate {
     bool Calculate::operator==(const Calculate &other) const noexcept {
         return this->expression == other.expression;
     }
+
 }
