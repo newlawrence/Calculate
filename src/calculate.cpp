@@ -1,7 +1,7 @@
 #include "calculate.h"
 
 namespace calculate {
-    qSymbol Calculate::tokenize(const String &expr) {
+    qSymbol Calculate::tokenize(const String &expr) const {
         qSymbol infix;
 
         auto next =
@@ -12,9 +12,9 @@ namespace calculate {
 
         while (next != end) {
             auto match = next->str();
-            auto it = std::find(_names.begin(), _names.end(), match);
-            if (it != _names.end()) {
-                auto position = it - _names.begin();
+            auto it = std::find(variables.begin(), variables.end(), match);
+            if (it != variables.end()) {
+                auto position = it - variables.begin();
                 infix.push(symbols::newSymbol(_values.get() + position));
             }
             else {
@@ -25,7 +25,7 @@ namespace calculate {
         return infix;
     }
 
-    qSymbol Calculate::shuntingYard(qSymbol &&infix) {
+    qSymbol Calculate::shuntingYard(qSymbol &&infix) const {
         qSymbol postfix;
         sSymbol operations;
 
@@ -113,7 +113,7 @@ namespace calculate {
         return postfix;
     }
 
-    pSymbol Calculate::buildTree(qSymbol &&postfix) {
+    pSymbol Calculate::buildTree(qSymbol &&postfix) const {
         sSymbol operands;
         pSymbol element;
 
@@ -152,10 +152,9 @@ namespace calculate {
     }
 
     Calculate::Calculate(const String &expr, const vString &vars) :
-        _names(vars), _values(new double[vars.size()]) {
+        expression(expr), variables(vars), _values(new double[vars.size()]) {
         for (auto i = 0; i < vars.size(); i++)
             _values[i] = 0.;
-        _arg = 0;
 
         auto regex_string = "-?[0-9.]+|[A-Za-z]+|" +
             symbols::Operator::symbolsRegex();
@@ -167,5 +166,20 @@ namespace calculate {
         auto infix = tokenize(expr);
         auto postfix = shuntingYard(std::move(infix));
         _tree = buildTree(std::move(postfix));
+    }
+
+    Calculate::Calculate(const Calculate &other) :
+        Calculate(other.expression, other.variables) {
+    }
+
+    Calculate::Calculate(Calculate &&other) :
+        expression(other.expression), variables(other.variables),
+        _values(new double[other.variables.size()]) {
+        this->_regex = other._regex;
+        this->_tree = std::move(other._tree);
+    }
+
+    bool Calculate::operator==(const Calculate &other) const {
+        return this->expression == other.expression;
     }
 }

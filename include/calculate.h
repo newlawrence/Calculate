@@ -24,38 +24,44 @@ namespace calculate {
 
     class Calculate final {
         Regex _regex;
-        vString _names;
         pValue _values;
         pSymbol _tree;
-        unsigned _arg;
 
-        qSymbol tokenize(const String &expression);
-        qSymbol shuntingYard(qSymbol &&infix);
-        pSymbol buildTree(qSymbol &&postfix);
+        qSymbol tokenize(const String &expression) const;
+        qSymbol shuntingYard(qSymbol &&infix) const;
+        pSymbol buildTree(qSymbol &&postfix) const;
 
     public:
-        Calculate(const String &expr, const vString &vars={});
+        const String expression;
+        const vString variables;
 
-        double operator() () {
+        Calculate() = delete;
+        Calculate& operator=(const Calculate &other) = delete;
+        Calculate& operator=(Calculate &&other) = delete;
+
+        Calculate(const String &expr, const vString &vars={});
+        Calculate(const Calculate &other);
+        Calculate(Calculate &&other);
+        bool operator==(const Calculate &other) const;
+
+        double operator() () const {
             return _tree->evaluate();
         };
 
-        double operator() (double value) {
-            _values[_arg] = value;
-            _arg = 0;
+        double operator() (double value) const {
+            _values[variables.size() - 1] = value;
             return _tree->evaluate();
         }
 
-        double operator() (vValue values) {
+        double operator() (vValue values) const {
             for (auto i = 0; i < values.size(); i++)
                 _values[i] = values[i];
             return _tree->evaluate();
         }
 
         template <typename Head, typename... Tail>
-        double operator() (Head head, Tail... tail) {
-            _values[_arg] = head;
-            _arg++;
+        double operator() (Head head, Tail... tail) const {
+            _values[variables.size() - sizeof...(tail) - 1] = head;
             return this->operator() (tail...);
         };
     };

@@ -9,8 +9,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-file(GLOB sources "src/*.cpp")
+file(GLOB sources src/*.cpp)
 add_library(calculate ${sources})
 
-add_executable(test1 "test/test1.cpp")
+add_executable(test1 test/test1.cpp)
 target_link_libraries(test1 LINK_PUBLIC calculate)
+
+add_executable(test2 test/test2.cpp)
+target_link_libraries(test2 LINK_PUBLIC calculate)
