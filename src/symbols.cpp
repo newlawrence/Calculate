@@ -35,12 +35,12 @@ namespace symbols {
     }
 
 
-    Constant::Recorder::Recorder(const String &t, double v) {
+    Constant::Recorder::Recorder(const String &t, double v) noexcept {
         Constant::_symbols[t] = v;
     }
 
 
-    Operator::Recorder::Recorder(const String &t, fSymbolGen g) {
+    Operator::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
         Operator::_symbols[t] = g;
         if (std::all_of(
             t.begin(), t.end(), [&t](char ch) {return ch == t[0];})
@@ -50,21 +50,21 @@ namespace symbols {
             _regex_composite += "|" + t;
     }
 
-    void Operator::addBranches(pSymbol l, pSymbol r) {
+    void Operator::addBranches(pSymbol l, pSymbol r) noexcept {
         _left_operand = l;
         _right_operand = r;
     }
 
-    String Operator::symbolsRegex() {
+    String Operator::getSymbolsRegex() noexcept {
         return String("[") + _regex_simple + ",()]+" + _regex_composite;
     }
 
 
-    Function::Recorder::Recorder(const String &t, fSymbolGen g) {
+    Function::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
         Function::_symbols[t] = g;
     }
 
-    void Function::addBranches(vSymbol &&x) {
+    void Function::addBranches(vSymbol &&x) noexcept {
         _operands = std::move(x);
     }
 

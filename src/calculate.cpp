@@ -157,7 +157,7 @@ namespace calculate {
             _values[i] = 0.;
 
         auto regex_string = "-?[0-9.]+|[A-Za-z]+|" +
-            symbols::Operator::symbolsRegex();
+            symbols::Operator::getSymbolsRegex();
 
         for (const String &var : vars)
             regex_string += "|" + var;
@@ -179,7 +179,7 @@ namespace calculate {
         this->_tree = std::move(other._tree);
     }
 
-    bool Calculate::operator==(const Calculate &other) const {
+    bool Calculate::operator==(const Calculate &other) const noexcept {
         return this->expression == other.expression;
     }
 }

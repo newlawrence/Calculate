@@ -42,7 +42,7 @@ namespace calculate {
         Calculate(const String &expr, const vString &vars={});
         Calculate(const Calculate &other);
         Calculate(Calculate &&other);
-        bool operator==(const Calculate &other) const;
+        bool operator==(const Calculate &other) const noexcept;
 
         double operator() () const {
             return _tree->evaluate();

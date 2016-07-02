@@ -39,18 +39,20 @@ namespace symbols {
         Symbol& operator=(const Symbol&) = delete;
 
     protected:
-        Symbol(const String &t, Type y) : token(t), type(y) {}
+        Symbol(const String &t, Type y) noexcept :
+            token(t), type(y) {}
 
     public:
         const String token;
         const Type type;
-        bool is(Type y) {return type == y;}
+        bool is(Type y) noexcept {return type == y;}
         virtual double evaluate() const = 0;
     };
 
 
     class Variable final : public Symbol {
-        Variable(double *v) : Symbol("var", Type::CONSTANT), _value(v) {}
+        Variable(double *v) noexcept :
+            Symbol("var", Type::CONSTANT), _value(v) {}
 
     public:
         const double *_value;
@@ -63,11 +65,11 @@ namespace symbols {
     class Constant : public Symbol {
     protected:
         struct Recorder {
-            Recorder(const String &t, double v);
+            Recorder(const String &t, double v) noexcept;
         };
         static mValue _symbols;
 
-        Constant(const String &s) :
+        Constant(const String &s) noexcept :
             Symbol(s, Type::CONSTANT), value(std::stod(s)) {}
 
     public:
@@ -85,7 +87,8 @@ namespace symbols {
             s == '(' ? Type::LEFT : Type::RIGHT;
         constexpr static const char _symbol[2] = {s, '\0'};
 
-        Parenthesis() : Symbol(_symbol, _type) {}
+        Parenthesis() noexcept :
+            Symbol(_symbol, _type) {}
 
     public:
         virtual double evaluate() const {
@@ -101,7 +104,8 @@ namespace symbols {
 
 
     class Separator final : public Symbol {
-        Separator() : Symbol(",", Type::SEPARATOR) {}
+        Separator() noexcept
+            : Symbol(",", Type::SEPARATOR) {}
 
     public:
         virtual double evaluate() const {
@@ -115,7 +119,7 @@ namespace symbols {
     class Operator : public Symbol {
     protected:
         struct Recorder {
-            Recorder(const String &t, fSymbolGen g);
+            Recorder(const String &t, fSymbolGen g) noexcept;
         };
         static mSymbolGen _symbols;
         static String _regex_simple;
@@ -124,16 +128,16 @@ namespace symbols {
         pSymbol _left_operand;
         pSymbol _right_operand;
 
-        Operator(const String &t, unsigned p, bool l) :
+        Operator(const String &t, unsigned p, bool l) noexcept :
             Symbol(t, Type::OPERATOR), precedence(p), left_assoc(l) {}
 
     public:
         const unsigned precedence;
         const bool left_assoc;
-        void addBranches(pSymbol l, pSymbol r);
+        void addBranches(pSymbol l, pSymbol r) noexcept;
         virtual double evaluate() const = 0;
 
-        static String symbolsRegex();
+        static String getSymbolsRegex() noexcept;
         friend pSymbol newSymbol(const String &t);
     };
 
@@ -141,18 +145,18 @@ namespace symbols {
     class Function : public Symbol {
     protected:
         struct Recorder {
-            Recorder(const String &t, fSymbolGen g);
+            Recorder(const String &t, fSymbolGen g) noexcept;
         };
         static mSymbolGen _symbols;
 
         vSymbol _operands;
 
-        Function(const String &t, unsigned s) :
+        Function(const String &t, unsigned s) noexcept :
             Symbol(t, Type::FUNCTION), args(s), _operands(s) {}
 
     public:
         const unsigned args;
-        void addBranches(vSymbol &&x);
+        void addBranches(vSymbol &&x) noexcept;
         virtual double evaluate() const = 0;
 
         friend pSymbol newSymbol(const String &t);
@@ -170,9 +174,12 @@ const Constant::Recorder Constant_##TOKEN::_recorder =                        \
 #define RECORD_OPERATOR(NAME,TOKEN,PREC,LASSOC,FUNC)                          \
 class Operator_##NAME final : public Operator {                               \
     static const Operator::Recorder _recorder;                                \
-    static pSymbol newOperator() {return pSymbol(new Operator_##NAME);}       \
+    static pSymbol newOperator() noexcept {                                   \
+        return pSymbol(new Operator_##NAME);                                  \
+    }                                                                         \
                                                                               \
-    Operator_##NAME() : Operator(#TOKEN, PREC, LASSOC) {}                     \
+    Operator_##NAME() noexcept :                                              \
+        Operator(#TOKEN, PREC, LASSOC) {}                                     \
                                                                               \
 public:                                                                       \
     virtual double evaluate() const {                                         \
@@ -187,9 +194,12 @@ const Operator::Recorder Operator_##NAME::_recorder =                         \
 #define RECORD_FUNCTION(TOKEN,ARGS,FUNC)                                      \
 class Function_##TOKEN final : public Function {                              \
     static const Function::Recorder _recorder;                                \
-    static pSymbol newFunction() {return pSymbol(new Function_##TOKEN);}      \
+    static pSymbol newFunction() noexcept {                                   \
+        return pSymbol(new Function_##TOKEN);                                 \
+    }                                                                         \
                                                                               \
-    Function_##TOKEN() : Function(#TOKEN, ARGS) {}                            \
+    Function_##TOKEN() noexcept :                                             \
+        Function(#TOKEN, ARGS) {}                                             \
                                                                               \
 public:                                                                       \
     virtual double evaluate() const {                                         \
