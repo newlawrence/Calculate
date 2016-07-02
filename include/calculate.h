@@ -25,6 +25,32 @@ namespace calculate {
     using qSymbol = std::queue<pSymbol>;
     using sSymbol = std::stack<pSymbol>;
 
+
+    struct EmptyExpressionException : public std::exception {
+        const char* what() const noexcept {
+            return "Empty expression";
+        }
+    };
+
+    struct ParenthesisMismatchException : public std::exception {
+        const char* what() const noexcept {
+            return "Parenthesis mismatch";
+        }
+    };
+
+    struct MissingArgumentsException : public std::exception {
+        const char* what() const noexcept {
+            return "Missing arguments";
+        }
+    };
+
+    struct ConstantsExcessException : public std::exception {
+        const char* what() const noexcept {
+            return "Too many arguments";
+        }
+    };
+
+
     class Calculate final {
         Regex _regex;
         pValue _values;

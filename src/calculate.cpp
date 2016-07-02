@@ -24,6 +24,9 @@ namespace calculate {
             }
             next++;
         }
+        if (infix.size() == 0)
+            throw symbols::UndefinedSymbolException();
+
         return infix;
     }
 
@@ -54,6 +57,8 @@ namespace calculate {
                         break;
                     }
                 }
+                if (operations.empty())
+                    throw ParenthesisMismatchException();
             }
 
             else if (element->is(symbols::Type::OPERATOR)) {
@@ -100,15 +105,22 @@ namespace calculate {
                         postfix.push(another);
                     }
                     else {
-                        operations.pop();
                         break;
                     }
                 }
+                if (!operations.empty() &&
+                    operations.top()->is(symbols::Type::LEFT)
+                    )
+                    operations.pop();
+                else
+                    throw ParenthesisMismatchException();
             }
         }
 
         while(!operations.empty()) {
             auto element = operations.top();
+            if (element->is(symbols::Type::LEFT))
+                throw ParenthesisMismatchException();
             operations.pop();
             postfix.push(element);
         }
@@ -132,6 +144,8 @@ namespace calculate {
                 auto args = function->args;
                 vSymbol ops(args);
                 for (auto i = args; i > 0; i--) {
+                    if (operands.empty())
+                        throw MissingArgumentsException();
                     ops[i - 1] = operands.top();
                     operands.pop();
                 }
@@ -142,6 +156,8 @@ namespace calculate {
             else {
                 auto binary = symbols::castChild<symbols::Operator>(element);
                 pSymbol a, b;
+                if (operands.size() < 2)
+                    throw MissingArgumentsException();
                 b = operands.top();
                 operands.pop();
                 a = operands.top();
@@ -150,11 +166,17 @@ namespace calculate {
                 operands.push(element);
             }        
         }
+        if (operands.size() > 1)
+            throw ConstantsExcessException();
+
         return operands.top();
     }
 
     Calculate::Calculate(const String &expr, const vString &vars) :
         expression(expr), variables(vars), _values(new double[vars.size()]) {
+        if (expr.length() == 0)
+            throw EmptyExpressionException();
+
         for (auto i = 0; i < vars.size(); i++)
             _values[i] = 0.;
 

@@ -23,7 +23,7 @@ namespace symbols {
     using mSymbolGen = std::unordered_map<String, fSymbolGen>;
 
 
-    struct CastException : public std::exception {
+    struct BadCastException : public std::exception {
         const char* what() const noexcept {
             return "Bad casting of Operator or Function";
         }
@@ -52,7 +52,7 @@ namespace symbols {
         if (auto child = dynamic_cast<T *>(o.get()))
             return child;
         else
-            throw CastException();
+            throw BadCastException();
     }
     pSymbol newSymbol(double *v);
     pSymbol newSymbol(const String &t);
