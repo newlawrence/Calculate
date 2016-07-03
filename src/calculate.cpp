@@ -240,8 +240,9 @@ namespace calculate {
         return operands.top();
     }
 
-    vString Calculate::getVariables(const String &expr) {
-        auto stream = std::istringstream(expr);
+
+    vString Calculate::extract(const String &vars) {
+        auto stream = std::istringstream(vars);
         vString variables;
 
         String item;
@@ -251,8 +252,37 @@ namespace calculate {
         return variables;
     }
 
+    vString Calculate::validate(const vString &vars) {
+        static const auto regex = std::regex("[A-Za-z]+");
+
+        if (!std::all_of(vars.begin(), vars.end(),
+            [](std::string var) {return std::regex_match(var, regex);})
+            )
+            throw BadNameException();
+
+        return vars;
+    }
+
+
+    Calculate::Calculate(const Calculate &other) :
+        Calculate(other.expression, other.variables) {
+    }
+
+    Calculate::Calculate(Calculate &&other) :
+        expression(other.expression), variables(other.variables),
+        _values(new double[other.variables.size()]) {
+        this->_regex = other._regex;
+        this->_tree = std::move(other._tree);
+    }
+
+    Calculate::Calculate(const String &expr, const String &vars) :
+        Calculate(expr, extract(vars)) {
+    }
+
     Calculate::Calculate(const String &expr, const vString &vars) :
-        expression(expr), variables(vars), _values(new double[vars.size()]) {
+        expression(expr), variables(validate(vars)),
+        _values(new double[vars.size()]) {
+
         if (expr.length() == 0)
             throw EmptyExpressionException();
 
@@ -271,17 +301,6 @@ namespace calculate {
         _tree = buildTree(std::move(postfix));
     }
 
-    Calculate::Calculate(const Calculate &other) :
-        Calculate(other.expression, other.variables) {
-    }
-
-    Calculate::Calculate(Calculate &&other) :
-        expression(other.expression), variables(other.variables),
-        _values(new double[other.variables.size()]) {
-        this->_regex = other._regex;
-        this->_tree = std::move(other._tree);
-    }
-
     bool Calculate::operator==(const Calculate &other) const noexcept {
         return this->expression == other.expression;
     }
@@ -290,23 +309,30 @@ namespace calculate {
 
 
 extern "C" {
-    
-    Calculate newExpression(const char *expr, const char *vars) {
-        Calculate cexpr = static_cast<Calculate>(
-            new calculate::Calculate(
-                expr,
-                calculate::Calculate::getVariables(vars)
-            )
-        );
-        return cexpr;
+
+    CALC_Expression CALC_newExpression(const char *expr, const char *vars) {
+        try {
+            CALC_Expression cexpr = static_cast<CALC_Expression>(
+                new calculate::Calculate(expr, vars)
+            );
+            return cexpr;
+        }
+        catch (symbols::BaseSymbolException) {
+            return nullptr;
+        }
     }
 
-    const char* getExpression(Calculate cexpr) {
-        return static_cast<calculate::Calculate*>(cexpr)->expression.c_str();
+    const char* CALC_getExpression(CALC_Expression cexpr) {
+        if (cexpr)
+            return static_cast<calculate::Calculate*>(cexpr)
+                ->expression.c_str();
+        else
+            return "";
     }
 
-    void freeExpression(Calculate obj) {
-        delete static_cast<calculate::Calculate*>(obj);
+    void CALC_freeExpression(CALC_Expression cexpr) {
+        if (cexpr)
+            delete static_cast<calculate::Calculate*>(cexpr);
     }
     
 }

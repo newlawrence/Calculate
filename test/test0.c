@@ -4,11 +4,19 @@
 
 
 int main(int argc, char *argv[]) {
-    Calculate expression;
+    CALC_Expression expr1, expr2, expr3;
 
-    expression = newExpression("1 + 2", "");
-    printf("%s\n", getExpression(expression));
-    freeExpression(expression);
+    expr1 = CALC_newExpression("x + y", "x,y");
+    expr2 = CALC_newExpression("x + &", "x,&");
+    expr3 = CALC_newExpression("+", "");
+
+    printf("%s\n", CALC_getExpression(expr1));
+    printf("%s\n", CALC_getExpression(expr2));
+    printf("%s\n", CALC_getExpression(expr3));
+
+    CALC_freeExpression(expr1);
+    CALC_freeExpression(expr2);
+    CALC_freeExpression(expr3);
 
     return 0;
 }

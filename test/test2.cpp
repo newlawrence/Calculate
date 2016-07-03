@@ -5,6 +5,7 @@
 using namespace std;
 using namespace calculate;
 
+
 int main(int argc, char *argv[]) {
     Calculate exp1("1 + 2");
     Calculate exp2(exp1);

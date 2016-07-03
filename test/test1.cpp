@@ -8,6 +8,7 @@
 using namespace std;
 using namespace calculate;
 
+
 int main(int argc, char *argv[]) {
     try {
         if (argc == 2) {
@@ -16,12 +17,16 @@ int main(int argc, char *argv[]) {
         }
 
         else if (argc == 4) {
-            auto expression = Calculate(argv[1], {argv[2]});
+            auto expression = Calculate(
+                argv[1], vector<string>({argv[2]})
+            );
             cout << expression(stod(argv[3])) << endl;
         }
 
         else if (argc == 6) {
-            auto expression = Calculate(argv[1], {argv[2], argv[4]});
+            auto expression = Calculate(
+                argv[1], vector<string>({argv[2], argv[4]})
+            );
             cout << expression(stod(argv[3]), stod(argv[5])) << endl;
         }
 

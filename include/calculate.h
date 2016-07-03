@@ -39,6 +39,12 @@ namespace calculate {
         }
     };
 
+    struct BadNameException : public BaseSymbolException {
+        const char* what() const noexcept {
+            return "Unsuitable variable name";
+        }
+    };
+
     struct ParenthesisMismatchException : public BaseSymbolException {
         const char* what() const noexcept {
             return "Parenthesis mismatch";
@@ -80,9 +86,10 @@ namespace calculate {
         qSymbol shuntingYard(qSymbol &&infix) const;
         pSymbol buildTree(qSymbol &&postfix) const;
 
+        static vString extract(const String &vars);
+        static vString validate(const vString &vars);
+
     public:
-        static vString getVariables(const String &expr);
-        
         const String expression;
         const vString variables;
 
@@ -90,9 +97,11 @@ namespace calculate {
         Calculate& operator=(const Calculate &other) = delete;
         Calculate& operator=(Calculate &&other) = delete;
 
-        Calculate(const String &expr, const vString &vars={});
         Calculate(const Calculate &other);
         Calculate(Calculate &&other);
+        Calculate(const String &expr, const String &vars);
+        Calculate(const String &expr, const vString &vars={});
+
         bool operator==(const Calculate &other) const noexcept;
 
         double operator() () const {
@@ -132,11 +141,11 @@ namespace calculate {
 extern "C" {
 #endif
 
-typedef void* Calculate;
+typedef void* CALC_Expression;
 
-Calculate newExpression(const char *expr, const char *vars);
-const char* getExpression(Calculate cexpr);
-void freeExpression(Calculate cexpr);
+CALC_Expression CALC_newExpression(const char *expr, const char *vars);
+const char* CALC_getExpression(CALC_Expression cexpr);
+void CALC_freeExpression(CALC_Expression cexpr);
 
 #ifdef __cplusplus
 }
