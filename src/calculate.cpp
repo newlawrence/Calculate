@@ -151,6 +151,17 @@ namespace calculate {
         return operands.top();
     }
 
+    vString Calculate::getVariables(const String &expr) {
+        auto stream = std::istringstream(expr);
+        vString variables;
+
+        String item;
+        while(std::getline(stream, item, ','))
+            variables.push_back(item);
+
+        return variables;
+    }
+
     Calculate::Calculate(const String &expr, const vString &vars) :
         expression(expr), variables(vars), _values(new double[vars.size()]) {
         for (auto i = 0; i < vars.size(); i++)
@@ -181,5 +192,25 @@ namespace calculate {
 
     bool Calculate::operator==(const Calculate &other) const {
         return this->expression == other.expression;
+    }
+}
+
+extern "C" {
+    Calculate newExpression(const char *expr, const char *vars) {
+        Calculate cexpr = static_cast<Calculate>(
+            new calculate::Calculate(
+                expr,
+                calculate::Calculate::getVariables(vars)
+            )
+        );
+        return cexpr;
+    }
+
+    const char* getExpression(Calculate cexpr) {
+        return static_cast<calculate::Calculate*>(cexpr)->expression.c_str();
+    }
+
+    void freeExpression(Calculate obj) {
+        delete static_cast<calculate::Calculate*>(obj);
     }
 }

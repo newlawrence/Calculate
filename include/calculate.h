@@ -1,9 +1,12 @@
 #ifndef __CALCULATE_H__
 #define __CALCULATE_H__
 
+#ifdef __cplusplus
+
 #include <memory>
 #include <algorithm>
 #include <regex>
+#include <sstream>
 #include <vector>
 #include <queue>
 #include <stack>
@@ -32,6 +35,8 @@ namespace calculate {
         pSymbol buildTree(qSymbol &&postfix) const;
 
     public:
+        static vString getVariables(const String &expr);
+
         const String expression;
         const vString variables;
 
@@ -66,5 +71,21 @@ namespace calculate {
         };
     };
 }
+
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef void* Calculate;
+
+Calculate newExpression(const char *expr, const char *vars);
+const char* getExpression(Calculate cexpr);
+void freeExpression(Calculate cexpr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
