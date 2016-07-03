@@ -44,6 +44,12 @@ namespace calculate {
         }
     };
 
+    struct DuplicateNameException : public BaseSymbolException {
+        const char* what() const noexcept {
+            return "Duplicated names";
+        }
+    };
+
     struct ParenthesisMismatchException : public BaseSymbolException {
         const char* what() const noexcept {
             return "Parenthesis mismatch";

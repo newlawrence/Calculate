@@ -242,7 +242,15 @@ namespace calculate {
 
 
     vString Calculate::extract(const String &vars) {
-        auto stream = std::istringstream(vars);
+        auto nospaces = vars;
+        nospaces.erase(
+            std::remove_if(
+                nospaces.begin(), nospaces.end(), [](char c) {return c == ' ';}
+            ),
+            nospaces.end()
+        );
+
+        auto stream = std::istringstream(nospaces);
         vString variables;
 
         String item;
@@ -254,11 +262,22 @@ namespace calculate {
 
     vString Calculate::validate(const vString &vars) {
         static const auto regex = std::regex("[A-Za-z]+");
+        vString variables;
 
         if (!std::all_of(vars.begin(), vars.end(),
             [](std::string var) {return std::regex_match(var, regex);})
             )
             throw BadNameException();
+
+        auto noduplicates = vars;
+        std::sort(noduplicates.begin(), noduplicates.end());
+        noduplicates.erase(
+            std::unique(noduplicates.begin(), noduplicates.end()),
+            noduplicates.end()
+        );
+
+        if (noduplicates.size() != vars.size())
+            throw DuplicateNameException();
 
         return vars;
     }
