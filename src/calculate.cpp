@@ -38,50 +38,70 @@ namespace calculate {
             auto element = infix.front();
             infix.pop();
 
-            if (element->is(symbols::Type::CONSTANT)) {
-                postfix.push(element);
-            }
+            switch (element->type) {
+                case (symbols::Type::CONSTANT):
+                    postfix.push(element);
+                    break;
 
-            else if (element->is(symbols::Type::FUNCTION)) {
-                operations.push(element);
-            }
+                case (symbols::Type::FUNCTION):
+                    operations.push(element);
+                    break;
 
-            else if (element->is(symbols::Type::SEPARATOR)) {
-                while (!operations.empty()) {
-                    auto another = operations.top();
-                    if (!another->is(symbols::Type::LEFT)) {
-                        postfix.push(another);
-                        operations.pop();
+                case (symbols::Type::SEPARATOR):
+                    while (!operations.empty()) {
+                        auto another = operations.top();
+                        if (!another->is(symbols::Type::LEFT)) {
+                            postfix.push(another);
+                            operations.pop();
+                        }
+                        else {
+                            break;
+                        }
                     }
-                    else {
-                        break;
-                    }
-                }
-                if (operations.empty())
-                    throw ParenthesisMismatchException();
-            }
+                    if (operations.empty())
+                        throw ParenthesisMismatchException();
+                    break;
 
-            else if (element->is(symbols::Type::OPERATOR)) {
-                while (!operations.empty()) {
-                    auto another = operations.top();
-                    if (another->is(symbols::Type::LEFT)) {
-                        break;
+                case (symbols::Type::OPERATOR):
+                    while (!operations.empty()) {
+                        auto another = operations.top();
+                        if (another->is(symbols::Type::LEFT)) {
+                            break;
+                        }
+                        else if (another->is(symbols::Type::FUNCTION)) {
+                            postfix.push(another);
+                            operations.pop();
+                            break;
+                        }
+                        else {
+                            auto op1 =
+                                symbols::castChild<symbols::Operator>(element);
+                            auto op2 =
+                                symbols::castChild<symbols::Operator>(another);
+                            if ((op1->left_assoc &&
+                                 op1->precedence <= op2->precedence) ||
+                                (!op1->left_assoc &&
+                                 op1->precedence < op2->precedence)
+                                ) {
+                                operations.pop();
+                                postfix.push(another);
+                            }
+                            else {
+                                break;
+                            }
+                        }
                     }
-                    else if (another->is(symbols::Type::FUNCTION)) {
-                        postfix.push(another);
-                        operations.pop();
-                        break;
-                    }
-                    else {
-                        auto op1 =
-                            symbols::castChild<symbols::Operator>(element);
-                        auto op2 =
-                            symbols::castChild<symbols::Operator>(another);
-                        if ((op1->left_assoc &&
-                                op1->precedence <= op2->precedence) ||
-                            (!op1->left_assoc &&
-                                op1->precedence < op2->precedence)
-                            ) {
+                    operations.push(element);
+                    break;
+
+                case (symbols::Type::LEFT):
+                    operations.push(element);
+                    break;
+
+                case (symbols::Type::RIGHT):
+                    while (!operations.empty()) {
+                        auto another = operations.top();
+                        if (!another->is(symbols::Type::LEFT)) {
                             operations.pop();
                             postfix.push(another);
                         }
@@ -89,31 +109,16 @@ namespace calculate {
                             break;
                         }
                     }
-                }
-                operations.push(element);
-            }
-
-            else if (element->is(symbols::Type::LEFT)) {
-                operations.push(element);
-            }
-
-            else {
-                while (!operations.empty()) {
-                    auto another = operations.top();
-                    if (!another->is(symbols::Type::LEFT)) {
+                    if (!operations.empty() &&
+                        operations.top()->is(symbols::Type::LEFT)
+                        )
                         operations.pop();
-                        postfix.push(another);
-                    }
-                    else {
-                        break;
-                    }
-                }
-                if (!operations.empty() &&
-                    operations.top()->is(symbols::Type::LEFT)
-                    )
-                    operations.pop();
-                else
-                    throw ParenthesisMismatchException();
+                    else
+                        throw ParenthesisMismatchException();
+                    break;
+
+                default:
+                    throw symbols::UndefinedSymbolException();
             }
         }
 
@@ -153,7 +158,7 @@ namespace calculate {
                 operands.push(element);
             }
 
-            else {
+            else if (element->is(symbols::Type::OPERATOR)) {
                 auto binary = symbols::castChild<symbols::Operator>(element);
                 pSymbol a, b;
                 if (operands.size() < 2)
@@ -164,7 +169,10 @@ namespace calculate {
                 operands.pop();
                 binary->addBranches(a, b);
                 operands.push(element);
-            }        
+            }
+
+            else
+                throw symbols::UndefinedSymbolException();
         }
         if (operands.size() > 1)
             throw ConstantsExcessException();

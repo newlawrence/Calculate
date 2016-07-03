@@ -23,19 +23,21 @@ namespace symbols {
     using mSymbolGen = std::unordered_map<String, fSymbolGen>;
 
 
-    struct BadCastException : public std::exception {
+    struct BaseSymbolException : public std::exception {};
+
+    struct BadCastException : public BaseSymbolException {
         const char* what() const noexcept {
             return "Bad casting of Operator or Function";
         }
     };
 
-    struct NotEvaluableException : public std::exception {
+    struct NotEvaluableException : public BaseSymbolException {
         const char* what() const noexcept {
             return "Call to a non evaluable symbol";
         }
     };
 
-    struct UndefinedSymbolException : public std::exception {
+    struct UndefinedSymbolException : public BaseSymbolException {
         const char* what() const noexcept {
             return "Undefined symbol";
         }
