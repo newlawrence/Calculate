@@ -1,6 +1,8 @@
 #include "symbols.h"
 
+
 namespace symbols {
+
     mValue Constant::_symbols;
     mSymbolGen Operator::_symbols;
     String Operator::_regex_simple;
@@ -30,17 +32,19 @@ namespace symbols {
             return pSymbol(new Separator);
         else if (Operator::_symbols.find(t) != Operator::_symbols.end())
             return Operator::_symbols[t]();
-        else
+        else if (Function::_symbols.find(t) != Function::_symbols.end())
             return Function::_symbols[t]();
+        else
+            throw UndefinedSymbolException();
     }
 
 
-    Constant::Recorder::Recorder(const String &t, double v) {
+    Constant::Recorder::Recorder(const String &t, double v) noexcept {
         Constant::_symbols[t] = v;
     }
 
 
-    Operator::Recorder::Recorder(const String &t, fSymbolGen g) {
+    Operator::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
         Operator::_symbols[t] = g;
         if (std::all_of(
             t.begin(), t.end(), [&t](char ch) {return ch == t[0];})
@@ -50,21 +54,21 @@ namespace symbols {
             _regex_composite += "|" + t;
     }
 
-    void Operator::addBranches(pSymbol l, pSymbol r) {
+    void Operator::addBranches(pSymbol l, pSymbol r) noexcept {
         _left_operand = l;
         _right_operand = r;
     }
 
-    String Operator::symbolsRegex() {
+    String Operator::getSymbolsRegex() noexcept {
         return String("[") + _regex_simple + ",()]+" + _regex_composite;
     }
 
 
-    Function::Recorder::Recorder(const String &t, fSymbolGen g) {
+    Function::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
         Function::_symbols[t] = g;
     }
 
-    void Function::addBranches(vSymbol &&x) {
+    void Function::addBranches(vSymbol &&x) noexcept {
         _operands = std::move(x);
     }
 
@@ -134,4 +138,5 @@ namespace symbols {
     RECORD_FUNCTION(erfc,1,std::erfc(x[0]))
     RECORD_FUNCTION(tgamma,1,std::tgamma(x[0]))
     RECORD_FUNCTION(lgamma,1,std::lgamma(x[0]))
+
 }
