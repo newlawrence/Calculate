@@ -1,11 +1,14 @@
 #ifndef __CALCULATE_H__
 #define __CALCULATE_H__
 
-#include <iostream>
+#ifdef __cplusplus
+
 #include <memory>
 #include <algorithm>
 #include <exception>
+#include <limits>
 #include <regex>
+#include <sstream>
 #include <vector>
 #include <queue>
 #include <stack>
@@ -33,6 +36,18 @@ namespace calculate {
     struct EmptyExpressionException : public BaseSymbolException {
         const char* what() const noexcept {
             return "Empty expression";
+        }
+    };
+
+    struct BadNameException : public BaseSymbolException {
+        const char* what() const noexcept {
+            return "Unsuitable variable name";
+        }
+    };
+
+    struct DuplicateNameException : public BaseSymbolException {
+        const char* what() const noexcept {
+            return "Duplicated names";
         }
     };
 
@@ -77,37 +92,26 @@ namespace calculate {
         qSymbol shuntingYard(qSymbol &&infix) const;
         pSymbol buildTree(qSymbol &&postfix) const;
 
-    public:
-        const String expression;
-        const vString variables;
+        static vString extract(const String &vars);
+        static vString validate(const vString &vars);
 
         Calculate() = delete;
         Calculate& operator=(const Calculate &other) = delete;
         Calculate& operator=(Calculate &&other) = delete;
 
-        Calculate(const String &expr, const vString &vars={});
+    public:
+        const String expression;
+        const vString variables;
+
         Calculate(const Calculate &other);
         Calculate(Calculate &&other);
+        Calculate(const String &expr, const String &vars);
+        Calculate(const String &expr, const vString &vars={});
+
         bool operator==(const Calculate &other) const noexcept;
-
-        double operator() () const {
-            return _tree->evaluate();
-        };
-
-        double operator() (double value) const {
-            if (variables.size() < 1)
-                throw EvaluationException();
-            _values[variables.size() - 1] = value;
-            return _tree->evaluate();
-        }
-
-        double operator() (vValue values) const {
-            if (values.size() != variables.size())
-                throw EvaluationException();
-            for (auto i = 0; i < values.size(); i++)
-                _values[i] = values[i];
-            return _tree->evaluate();
-        }
+        double operator() () const;
+        double operator() (double value) const;
+        double operator() (vValue values) const;
 
         template <typename Head, typename... Tail>
         double operator() (Head head, Tail... tail) const {
@@ -119,5 +123,25 @@ namespace calculate {
     };
 
 }
+
+#endif
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef void* CALC_Expression;
+
+CALC_Expression CALC_newExpression(const char *expr, const char *vars);
+const char* CALC_getExpression(CALC_Expression cexpr);
+int CALC_getVariables(CALC_Expression cexpr);
+double CALC_evaluate(CALC_Expression cexpr, ...);
+double CALC_evalArray(CALC_Expression cexpr, double *v, unsigned s);
+void CALC_freeExpression(CALC_Expression cexpr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

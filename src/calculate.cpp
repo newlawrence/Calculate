@@ -240,8 +240,68 @@ namespace calculate {
         return operands.top();
     }
 
+
+    vString Calculate::extract(const String &vars) {
+        auto nospaces = vars;
+        nospaces.erase(
+            std::remove_if(
+                nospaces.begin(), nospaces.end(), [](char c) {return c == ' ';}
+            ),
+            nospaces.end()
+        );
+
+        auto stream = std::istringstream(nospaces);
+        vString variables;
+
+        String item;
+        while(std::getline(stream, item, ','))
+            variables.push_back(item);
+
+        return variables;
+    }
+
+    vString Calculate::validate(const vString &vars) {
+        static const auto regex = std::regex("[A-Za-z]+");
+        vString variables;
+
+        if (!std::all_of(vars.begin(), vars.end(),
+            [](String var) {return std::regex_match(var, regex);})
+            )
+            throw BadNameException();
+
+        auto noduplicates = vars;
+        std::sort(noduplicates.begin(), noduplicates.end());
+        noduplicates.erase(
+            std::unique(noduplicates.begin(), noduplicates.end()),
+            noduplicates.end()
+        );
+
+        if (noduplicates.size() != vars.size())
+            throw DuplicateNameException();
+
+        return vars;
+    }
+
+
+    Calculate::Calculate(const Calculate &other) :
+        Calculate(other.expression, other.variables) {
+    }
+
+    Calculate::Calculate(Calculate &&other) :
+        expression(other.expression), variables(other.variables),
+        _values(new double[other.variables.size()]) {
+        this->_regex = other._regex;
+        this->_tree = std::move(other._tree);
+    }
+
+    Calculate::Calculate(const String &expr, const String &vars) :
+        Calculate(expr, extract(vars)) {
+    }
+
     Calculate::Calculate(const String &expr, const vString &vars) :
-        expression(expr), variables(vars), _values(new double[vars.size()]) {
+        expression(expr), variables(validate(vars)),
+        _values(new double[vars.size()]) {
+
         if (expr.length() == 0)
             throw EmptyExpressionException();
 
@@ -260,19 +320,110 @@ namespace calculate {
         _tree = buildTree(std::move(postfix));
     }
 
-    Calculate::Calculate(const Calculate &other) :
-        Calculate(other.expression, other.variables) {
-    }
-
-    Calculate::Calculate(Calculate &&other) :
-        expression(other.expression), variables(other.variables),
-        _values(new double[other.variables.size()]) {
-        this->_regex = other._regex;
-        this->_tree = std::move(other._tree);
-    }
 
     bool Calculate::operator==(const Calculate &other) const noexcept {
         return this->expression == other.expression;
     }
 
+    double Calculate::operator() () const {
+        return _tree->evaluate();
+    };
+
+    double Calculate::operator() (double value) const {
+        if (variables.size() < 1)
+            throw EvaluationException();
+        _values[variables.size() - 1] = value;
+        return _tree->evaluate();
+    }
+
+    double Calculate::operator() (vValue values) const {
+        if (values.size() != variables.size())
+            throw EvaluationException();
+        for (auto i = 0; i < values.size(); i++)
+            _values[i] = values[i];
+        return _tree->evaluate();
+    }
+
+}
+
+
+extern "C" {
+
+    CALC_Expression CALC_newExpression(const char *expr, const char *vars) {
+        using namespace calculate;
+
+        try {
+            CALC_Expression cexpr = static_cast<CALC_Expression>(
+                new Calculate(expr, vars)
+            );
+            return cexpr;
+        }
+        catch (BaseSymbolException) {
+            return nullptr;
+        }
+    }
+
+    const char* CALC_getExpression(CALC_Expression cexpr) {
+        using namespace calculate;
+
+        if (!cexpr)
+            return "";
+
+        return static_cast<Calculate*>(cexpr)->expression.c_str();
+    }
+
+    int CALC_getVariables(CALC_Expression cexpr) {
+        using namespace calculate;
+
+        if (!cexpr)
+            return -1;
+
+        return static_cast<int>(
+            static_cast<Calculate*>(cexpr)->variables.size()
+        );
+    }
+
+    double CALC_evaluate(CALC_Expression cexpr, ...) {
+        using namespace calculate;
+
+        if (!cexpr)
+            return std::numeric_limits<double>::quiet_NaN();
+
+        vValue values;
+        va_list list;
+        va_start(list, cexpr);
+        for (auto i = 0; i < CALC_getVariables(cexpr); i++)
+            values.push_back(va_arg(list, double));
+        va_end(list);
+
+        try {
+            return static_cast<Calculate*>(cexpr)->operator()(values);
+        }
+        catch (BaseSymbolException) {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+    }
+
+    double CALC_evalArray(CALC_Expression cexpr, double *v, unsigned s) {
+        using namespace calculate;
+
+        if (!cexpr)
+            return std::numeric_limits<double>::quiet_NaN();
+
+        vValue values(v, v + s);
+        try {
+            return static_cast<Calculate*>(cexpr)->operator()(values);
+        }
+        catch (BaseSymbolException) {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+    }
+
+    void CALC_freeExpression(CALC_Expression cexpr) {
+        using namespace calculate;
+
+        if (cexpr)
+            delete static_cast<Calculate*>(cexpr);
+    }
+    
 }
