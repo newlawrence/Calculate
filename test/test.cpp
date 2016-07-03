@@ -14,22 +14,7 @@ int main(int argc, char *argv[]) {
             auto expression = Calculate(argv[1]);
             cout << expression() << endl;
         }
-
-        else if (argc == 4) {
-            auto expression = Calculate(
-                argv[1], vector<string>({argv[2]})
-            );
-            cout << expression(stod(argv[3])) << endl;
-        }
-
-        else if (argc == 6) {
-            auto expression = Calculate(
-                argv[1], vector<string>({argv[2], argv[4]})
-            );
-            cout << expression(stod(argv[3]), stod(argv[5])) << endl;
-        }
-
-        else if (argc > 6 && argc % 2 == 0) {
+        else if (argc > 2 && argc % 2 == 0) {
             auto variables = vector<string>();
             auto values = vector<double>();
             for (auto i = 2; i < argc; i += 2) {

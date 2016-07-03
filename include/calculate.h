@@ -6,6 +6,7 @@
 #include <memory>
 #include <algorithm>
 #include <exception>
+#include <limits>
 #include <regex>
 #include <sstream>
 #include <vector>
@@ -94,13 +95,13 @@ namespace calculate {
         static vString extract(const String &vars);
         static vString validate(const vString &vars);
 
-    public:
-        const String expression;
-        const vString variables;
-
         Calculate() = delete;
         Calculate& operator=(const Calculate &other) = delete;
         Calculate& operator=(Calculate &&other) = delete;
+
+    public:
+        const String expression;
+        const vString variables;
 
         Calculate(const Calculate &other);
         Calculate(Calculate &&other);
@@ -136,6 +137,7 @@ CALC_Expression CALC_newExpression(const char *expr, const char *vars);
 const char* CALC_getExpression(CALC_Expression cexpr);
 int CALC_getVariables(CALC_Expression cexpr);
 double CALC_evaluate(CALC_Expression cexpr, ...);
+double CALC_evalArray(CALC_Expression cexpr, double *v, unsigned s);
 void CALC_freeExpression(CALC_Expression cexpr);
 
 #ifdef __cplusplus

@@ -265,7 +265,7 @@ namespace calculate {
         vString variables;
 
         if (!std::all_of(vars.begin(), vars.end(),
-            [](std::string var) {return std::regex_match(var, regex);})
+            [](String var) {return std::regex_match(var, regex);})
             )
             throw BadNameException();
 
@@ -350,46 +350,80 @@ namespace calculate {
 extern "C" {
 
     CALC_Expression CALC_newExpression(const char *expr, const char *vars) {
+        using namespace calculate;
+
         try {
             CALC_Expression cexpr = static_cast<CALC_Expression>(
-                new calculate::Calculate(expr, vars)
+                new Calculate(expr, vars)
             );
             return cexpr;
         }
-        catch (symbols::BaseSymbolException) {
+        catch (BaseSymbolException) {
             return nullptr;
         }
     }
 
     const char* CALC_getExpression(CALC_Expression cexpr) {
+        using namespace calculate;
+
         if (!cexpr)
             return "";
-        return static_cast<calculate::Calculate*>(cexpr)->expression.c_str();
+
+        return static_cast<Calculate*>(cexpr)->expression.c_str();
     }
 
     int CALC_getVariables(CALC_Expression cexpr) {
+        using namespace calculate;
+
         if (!cexpr)
             return -1;
+
         return static_cast<int>(
-            static_cast<calculate::Calculate*>(cexpr)->variables.size()
+            static_cast<Calculate*>(cexpr)->variables.size()
         );
     }
 
     double CALC_evaluate(CALC_Expression cexpr, ...) {
-        calculate::vValue values;
-        va_list list;
+        using namespace calculate;
 
+        if (!cexpr)
+            return std::numeric_limits<double>::quiet_NaN();
+
+        vValue values;
+        va_list list;
         va_start(list, cexpr);
         for (auto i = 0; i < CALC_getVariables(cexpr); i++)
             values.push_back(va_arg(list, double));
         va_end(list);
 
-        return static_cast<calculate::Calculate*>(cexpr)->operator()(values);
+        try {
+            return static_cast<Calculate*>(cexpr)->operator()(values);
+        }
+        catch (BaseSymbolException) {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+    }
+
+    double CALC_evalArray(CALC_Expression cexpr, double *v, unsigned s) {
+        using namespace calculate;
+
+        if (!cexpr)
+            return std::numeric_limits<double>::quiet_NaN();
+
+        vValue values(v, v + s);
+        try {
+            return static_cast<Calculate*>(cexpr)->operator()(values);
+        }
+        catch (BaseSymbolException) {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
     }
 
     void CALC_freeExpression(CALC_Expression cexpr) {
+        using namespace calculate;
+
         if (cexpr)
-            delete static_cast<calculate::Calculate*>(cexpr);
+            delete static_cast<Calculate*>(cexpr);
     }
     
 }

@@ -12,8 +12,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 file(GLOB sources src/*.cpp)
 add_library(calculate ${sources})
 
-add_executable(test0 test/test0.c)
-target_link_libraries(test0 LINK_PUBLIC calculate)
+add_executable(test_c test/test.c)
+target_link_libraries(test_c LINK_PUBLIC calculate)
 
-add_executable(test1 test/test1.cpp)
-target_link_libraries(test1 LINK_PUBLIC calculate)
+add_executable(test_cpp test/test.cpp)
+target_link_libraries(test_cpp LINK_PUBLIC calculate)
