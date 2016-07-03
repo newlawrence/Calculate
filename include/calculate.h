@@ -16,6 +16,7 @@
 namespace calculate {
 
     using symbols::BaseSymbolException;
+    using symbols::Type;
 
     using pValue = std::unique_ptr<double[]>;
     using vValue = std::vector<double>;
@@ -23,8 +24,8 @@ namespace calculate {
     using vString = std::vector<String>;
     using Regex = std::regex;
 
-    using pSymbol = symbols::pSymbol;
-    using vSymbol = symbols::vSymbol;
+    using symbols::pSymbol;
+    using symbols::vSymbol;
     using qSymbol = std::queue<pSymbol>;
     using sSymbol = std::stack<pSymbol>;
 
@@ -53,6 +54,12 @@ namespace calculate {
         }
     };
 
+    struct SyntaxErrorException : public BaseSymbolException {
+        const char* what() const noexcept {
+            return "Syntax error";
+        }
+    };
+
     struct EvaluationException : public BaseSymbolException {
         const char* what() const noexcept {
             return "Arguments mismatch";
@@ -66,6 +73,7 @@ namespace calculate {
         pSymbol _tree;
 
         qSymbol tokenize(const String &expression) const;
+        qSymbol check(qSymbol &&input) const;
         qSymbol shuntingYard(qSymbol &&infix) const;
         pSymbol buildTree(qSymbol &&postfix) const;
 

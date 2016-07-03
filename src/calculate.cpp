@@ -24,10 +24,70 @@ namespace calculate {
             }
             next++;
         }
-        if (infix.size() == 0)
-            throw symbols::UndefinedSymbolException();
 
         return infix;
+    }
+
+    qSymbol Calculate::check(qSymbol &&input) const {
+        qSymbol output;
+        pSymbol current, next;
+
+        if (input.size() == 0)
+            throw symbols::UndefinedSymbolException();
+
+        current = input.front();
+        input.pop();
+        output.push(current);
+        if (input.size() == 1 && !current->is(Type::CONSTANT))
+            throw SyntaxErrorException();
+
+        switch (current->type) {
+            case (Type::RIGHT):
+            case (Type::SEPARATOR):
+            case (Type::OPERATOR):
+                throw SyntaxErrorException();
+            default:
+                break;
+        }
+
+        while (!input.empty()) {
+            next = input.front();
+            input.pop();
+            output.push(next);
+
+            switch (current->type) {
+                case (Type::CONSTANT):
+                case (Type::RIGHT):
+                    if (next->is(Type::RIGHT) ||
+                        next->is(Type::SEPARATOR) ||
+                        next->is(Type::OPERATOR))
+                        break;
+                case (Type::LEFT):
+                case (Type::SEPARATOR):
+                case (Type::OPERATOR):
+                    if (next->is(Type::CONSTANT) ||
+                        next->is(Type::LEFT) ||
+                        next->is(Type::FUNCTION))
+                        break;
+                case (Type::FUNCTION):
+                    if (next->is(Type::LEFT))
+                        break;
+                    throw SyntaxErrorException();
+            }
+            current = next;
+        }
+
+        switch (current->type) {
+            case (Type::LEFT):
+            case (Type::SEPARATOR):
+            case (Type::OPERATOR):
+            case (Type::FUNCTION):
+                throw SyntaxErrorException();
+            default:
+                break;
+        }
+
+        return output;
     }
 
     qSymbol Calculate::shuntingYard(qSymbol &&infix) const {
@@ -39,18 +99,18 @@ namespace calculate {
             infix.pop();
 
             switch (element->type) {
-                case (symbols::Type::CONSTANT):
+                case (Type::CONSTANT):
                     postfix.push(element);
                     break;
 
-                case (symbols::Type::FUNCTION):
+                case (Type::FUNCTION):
                     operations.push(element);
                     break;
 
-                case (symbols::Type::SEPARATOR):
+                case (Type::SEPARATOR):
                     while (!operations.empty()) {
                         auto another = operations.top();
-                        if (!another->is(symbols::Type::LEFT)) {
+                        if (!another->is(Type::LEFT)) {
                             postfix.push(another);
                             operations.pop();
                         }
@@ -62,13 +122,13 @@ namespace calculate {
                         throw ParenthesisMismatchException();
                     break;
 
-                case (symbols::Type::OPERATOR):
+                case (Type::OPERATOR):
                     while (!operations.empty()) {
                         auto another = operations.top();
-                        if (another->is(symbols::Type::LEFT)) {
+                        if (another->is(Type::LEFT)) {
                             break;
                         }
-                        else if (another->is(symbols::Type::FUNCTION)) {
+                        else if (another->is(Type::FUNCTION)) {
                             postfix.push(another);
                             operations.pop();
                             break;
@@ -94,14 +154,14 @@ namespace calculate {
                     operations.push(element);
                     break;
 
-                case (symbols::Type::LEFT):
+                case (Type::LEFT):
                     operations.push(element);
                     break;
 
-                case (symbols::Type::RIGHT):
+                case (Type::RIGHT):
                     while (!operations.empty()) {
                         auto another = operations.top();
-                        if (!another->is(symbols::Type::LEFT)) {
+                        if (!another->is(Type::LEFT)) {
                             operations.pop();
                             postfix.push(another);
                         }
@@ -110,7 +170,7 @@ namespace calculate {
                         }
                     }
                     if (!operations.empty() &&
-                        operations.top()->is(symbols::Type::LEFT)
+                        operations.top()->is(Type::LEFT)
                         )
                         operations.pop();
                     else
@@ -124,7 +184,7 @@ namespace calculate {
 
         while(!operations.empty()) {
             auto element = operations.top();
-            if (element->is(symbols::Type::LEFT))
+            if (element->is(Type::LEFT))
                 throw ParenthesisMismatchException();
             operations.pop();
             postfix.push(element);
@@ -140,11 +200,11 @@ namespace calculate {
             element = postfix.front();
             postfix.pop();
 
-            if (element->is(symbols::Type::CONSTANT)) {
+            if (element->is(Type::CONSTANT)) {
                 operands.push(element);
             }
 
-            else if (element->is(symbols::Type::FUNCTION)) {
+            else if (element->is(Type::FUNCTION)) {
                 auto function = symbols::castChild<symbols::Function>(element);
                 auto args = function->args;
                 vSymbol ops(args);
@@ -158,7 +218,7 @@ namespace calculate {
                 operands.push(element);
             }
 
-            else if (element->is(symbols::Type::OPERATOR)) {
+            else if (element->is(Type::OPERATOR)) {
                 auto binary = symbols::castChild<symbols::Operator>(element);
                 pSymbol a, b;
                 if (operands.size() < 2)
@@ -195,7 +255,7 @@ namespace calculate {
             regex_string += "|" + var;
         _regex = std::regex(regex_string);
 
-        auto infix = tokenize(expr);
+        auto infix = check(tokenize(expr));
         auto postfix = shuntingYard(std::move(infix));
         _tree = buildTree(std::move(postfix));
     }

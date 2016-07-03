@@ -44,9 +44,7 @@ namespace symbols {
     };
 
 
-    enum Type {
-        VARIABLE, CONSTANT, LEFT, RIGHT, SEPARATOR, OPERATOR, FUNCTION
-    };
+    enum Type {CONSTANT, LEFT, RIGHT, SEPARATOR, OPERATOR, FUNCTION};
 
 
     template<typename T>
