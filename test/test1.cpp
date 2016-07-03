@@ -1,5 +1,4 @@
 #include <iostream>
-#include <exception>
 #include <string>
 #include <vector>
 
@@ -42,7 +41,7 @@ int main(int argc, char *argv[]) {
             cout << expression(values) << endl;
         }
     }
-    catch (std::exception &e) {
+    catch (symbols::BaseSymbolException &e) {
         cout << e.what() << endl;
     }
 

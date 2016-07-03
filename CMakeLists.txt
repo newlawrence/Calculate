@@ -18,5 +18,8 @@ target_link_libraries(test0 LINK_PUBLIC calculate)
 add_executable(test1 test/test1.cpp)
 target_link_libraries(test1 LINK_PUBLIC calculate)
 
-add_executable(test2 test/test2.cpp)
+add_executable(test2 test/test2.c)
 target_link_libraries(test2 LINK_PUBLIC calculate)
+
+add_executable(test3 test/test3.cpp)
+target_link_libraries(test3 LINK_PUBLIC calculate)

@@ -301,8 +301,28 @@ namespace calculate {
         _tree = buildTree(std::move(postfix));
     }
 
+
     bool Calculate::operator==(const Calculate &other) const noexcept {
         return this->expression == other.expression;
+    }
+
+    double Calculate::operator() () const {
+        return _tree->evaluate();
+    };
+
+    double Calculate::operator() (double value) const {
+        if (variables.size() < 1)
+            throw EvaluationException();
+        _values[variables.size() - 1] = value;
+        return _tree->evaluate();
+    }
+
+    double Calculate::operator() (vValue values) const {
+        if (values.size() != variables.size())
+            throw EvaluationException();
+        for (auto i = 0; i < values.size(); i++)
+            _values[i] = values[i];
+        return _tree->evaluate();
     }
 
 }
@@ -323,11 +343,29 @@ extern "C" {
     }
 
     const char* CALC_getExpression(CALC_Expression cexpr) {
-        if (cexpr)
-            return static_cast<calculate::Calculate*>(cexpr)
-                ->expression.c_str();
-        else
+        if (!cexpr)
             return "";
+        return static_cast<calculate::Calculate*>(cexpr)->expression.c_str();
+    }
+
+    int CALC_getVariables(CALC_Expression cexpr) {
+        if (!cexpr)
+            return -1;
+        return static_cast<int>(
+            static_cast<calculate::Calculate*>(cexpr)->variables.size()
+        );
+    }
+
+    double CALC_evaluate(CALC_Expression cexpr, ...) {
+        calculate::vValue values;
+        va_list list;
+
+        va_start(list, cexpr);
+        for (auto i = 0; i < CALC_getVariables(cexpr); i++)
+            values.push_back(va_arg(list, double));
+        va_end(list);
+
+        return static_cast<calculate::Calculate*>(cexpr)->operator()(values);
     }
 
     void CALC_freeExpression(CALC_Expression cexpr) {

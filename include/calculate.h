@@ -3,7 +3,6 @@
 
 #ifdef __cplusplus
 
-
 #include <memory>
 #include <algorithm>
 #include <exception>
@@ -103,25 +102,9 @@ namespace calculate {
         Calculate(const String &expr, const vString &vars={});
 
         bool operator==(const Calculate &other) const noexcept;
-
-        double operator() () const {
-            return _tree->evaluate();
-        };
-
-        double operator() (double value) const {
-            if (variables.size() < 1)
-                throw EvaluationException();
-            _values[variables.size() - 1] = value;
-            return _tree->evaluate();
-        }
-
-        double operator() (vValue values) const {
-            if (values.size() != variables.size())
-                throw EvaluationException();
-            for (auto i = 0; i < values.size(); i++)
-                _values[i] = values[i];
-            return _tree->evaluate();
-        }
+        double operator() () const;
+        double operator() (double value) const;
+        double operator() (vValue values) const;
 
         template <typename Head, typename... Tail>
         double operator() (Head head, Tail... tail) const {
@@ -145,6 +128,8 @@ typedef void* CALC_Expression;
 
 CALC_Expression CALC_newExpression(const char *expr, const char *vars);
 const char* CALC_getExpression(CALC_Expression cexpr);
+int CALC_getVariables(CALC_Expression cexpr);
+double CALC_evaluate(CALC_Expression cexpr, ...);
 void CALC_freeExpression(CALC_Expression cexpr);
 
 #ifdef __cplusplus

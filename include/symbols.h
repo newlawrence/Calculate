@@ -1,6 +1,8 @@
 #ifndef __SYMBOLS_H__
 #define __SYMBOLS_H__
 
+#ifdef __cplusplus
+
 #include <memory>
 #include <algorithm>
 #include <exception>
@@ -238,5 +240,7 @@ public:                                                                       \
 };                                                                            \
 const Function::Recorder Function_##TOKEN::_recorder =                        \
     Function::Recorder(#TOKEN, &Function_##TOKEN::newFunction);
+
+#endif
 
 #endif
