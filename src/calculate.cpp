@@ -288,8 +288,8 @@ namespace calculate {
     }
 
     Calculate::Calculate(Calculate &&other) :
-        expression(other.expression), variables(other.variables),
-        _values(new double[other.variables.size()]) {
+        _values(new double[other.variables.size()]),
+        expression(other.expression), variables(other.variables) {
         this->_regex = other._regex;
         this->_tree = std::move(other._tree);
     }
@@ -299,13 +299,13 @@ namespace calculate {
     }
 
     Calculate::Calculate(const String &expr, const vString &vars) :
-        expression(expr), variables(validate(vars)),
-        _values(new double[vars.size()]) {
+        _values(new double[vars.size()]),
+        expression(expr), variables(validate(vars)) {
 
         if (expr.length() == 0)
             throw EmptyExpressionException();
 
-        for (auto i = 0; i < vars.size(); i++)
+        for (auto i = 0u; i < vars.size(); i++)
             _values[i] = 0.;
 
         auto regex_string = "-?[0-9.]+|[A-Za-z]+|" +
@@ -339,7 +339,7 @@ namespace calculate {
     double Calculate::operator() (vValue values) const {
         if (values.size() != variables.size())
             throw EvaluationException();
-        for (auto i = 0; i < values.size(); i++)
+        for (auto i = 0u; i < values.size(); i++)
             _values[i] = values[i];
         return _tree->evaluate();
     }
@@ -389,10 +389,11 @@ extern "C" {
         if (!cexpr)
             return std::numeric_limits<double>::quiet_NaN();
 
+        auto vars = static_cast<Calculate*>(cexpr)->variables.size();
         vValue values;
         va_list list;
         va_start(list, cexpr);
-        for (auto i = 0; i < CALC_getVariables(cexpr); i++)
+        for (auto i = 0u; i < vars; i++)
             values.push_back(va_arg(list, double));
         va_end(list);
 
