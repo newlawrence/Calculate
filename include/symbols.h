@@ -4,9 +4,7 @@
 #ifdef __cplusplus
 
 #include <memory>
-#include <algorithm>
 #include <exception>
-#include <cmath>
 #include <string>
 #include <vector>
 #include <unordered_map>

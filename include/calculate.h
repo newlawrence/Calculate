@@ -4,14 +4,11 @@
 #ifdef __cplusplus
 
 #include <memory>
-#include <algorithm>
-#include <exception>
-#include <limits>
-#include <regex>
-#include <sstream>
+#include <string>
 #include <vector>
 #include <queue>
 #include <stack>
+#include <regex>
 
 #include "symbols.h"
 

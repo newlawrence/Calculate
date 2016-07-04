@@ -1,3 +1,6 @@
+#include <cmath>
+#include <algorithm>
+
 #include "symbols.h"
 
 

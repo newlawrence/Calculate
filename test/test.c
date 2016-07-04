@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +17,7 @@ int main(int argc, char *argv[]) {
             strcpy(variables, "");
         else
             strcpy(variables, argv[2]);
-        for (unsigned i = 4; i < argc; i += 2) {
+        for (int i = 4; i < argc; i += 2) {
             strcat(variables, ",");
             strcat(variables, argv[i]);
         }
@@ -27,7 +29,7 @@ int main(int argc, char *argv[]) {
             }
             else {
                 values = (double *) malloc((argc - 2) / 2 * sizeof(double));
-                for (unsigned i = 3; i < argc; i += 2)
+                for (int i = 3; i < argc; i += 2)
                     values[(i + 1) / 2 - 2] = strtod(argv[i], NULL);
                 printf(
                     "%f\n",
