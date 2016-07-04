@@ -127,9 +127,6 @@ namespace symbols {
     };
     template<char s> constexpr const char Parenthesis<s>::_symbol[2];
 
-    template class Parenthesis<'('>;
-    template class Parenthesis<')'>;
-
 
     class Separator final : public Symbol {
         Separator() noexcept
@@ -180,7 +177,7 @@ namespace symbols {
         vSymbol _operands;
 
         Function(const String &t, unsigned s) noexcept :
-            Symbol(t, Type::FUNCTION), args(s), _operands(s) {}
+            Symbol(t, Type::FUNCTION), _operands(s), args(s) {}
 
     public:
         const unsigned args;
@@ -233,7 +230,7 @@ class Function_##TOKEN final : public Function {                              \
 public:                                                                       \
     virtual double evaluate() const {                                         \
         vName x(args);                                                        \
-        for (auto i = 0; i < args; i++)                                       \
+        for (auto i = 0u; i < args; i++)                                       \
             x[i] = _operands[i]->evaluate();                                  \
         return FUNC;                                                          \
     }                                                                         \

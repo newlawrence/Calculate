@@ -1,2 +1,4 @@
+copying linguist-vendored
 *.txt linguist-vendored
+*.md linguist-vendored
 
