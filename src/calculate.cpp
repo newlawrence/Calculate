@@ -1,3 +1,8 @@
+#include <cstdarg>
+#include <algorithm>
+#include <limits>
+#include <sstream>
+
 #include "calculate.h"
 
 

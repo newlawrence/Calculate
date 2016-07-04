@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
             }
             else {
                 values = (double *) malloc((argc - 2) / 2 * sizeof(double));
-                for (unsigned i = 3; i < argc; i += 2)
+                for (int i = 3; i < argc; i += 2)
                     values[(i + 1) / 2 - 2] = strtod(argv[i], NULL);
                 printf(
                     "%f\n",
