@@ -127,9 +127,6 @@ namespace symbols {
     };
     template<char s> constexpr const char Parenthesis<s>::_symbol[2];
 
-    template class Parenthesis<'('>;
-    template class Parenthesis<')'>;
-
 
     class Separator final : public Symbol {
         Separator() noexcept
