@@ -10,7 +10,7 @@
 #include <stack>
 #include <regex>
 
-#include "symbols.h"
+#include "symbols.hpp"
 
 
 #define CAST(expression) static_cast<calculate::Calculate*>(expression)

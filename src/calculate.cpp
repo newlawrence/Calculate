@@ -12,10 +12,7 @@ namespace calculate {
     qSymbol Calculate::tokenize(const String &expr) const {
         qSymbol infix;
 
-        auto next =
-            std::sregex_iterator(
-                expr.begin(), expr.end(), _regex
-            ),
+        auto next = std::sregex_iterator(expr.begin(), expr.end(), _regex),
             end = std::sregex_iterator();
 
         while (next != end) {

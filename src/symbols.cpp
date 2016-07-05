@@ -1,7 +1,7 @@
 #include <cmath>
 #include <algorithm>
 
-#include "symbols.h"
+#include "symbols.hpp"
 
 
 namespace symbols {
