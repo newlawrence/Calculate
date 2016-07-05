@@ -1,6 +1,6 @@
-#include <iostream>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "calculate.h"
 
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
             cout << expression(values) << endl;
         }
     }
-    catch (symbols::BaseSymbolException &e) {
+    catch (const symbols::BaseSymbolException &e) {
         cout << e.what() << endl;
     }
 

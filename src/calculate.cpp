@@ -1,4 +1,5 @@
 #include <cstdarg>
+#include <cstring>
 #include <limits>
 #include <algorithm>
 #include <sstream>
@@ -355,68 +356,82 @@ namespace calculate {
 
 extern "C" {
 
-    CALC_Expression CALC_newExpression(const char *expr, const char *vars) {
-        using namespace calculate;
+CALC_Expression CALC_createExpression(c_str expr, c_str vars, char *errors) {
+    using namespace calculate;
 
-        try {
-            CALC_Expression c = REV_CAST(new Calculate(expr, vars));
-            return c;
-        }
-        catch (BaseSymbolException) {
-            return nullptr;
-        }
+    try {
+        CALC_Expression c = REV_CAST(new Calculate(expr, vars));
+        strcpy(errors, "");
+        return c;
     }
-
-    const char* CALC_getExpression(CALC_Expression c) {
-        return c ? CAST(c)->expression.c_str() : "";
+    catch (const BaseSymbolException &e) {
+        strcpy(errors, e.what());
+        return nullptr;
     }
+}
 
-    int CALC_getVariables(CALC_Expression c) {
-        return c ? static_cast<int>(CAST(c)->variables.size()) : -1;
+CALC_Expression CALC_newExpression(const char *expr, const char *vars) {
+    char errors[64];
+    return CALC_createExpression(expr, vars, errors);
+}
+
+const char* CALC_getExpression(CALC_Expression c) {
+    return c ? CAST(c)->expression.c_str() : "";
+}
+
+int CALC_getVariables(CALC_Expression c) {
+    return c ? static_cast<int>(CAST(c)->variables.size()) : -1;
+}
+
+double CALC_evaluateArray(CALC_Expression c, double *v, int s, char *errors) {
+    using namespace calculate;
+    using limits = std::numeric_limits<double>;
+
+    if (!c)
+        return limits::quiet_NaN();
+
+    vValue values(v, v + s);
+    try {
+        strcpy(errors, "");
+        return CAST(c)->operator()(values);
     }
-
-    double CALC_evaluate(CALC_Expression c, ...) {
-        using namespace calculate;
-        using limits = std::numeric_limits<double>;
-
-        if (!c)
-            return limits::quiet_NaN();
-
-        auto vars = CAST(c)->variables.size();
-        vValue values;
-        va_list list;
-        va_start(list, c);
-        for (auto i = 0u; i < vars; i++)
-            values.push_back(va_arg(list, double));
-        va_end(list);
-
-        try {
-            return CAST(c)->operator()(values);
-        }
-        catch (BaseSymbolException) {
-            return limits::quiet_NaN();
-        }
+    catch (const BaseSymbolException &e) {
+        strcpy(errors, e.what());
+        return limits::quiet_NaN();
     }
+}
 
-    double CALC_evalArray(CALC_Expression c, double *v, int s) {
-        using namespace calculate;
-        using limits = std::numeric_limits<double>;
+double CALC_evalArray(CALC_Expression c, double *v, int s) {
+    char errors[64];
+    return CALC_evaluateArray(c, v, s, errors);
+}
 
-        if (!c)
-            return limits::quiet_NaN();
+double CALC_eval(CALC_Expression c, ...) {
+    using namespace calculate;
+    using limits = std::numeric_limits<double>;
 
-        vValue values(v, v + s);
-        try {
-            return CAST(c)->operator()(values);
-        }
-        catch (BaseSymbolException) {
-            return limits::quiet_NaN();
-        }
+    if (!c)
+        return limits::quiet_NaN();
+
+    auto vars = CAST(c)->variables.size();
+    vValue values;
+    va_list list;
+    va_start(list, c);
+    for (auto i = 0u; i < vars; i++)
+        values.push_back(va_arg(list, double));
+    va_end(list);
+
+    try {
+        return CAST(c)->operator()(values);
     }
-
-    void CALC_freeExpression(CALC_Expression c) {
-        if (c)
-            delete CAST(c);
+    catch (BaseSymbolException) {
+        return limits::quiet_NaN();
     }
+}
+
+void CALC_freeExpression(CALC_Expression c) {
+    if (c)
+        delete CAST(c);
+}
     
 }

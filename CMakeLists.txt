@@ -10,7 +10,7 @@ if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
 elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3 -std=c++11")
 elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox /sdl")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
