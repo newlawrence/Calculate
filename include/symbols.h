@@ -10,6 +10,58 @@
 #include <unordered_map>
 
 
+#define RECORD_EXCEPTION(NAME, MESSAGE)                                       \
+struct NAME : public BaseSymbolException {                                    \
+    const char* what() const noexcept {                                       \
+        return MESSAGE;                                                       \
+    }                                                                         \
+};
+
+#define RECORD_CONSTANT(TOKEN, VALUE)                                         \
+class Constant_##TOKEN final : public Constant {                              \
+    static const Constant::Recorder _recorder;                                \
+};                                                                            \
+const Constant::Recorder Constant_##TOKEN::_recorder =                        \
+    Constant::Recorder(#TOKEN, VALUE);
+
+#define RECORD_OPERATOR(NAME, TOKEN, PRECEDENCE, L_ASSOCIATION, FUNCTION)     \
+class Operator_##NAME final : public Operator {                               \
+    static const Operator::Recorder _recorder;                                \
+    static pSymbol newOperator() noexcept {                                   \
+        return pSymbol(new Operator_##NAME);                                  \
+    }                                                                         \
+    Operator_##NAME() noexcept :                                              \
+        Operator(TOKEN, PRECEDENCE, L_ASSOCIATION) {}                         \
+public:                                                                       \
+    virtual double evaluate() const {                                         \
+        double a = _left_operand->evaluate();                                 \
+        double b = _right_operand->evaluate();                                \
+        return FUNCTION;                                                      \
+    }                                                                         \
+};                                                                            \
+const Operator::Recorder Operator_##NAME::_recorder =                         \
+    Operator::Recorder(TOKEN, &Operator_##NAME::newOperator);
+
+#define RECORD_FUNCTION(TOKEN, ARGS, FUNCTION)                                \
+class Function_##TOKEN final : public Function {                              \
+    static const Function::Recorder _recorder;                                \
+    static pSymbol newFunction() noexcept {                                   \
+        return pSymbol(new Function_##TOKEN);                                 \
+    }                                                                         \
+    Function_##TOKEN() noexcept :                                             \
+        Function(#TOKEN, ARGS) {}                                             \
+public:                                                                       \
+    virtual double evaluate() const {                                         \
+        vName x(args);                                                        \
+        for (auto i = 0u; i < args; i++)                                      \
+            x[i] = _operands[i]->evaluate();                                  \
+        return FUNCTION;                                                      \
+    }                                                                         \
+};                                                                            \
+const Function::Recorder Function_##TOKEN::_recorder =                        \
+    Function::Recorder(#TOKEN, &Function_##TOKEN::newFunction);
+
+
 namespace symbols {
 
     using String = std::string;
@@ -24,24 +76,9 @@ namespace symbols {
 
 
     struct BaseSymbolException : public std::exception {};
-
-    struct BadCastException : public BaseSymbolException {
-        const char* what() const noexcept {
-            return "Bad casting of Operator or Function";
-        }
-    };
-
-    struct NotEvaluableException : public BaseSymbolException {
-        const char* what() const noexcept {
-            return "Call to a non evaluable symbol";
-        }
-    };
-
-    struct UndefinedSymbolException : public BaseSymbolException {
-        const char* what() const noexcept {
-            return "Undefined symbol";
-        }
-    };
+    RECORD_EXCEPTION(BadCastException, "Bad casting of symbol")
+    RECORD_EXCEPTION(NotEvaluableException, "Non evaluable symbol called")
+    RECORD_EXCEPTION(UndefinedSymbolException, "Undefined symbol")
 
 
     enum Type {CONSTANT, LEFT, RIGHT, SEPARATOR, OPERATOR, FUNCTION};
@@ -186,55 +223,6 @@ namespace symbols {
     };
 
 }
-
-
-#define RECORD_CONSTANT(TOKEN,VALUE)                                          \
-class Constant_##TOKEN final : public Constant {                              \
-    static const Constant::Recorder _recorder;                                \
-};                                                                            \
-const Constant::Recorder Constant_##TOKEN::_recorder =                        \
-    Constant::Recorder(#TOKEN, VALUE);
-
-#define RECORD_OPERATOR(NAME,TOKEN,PREC,LASSOC,FUNC)                          \
-class Operator_##NAME final : public Operator {                               \
-    static const Operator::Recorder _recorder;                                \
-    static pSymbol newOperator() noexcept {                                   \
-        return pSymbol(new Operator_##NAME);                                  \
-    }                                                                         \
-                                                                              \
-    Operator_##NAME() noexcept :                                              \
-        Operator(#TOKEN, PREC, LASSOC) {}                                     \
-                                                                              \
-public:                                                                       \
-    virtual double evaluate() const {                                         \
-        double a = _left_operand->evaluate();                                 \
-        double b = _right_operand->evaluate();                                \
-        return FUNC;                                                          \
-    }                                                                         \
-};                                                                            \
-const Operator::Recorder Operator_##NAME::_recorder =                         \
-    Operator::Recorder(#TOKEN, &Operator_##NAME::newOperator);
-
-#define RECORD_FUNCTION(TOKEN,ARGS,FUNC)                                      \
-class Function_##TOKEN final : public Function {                              \
-    static const Function::Recorder _recorder;                                \
-    static pSymbol newFunction() noexcept {                                   \
-        return pSymbol(new Function_##TOKEN);                                 \
-    }                                                                         \
-                                                                              \
-    Function_##TOKEN() noexcept :                                             \
-        Function(#TOKEN, ARGS) {}                                             \
-                                                                              \
-public:                                                                       \
-    virtual double evaluate() const {                                         \
-        vName x(args);                                                        \
-        for (auto i = 0u; i < args; i++)                                       \
-            x[i] = _operands[i]->evaluate();                                  \
-        return FUNC;                                                          \
-    }                                                                         \
-};                                                                            \
-const Function::Recorder Function_##TOKEN::_recorder =                        \
-    Function::Recorder(#TOKEN, &Function_##TOKEN::newFunction);
 
 #endif
 

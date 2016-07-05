@@ -1,6 +1,6 @@
 #include <cstdarg>
-#include <algorithm>
 #include <limits>
+#include <algorithm>
 #include <sstream>
 
 #include "calculate.h"
@@ -247,15 +247,17 @@ namespace calculate {
 
 
     vString Calculate::extract(const String &vars) {
-        auto nospaces = vars;
-        nospaces.erase(
+        auto no_spaces = vars;
+        no_spaces.erase(
             std::remove_if(
-                nospaces.begin(), nospaces.end(), [](char c) {return c == ' ';}
+                no_spaces.begin(),
+                no_spaces.end(),
+                [](char c) {return c == ' ';}
             ),
-            nospaces.end()
+            no_spaces.end()
         );
 
-        auto stream = std::istringstream(nospaces);
+        auto stream = std::istringstream(no_spaces);
         vString variables;
 
         String item;
@@ -267,21 +269,20 @@ namespace calculate {
 
     vString Calculate::validate(const vString &vars) {
         static const auto regex = std::regex("[A-Za-z]+");
-        vString variables;
 
         if (!std::all_of(vars.begin(), vars.end(),
             [](String var) {return std::regex_match(var, regex);})
             )
             throw BadNameException();
 
-        auto noduplicates = vars;
-        std::sort(noduplicates.begin(), noduplicates.end());
-        noduplicates.erase(
-            std::unique(noduplicates.begin(), noduplicates.end()),
-            noduplicates.end()
+        auto no_duplicates = vars;
+        std::sort(no_duplicates.begin(), no_duplicates.end());
+        no_duplicates.erase(
+            std::unique(no_duplicates.begin(), no_duplicates.end()),
+            no_duplicates.end()
         );
 
-        if (noduplicates.size() != vars.size())
+        if (no_duplicates.size() != vars.size())
             throw DuplicateNameException();
 
         return vars;
@@ -358,78 +359,64 @@ extern "C" {
         using namespace calculate;
 
         try {
-            CALC_Expression cexpr = static_cast<CALC_Expression>(
-                new Calculate(expr, vars)
-            );
-            return cexpr;
+            CALC_Expression c = REV_CAST(new Calculate(expr, vars));
+            return c;
         }
         catch (BaseSymbolException) {
             return nullptr;
         }
     }
 
-    const char* CALC_getExpression(CALC_Expression cexpr) {
-        using namespace calculate;
-
-        if (!cexpr)
-            return "";
-
-        return static_cast<Calculate*>(cexpr)->expression.c_str();
+    const char* CALC_getExpression(CALC_Expression c) {
+        return c ? CAST(c)->expression.c_str() : "";
     }
 
-    int CALC_getVariables(CALC_Expression cexpr) {
-        using namespace calculate;
-
-        if (!cexpr)
-            return -1;
-
-        return static_cast<int>(
-            static_cast<Calculate*>(cexpr)->variables.size()
-        );
+    int CALC_getVariables(CALC_Expression c) {
+        return c ? static_cast<int>(CAST(c)->variables.size()) : -1;
     }
 
-    double CALC_evaluate(CALC_Expression cexpr, ...) {
+    double CALC_evaluate(CALC_Expression c, ...) {
         using namespace calculate;
+        using limits = std::numeric_limits<double>;
 
-        if (!cexpr)
-            return std::numeric_limits<double>::quiet_NaN();
+        if (!c)
+            return limits::quiet_NaN();
 
-        auto vars = static_cast<Calculate*>(cexpr)->variables.size();
+        auto vars = CAST(c)->variables.size();
         vValue values;
         va_list list;
-        va_start(list, cexpr);
+        va_start(list, c);
         for (auto i = 0u; i < vars; i++)
             values.push_back(va_arg(list, double));
         va_end(list);
 
         try {
-            return static_cast<Calculate*>(cexpr)->operator()(values);
+            return CAST(c)->operator()(values);
         }
         catch (BaseSymbolException) {
-            return std::numeric_limits<double>::quiet_NaN();
+            return limits::quiet_NaN();
         }
     }
 
-    double CALC_evalArray(CALC_Expression cexpr, double *v, unsigned s) {
+    double CALC_evalArray(CALC_Expression c, double *v, int s) {
         using namespace calculate;
+        using limits = std::numeric_limits<double>;
 
-        if (!cexpr)
-            return std::numeric_limits<double>::quiet_NaN();
+        if (!c)
+            return limits::quiet_NaN();
 
         vValue values(v, v + s);
         try {
-            return static_cast<Calculate*>(cexpr)->operator()(values);
+            return CAST(c)->operator()(values);
         }
         catch (BaseSymbolException) {
-            return std::numeric_limits<double>::quiet_NaN();
+            return limits::quiet_NaN();
         }
     }
 
-    void CALC_freeExpression(CALC_Expression cexpr) {
-        using namespace calculate;
-
-        if (cexpr)
-            delete static_cast<Calculate*>(cexpr);
+    void CALC_freeExpression(CALC_Expression c) {
+        if (c)
+            delete CAST(c);
     }
     
 }

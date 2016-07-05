@@ -13,6 +13,10 @@
 #include "symbols.h"
 
 
+#define CAST(expression) static_cast<calculate::Calculate*>(expression)
+#define REV_CAST(expression) static_cast<CALC_Expression>(expression)
+
+
 namespace calculate {
 
     using symbols::BaseSymbolException;
@@ -30,53 +34,14 @@ namespace calculate {
     using sSymbol = std::stack<pSymbol>;
 
 
-    struct EmptyExpressionException : public BaseSymbolException {
-        const char* what() const noexcept {
-            return "Empty expression";
-        }
-    };
-
-    struct BadNameException : public BaseSymbolException {
-        const char* what() const noexcept {
-            return "Unsuitable variable name";
-        }
-    };
-
-    struct DuplicateNameException : public BaseSymbolException {
-        const char* what() const noexcept {
-            return "Duplicated names";
-        }
-    };
-
-    struct ParenthesisMismatchException : public BaseSymbolException {
-        const char* what() const noexcept {
-            return "Parenthesis mismatch";
-        }
-    };
-
-    struct MissingArgumentsException : public BaseSymbolException {
-        const char* what() const noexcept {
-            return "Missing arguments";
-        }
-    };
-
-    struct ConstantsExcessException : public BaseSymbolException {
-        const char* what() const noexcept {
-            return "Too many arguments";
-        }
-    };
-
-    struct SyntaxErrorException : public BaseSymbolException {
-        const char* what() const noexcept {
-            return "Syntax error";
-        }
-    };
-
-    struct EvaluationException : public BaseSymbolException {
-        const char* what() const noexcept {
-            return "Arguments mismatch";
-        }
-    };
+    RECORD_EXCEPTION(EmptyExpressionException, "Empty expression")
+    RECORD_EXCEPTION(BadNameException, "Unsuitable variable name")
+    RECORD_EXCEPTION(DuplicateNameException, "Duplicated names")
+    RECORD_EXCEPTION(ParenthesisMismatchException, "Parenthesis mismatch")
+    RECORD_EXCEPTION(MissingArgumentsException, "Missing arguments")
+    RECORD_EXCEPTION(ConstantsExcessException, "Too many arguments")
+    RECORD_EXCEPTION(SyntaxErrorException, "Syntax error")
+    RECORD_EXCEPTION(EvaluationException, "Arguments mismatch")
 
 
     class Calculate final {
@@ -131,11 +96,11 @@ extern "C" {
 typedef void* CALC_Expression;
 
 CALC_Expression CALC_newExpression(const char *expr, const char *vars);
-const char* CALC_getExpression(CALC_Expression cexpr);
-int CALC_getVariables(CALC_Expression cexpr);
-double CALC_evaluate(CALC_Expression cexpr, ...);
-double CALC_evalArray(CALC_Expression cexpr, double *v, unsigned s);
-void CALC_freeExpression(CALC_Expression cexpr);
+const char* CALC_getExpression(CALC_Expression c);
+int CALC_getVariables(CALC_Expression c);
+double CALC_evaluate(CALC_Expression c, ...);
+double CALC_evalArray(CALC_Expression c, double *v, int s);
+void CALC_freeExpression(CALC_Expression c);
 
 #ifdef __cplusplus
 }

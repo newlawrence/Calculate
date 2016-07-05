@@ -16,7 +16,8 @@ endif()
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 file(GLOB sources src/*.cpp)
-add_library(calculate ${sources})
+add_library(calculate_static STATIC ${sources})
+add_library(calculate SHARED ${sources})
 
 add_executable(test_c test/test.c)
 target_link_libraries(test_c LINK_PUBLIC calculate)
