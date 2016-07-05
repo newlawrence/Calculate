@@ -34,14 +34,14 @@ namespace calculate {
     using sSymbol = std::stack<pSymbol>;
 
 
-    RECORD_EXCEPTION(EmptyExpressionException, "Empty expression")
-    RECORD_EXCEPTION(BadNameException, "Unsuitable variable name")
-    RECORD_EXCEPTION(DuplicateNameException, "Duplicated names")
-    RECORD_EXCEPTION(ParenthesisMismatchException, "Parenthesis mismatch")
-    RECORD_EXCEPTION(MissingArgumentsException, "Missing arguments")
-    RECORD_EXCEPTION(ConstantsExcessException, "Too many arguments")
-    RECORD_EXCEPTION(SyntaxErrorException, "Syntax error")
-    RECORD_EXCEPTION(EvaluationException, "Arguments mismatch")
+    DEFINE_EXCEPTION(EmptyExpressionException, "Empty expression")
+    DEFINE_EXCEPTION(BadNameException, "Unsuitable variable name")
+    DEFINE_EXCEPTION(DuplicateNameException, "Duplicated names")
+    DEFINE_EXCEPTION(ParenthesisMismatchException, "Parenthesis mismatch")
+    DEFINE_EXCEPTION(MissingArgumentsException, "Missing arguments")
+    DEFINE_EXCEPTION(ConstantsExcessException, "Too many arguments")
+    DEFINE_EXCEPTION(SyntaxErrorException, "Syntax error")
+    DEFINE_EXCEPTION(EvaluationException, "Arguments mismatch")
 
 
     class Calculate final {
