@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 
-#define RECORD_EXCEPTION(NAME, MESSAGE)                                       \
+#define DEFINE_EXCEPTION(NAME, MESSAGE)                                       \
 struct NAME : public BaseSymbolException {                                    \
     const char* what() const noexcept {                                       \
         return MESSAGE;                                                       \
@@ -74,9 +74,9 @@ namespace symbols {
 
 
     struct BaseSymbolException : public std::exception {};
-    RECORD_EXCEPTION(BadCastException, "Bad casting of symbol")
-    RECORD_EXCEPTION(NotEvaluableException, "Non evaluable symbol called")
-    RECORD_EXCEPTION(UndefinedSymbolException, "Undefined symbol")
+    DEFINE_EXCEPTION(BadCastException, "Bad casting of symbol")
+    DEFINE_EXCEPTION(NotEvaluableException, "Non evaluable symbol called")
+    DEFINE_EXCEPTION(UndefinedSymbolException, "Undefined symbol")
 
 
     enum Type {CONSTANT, LEFT, RIGHT, SEPARATOR, OPERATOR, FUNCTION};

@@ -21,11 +21,12 @@ elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
 endif()
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories("${PROJECT_SOURCE_DIR}/include")
 
 file(GLOB sources "src/*.cpp")
-add_library(calculate_static STATIC "${sources}")
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 add_library(calculate SHARED "${sources}")
+add_library(calculate_static STATIC "${sources}")
 
 add_executable(calc "examples/calc.c")
 target_link_libraries(calc LINK_PUBLIC calculate)
