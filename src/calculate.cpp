@@ -315,12 +315,9 @@ namespace calculate {
         for (auto i = 0u; i < vars.size(); i++)
             _values[i] = 0.;
 
-        auto regex_string = "-?[0-9.]+|[A-Za-z]+|" +
-            symbols::Operator::getSymbolsRegex();
-
-        for (const String &var : vars)
-            regex_string += "|" + var;
-        _regex = std::regex(regex_string);
+        _regex = std::regex(
+            "-?[0-9.]+|[A-Za-z]+|" + symbols::Operator::getSymbolsRegex()
+        );
 
         auto infix = check(tokenize(expr));
         auto postfix = shuntingYard(std::move(infix));

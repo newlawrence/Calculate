@@ -19,15 +19,14 @@
 
 namespace calculate {
 
-    using symbols::BaseSymbolException;
-    using symbols::Type;
-
     using pValue = std::unique_ptr<double[]>;
     using vValue = std::vector<double>;
     using String = std::string;
     using vString = std::vector<String>;
     using Regex = std::regex;
 
+    using symbols::BaseSymbolException;
+    using symbols::Type;
     using symbols::pSymbol;
     using symbols::vSymbol;
     using qSymbol = std::queue<pSymbol>;
@@ -93,17 +92,22 @@ namespace calculate {
 extern "C" {
 #endif
 
+
 typedef void* CALC_Expression;
 typedef const char* c_str;
 
 CALC_Expression CALC_createExpression(c_str expr, c_str vars, char *errors);
 CALC_Expression CALC_newExpression(c_str expr, c_str vars);
+
 const char* CALC_getExpression(CALC_Expression c);
 int CALC_getVariables(CALC_Expression c);
+
 double CALC_evaluateArray(CALC_Expression c, double *v, int s, char *errors);
 double CALC_evalArray(CALC_Expression c, double *v, int s);
 double CALC_eval(CALC_Expression c, ...);
+
 void CALC_freeExpression(CALC_Expression c);
+
 
 #ifdef __cplusplus
 }
