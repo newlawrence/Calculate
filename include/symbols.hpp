@@ -15,12 +15,23 @@ struct NAME : public BaseSymbolException {                                    \
     }                                                                         \
 };
 
+
 #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
 class Constant_##TOKEN final : public Constant {                              \
     static const Constant::Recorder _recorder;                                \
+    static pSymbol newConstant() noexcept {                                   \
+        return pSymbol(new Constant_##TOKEN);                                 \
+    }                                                                         \
+                                                                              \
+    Constant_##TOKEN() noexcept :                                             \
+        Constant(std::to_string(VALUE)) {}                                    \
+                                                                              \
+public:                                                                       \
+    virtual double evaluate() const {return VALUE;}                           \
 };                                                                            \
 const Constant::Recorder Constant_##TOKEN::_recorder =                        \
-    Constant::Recorder(#TOKEN, VALUE);
+    Constant::Recorder(#TOKEN, &Constant_##TOKEN::newConstant);
+
 
 #define RECORD_OPERATOR(NAME, TOKEN, PRECEDENCE, L_ASSOCIATION, FUNCTION)     \
 class Operator_##NAME final : public Operator {                               \
@@ -28,8 +39,10 @@ class Operator_##NAME final : public Operator {                               \
     static pSymbol newOperator() noexcept {                                   \
         return pSymbol(new Operator_##NAME);                                  \
     }                                                                         \
+                                                                              \
     Operator_##NAME() noexcept :                                              \
         Operator(TOKEN, PRECEDENCE, L_ASSOCIATION) {}                         \
+                                                                              \
 public:                                                                       \
     virtual double evaluate() const {                                         \
         double a = _left_operand->evaluate();                                 \
@@ -40,14 +53,17 @@ public:                                                                       \
 const Operator::Recorder Operator_##NAME::_recorder =                         \
     Operator::Recorder(TOKEN, &Operator_##NAME::newOperator);
 
+
 #define RECORD_FUNCTION(TOKEN, ARGS, FUNCTION)                                \
 class Function_##TOKEN final : public Function {                              \
     static const Function::Recorder _recorder;                                \
     static pSymbol newFunction() noexcept {                                   \
         return pSymbol(new Function_##TOKEN);                                 \
     }                                                                         \
+                                                                              \
     Function_##TOKEN() noexcept :                                             \
         Function(#TOKEN, ARGS) {}                                             \
+                                                                              \
 public:                                                                       \
     virtual double evaluate() const {                                         \
         vName x(args);                                                        \
@@ -126,9 +142,9 @@ namespace symbols {
     class Constant : public Symbol {
     protected:
         struct Recorder {
-            Recorder(const String &t, double v) noexcept;
+            Recorder(const String &t, fSymbolGen g) noexcept;
         };
-        static mValue _symbols;
+        static mSymbolGen _symbols;
 
         Constant(const String &s) noexcept :
             Symbol(s, Type::CONSTANT), value(std::stod(s)) {}
