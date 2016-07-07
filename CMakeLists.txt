@@ -28,6 +28,10 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 add_library(calculate SHARED "${sources}")
 add_library(calculate_static STATIC "${sources}")
 
+file(GLOB tests "tests/*.cpp")
+add_executable(unittests "${tests}")
+target_link_libraries(unittests LINK_PUBLIC calculate)
+
 add_executable(calc "examples/calc.c")
 target_link_libraries(calc LINK_PUBLIC calculate)
 
