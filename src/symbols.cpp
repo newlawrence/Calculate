@@ -6,7 +6,7 @@
 
 namespace symbols {
 
-    mValue Constant::_symbols;
+    mSymbolGen Constant::_symbols;
     mSymbolGen Operator::_symbols;
     String Operator::_regex_simple;
     String Operator::_regex_composite;
@@ -24,9 +24,7 @@ namespace symbols {
             }())
             return pSymbol(new Constant(t));
         else if (Constant::_symbols.find(t) != Constant::_symbols.end())
-            return pSymbol(
-                new Constant(std::to_string(Constant::_symbols[t]))
-            );
+            return Constant::_symbols[t]();
         else if (t == "(")
             return pSymbol(new Parenthesis<'('>);
         else if (t == ")")
@@ -42,8 +40,8 @@ namespace symbols {
     }
 
 
-    Constant::Recorder::Recorder(const String &t, double v) noexcept {
-        Constant::_symbols[t] = v;
+    Constant::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
+        Constant::_symbols[t] = g;
     }
 
 
