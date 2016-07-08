@@ -61,7 +61,7 @@ namespace symbols {
     }
 
     String Operator::getSymbolsRegex() noexcept {
-        return String("[") + _regex_simple + ",()]+" + _regex_composite;
+        return String("[") + _regex_simple + "]+" + _regex_composite;
     }
 
 
@@ -112,12 +112,12 @@ namespace symbols {
     RECORD_FUNCTION(hypot, 2, std::hypot(x[0], x[1]))
 
     RECORD_FUNCTION(exp, 1, std::exp(x[0]))
-    RECORD_FUNCTION(expmone, 1, std::expm1(x[0]))
-    RECORD_FUNCTION(exptwo, 1, std::exp2(x[0]))
-    RECORD_FUNCTION(ln, 1, std::log(x[0]))
-    RECORD_FUNCTION(log, 1, std::log10(x[0]))
-    RECORD_FUNCTION(logonep, 1, std::log1p(x[0]))
-    RECORD_FUNCTION(logtwo, 1, std::log2(x[0]))
+    RECORD_FUNCTION(expm1, 1, std::expm1(x[0]))
+    RECORD_FUNCTION(exp2, 1, std::exp2(x[0]))
+    RECORD_FUNCTION(log, 1, std::log(x[0]))
+    RECORD_FUNCTION(log10, 1, std::log10(x[0]))
+    RECORD_FUNCTION(log1p, 1, std::log1p(x[0]))
+    RECORD_FUNCTION(log2, 1, std::log2(x[0]))
     RECORD_FUNCTION(logb, 1, std::logb(x[0]))
 
     RECORD_FUNCTION(sin, 1, std::sin(x[0]))
@@ -126,7 +126,7 @@ namespace symbols {
     RECORD_FUNCTION(asin, 1, std::asin(x[0]))
     RECORD_FUNCTION(acos, 1, std::acos(x[0]))
     RECORD_FUNCTION(atan, 1, std::atan(x[0]))
-    RECORD_FUNCTION(atantwo, 2, std::atan2(x[0], x[1]))
+    RECORD_FUNCTION(atan2, 2, std::atan2(x[0], x[1]))
 
     RECORD_FUNCTION(sinh, 1, std::sinh(x[0]))
     RECORD_FUNCTION(cosh, 1, std::cosh(x[0]))

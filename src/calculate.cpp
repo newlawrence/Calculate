@@ -266,10 +266,10 @@ namespace calculate {
     }
 
     vString Calculate::validate(const vString &vars) {
-        static const auto regex = std::regex("[A-Za-z]+");
+        auto regex = std::regex("[A-Za-z]+\\d*");
 
         if (!std::all_of(vars.begin(), vars.end(),
-            [](String var) {return std::regex_match(var, regex);})
+            [&regex](String var) {return std::regex_match(var, regex);})
             )
             throw BadNameException();
 
@@ -313,7 +313,11 @@ namespace calculate {
             _values[i] = 0.;
 
         _regex = std::regex(
-            "-?[0-9.]+|[A-Za-z]+|" + symbols::Operator::getSymbolsRegex()
+            "-?[0-9.]+(?!e\\+?-?\\d+)|"
+            "-?\\d+e-?\\d+|"
+            "[A-Za-z]+\\d*[A-Za-z]*|"
+            "[,()]|" +
+            symbols::Operator::getSymbolsRegex()
         );
 
         auto infix = check(tokenize(expr));
