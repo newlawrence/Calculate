@@ -76,7 +76,7 @@ namespace calculate {
 
         template <typename Head, typename... Tail>
         double operator() (Head head, Tail... tail) const {
-            if (sizeof...(tail) + 1 != variables.size())
+            if (sizeof...(tail) + 1 > variables.size())
                 throw EvaluationException();
             _values[variables.size() - sizeof...(tail) - 1] = head;
             return this->operator() (tail...);
