@@ -11,13 +11,14 @@ int main(int argc, char *argv[]) {
     char errors[64];
     double *values;
     double result;
+    int i;
 
     if (argc % 2 == 0) {
         if (argc == 2)
             strcpy(variables, "");
         else
             strcpy(variables, argv[2]);
-        for (int i = 4; i < argc; i += 2) {
+        for (i = 4; i < argc; i += 2) {
             strcat(variables, ",");
             strcat(variables, argv[i]);
         }
@@ -25,7 +26,7 @@ int main(int argc, char *argv[]) {
 
         if (expression) {
             values = (double *) malloc((argc - 2) / 2 * sizeof(double));
-            for (int i = 3; i < argc; i += 2)
+            for (i = 3; i < argc; i += 2)
                 values[(i + 1) / 2 - 2] = strtod(argv[i], NULL);
 
             result = CALC_evaluateArray(
