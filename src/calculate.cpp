@@ -358,10 +358,12 @@ namespace calculate {
 namespace calculate_c_interface {
     using namespace calculate;
 
-    Expression createExpression(const char *expr, const char *vars,
+    calculate_Expression createExpression(const char *expr, const char *vars,
                                 char *errors) {
         try {
-            auto expr_obj = static_cast<Expression>(new Calculate(expr, vars));
+            auto expr_obj = static_cast<calculate_Expression>(
+                new Calculate(expr, vars)
+            );
             strcpy(errors, "");
             return expr_obj;
         }
@@ -371,23 +373,23 @@ namespace calculate_c_interface {
         }
     }
 
-    Expression newExpression(const char *expr, const char *vars) {
+    calculate_Expression newExpression(const char *expr, const char *vars) {
         char errors[64];
         return createExpression(expr, vars, errors);
     }
 
-    void freeExpression(Expression expr_obj) {
+    void freeExpression(calculate_Expression expr_obj) {
         if (expr_obj)
             delete static_cast<Calculate*>(expr_obj);
     }
 
 
-    const char* getExpression(Expression expr_obj) {
+    const char* getExpression(calculate_Expression expr_obj) {
         return expr_obj ?
                static_cast<Calculate*>(expr_obj)->expression.c_str() : "";
     }
 
-    int getVariables(Expression expr_obj) {
+    int getVariables(calculate_Expression expr_obj) {
         return expr_obj ?
                static_cast<int>(
                    static_cast<Calculate*>(expr_obj)->variables.size()
@@ -395,8 +397,8 @@ namespace calculate_c_interface {
     }
 
 
-    double evaluateArray(Expression expr_obj, double *values, int size,
-                          char *errors) {
+    double evaluateArray(calculate_Expression expr_obj, double *values,
+                         int size, char *errors) {
         if (!expr_obj)
             return std::numeric_limits<double>::quiet_NaN();
 
@@ -411,12 +413,12 @@ namespace calculate_c_interface {
         }
     }
 
-    double evalArray(Expression expr_obj, double *values, int size) {
+    double evalArray(calculate_Expression expr_obj, double *values, int size) {
         char errors[64];
         return evaluateArray(expr_obj, values, size, errors);
     }
 
-    double eval(Expression expr_obj, ...) {
+    double eval(calculate_Expression expr_obj, ...) {
         if (!expr_obj)
             return std::numeric_limits<double>::quiet_NaN();
 
@@ -441,7 +443,7 @@ namespace calculate_c_interface {
 
 extern "C" {
 
-extern const _calculate_c_library Calculate = {
+extern const _calculate_c_library _c_calculate = {
     .createExpression = calculate_c_interface::createExpression,
     .newExpression = calculate_c_interface::newExpression,
     .freeExpression = calculate_c_interface::freeExpression,

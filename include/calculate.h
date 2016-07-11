@@ -88,24 +88,26 @@ namespace calculate {
 extern "C" {
 #endif
 
-typedef void* Expression;
+typedef void* calculate_Expression;
+
 struct _calculate_c_library {
-    Expression (*createExpression)(const char*, const char*, char*);
-    Expression (*newExpression)(const char*, const char*);
-    void (*freeExpression)(Expression);
+    calculate_Expression (*createExpression)(const char*, const char*, char*);
+    calculate_Expression (*newExpression)(const char*, const char*);
+    void (*freeExpression)(calculate_Expression);
 
-    const char* (*getExpression)(Expression);
-    int (*getVariables)(Expression);
+    const char* (*getExpression)(calculate_Expression);
+    int (*getVariables)(calculate_Expression);
 
-    double (*evaluateArray)(Expression, double*, int, char*);
-    double (*evalArray)(Expression, double*, int);
-    double (*eval)(Expression, ...);
+    double (*evaluateArray)(calculate_Expression, double*, int, char*);
+    double (*evalArray)(calculate_Expression, double*, int);
+    double (*eval)(calculate_Expression, ...);
 };
 
 #ifdef __cplusplus
 }
 #else
-extern const struct _calculate_c_library Calculate;
+extern const struct _calculate_c_library _c_calculate;
+const struct _calculate_c_library* const calculate = &_c_calculate;
 #endif
 
 #endif
