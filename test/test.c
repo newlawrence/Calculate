@@ -6,7 +6,9 @@
 
 
 int main(int argc, char *argv[]) {
-    CALC_Expression expression;
+    calculate_init();
+
+    calculate_Expression expression;
     char variables[256];
     char errors[64];
     double *values;
@@ -22,14 +24,14 @@ int main(int argc, char *argv[]) {
             strcat(variables, ",");
             strcat(variables, argv[i]);
         }
-        expression = CALC_createExpression(argv[1], variables, errors);
+        expression = calculate->createExpression(argv[1], variables, errors);
 
         if (expression) {
             values = (double *) malloc((argc - 2) / 2 * sizeof(double));
             for (i = 3; i < argc; i += 2)
                 values[(i + 1) / 2 - 2] = strtod(argv[i], NULL);
 
-            result = CALC_evaluateArray(
+            result = calculate->evaluateArray(
                 expression, values, (argc - 2) / 2, errors
             );
 
@@ -38,7 +40,7 @@ int main(int argc, char *argv[]) {
             else
                 printf("%s\n", errors);
 
-            CALC_freeExpression(expression);
+            calculate->freeExpression(expression);
         }
         else
             printf("%s\n", errors);
