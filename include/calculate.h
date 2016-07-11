@@ -13,10 +13,6 @@
 #include "symbols.h"
 
 
-#define CAST(expression) static_cast<calculate::Calculate*>(expression)
-#define REV_CAST(expression) static_cast<CALC_Expression>(expression)
-
-
 namespace calculate {
 
     using pValue = std::unique_ptr<double[]>;
@@ -92,25 +88,24 @@ namespace calculate {
 extern "C" {
 #endif
 
+typedef void* Expression;
+struct _calculate_c_library {
+    Expression (*createExpression)(const char*, const char*, char*);
+    Expression (*newExpression)(const char*, const char*);
+    void (*freeExpression)(Expression);
 
-typedef void* CALC_Expression;
-typedef const char* c_str;
+    const char* (*getExpression)(Expression);
+    int (*getVariables)(Expression);
 
-CALC_Expression CALC_createExpression(c_str expr, c_str vars, char *errors);
-CALC_Expression CALC_newExpression(c_str expr, c_str vars);
-
-const char* CALC_getExpression(CALC_Expression c);
-int CALC_getVariables(CALC_Expression c);
-
-double CALC_evaluateArray(CALC_Expression c, double *v, int s, char *errors);
-double CALC_evalArray(CALC_Expression c, double *v, int s);
-double CALC_eval(CALC_Expression c, ...);
-
-void CALC_freeExpression(CALC_Expression c);
-
+    double (*evaluateArray)(Expression, double*, int, char*);
+    double (*evalArray)(Expression, double*, int);
+    double (*eval)(Expression, ...);
+};
 
 #ifdef __cplusplus
 }
+#else
+extern const struct _calculate_c_library Calculate;
 #endif
 
 #endif
