@@ -17,7 +17,7 @@ endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-file(GLOB sources "src/*.cpp")
+file(GLOB sources "source/*.cpp")
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 add_library(calculate SHARED "${sources}")
 add_library(calculate_static STATIC "${sources}")
