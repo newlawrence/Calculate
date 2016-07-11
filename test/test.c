@@ -6,6 +6,8 @@
 
 
 int main(int argc, char *argv[]) {
+    calculate_init();
+
     calculate_Expression expression;
     char variables[256];
     char errors[64];

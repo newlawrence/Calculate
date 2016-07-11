@@ -441,17 +441,16 @@ namespace calculate_c_interface {
 }
 
 
-extern "C" {
-
-extern const _calculate_c_library _c_calculate = {
-    .createExpression = calculate_c_interface::createExpression,
-    .newExpression = calculate_c_interface::newExpression,
-    .freeExpression = calculate_c_interface::freeExpression,
-    .getExpression = calculate_c_interface::getExpression,
-    .getVariables = calculate_c_interface::getVariables,
-    .evaluateArray = calculate_c_interface::evaluateArray,
-    .evalArray = calculate_c_interface:: evalArray,
-    .eval = calculate_c_interface::eval
-};
-
+extern "C" const _calculate_c_library* _get_calculate_c_library() {
+    static const _calculate_c_library library = {
+        calculate_c_interface::createExpression,
+        calculate_c_interface::newExpression,
+        calculate_c_interface::freeExpression,
+        calculate_c_interface::getExpression,
+        calculate_c_interface::getVariables,
+        calculate_c_interface::evaluateArray,
+        calculate_c_interface:: evalArray,
+        calculate_c_interface::eval
+    };
+    return &library;
 }

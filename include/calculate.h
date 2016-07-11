@@ -106,8 +106,9 @@ struct _calculate_c_library {
 #ifdef __cplusplus
 }
 #else
-extern const struct _calculate_c_library _c_calculate;
-const struct _calculate_c_library* const calculate = &_c_calculate;
+#define calculate_init() \
+const struct _calculate_c_library* const calculate = _get_calculate_c_library()
+const struct _calculate_c_library* _get_calculate_c_library();
 #endif
 
 #endif
