@@ -23,5 +23,5 @@ Release/
 *.sln
 
 # CATCH library
-include/catch.hpp
+extern/include/catch.hpp
 

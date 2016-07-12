@@ -3,7 +3,7 @@ project(calculate)
 
 set(CATCH_REPO "https://raw.githubusercontent.com/philsquared/Catch/master")
 set(CATCH_URL "${CATCH_REPO}/single_include/catch.hpp")
-set(CATCH_PATH "${CMAKE_CURRENT_SOURCE_DIR}/include/catch.hpp")
+set(CATCH_PATH "${CMAKE_CURRENT_SOURCE_DIR}/extern/include/catch.hpp")
 
 if(NOT EXISTS "${CATCH_PATH}")
     file(DOWNLOAD "${CATCH_URL}" "${CATCH_PATH}")
@@ -24,6 +24,7 @@ elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
 endif()
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories("${PROJECT_SOURCE_DIR}/extern/include")
 
 file(GLOB sources "source/*.cpp")
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
