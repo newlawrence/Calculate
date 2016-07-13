@@ -7,11 +7,56 @@ env:
     - CMAKE_URL=http://www.cmake.org/files/v3.5/${CMAKE_FILE}
     - CMAKE_BUILD_TYPE=Release
 
-compiler:
-  - gcc
-  - clang
+matrix:
+  include:
+    - compiler: gcc
+      env: GCC_VER=5
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+            - gcc-5
+    - compiler: gcc
+      env: GCC_VER=6
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+            - gcc-6
+    - compiler: clang
+      env: CLANG_VER=3.6
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.6
+          packages:
+            - g++-5
+            - clang-3.6
+    - compiler: clang
+      env: CLANG_VER=3.7
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.7
+          packages:
+            - g++-5
+            - clang-3.7
 
 before_install:
+  - |
+    if [ "${CXX}" = "g++" ]
+        then export CXX="g++-${GCC_VER}" CC="gcc-${GCC_VER}"
+    fi
+  - |
+    if [ "${CXX}" = "clang++" ]
+        then export CXX="clang++-${CLANG_VER}" CC="clang-${CLANG_VER}"
+    fi
   - mkdir -p ${DEPS_DIR}
 
 install:
@@ -23,4 +68,4 @@ install:
   - cmake --version
 
 script:
-  - cmake .
+  - cmake . && make all
