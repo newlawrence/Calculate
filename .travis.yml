@@ -13,35 +13,36 @@ matrix:
       env: GCC_VER=5
       addons:
         apt:
-          packages:
-            - g++-5
-            - gcc-5
+          sources:
+            - ubuntu-toolchain-r-test
+        packages:
+          - g++-5
+          - gcc-5
     - compiler: gcc
       env: GCC_VER=6
       addons:
         apt:
-          packages:
-            - g++-6
-            - gcc-6
+          sources:
+            - ubuntu-toolchain-r-test
+        packages:
+          - g++-6
+          - gcc-6
     - compiler: clang
       env: GLANG_VER=3.6
       addons:
         apt:
-          packages:
-            - clang-3.6
+          sources:
+            - llvm-toolchain-precise-3.6
+        packages:
+          - clang-3.6
     - compiler: clang
       env: GLANG_VER=3.7
       addons:
         apt:
-          packages:
-            - clang-3.7
-
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-precise-3.6
-      - llvm-toolchain-precise-3.7
+          sources:
+            - llvm-toolchain-precise-3.7
+        packages:
+          - clang-3.7
 
 before_install:
   - |
