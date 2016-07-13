@@ -1,10 +1,14 @@
 language: cpp
 
 env:
+  matrix:
+    - GCC_VER=5 CLANG_VER=3.6
+    - GCC_VER=6 CLANG_VER=3.7
   global:
     - DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
     - CMAKE_FILE=cmake-3.5.2-Linux-x86_64.tar.gz
     - CMAKE_URL=http://www.cmake.org/files/v3.5/${CMAKE_FILE}
+    - CMAKE_BUILD_TYPE=Release
 
 compiler:
   - gcc
@@ -13,16 +17,23 @@ compiler:
 addons:
   apt:
     sources:
+      - llvm-toolchain-precise-3.6
       - llvm-toolchain-precise-3.7
       - ubuntu-toolchain-r-test
     packages:
-      - clang-3.7
-      - g++-6
-      - gcc-6
+      - clang-${CLANG_VER}
+      - g++-${GCC_VER}
+      - gcc-${GCC_VER}
 
 before_install:
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-6" CC="gcc-6"; fi
-  - if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.7" CC="clang-3.7"; fi
+  - |
+    if [ "${CXX}" = "g++" ]
+        then export CXX="g++-${GCC_VER}" CC="gcc-${GCC_VER}"
+    fi
+  - |
+    if [ "${CXX}" = "clang++" ]
+        then export CXX="clang++-${CLANG_VER}" CC="clang-${CLANG_VER}"
+    fi
   - mkdir -p ${DEPS_DIR}
 
 install:
@@ -34,6 +45,5 @@ install:
   - cmake --version
 
 script:
-  - cmake . -DCMAKE_BUILD_TYPE=Release
-  - make unittests
-
+  - cmake . && make all
+  - ./bin/unittests -r compact
