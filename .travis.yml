@@ -21,9 +21,12 @@ addons:
       - llvm-toolchain-precise-3.7
       - ubuntu-toolchain-r-test
     packages:
-      - clang-${CLANG_VER}
-      - g++-${GCC_VER}
-      - gcc-${GCC_VER}
+      - clang-3.6
+      - clang-3.7
+      - g++-5
+      - gcc-5
+      - g++-6
+      - gcc-6
 
 before_install:
   - |
