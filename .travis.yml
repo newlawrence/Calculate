@@ -16,8 +16,8 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-5
             - gcc-5
+            - g++-5
     - compiler: gcc
       env: GCC_VER=6
       addons:
@@ -25,8 +25,8 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-6
             - gcc-6
+            - g++-6
     - compiler: clang
       env: CLANG_VER=3.6
       addons:
@@ -69,3 +69,4 @@ install:
 
 script:
   - cmake . && make all
+  - ./bin/unittests
