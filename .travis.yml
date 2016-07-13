@@ -1,18 +1,23 @@
 language: cpp
 
+env:
+  global:
+    - DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
+    - CMAKE_FILE=cmake-3.5.2-Linux-x86_64.tar.gz
+    - CMAKE_URL=http://www.cmake.org/files/v3.5/${CMAKE_FILE}
+
 compiler:
   - gcc
   - clang
 
 before_install:
-  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
-  - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
+  - mkdir -p ${DEPS_DIR}
 
 install:
-  - CMAKE_URL="http://www.cmake.org/files/v3.5/cmake-3.5.2-Linux-x86_64.tar.gz"
-  - mkdir cmake
-  - travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL}
-  - tar --strip-components=1 -xz -C cmake
+  - wget ${CMAKE_URL} --quiet
+  - mkdir -p cmake
+  - tar -xzf ${CMAKE_FILE} -C cmake --strip-components 1
+  - mv cmake ${DEPS_DIR}
   - export PATH=${DEPS_DIR}/cmake/bin:${PATH}
   - cmake --version
 
