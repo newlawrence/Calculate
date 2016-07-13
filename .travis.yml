@@ -14,7 +14,7 @@ before_install:
   - mkdir -p ${DEPS_DIR}
 
 install:
-  - wget ${CMAKE_URL} --quiet
+  - wget ${CMAKE_URL} --quiet --no-check-certificate
   - mkdir -p cmake
   - tar -xzf ${CMAKE_FILE} -C cmake --strip-components 1
   - mv cmake ${DEPS_DIR}
