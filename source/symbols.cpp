@@ -23,7 +23,7 @@ namespace symbols {
                 std::stod(t);
                 return true;
             }
-            catch (std::logic_error) { return false; }
+            catch (std::logic_error) {return false;}
         }())
             return pSymbol(new Constant(t));
         else if (Constant::_symbols.find(t) != Constant::_symbols.end())
@@ -51,7 +51,7 @@ namespace symbols {
     Operator::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
         Operator::_symbols[t] = g;
         if (std::all_of(
-            t.begin(), t.end(), [&t](char ch) { return ch == t[0]; })
+            t.begin(), t.end(), [&t](char ch) {return ch == t[0];})
             )
             _regex_simple += t;
         else
@@ -95,12 +95,12 @@ RECORD_OPERATOR(pow2, "**", 800, false, std::pow(a,b))
 RECORD_FUNCTION(fabs, 1, std::fabs(x[0]))
 RECORD_FUNCTION(abs, 1, std::abs(x[0]))
 RECORD_FUNCTION(fma, 3, std::fma(x[0], x[1], x[2]))
+RECORD_FUNCTION(copysign, 2, std::copysign(x[0], x[1]))
+RECORD_FUNCTION(nextafter, 2, std::nextafter(x[0], x[1]))
 
 RECORD_FUNCTION(fdim, 2, std::fdim(x[0], x[1]))
 RECORD_FUNCTION(fmax, 2, std::fmax(x[0], x[1]))
 RECORD_FUNCTION(fmin, 2, std::fmin(x[0], x[1]))
-RECORD_FUNCTION(copysign, 2, std::copysign(x[0], x[1]))
-RECORD_FUNCTION(nextafter, 2, std::nextafter(x[0], x[1]))
 
 RECORD_FUNCTION(ceil, 1, std::ceil(x[0]))
 RECORD_FUNCTION(floor, 1, std::floor(x[0]))

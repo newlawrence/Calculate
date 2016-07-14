@@ -42,3 +42,10 @@ target_link_libraries(calc LINK_PUBLIC calculate)
 
 add_executable(calcpp "examples/calc.cpp")
 target_link_libraries(calcpp LINK_PUBLIC calculate)
+
+add_custom_command(
+    TARGET unittests
+    COMMENT "Run tests"
+    POST_BUILD
+    COMMAND unittests
+)
