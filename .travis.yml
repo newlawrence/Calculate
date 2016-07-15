@@ -68,5 +68,5 @@ install:
   - cmake --version
 
 script:
-  - cmake . && make all
+  - cmake . && make unittests
 
