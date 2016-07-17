@@ -57,4 +57,8 @@ TEST_CASE("Variable arguments", "[variables]") {
         CHECK_THROWS_AS(Calculate("var+", "var+"), BadNameException);
     }
 
+    SECTION("Duplicate variable names") {
+        CHECK_THROWS_AS(Calculate("x + x", "x, x"), DuplicateNameException);
+    }
+
 }
