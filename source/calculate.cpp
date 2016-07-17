@@ -12,10 +12,7 @@ namespace calculate {
     qSymbol Calculate::tokenize(const String &expr) const {
         qSymbol infix;
 
-        auto next =
-            std::sregex_iterator(
-                expr.begin(), expr.end(), _regex
-            ),
+        auto next = std::sregex_iterator(expr.begin(), expr.end(), _regex),
             end = std::sregex_iterator();
 
         while (next != end) {
@@ -39,13 +36,11 @@ namespace calculate {
         pSymbol current, next;
 
         if (input.size() == 0)
-            throw symbols::UndefinedSymbolException();
+            throw SyntaxErrorException();
 
         current = input.front();
         input.pop();
         output.push(current);
-        if (input.size() == 1 && !current->is(Type::CONSTANT))
-            throw SyntaxErrorException();
 
         switch (current->type) {
             case (Type::RIGHT):
@@ -64,21 +59,20 @@ namespace calculate {
             switch (current->type) {
                 case (Type::CONSTANT):
                 case (Type::RIGHT):
-                    if (next->is(Type::RIGHT) ||
-                        next->is(Type::SEPARATOR) ||
-                        next->is(Type::OPERATOR))
-                        break;
+                    if (next->is(Type::RIGHT)) break;
+                    else if (next->is(Type::SEPARATOR)) break;
+                    else if (next->is(Type::OPERATOR)) break;
+                    else throw SyntaxErrorException();
                 case (Type::LEFT):
                 case (Type::SEPARATOR):
                 case (Type::OPERATOR):
-                    if (next->is(Type::CONSTANT) ||
-                        next->is(Type::LEFT) ||
-                        next->is(Type::FUNCTION))
-                        break;
+                    if (next->is(Type::CONSTANT)) break;
+                    else if (next->is(Type::LEFT)) break;
+                    else if (next->is(Type::FUNCTION)) break;
+                    else throw SyntaxErrorException();
                 case (Type::FUNCTION):
-                    if (next->is(Type::LEFT))
-                        break;
-                    throw SyntaxErrorException();
+                    if (next->is(Type::LEFT)) break;
+                    else throw SyntaxErrorException();
             }
             current = next;
         }

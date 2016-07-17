@@ -22,3 +22,6 @@ Release/
 *.vcxproj
 *.sln
 
+# CATCH library
+extern/include/catch.hpp
+

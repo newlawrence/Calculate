@@ -10,7 +10,7 @@
 #include <stack>
 #include <regex>
 
-#include "symbols.h"
+#include "symbols.hpp"
 
 
 namespace calculate {
@@ -30,13 +30,13 @@ namespace calculate {
 
 
     DEFINE_EXCEPTION(EmptyExpressionException, "Empty expression")
+    DEFINE_EXCEPTION(EvaluationException, "Arguments mismatch")
     DEFINE_EXCEPTION(BadNameException, "Unsuitable variable name")
     DEFINE_EXCEPTION(DuplicateNameException, "Duplicated names")
     DEFINE_EXCEPTION(ParenthesisMismatchException, "Parenthesis mismatch")
     DEFINE_EXCEPTION(MissingArgumentsException, "Missing arguments")
     DEFINE_EXCEPTION(ConstantsExcessException, "Too many arguments")
     DEFINE_EXCEPTION(SyntaxErrorException, "Syntax error")
-    DEFINE_EXCEPTION(EvaluationException, "Arguments mismatch")
 
 
     class Calculate final {

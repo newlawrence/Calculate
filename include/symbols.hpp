@@ -1,8 +1,6 @@
 #ifndef __SYMBOLS_H__
 #define __SYMBOLS_H__
 
-#ifdef __cplusplus
-
 #include <memory>
 #include <exception>
 #include <string>
@@ -19,63 +17,69 @@ struct NAME : public BaseSymbolException {                                    \
 
 
 #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
-class Constant_##TOKEN final : public Constant {                              \
-    static const Constant::Recorder _recorder;                                \
-    static pSymbol newConstant() noexcept {                                   \
-        return pSymbol(new Constant_##TOKEN);                                 \
-    }                                                                         \
+namespace symbols {                                                           \
+    class Constant_##TOKEN final : public Constant {                          \
+        static const Constant::Recorder _recorder;                            \
+        static pSymbol newConstant() noexcept {                               \
+            return pSymbol(new Constant_##TOKEN);                             \
+        }                                                                     \
                                                                               \
-    Constant_##TOKEN() noexcept :                                             \
-        Constant(std::to_string(VALUE)) {}                                    \
+        Constant_##TOKEN() noexcept :                                         \
+            Constant(std::to_string(VALUE)) {}                                \
                                                                               \
-public:                                                                       \
-    virtual double evaluate() const {return VALUE;}                           \
-};                                                                            \
-const Constant::Recorder Constant_##TOKEN::_recorder =                        \
-    Constant::Recorder(#TOKEN, &Constant_##TOKEN::newConstant);
+    public:                                                                   \
+        virtual double evaluate() const {return VALUE;}                       \
+    };                                                                        \
+    const Constant::Recorder Constant_##TOKEN::_recorder =                    \
+        Constant::Recorder(#TOKEN, &Constant_##TOKEN::newConstant);           \
+}
 
 
 #define RECORD_OPERATOR(NAME, TOKEN, PRECEDENCE, L_ASSOCIATION, FUNCTION)     \
-class Operator_##NAME final : public Operator {                               \
-    static const Operator::Recorder _recorder;                                \
-    static pSymbol newOperator() noexcept {                                   \
-        return pSymbol(new Operator_##NAME);                                  \
-    }                                                                         \
+namespace symbols {                                                           \
+    class Operator_##NAME final : public Operator {                           \
+        static const Operator::Recorder _recorder;                            \
+        static pSymbol newOperator() noexcept {                               \
+            return pSymbol(new Operator_##NAME);                              \
+        }                                                                     \
                                                                               \
-    Operator_##NAME() noexcept :                                              \
-        Operator(TOKEN, PRECEDENCE, L_ASSOCIATION) {}                         \
+        Operator_##NAME() noexcept :                                          \
+            Operator(TOKEN, PRECEDENCE, L_ASSOCIATION) {}                     \
                                                                               \
-public:                                                                       \
-    virtual double evaluate() const {                                         \
-        double a = _left_operand->evaluate();                                 \
-        double b = _right_operand->evaluate();                                \
-        return FUNCTION;                                                      \
-    }                                                                         \
-};                                                                            \
-const Operator::Recorder Operator_##NAME::_recorder =                         \
-    Operator::Recorder(TOKEN, &Operator_##NAME::newOperator);
+    public:                                                                   \
+        virtual double evaluate() const {                                     \
+            double a = _left_operand->evaluate();                             \
+            double b = _right_operand->evaluate();                            \
+            return FUNCTION;                                                  \
+        }                                                                     \
+    };                                                                        \
+    const Operator::Recorder Operator_##NAME::_recorder =                     \
+        Operator::Recorder(TOKEN, &Operator_##NAME::newOperator);             \
+}
 
 
 #define RECORD_FUNCTION(TOKEN, ARGS, FUNCTION)                                \
-class Function_##TOKEN final : public Function {                              \
-    static const Function::Recorder _recorder;                                \
-    static pSymbol newFunction() noexcept {                                   \
-        return pSymbol(new Function_##TOKEN);                                 \
-    }                                                                         \
+namespace symbols {                                                           \
+    class Function_##TOKEN final : public Function {                          \
+        static const Function::Recorder _recorder;                            \
+        static pSymbol newFunction() noexcept {                               \
+            return pSymbol(new Function_##TOKEN);                             \
+        }                                                                     \
                                                                               \
-    Function_##TOKEN() noexcept :                                             \
-        Function(#TOKEN, ARGS) {}                                             \
+        Function_##TOKEN() noexcept :                                         \
+             Function(#TOKEN, ARGS) {}                                        \
                                                                               \
-public:                                                                       \
-    virtual double evaluate() const {                                         \
-        vName x(args);                                                        \
-        for (auto i = 0u; i < args; i++)                                      \
-            x[i] = _operands[i]->evaluate();                                  \
-        return FUNCTION;                                                      \
-    }                                                                         \
-};                                                                            \
-const Function::Recorder Function_##TOKEN::_recorder =                        \
-    Function::Recorder(#TOKEN, &Function_##TOKEN::newFunction);
+    public:                                                                   \
+        virtual double evaluate() const {                                     \
+            vName x(args);                                                    \
+            for (auto i = 0u; i < args; i++)                                  \
+                x[i] = _operands[i]->evaluate();                              \
+            return FUNCTION;                                                  \
+        }                                                                     \
+    };                                                                        \
+    const Function::Recorder Function_##TOKEN::_recorder =                    \
+        Function::Recorder(#TOKEN, &Function_##TOKEN::newFunction);           \
+}
 
 
 namespace symbols {
@@ -239,7 +243,5 @@ namespace symbols {
     };
 
 }
-
-#endif
 
 #endif
