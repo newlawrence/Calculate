@@ -1,4 +1,11 @@
+# Exclude files from code releases
+.gitignore export-ignore
+.gitattributes export-ignore
+.travis.yml export-ignore
+readme.md export-ignore
+
+# Exclude files from language statistics
 copying linguist-vendored
 *.txt linguist-vendored
 *.md linguist-vendored
-
+*.yml linguist-vendored
