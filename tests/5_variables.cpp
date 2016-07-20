@@ -22,27 +22,27 @@ TEST_CASE("Variable arguments", "[variables]") {
     SECTION("Arguments mismatch") {
         CHECK_THROWS_AS(
             Calculate("0")(0),
-            EvaluationException
+            WrongArgumentsException
         );
         CHECK_THROWS_AS(
             Calculate("x0", "x0")(0, 1),
-            EvaluationException
+            WrongArgumentsException
         );
         CHECK_THROWS_AS(
             Calculate("x0 + x1", "x0, x1")(0, 1, 2),
-            EvaluationException
+            WrongArgumentsException
         );
         CHECK_THROWS_AS(
             Calculate("x0 * x1 * x2", "x0, x1, x2")(0, 1, 2, 3),
-            EvaluationException
+            WrongArgumentsException
         );
         CHECK_THROWS_AS(
             Calculate("x0 + x1", "x0, x1")(std::vector<double>({0})),
-            EvaluationException
+            WrongArgumentsException
         );
         CHECK_THROWS_AS(
             Calculate("x0 + x1", "x0, x1")({0, 1, 2}),
-            EvaluationException
+            WrongArgumentsException
         );
     }
 

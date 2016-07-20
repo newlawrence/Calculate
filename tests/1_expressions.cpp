@@ -1,7 +1,6 @@
 #include "catch.hpp"
 #include "calculate.h"
 
-using namespace symbols;
 using namespace calculate;
 
 

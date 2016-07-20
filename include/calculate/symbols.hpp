@@ -8,14 +8,6 @@
 #include <unordered_map>
 
 
-#define DEFINE_EXCEPTION(NAME, MESSAGE)                                       \
-struct NAME : public BaseSymbolException {                                    \
-    const char* what() const noexcept {                                       \
-        return MESSAGE;                                                       \
-    }                                                                         \
-};
-
-
 #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
 namespace symbols {                                                           \
     class Constant_##TOKEN final : public Constant {                          \
@@ -94,22 +86,12 @@ namespace symbols {
     using fSymbolGen = pSymbol (*)();
     using mSymbolGen = std::unordered_map<String, fSymbolGen>;
 
-
-    struct BaseSymbolException : public std::exception {};
-    DEFINE_EXCEPTION(BadCastException, "Bad casting of symbol")
-    DEFINE_EXCEPTION(NotEvaluableException, "Non evaluable symbol called")
-    DEFINE_EXCEPTION(UndefinedSymbolException, "Undefined symbol")
-
-
     enum Type {CONSTANT, LEFT, RIGHT, SEPARATOR, OPERATOR, FUNCTION};
 
 
     template<typename T>
-    T* castChild(pSymbol o) {
-        if (auto child = dynamic_cast<T *>(o.get()))
-            return child;
-        else
-            throw BadCastException();
+    T* castChild(pSymbol o) noexcept {
+         return dynamic_cast<T *>(o.get());
     }
     pSymbol newSymbol(double *v);
     pSymbol newSymbol(const String &t);
@@ -175,7 +157,7 @@ namespace symbols {
 
     public:
         virtual double evaluate() const {
-            throw NotEvaluableException();
+            throw std::exception();
         };
 
         friend pSymbol newSymbol(const String &t);
@@ -189,7 +171,7 @@ namespace symbols {
 
     public:
         virtual double evaluate() const {
-            throw NotEvaluableException();
+            throw std::exception();
         };
 
         friend pSymbol newSymbol(const String &t);

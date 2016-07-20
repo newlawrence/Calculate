@@ -39,7 +39,7 @@ namespace symbols {
         else if (Function::_symbols.find(t) != Function::_symbols.end())
             return Function::_symbols[t]();
         else
-            throw UndefinedSymbolException();
+            throw std::exception();
     }
 
 

@@ -10,6 +10,8 @@
 namespace calculate {
 
     qSymbol Calculate::tokenize(const String &expr) const {
+        using namespace symbols;
+
         qSymbol infix;
 
         auto next = std::sregex_iterator(expr.begin(), expr.end(), _regex),
@@ -20,10 +22,15 @@ namespace calculate {
             auto it = std::find(variables.begin(), variables.end(), match);
             if (it != variables.end()) {
                 auto position = it - variables.begin();
-                infix.push(symbols::newSymbol(_values.get() + position));
+                infix.push(newSymbol(_values.get() + position));
             }
             else {
-                infix.push(symbols::newSymbol(match));
+                try {
+                    infix.push(newSymbol(match));
+                }
+                catch (std::exception) {
+                    throw UndefinedSymbolException();
+                }
             }
             next++;
         }
@@ -91,6 +98,8 @@ namespace calculate {
     }
 
     qSymbol Calculate::shuntingYard(qSymbol &&infix) const {
+        using namespace symbols;
+
         qSymbol postfix;
         sSymbol operations;
 
@@ -134,10 +143,8 @@ namespace calculate {
                             break;
                         }
                         else {
-                            auto op1 =
-                                symbols::castChild<symbols::Operator>(element);
-                            auto op2 =
-                                symbols::castChild<symbols::Operator>(another);
+                            auto op1 = castChild<Operator>(element);
+                            auto op2 = castChild<Operator>(another);
                             if ((op1->left_assoc &&
                                  op1->precedence <= op2->precedence) ||
                                 (!op1->left_assoc &&
@@ -176,9 +183,6 @@ namespace calculate {
                     else
                         throw ParenthesisMismatchException();
                     break;
-
-                default:
-                    throw symbols::UndefinedSymbolException();
             }
         }
 
@@ -193,6 +197,7 @@ namespace calculate {
     }
 
     pSymbol Calculate::buildTree(qSymbol &&postfix) const {
+        using namespace symbols;
         sSymbol operands;
         pSymbol element;
 
@@ -205,7 +210,7 @@ namespace calculate {
             }
 
             else if (element->is(Type::FUNCTION)) {
-                auto function = symbols::castChild<symbols::Function>(element);
+                auto function = castChild<Function>(element);
                 auto args = function->args;
                 vSymbol ops(args);
                 for (auto i = args; i > 0; i--) {
@@ -219,7 +224,7 @@ namespace calculate {
             }
 
             else if (element->is(Type::OPERATOR)) {
-                auto binary = symbols::castChild<symbols::Operator>(element);
+                auto binary = castChild<Operator>(element);
                 pSymbol a, b;
                 if (operands.size() < 2)
                     throw MissingArgumentsException();
@@ -230,9 +235,6 @@ namespace calculate {
                 binary->addBranches(a, b);
                 operands.push(element);
             }
-
-            else
-                throw symbols::UndefinedSymbolException();
         }
         if (operands.size() > 1)
             throw ConstantsExcessException();
@@ -302,6 +304,7 @@ namespace calculate {
     Calculate::Calculate(const String &expr, const vString &vars) :
         _values(new double[vars.size()]),
         expression(expr), variables(validate(vars)) {
+        using namespace symbols;
 
         if (expr.length() == 0)
             throw EmptyExpressionException();
@@ -314,7 +317,7 @@ namespace calculate {
             "-?\\d+e-?\\d+|"
             "[A-Za-z]+\\d*[A-Za-z]*|"
             "[,()]|" +
-            symbols::Operator::getSymbolsRegex()
+            Operator::getSymbolsRegex()
         );
 
         auto infix = check(tokenize(expr));
@@ -328,22 +331,39 @@ namespace calculate {
     }
 
     double Calculate::operator() () const {
-        return _tree->evaluate();
+        try {
+            return _tree->evaluate();
+        }
+        catch (std::exception) {
+            throw EvaluationException();
+        }
     };
 
     double Calculate::operator() (double value) const {
         if (variables.size() < 1)
-            throw EvaluationException();
+            throw WrongArgumentsException();
         _values[variables.size() - 1] = value;
-        return _tree->evaluate();
+
+        try {
+            return _tree->evaluate();
+        }
+        catch (std::exception) {
+            throw EvaluationException();
+        }
     }
 
     double Calculate::operator() (vValue values) const {
         if (values.size() != variables.size())
-            throw EvaluationException();
+            throw WrongArgumentsException();
         for (auto i = 0u; i < values.size(); i++)
             _values[i] = values[i];
-        return _tree->evaluate();
+
+        try {
+            return _tree->evaluate();
+        }
+        catch (std::exception) {
+            throw EvaluationException();
+        }
     }
 
 }
@@ -361,7 +381,7 @@ namespace calculate_c_interface {
             strcpy(errors, "");
             return expr_obj;
         }
-        catch (const BaseSymbolException &e) {
+        catch (const BaseCalculateException &e) {
             strcpy(errors, e.what());
             return nullptr;
         }
@@ -391,25 +411,25 @@ namespace calculate_c_interface {
     }
 
 
-    double evaluateArray(calculate_Expression expr_obj, double *values,
+    double evaluateArray(calculate_Expression expr_obj, double *args,
                          int size, char *errors) {
         if (!expr_obj)
             return std::numeric_limits<double>::quiet_NaN();
 
-        vValue values_vector(values, values + size);
+        vValue values(args, args + size);
         try {
             strcpy(errors, "");
-            return static_cast<Calculate*>(expr_obj)->operator()(values_vector);
+            return static_cast<Calculate*>(expr_obj)->operator()(values);
         }
-        catch (const BaseSymbolException &e) {
+        catch (const BaseCalculateException &e) {
             strcpy(errors, e.what());
             return std::numeric_limits<double>::quiet_NaN();
         }
     }
 
-    double evalArray(calculate_Expression expr_obj, double *values, int size) {
+    double evalArray(calculate_Expression expr_obj, double *args, int size) {
         char errors[64];
-        return evaluateArray(expr_obj, values, size, errors);
+        return evaluateArray(expr_obj, args, size, errors);
     }
 
     double eval(calculate_Expression expr_obj, ...) {
@@ -427,7 +447,7 @@ namespace calculate_c_interface {
         try {
             return static_cast<Calculate*>(expr_obj)->operator()(values);
         }
-        catch (BaseSymbolException) {
+        catch (BaseCalculateException) {
             return std::numeric_limits<double>::quiet_NaN();
         }
     }

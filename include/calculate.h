@@ -13,6 +13,14 @@
 #include "calculate/symbols.hpp"
 
 
+#define CALCULATE_EXCEPTION(NAME, MESSAGE)                                    \
+struct NAME : public BaseCalculateException {                                 \
+    const char* what() const noexcept {                                       \
+        return MESSAGE;                                                       \
+    }                                                                         \
+};
+
+
 namespace calculate {
 
     using pValue = std::unique_ptr<double[]>;
@@ -21,7 +29,6 @@ namespace calculate {
     using vString = std::vector<String>;
     using Regex = std::regex;
 
-    using symbols::BaseSymbolException;
     using symbols::Type;
     using symbols::pSymbol;
     using symbols::vSymbol;
@@ -29,14 +36,17 @@ namespace calculate {
     using sSymbol = std::stack<pSymbol>;
 
 
-    DEFINE_EXCEPTION(EmptyExpressionException, "Empty expression")
-    DEFINE_EXCEPTION(EvaluationException, "Arguments mismatch")
-    DEFINE_EXCEPTION(BadNameException, "Unsuitable variable name")
-    DEFINE_EXCEPTION(DuplicateNameException, "Duplicated names")
-    DEFINE_EXCEPTION(ParenthesisMismatchException, "Parenthesis mismatch")
-    DEFINE_EXCEPTION(MissingArgumentsException, "Missing arguments")
-    DEFINE_EXCEPTION(ConstantsExcessException, "Too many arguments")
-    DEFINE_EXCEPTION(SyntaxErrorException, "Syntax error")
+    struct BaseCalculateException : public std::exception {};
+    CALCULATE_EXCEPTION(EmptyExpressionException, "Empty expression")
+    CALCULATE_EXCEPTION(UndefinedSymbolException, "Undefined symbol")
+    CALCULATE_EXCEPTION(BadNameException, "Unsuitable variable name")
+    CALCULATE_EXCEPTION(DuplicateNameException, "Duplicated names")
+    CALCULATE_EXCEPTION(ParenthesisMismatchException, "Parenthesis mismatch")
+    CALCULATE_EXCEPTION(MissingArgumentsException, "Missing arguments")
+    CALCULATE_EXCEPTION(ConstantsExcessException, "Too many arguments")
+    CALCULATE_EXCEPTION(SyntaxErrorException, "Syntax error")
+    CALCULATE_EXCEPTION(WrongArgumentsException, "Arguments mismatch")
+    CALCULATE_EXCEPTION(EvaluationException, "Evaluation error")
 
 
     class Calculate final {
@@ -73,7 +83,7 @@ namespace calculate {
         template <typename Head, typename... Tail>
         double operator() (Head head, Tail... tail) const {
             if (sizeof...(tail) + 1 > variables.size())
-                throw EvaluationException();
+                throw WrongArgumentsException();
             _values[variables.size() - sizeof...(tail) - 1] = head;
             return this->operator() (tail...);
         };
