@@ -8,10 +8,9 @@
 
 
 namespace calculate {
+    using namespace symbols;
 
     qSymbol Calculate::tokenize(const String &expr) const {
-        using namespace symbols;
-
         qSymbol infix;
 
         auto regex = std::regex(
@@ -106,8 +105,6 @@ namespace calculate {
     }
 
     qSymbol Calculate::shuntingYard(qSymbol &&infix) const {
-        using namespace symbols;
-
         qSymbol postfix;
         sSymbol operations;
 
@@ -205,7 +202,6 @@ namespace calculate {
     }
 
     pSymbol Calculate::buildTree(qSymbol &&postfix) const {
-        using namespace symbols;
         sSymbol operands;
         pSymbol element;
 
@@ -311,7 +307,6 @@ namespace calculate {
     Calculate::Calculate(const String &expr, const vString &vars) :
         _values(new double[vars.size()]),
         expression(expr), variables(validate(vars)) {
-        using namespace symbols;
 
         if (expr.length() == 0)
             throw EmptyExpressionException();
