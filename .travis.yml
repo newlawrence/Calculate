@@ -7,6 +7,10 @@ env:
     - CMAKE_URL=http://www.cmake.org/files/v3.5/${CMAKE_FILE}
     - CMAKE_BUILD_TYPE=Release
 
+branches:
+  only:
+    - master
+
 matrix:
   include:
     - compiler: gcc

@@ -4,13 +4,14 @@
 #include "catch.hpp"
 #include "calculate.h"
 
+using namespace calculate;
 
 TEST_CASE("Builtin operators", "[operators]") {
 
     SECTION("addition") {
         auto x = static_cast<double>(rand() % 1000 + 1);
         auto y = static_cast<double>(rand() % 1000 + 1);
-        auto add = calculate::Calculate("x + y", "x, y");
+        auto add = Calculate("x + y", "x, y");
 
         CHECK(add(x, 0) == Approx(x).epsilon(1e-12));
         CHECK(add(x, 1) == Approx(x + 1).epsilon(1e-12));
@@ -20,7 +21,7 @@ TEST_CASE("Builtin operators", "[operators]") {
     SECTION("subtraction") {
         auto x = static_cast<double>(rand() % 1000 + 1);
         auto y = static_cast<double>(rand() % 1000 + 1);
-        auto sub = calculate::Calculate("x - y", "x, y");
+        auto sub = Calculate("x - y", "x, y");
 
         CHECK(sub(x, 0) == Approx(x).epsilon(1e-12));
         CHECK(sub(x, 1) == Approx(x - 1).epsilon(1e-12));
@@ -30,7 +31,7 @@ TEST_CASE("Builtin operators", "[operators]") {
     SECTION("multiplication") {
         auto x = static_cast<double>(rand() % 1000 + 1);
         auto y = static_cast<double>(rand() % 1000 + 1);
-        auto mul = calculate::Calculate("x * y", "x, y");
+        auto mul = Calculate("x * y", "x, y");
 
         CHECK(mul(x, 0) == Approx(0).epsilon(1e-12));
         CHECK(mul(x, 1) == Approx(x).epsilon(1e-12));
@@ -40,7 +41,7 @@ TEST_CASE("Builtin operators", "[operators]") {
     SECTION("division") {
         auto x = static_cast<double>(rand() % 1000 + 1);
         auto y = static_cast<double>(rand() % 1000 + 1);
-        auto mul = calculate::Calculate("x / y", "x, y");
+        auto mul = Calculate("x / y", "x, y");
 
         CHECK(std::isinf(mul(x, 0)));
         CHECK(mul(x, 1) == Approx(x).epsilon(1e-12));
@@ -50,7 +51,7 @@ TEST_CASE("Builtin operators", "[operators]") {
     SECTION("modulus") {
         auto x = static_cast<double>(rand() % 1000 + 1);
         auto y = x + 1;
-        auto mod = calculate::Calculate("x % y", "x, y");
+        auto mod = Calculate("x % y", "x, y");
 
         CHECK(std::isnan(mod(x, 0)));
         CHECK(mod(x, 1) == Approx(0).epsilon(1e-12));
@@ -62,8 +63,8 @@ TEST_CASE("Builtin operators", "[operators]") {
     SECTION("power") {
         auto x = static_cast<double>(rand() % 5 + 1);
         auto y = x + static_cast<double>(rand() % 5 + 1);
-        auto pow = calculate::Calculate("x ^ y", "x, y");
-        auto pow2 = calculate::Calculate("x ** y", "x, y");
+        auto pow = Calculate("x ^ y", "x, y");
+        auto pow2 = Calculate("x ** y", "x, y");
 
         CHECK(pow(x, 0) == Approx(1).epsilon(1e-12));
         CHECK(pow2(x, 0) == Approx(1).epsilon(1e-12));

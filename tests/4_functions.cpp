@@ -1,3 +1,4 @@
+#include <exception>
 #include <cmath>
 
 #include "catch.hpp"
@@ -5,6 +6,11 @@
 
 #define eval(e) calculate::Calculate(e)()
 #define approx(x) Approx(x).epsilon(1e-12)
+
+RECORD_FUNCTION(good, 1, x[0])
+RECORD_FUNCTION(bad, 1, []() -> double {throw std::exception();}())
+
+using namespace calculate;
 
 
 TEST_CASE("Builtin functions", "[functions]") {
@@ -78,4 +84,8 @@ TEST_CASE("Builtin functions", "[functions]") {
         CHECK(eval("lgamma(0.5)") == approx(0.572364942925));
     }
 
+    SECTION("Custom functions") {
+        CHECK_NOTHROW(Calculate("good(0)")());
+        CHECK_THROWS_AS(Calculate("bad(0)")(), EvaluationException);
+    }
 }

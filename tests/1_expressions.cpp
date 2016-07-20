@@ -1,7 +1,6 @@
 #include "catch.hpp"
 #include "calculate.h"
 
-using namespace symbols;
 using namespace calculate;
 
 
@@ -12,9 +11,10 @@ TEST_CASE("Wrong expressions", "[Expressions]") {
     }
 
     SECTION("Undefined symbols") {
-        CHECK_THROWS_AS(Calculate("~"), SyntaxErrorException);
-        CHECK_THROWS_AS(Calculate("1 + ~"), SyntaxErrorException);
-        CHECK_THROWS_AS(Calculate("~ + 1"), SyntaxErrorException);
+        CHECK_THROWS_AS(Calculate("x"), UndefinedSymbolException);
+        CHECK_THROWS_AS(Calculate("1 + x"), UndefinedSymbolException);
+        CHECK_THROWS_AS(Calculate("x + 1"), UndefinedSymbolException);
+        CHECK_THROWS_AS(Calculate("1 + x 2"), UndefinedSymbolException);
     }
 
     SECTION("Parenthesis mismatches") {
@@ -73,7 +73,7 @@ TEST_CASE("Wrong expressions", "[Expressions]") {
         CHECK_NOTHROW(Calculate("1 + 2"));
         CHECK_NOTHROW(Calculate("1 + (2)"));
         CHECK_THROWS_AS(Calculate("1 + )"), SyntaxErrorException);
-        CHECK_THROWS_AS(Calculate("hypot(1 +, 2)"), SyntaxErrorException);
+        CHECK_THROWS_AS(Calculate("hypot(1 + , 2)"), SyntaxErrorException);
         CHECK_THROWS_AS(Calculate("1 + + 2"), SyntaxErrorException);
         CHECK_NOTHROW(Calculate("1 + log(2)"));
     }

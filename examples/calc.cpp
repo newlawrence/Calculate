@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
             cout << expression(values) << endl;
         }
     }
-    catch (const symbols::BaseSymbolException &e) {
+    catch (const BaseCalculateException &e) {
         cout << e.what() << endl;
     }
 
