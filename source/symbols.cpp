@@ -1,5 +1,4 @@
 #include <cmath>
-#include <algorithm>
 
 #include "calculate/symbols.hpp"
 
@@ -8,8 +7,6 @@ namespace symbols {
 
     mSymbolGen Constant::_symbols;
     mSymbolGen Operator::_symbols;
-    String Operator::_regex_simple;
-    String Operator::_regex_composite;
     mSymbolGen Function::_symbols;
 
 
@@ -50,23 +47,12 @@ namespace symbols {
 
     Operator::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
         Operator::_symbols[t] = g;
-        if (std::all_of(
-            t.begin(), t.end(), [&t](char ch) {return ch == t[0];})
-            )
-            _regex_simple += t;
-        else
-            _regex_composite += "|" + t;
     }
 
     void Operator::addBranches(pSymbol l, pSymbol r) noexcept {
         _left_operand = l;
         _right_operand = r;
     }
-
-    String Operator::getSymbolsRegex() noexcept {
-        return String("[") + _regex_simple + "]+" + _regex_composite;
-    }
-
 
     Function::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
         Function::_symbols[t] = g;

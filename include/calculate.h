@@ -50,7 +50,6 @@ namespace calculate {
 
 
     class Calculate final {
-        Regex _regex;
         pValue _values;
         pSymbol _tree;
 

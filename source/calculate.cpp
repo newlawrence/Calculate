@@ -14,7 +14,15 @@ namespace calculate {
 
         qSymbol infix;
 
-        auto next = std::sregex_iterator(expr.begin(), expr.end(), _regex),
+        auto regex = std::regex(
+            "-?[0-9.]+(?!e\\+?-?\\d+)|"
+            "-?\\d+e-?\\d+|"
+            "[A-Za-z]+\\d*[A-Za-z]*|"
+            "[^a-zA-Z\\d\\s\\.\\,()]+|"
+            "[(),]"
+        );
+
+        auto next = std::sregex_iterator(expr.begin(), expr.end(), regex),
             end = std::sregex_iterator();
 
         while (next != end) {
@@ -293,7 +301,6 @@ namespace calculate {
     Calculate::Calculate(Calculate &&other) :
         _values(new double[other.variables.size()]),
         expression(other.expression), variables(other.variables) {
-        this->_regex = other._regex;
         this->_tree = std::move(other._tree);
     }
 
@@ -311,14 +318,6 @@ namespace calculate {
 
         for (auto i = 0u; i < vars.size(); i++)
             _values[i] = 0.;
-
-        _regex = std::regex(
-            "-?[0-9.]+(?!e\\+?-?\\d+)|"
-            "-?\\d+e-?\\d+|"
-            "[A-Za-z]+\\d*[A-Za-z]*|"
-            "[,()]|" +
-            Operator::getSymbolsRegex()
-        );
 
         auto infix = check(tokenize(expr));
         auto postfix = shuntingYard(std::move(infix));
@@ -344,12 +343,7 @@ namespace calculate {
             throw WrongArgumentsException();
         _values[variables.size() - 1] = value;
 
-        try {
-            return _tree->evaluate();
-        }
-        catch (std::exception) {
-            throw EvaluationException();
-        }
+        return this->operator()();
     }
 
     double Calculate::operator() (vValue values) const {
@@ -358,12 +352,7 @@ namespace calculate {
         for (auto i = 0u; i < values.size(); i++)
             _values[i] = values[i];
 
-        try {
-            return _tree->evaluate();
-        }
-        catch (std::exception) {
-            throw EvaluationException();
-        }
+        return this->operator()();
     }
 
 }

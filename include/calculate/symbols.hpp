@@ -184,8 +184,6 @@ namespace symbols {
             Recorder(const String &t, fSymbolGen g) noexcept;
         };
         static mSymbolGen _symbols;
-        static String _regex_simple;
-        static String _regex_composite;
 
         pSymbol _left_operand;
         pSymbol _right_operand;
@@ -199,7 +197,6 @@ namespace symbols {
         void addBranches(pSymbol l, pSymbol r) noexcept;
         virtual double evaluate() const = 0;
 
-        static String getSymbolsRegex() noexcept;
         friend pSymbol newSymbol(const String &t);
     };
 
