@@ -1,7 +1,7 @@
 #include <cmath>
 #include <algorithm>
 
-#include "symbols.hpp"
+#include "calculate/symbols.hpp"
 
 
 namespace symbols {

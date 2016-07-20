@@ -10,7 +10,7 @@
 #include <stack>
 #include <regex>
 
-#include "symbols.hpp"
+#include "calculate/symbols.hpp"
 
 
 namespace calculate {
