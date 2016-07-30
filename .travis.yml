@@ -16,10 +16,6 @@ env:
     - DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
     - CMAKE_FILE=cmake-3.5.2-Linux-x86_64.tar.gz
     - CMAKE_URL=http://www.cmake.org/files/v3.5/${CMAKE_FILE}
-    - CMAKE_BUILD_TYPE=Debug
-    - CC=gcc-5
-    - CXX=g++-5
-    - COVERAGE=True
 
 branches:
   only:
@@ -38,7 +34,7 @@ install:
   - cmake --version
 
 script:
-  - cmake .
+  - CC=gcc-5 CXX=g++-5 COVERAGE=True cmake . -DCMAKE_BUILD_TYPE=Debug
   - make unittests
   - make coverage
 
