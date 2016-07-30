@@ -1,66 +1,32 @@
 language: cpp
 
+compiler:
+  - gcc
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-5
+      - g++-5
+
 env:
   global:
     - DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
     - CMAKE_FILE=cmake-3.5.2-Linux-x86_64.tar.gz
     - CMAKE_URL=http://www.cmake.org/files/v3.5/${CMAKE_FILE}
-    - CMAKE_BUILD_TYPE=Release
+    - CMAKE_BUILD_TYPE=Debug
+    - CC=gcc-5
+    - CXX=g++-5
+    - COVERAGE=True
 
 branches:
   only:
     - master
-
-matrix:
-  include:
-    - compiler: gcc
-      env: GCC_VER=5
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - gcc-5
-            - g++-5
-    - compiler: gcc
-      env: GCC_VER=6
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - gcc-6
-            - g++-6
-    - compiler: clang
-      env: CLANG_VER=3.6
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.6
-          packages:
-            - g++-5
-            - clang-3.6
-    - compiler: clang
-      env: CLANG_VER=3.7
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.7
-          packages:
-            - g++-5
-            - clang-3.7
+    - codecov
 
 before_install:
-  - |
-    if [ "${CXX}" = "g++" ]
-        then export CXX="g++-${GCC_VER}" CC="gcc-${GCC_VER}"
-    fi
-  - |
-    if [ "${CXX}" = "clang++" ]
-        then export CXX="clang++-${CLANG_VER}" CC="clang-${CLANG_VER}"
-    fi
   - mkdir -p ${DEPS_DIR}
 
 install:
@@ -72,5 +38,9 @@ install:
   - cmake --version
 
 script:
-  - cmake . && make unittests
+  - cmake .
+  - make unittests
+  - make coverage
 
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
