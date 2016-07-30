@@ -26,6 +26,8 @@ before_install:
   - mkdir -p ${DEPS_DIR}
 
 install:
+  - dirname $(which gcc-5)
+  - ls $(dirname $(which gcc-5))
   - wget ${CMAKE_URL} --quiet --no-check-certificate
   - mkdir -p cmake
   - tar -xzf ${CMAKE_FILE} -C cmake --strip-components 1
