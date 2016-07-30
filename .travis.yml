@@ -10,7 +10,6 @@ addons:
     packages:
       - gcc-5
       - g++-5
-      - gcov-5
 
 env:
   global:
@@ -21,12 +20,12 @@ env:
 branches:
   only:
     - master
-    - codecov
 
 before_install:
   - mkdir -p ${DEPS_DIR}
 
 install:
+  - sed -i -e 's/gcov/gcov-5/g' CMakeLists.txt
   - wget ${CMAKE_URL} --quiet --no-check-certificate
   - mkdir -p cmake
   - tar -xzf ${CMAKE_FILE} -C cmake --strip-components 1

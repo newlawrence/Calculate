@@ -9,7 +9,7 @@ if(NOT EXISTS "${CATCH_PATH}")
 endif()
 
 function(setup_target_for_coverage TARGETNAME LIBRARYNAME)
-    FIND_PROGRAM(GCOV gcov-5)
+    FIND_PROGRAM(GCOV gcov)
     if (NOT GCOV)
     	message(FATAL_ERROR "gcov not found.")
     endif ()
