@@ -25,3 +25,5 @@ Release/
 # CATCH library
 extern/include/catch.hpp
 
+# coverage reports
+coverage/
