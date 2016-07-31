@@ -49,9 +49,6 @@ namespace calculate {
         qSymbol output;
         pSymbol current, next;
 
-        if (input.size() == 0)
-            throw SyntaxErrorException();
-
         current = input.front();
         input.pop();
         output.push(current);
