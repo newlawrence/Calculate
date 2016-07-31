@@ -79,4 +79,9 @@ TEST_CASE("Builtin functions", "[functions]") {
         CHECK(eval("tgamma(0.5)") == approx(1.772453850906));
         CHECK(eval("lgamma(0.5)") == approx(0.572364942925));
     }
+
+    SECTION("Incorrect number of arguments") {
+        CHECK_THROWS_AS(Calculate("hypot(1)"), MissingArgumentsException);
+        CHECK_THROWS_AS(Calculate("hypot(1, 2, 3)"), ArgumentsExcessException);
+    }
 }

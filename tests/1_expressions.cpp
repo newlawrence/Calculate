@@ -4,6 +4,18 @@
 using namespace calculate;
 
 
+TEST_CASE("Constructors test", "[Constructors]") {
+
+    SECTION("Constructors") {
+        Calculate expression1(Calculate("1 + x", "x"));
+        Calculate expression2(expression1);
+        CHECK(expression1 == expression2);
+        CHECK(expression1(2) == expression2(2));
+    }
+
+}
+
+
 TEST_CASE("Wrong expressions", "[Expressions]") {
 
     SECTION("Empty expression") {
@@ -96,4 +108,10 @@ TEST_CASE("Wrong expressions", "[Expressions]") {
         CHECK_THROWS_AS(Calculate("log"), SyntaxErrorException);
     }
 
+    SECTION("Miscellany") {
+        CHECK_NOTHROW(Calculate("hypot(4 + cos(pi), 4)"));
+        CHECK_THROWS_AS(Calculate("1, 2)"), ParenthesisMismatchException);
+        CHECK_NOTHROW(Calculate("sin(pi / 2) + 1"));
+        CHECK_NOTHROW(Calculate("3 + 4 * 2 / (1 - 5) ^ 2 ^ 3"));
+    }
 }

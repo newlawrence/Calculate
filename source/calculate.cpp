@@ -227,8 +227,6 @@ namespace calculate {
             else if (element->is(Type::OPERATOR)) {
                 auto binary = castChild<Operator>(element);
                 pSymbol a, b;
-                if (operands.size() < 2)
-                    throw MissingArgumentsException();
                 b = operands.top();
                 operands.pop();
                 a = operands.top();
@@ -238,7 +236,7 @@ namespace calculate {
             }
         }
         if (operands.size() > 1)
-            throw ConstantsExcessException();
+            throw ArgumentsExcessException();
 
         return operands.top();
     }
@@ -293,8 +291,8 @@ namespace calculate {
 
     Calculate::Calculate(Calculate &&other) :
         _values(new double[other.variables.size()]),
-        expression(other.expression), variables(other.variables) {
-        this->_tree = std::move(other._tree);
+        expression(other.expression), variables(std::move(other.variables)) {
+        _tree = std::move(other._tree);
     }
 
     Calculate::Calculate(const String &expr, const String &vars) :

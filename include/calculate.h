@@ -43,7 +43,7 @@ namespace calculate {
     CALCULATE_EXCEPTION(DuplicateNameException, "Duplicated names")
     CALCULATE_EXCEPTION(ParenthesisMismatchException, "Parenthesis mismatch")
     CALCULATE_EXCEPTION(MissingArgumentsException, "Missing arguments")
-    CALCULATE_EXCEPTION(ConstantsExcessException, "Too many arguments")
+    CALCULATE_EXCEPTION(ArgumentsExcessException, "Too many arguments")
     CALCULATE_EXCEPTION(SyntaxErrorException, "Syntax error")
     CALCULATE_EXCEPTION(WrongArgumentsException, "Arguments mismatch")
 
