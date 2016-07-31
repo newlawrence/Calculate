@@ -2,6 +2,7 @@
 .gitignore export-ignore
 .gitattributes export-ignore
 .travis.yml export-ignore
+.codecov.yml export-ignore
 readme.md export-ignore
 
 # Exclude files from language statistics
