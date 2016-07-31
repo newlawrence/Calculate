@@ -39,4 +39,6 @@ script:
   - make coverage
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - pushd coverage
+  - bash <(curl -s https://codecov.io/bash) -X gcov
+  - popd

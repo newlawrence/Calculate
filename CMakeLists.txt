@@ -16,8 +16,11 @@ function(setup_target_for_coverage TARGETNAME LIBRARYNAME)
     set(SRCS "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
     set(BINS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${LIBRARYNAME}.dir/source")
     add_custom_target(${TARGETNAME}
-        COMMAND ${GCOV} ${SRCS} -o ${BINS} -p > /dev/null
-        COMMAND ${CMAKE_COMMAND} -E remove "*usr*.gcov"
+        COMMAND ${CMAKE_COMMAND} -E make_directory coverage
+        COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_CURRENT_SOURCE_DIR}/coverage"
+                ${GCOV} ${SRCS} -o ${BINS} -p > /dev/null
+        COMMAND ${CMAKE_COMMAND} -E remove
+                "${CMAKE_CURRENT_SOURCE_DIR}/coverage/*usr*.gcov"
     )
 endfunction ()
 
