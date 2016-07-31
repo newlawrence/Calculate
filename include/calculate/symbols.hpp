@@ -2,7 +2,6 @@
 #define __SYMBOLS_H__
 
 #include <memory>
-#include <exception>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -20,7 +19,7 @@ namespace symbols {                                                           \
             Constant(std::to_string(VALUE)) {}                                \
                                                                               \
     public:                                                                   \
-        virtual double evaluate() const {return VALUE;}                       \
+        virtual double evaluate() const noexcept {return VALUE;}              \
     };                                                                        \
     const Constant::Recorder Constant_##TOKEN::_recorder =                    \
         Constant::Recorder(#TOKEN, &Constant_##TOKEN::newConstant);           \
@@ -39,7 +38,7 @@ namespace symbols {                                                           \
             Operator(TOKEN, PRECEDENCE, L_ASSOCIATION) {}                     \
                                                                               \
     public:                                                                   \
-        virtual double evaluate() const {                                     \
+        virtual double evaluate() const noexcept {                            \
             double a = _left_operand->evaluate();                             \
             double b = _right_operand->evaluate();                            \
             return FUNCTION;                                                  \
@@ -62,7 +61,7 @@ namespace symbols {                                                           \
              Function(#TOKEN, ARGS) {}                                        \
                                                                               \
     public:                                                                   \
-        virtual double evaluate() const {                                     \
+        virtual double evaluate() const noexcept {                            \
             vName x(args);                                                    \
             for (auto i = 0u; i < args; i++)                                  \
                 x[i] = _operands[i]->evaluate();                              \
@@ -111,7 +110,7 @@ namespace symbols {
         const String token;
         const Type type;
         bool is(Type y) noexcept {return type == y;}
-        virtual double evaluate() const = 0;
+        virtual double evaluate() const noexcept = 0;
     };
 
 
@@ -121,7 +120,7 @@ namespace symbols {
 
     public:
         const double *_value;
-        virtual double evaluate() const {return *_value;}
+        virtual double evaluate() const noexcept {return *_value;}
 
         friend pSymbol newSymbol(double *v);
     };
@@ -139,7 +138,7 @@ namespace symbols {
 
     public:
         const double value;
-        virtual double evaluate() const {return value;}
+        virtual double evaluate() const noexcept {return value;}
 
         friend void recordConstant(const String &t, double v);
         friend pSymbol newSymbol(const String &t);
@@ -156,8 +155,8 @@ namespace symbols {
             Symbol(_symbol, _type) {}
 
     public:
-        virtual double evaluate() const {
-            throw std::exception();
+        virtual double evaluate() const noexcept {
+            return 0;
         };
 
         friend pSymbol newSymbol(const String &t);
@@ -170,8 +169,8 @@ namespace symbols {
             : Symbol(",", Type::SEPARATOR) {}
 
     public:
-        virtual double evaluate() const {
-            throw std::exception();
+        virtual double evaluate() const noexcept {
+            return 0;
         };
 
         friend pSymbol newSymbol(const String &t);
@@ -195,7 +194,7 @@ namespace symbols {
         const unsigned precedence;
         const bool left_assoc;
         void addBranches(pSymbol l, pSymbol r) noexcept;
-        virtual double evaluate() const = 0;
+        virtual double evaluate() const noexcept = 0;
 
         friend pSymbol newSymbol(const String &t);
     };
@@ -216,7 +215,7 @@ namespace symbols {
     public:
         const unsigned args;
         void addBranches(vSymbol &&x) noexcept;
-        virtual double evaluate() const = 0;
+        virtual double evaluate() const noexcept = 0;
 
         friend pSymbol newSymbol(const String &t);
     };

@@ -322,12 +322,7 @@ namespace calculate {
     }
 
     double Calculate::operator() () const {
-        try {
-            return _tree->evaluate();
-        }
-        catch (std::exception) {
-            throw EvaluationException();
-        }
+        return _tree->evaluate();
     };
 
     double Calculate::operator() (double value) const {
@@ -444,7 +439,7 @@ extern "C" const _calculate_c_library* _get_calculate_c_library() {
         calculate_c_interface::getExpression,
         calculate_c_interface::getVariables,
         calculate_c_interface::evaluateArray,
-        calculate_c_interface:: evalArray,
+        calculate_c_interface::evalArray,
         calculate_c_interface::eval
     };
     return &library;

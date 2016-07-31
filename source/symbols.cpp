@@ -1,3 +1,4 @@
+#include <exception>
 #include <cmath>
 
 #include "calculate/symbols.hpp"

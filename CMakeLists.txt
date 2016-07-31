@@ -13,12 +13,13 @@ function(setup_target_for_coverage TARGETNAME LIBRARYNAME)
     if (NOT GCOV)
     	message(FATAL_ERROR "gcov not found.")
     endif ()
-    set(SRCS "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
-    set(BINS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${LIBRARYNAME}.dir/source")
+    set(SRC "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
+    set(BIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${LIBRARYNAME}.dir/source")
     add_custom_target(${TARGETNAME}
         COMMAND ${CMAKE_COMMAND} -E make_directory coverage
-        COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_CURRENT_SOURCE_DIR}/coverage"
-                ${GCOV} ${SRCS} -o ${BINS} -p > /dev/null
+        COMMAND ${CMAKE_COMMAND} -E chdir
+                "${CMAKE_CURRENT_SOURCE_DIR}/coverage"
+                ${GCOV} ${SRC} -o ${BIN} -p > /dev/null
         COMMAND ${CMAKE_COMMAND} -E remove
                 "${CMAKE_CURRENT_SOURCE_DIR}/coverage/*usr*.gcov"
     )
@@ -36,9 +37,10 @@ if (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
             message(FATAL_ERROR "Code coverage needs an unoptimized build." )
         endif ()
         set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -coverage")
         set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g -coverage")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -coverage")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -coverage")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors")
         setup_target_for_coverage(coverage calculate)
     else ()
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")

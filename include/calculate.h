@@ -46,7 +46,6 @@ namespace calculate {
     CALCULATE_EXCEPTION(ConstantsExcessException, "Too many arguments")
     CALCULATE_EXCEPTION(SyntaxErrorException, "Syntax error")
     CALCULATE_EXCEPTION(WrongArgumentsException, "Arguments mismatch")
-    CALCULATE_EXCEPTION(EvaluationException, "Evaluation error")
 
 
     class Calculate final {
