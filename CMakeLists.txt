@@ -8,29 +8,32 @@ if(NOT EXISTS "${CATCH_PATH}")
     file(DOWNLOAD "${CATCH_URL}" "${CATCH_PATH}")
 endif()
 
-function(setup_target_for_coverage TARGETNAME LIBRARYNAME)
+function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
     FIND_PROGRAM(GCOV gcov)
     if (NOT GCOV)
-    	message(FATAL_ERROR "gcov not found.")
+        message(FATAL_ERROR "gcov not found.")
+    endif ()
+    FIND_PROGRAM(GCOVR gcovr)
+    if (NOT GCOVR)
+        message(FATAL_ERROR "gcovr not found.")
     endif ()
     set(SRC "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
     set(TSRC "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
     set(BIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${LIBRARYNAME}.dir/source")
-    set(TBIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/unittests.dir/tests")
+    set(TBIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${TESTSNAME}.dir/tests")
+    set(COVERAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coverage")
     add_custom_target(${TARGETNAME}
         COMMAND ${CMAKE_COMMAND} -E make_directory coverage
-        COMMAND ${CMAKE_COMMAND} -E chdir
-                "${CMAKE_CURRENT_SOURCE_DIR}/coverage"
+        COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
                 ${GCOV} ${SRC} -o ${BIN} -p > /dev/null
-        COMMAND ${CMAKE_COMMAND} -E chdir
-                "${CMAKE_CURRENT_SOURCE_DIR}/coverage"
+        COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
                 ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
-        COMMAND ${CMAKE_COMMAND} -E remove
-                "${CMAKE_CURRENT_SOURCE_DIR}/coverage/*usr*.gcov"
-        COMMAND ${CMAKE_COMMAND} -E remove
-                "${CMAKE_CURRENT_SOURCE_DIR}/coverage/*extern*.gcov"
-        COMMAND ${CMAKE_COMMAND} -E remove
-                "${CMAKE_CURRENT_SOURCE_DIR}/coverage/*tests*.gcov"
+        COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+                ${GCOVR} -r .. --object-directory . -o coverage.html
+                "--gcov-filter=\".*#(usr|extern|tests)#.*\"" -g 
+        COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+                ${GCOVR} -r .. --object-directory . -o coverage.html
+                -g -k -s --html --html-details
     )
 endfunction ()
 
@@ -54,7 +57,7 @@ if ((${CMAKE_CXX_COMPILER_ID} MATCHES "GNU") OR
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-inline")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-default-inline")
-            setup_target_for_coverage(coverage calculate)
+            setup_target_for_coverage(coverage calculate unittests)
         endif ()
     else ()
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
