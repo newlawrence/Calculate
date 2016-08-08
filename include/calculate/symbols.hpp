@@ -19,6 +19,7 @@ namespace symbols {                                                           \
             Constant(std::to_string(VALUE)) {}                                \
                                                                               \
     public:                                                                   \
+        virtual ~Constant_##TOKEN() {}                                        \
         virtual double evaluate() const noexcept {return VALUE;}              \
     };                                                                        \
     const Constant::Recorder Constant_##TOKEN::_recorder =                    \
@@ -38,6 +39,7 @@ namespace symbols {                                                           \
             Operator(TOKEN, PRECEDENCE, L_ASSOCIATION) {}                     \
                                                                               \
     public:                                                                   \
+        virtual ~Operator_##NAME() {}                                         \
         virtual double evaluate() const noexcept {                            \
             double a = _left_operand->evaluate();                             \
             double b = _right_operand->evaluate();                            \
@@ -61,6 +63,7 @@ namespace symbols {                                                           \
              Function(#TOKEN, ARGS) {}                                        \
                                                                               \
     public:                                                                   \
+        virtual ~Function_##TOKEN() {}                                        \
         virtual double evaluate() const noexcept {                            \
             vName x(args);                                                    \
             for (auto i = 0u; i < args; i++)                                  \
@@ -114,8 +117,11 @@ namespace symbols {
     public:
         const String token;
         const Type type;
-        virtual bool is(Type y) noexcept = 0;
+
+        virtual ~Symbol() = 0;
+        bool is(Type y) const noexcept {return type == y;}
     };
+    inline Symbol::~Symbol() {}
 
 
     template<char s>
@@ -128,7 +134,8 @@ namespace symbols {
             Symbol(_symbol, _type) {}
 
     public:
-        virtual bool is(Type y) noexcept {return type == y;}
+        virtual ~Parenthesis() {}
+
         friend pSymbol newSymbol(const String &t);
     };
     template<char s> constexpr const char Parenthesis<s>::_symbol[2];
@@ -139,7 +146,8 @@ namespace symbols {
             : Symbol(",", Type::SEPARATOR) {}
 
     public:
-        virtual bool is(Type y) noexcept {return type == y;}
+        virtual ~Separator() {}
+
         friend pSymbol newSymbol(const String &t);
     };
 
@@ -150,9 +158,10 @@ namespace symbols {
             Symbol(t, y) {}
 
     public:
-        virtual bool is(Type y) noexcept {return type == y;}
+        virtual ~Evaluable() = 0;
         virtual double evaluate() const noexcept = 0;
     };
+    inline Evaluable::~Evaluable() {}
 
 
     class Variable final : public Evaluable {
@@ -161,6 +170,8 @@ namespace symbols {
 
     public:
         const double *_value;
+
+        virtual ~Variable() {}
         virtual double evaluate() const noexcept {return *_value;}
 
         friend pSymbol newSymbol(double *v);
@@ -179,6 +190,8 @@ namespace symbols {
 
     public:
         const double value;
+
+        virtual ~Constant() {};
         virtual double evaluate() const noexcept {return value;}
 
         friend void recordConstant(const String &t, double v);
@@ -202,6 +215,8 @@ namespace symbols {
     public:
         const unsigned precedence;
         const bool left_assoc;
+
+        virtual ~Operator() {}
         void addBranches(pEvaluable l, pEvaluable r) noexcept;
         virtual double evaluate() const noexcept = 0;
 
@@ -223,6 +238,8 @@ namespace symbols {
 
     public:
         const unsigned args;
+
+        virtual ~Function() {}
         void addBranches(vEvaluable &&x) noexcept;
         virtual double evaluate() const noexcept = 0;
 
