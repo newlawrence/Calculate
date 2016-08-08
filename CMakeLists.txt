@@ -14,14 +14,23 @@ function(setup_target_for_coverage TARGETNAME LIBRARYNAME)
     	message(FATAL_ERROR "gcov not found.")
     endif ()
     set(SRC "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
+    set(TSRC "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
     set(BIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${LIBRARYNAME}.dir/source")
+    set(TBIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/unittests.dir/tests")
     add_custom_target(${TARGETNAME}
         COMMAND ${CMAKE_COMMAND} -E make_directory coverage
         COMMAND ${CMAKE_COMMAND} -E chdir
                 "${CMAKE_CURRENT_SOURCE_DIR}/coverage"
                 ${GCOV} ${SRC} -o ${BIN} -p > /dev/null
+        COMMAND ${CMAKE_COMMAND} -E chdir
+                "${CMAKE_CURRENT_SOURCE_DIR}/coverage"
+                ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
         COMMAND ${CMAKE_COMMAND} -E remove
                 "${CMAKE_CURRENT_SOURCE_DIR}/coverage/*usr*.gcov"
+        COMMAND ${CMAKE_COMMAND} -E remove
+                "${CMAKE_CURRENT_SOURCE_DIR}/coverage/*extern*.gcov"
+        COMMAND ${CMAKE_COMMAND} -E remove
+                "${CMAKE_CURRENT_SOURCE_DIR}/coverage/*tests*.gcov"
     )
 endfunction ()
 
@@ -43,6 +52,8 @@ if ((${CMAKE_CXX_COMPILER_ID} MATCHES "GNU") OR
             set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -coverage")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-inline")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-default-inline")
             setup_target_for_coverage(coverage calculate)
         endif ()
     else ()
