@@ -2,7 +2,6 @@
 #define __SYMBOLS_H__
 
 #include <memory>
-#include <exception>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -20,7 +19,7 @@ namespace symbols {                                                           \
             Constant(std::to_string(VALUE)) {}                                \
                                                                               \
     public:                                                                   \
-        virtual double evaluate() const {return VALUE;}                       \
+        virtual double evaluate() const noexcept {return VALUE;}              \
     };                                                                        \
     const Constant::Recorder Constant_##TOKEN::_recorder =                    \
         Constant::Recorder(#TOKEN, &Constant_##TOKEN::newConstant);           \
@@ -39,7 +38,7 @@ namespace symbols {                                                           \
             Operator(TOKEN, PRECEDENCE, L_ASSOCIATION) {}                     \
                                                                               \
     public:                                                                   \
-        virtual double evaluate() const {                                     \
+        virtual double evaluate() const noexcept {                            \
             double a = _left_operand->evaluate();                             \
             double b = _right_operand->evaluate();                            \
             return FUNCTION;                                                  \
@@ -62,7 +61,7 @@ namespace symbols {                                                           \
              Function(#TOKEN, ARGS) {}                                        \
                                                                               \
     public:                                                                   \
-        virtual double evaluate() const {                                     \
+        virtual double evaluate() const noexcept {                            \
             vName x(args);                                                    \
             for (auto i = 0u; i < args; i++)                                  \
                 x[i] = _operands[i]->evaluate();                              \
@@ -86,13 +85,18 @@ namespace symbols {
     using fSymbolGen = pSymbol (*)();
     using mSymbolGen = std::unordered_map<String, fSymbolGen>;
 
-    enum Type {CONSTANT, LEFT, RIGHT, SEPARATOR, OPERATOR, FUNCTION};
+    class Evaluable;
+    using pEvaluable = std::shared_ptr<Evaluable>;
+    using vEvaluable = std::vector<pEvaluable>;
+
+    enum Type {LEFT, RIGHT, SEPARATOR, CONSTANT, OPERATOR, FUNCTION};
 
 
     template<typename T>
-    T* castChild(pSymbol o) noexcept {
-         return dynamic_cast<T *>(o.get());
+    std::shared_ptr<T> castChild(pSymbol o) noexcept {
+         return std::dynamic_pointer_cast<T>(o);
     }
+
     pSymbol newSymbol(double *v);
     pSymbol newSymbol(const String &t);
 
@@ -110,39 +114,7 @@ namespace symbols {
     public:
         const String token;
         const Type type;
-        bool is(Type y) noexcept {return type == y;}
-        virtual double evaluate() const = 0;
-    };
-
-
-    class Variable final : public Symbol {
-        Variable(double *v) noexcept :
-            Symbol("var", Type::CONSTANT), _value(v) {}
-
-    public:
-        const double *_value;
-        virtual double evaluate() const {return *_value;}
-
-        friend pSymbol newSymbol(double *v);
-    };
-
-
-    class Constant : public Symbol {
-    protected:
-        struct Recorder {
-            Recorder(const String &t, fSymbolGen g) noexcept;
-        };
-        static mSymbolGen _symbols;
-
-        Constant(const String &s) noexcept :
-            Symbol(s, Type::CONSTANT), value(std::stod(s)) {}
-
-    public:
-        const double value;
-        virtual double evaluate() const {return value;}
-
-        friend void recordConstant(const String &t, double v);
-        friend pSymbol newSymbol(const String &t);
+        virtual bool is(Type y) noexcept = 0;
     };
 
 
@@ -156,10 +128,7 @@ namespace symbols {
             Symbol(_symbol, _type) {}
 
     public:
-        virtual double evaluate() const {
-            throw std::exception();
-        };
-
+        virtual bool is(Type y) noexcept {return type == y;}
         friend pSymbol newSymbol(const String &t);
     };
     template<char s> constexpr const char Parenthesis<s>::_symbol[2];
@@ -170,53 +139,92 @@ namespace symbols {
             : Symbol(",", Type::SEPARATOR) {}
 
     public:
-        virtual double evaluate() const {
-            throw std::exception();
-        };
-
+        virtual bool is(Type y) noexcept {return type == y;}
         friend pSymbol newSymbol(const String &t);
     };
 
 
-    class Operator : public Symbol {
+    class Evaluable : public Symbol {
+    protected:
+        Evaluable(const String &t, Type y) noexcept :
+            Symbol(t, y) {}
+
+    public:
+        virtual bool is(Type y) noexcept {return type == y;}
+        virtual double evaluate() const noexcept = 0;
+    };
+
+
+    class Variable final : public Evaluable {
+        Variable(double *v) noexcept :
+            Evaluable("var", Type::CONSTANT), _value(v) {}
+
+    public:
+        const double *_value;
+        virtual double evaluate() const noexcept {return *_value;}
+
+        friend pSymbol newSymbol(double *v);
+    };
+
+
+    class Constant : public Evaluable {
     protected:
         struct Recorder {
             Recorder(const String &t, fSymbolGen g) noexcept;
         };
         static mSymbolGen _symbols;
 
-        pSymbol _left_operand;
-        pSymbol _right_operand;
+        Constant(const String &s) noexcept :
+            Evaluable(s, Type::CONSTANT), value(std::stod(s)) {}
+
+    public:
+        const double value;
+        virtual double evaluate() const noexcept {return value;}
+
+        friend void recordConstant(const String &t, double v);
+        friend pSymbol newSymbol(const String &t);
+    };
+
+
+    class Operator : public Evaluable {
+    protected:
+        struct Recorder {
+            Recorder(const String &t, fSymbolGen g) noexcept;
+        };
+        static mSymbolGen _symbols;
+
+        pEvaluable _left_operand;
+        pEvaluable _right_operand;
 
         Operator(const String &t, unsigned p, bool l) noexcept :
-            Symbol(t, Type::OPERATOR), precedence(p), left_assoc(l) {}
+            Evaluable(t, Type::OPERATOR), precedence(p), left_assoc(l) {}
 
     public:
         const unsigned precedence;
         const bool left_assoc;
-        void addBranches(pSymbol l, pSymbol r) noexcept;
-        virtual double evaluate() const = 0;
+        void addBranches(pEvaluable l, pEvaluable r) noexcept;
+        virtual double evaluate() const noexcept = 0;
 
         friend pSymbol newSymbol(const String &t);
     };
 
 
-    class Function : public Symbol {
+    class Function : public Evaluable {
     protected:
         struct Recorder {
             Recorder(const String &t, fSymbolGen g) noexcept;
         };
         static mSymbolGen _symbols;
 
-        vSymbol _operands;
+        vEvaluable _operands;
 
         Function(const String &t, unsigned s) noexcept :
-            Symbol(t, Type::FUNCTION), _operands(s), args(s) {}
+            Evaluable(t, Type::FUNCTION), _operands(s), args(s) {}
 
     public:
         const unsigned args;
-        void addBranches(vSymbol &&x) noexcept;
-        virtual double evaluate() const = 0;
+        void addBranches(vEvaluable &&x) noexcept;
+        virtual double evaluate() const noexcept = 0;
 
         friend pSymbol newSymbol(const String &t);
     };

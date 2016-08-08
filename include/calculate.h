@@ -30,10 +30,15 @@ namespace calculate {
     using Regex = std::regex;
 
     using symbols::Type;
+
     using symbols::pSymbol;
     using symbols::vSymbol;
     using qSymbol = std::queue<pSymbol>;
     using sSymbol = std::stack<pSymbol>;
+
+    using symbols::pEvaluable;
+    using qEvaluable = std::queue<pEvaluable>;
+    using sEvaluable = std::stack<pEvaluable>;
 
 
     struct BaseCalculateException : public std::exception {};
@@ -43,20 +48,19 @@ namespace calculate {
     CALCULATE_EXCEPTION(DuplicateNameException, "Duplicated names")
     CALCULATE_EXCEPTION(ParenthesisMismatchException, "Parenthesis mismatch")
     CALCULATE_EXCEPTION(MissingArgumentsException, "Missing arguments")
-    CALCULATE_EXCEPTION(ConstantsExcessException, "Too many arguments")
+    CALCULATE_EXCEPTION(ArgumentsExcessException, "Too many arguments")
     CALCULATE_EXCEPTION(SyntaxErrorException, "Syntax error")
     CALCULATE_EXCEPTION(WrongArgumentsException, "Arguments mismatch")
-    CALCULATE_EXCEPTION(EvaluationException, "Evaluation error")
 
 
     class Calculate final {
         pValue _values;
-        pSymbol _tree;
+        pEvaluable _tree;
 
         qSymbol tokenize(const String &expression) const;
         qSymbol check(qSymbol &&input) const;
-        qSymbol shuntingYard(qSymbol &&infix) const;
-        pSymbol buildTree(qSymbol &&postfix) const;
+        qEvaluable shuntingYard(qSymbol &&infix) const;
+        pEvaluable buildTree(qEvaluable &&postfix) const;
 
         static vString extract(const String &vars);
         static vString validate(const vString &vars);

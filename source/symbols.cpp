@@ -1,3 +1,4 @@
+#include <exception>
 #include <cmath>
 
 #include "calculate/symbols.hpp"
@@ -49,7 +50,7 @@ namespace symbols {
         Operator::_symbols[t] = g;
     }
 
-    void Operator::addBranches(pSymbol l, pSymbol r) noexcept {
+    void Operator::addBranches(pEvaluable l, pEvaluable r) noexcept {
         _left_operand = l;
         _right_operand = r;
     }
@@ -58,7 +59,7 @@ namespace symbols {
         Function::_symbols[t] = g;
     }
 
-    void Function::addBranches(vSymbol &&x) noexcept {
+    void Function::addBranches(vEvaluable &&x) noexcept {
         _operands = std::move(x);
     }
 

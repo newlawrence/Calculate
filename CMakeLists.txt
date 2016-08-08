@@ -13,11 +13,24 @@ function(setup_target_for_coverage TARGETNAME LIBRARYNAME)
     if (NOT GCOV)
     	message(FATAL_ERROR "gcov not found.")
     endif ()
-    set(SRCS "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
-    set(BINS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${LIBRARYNAME}.dir/source")
+    set(SRC "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
+    set(TSRC "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
+    set(BIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${LIBRARYNAME}.dir/source")
+    set(TBIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/unittests.dir/tests")
     add_custom_target(${TARGETNAME}
-        COMMAND ${GCOV} ${SRCS} -o ${BINS} -p > /dev/null
-        COMMAND ${CMAKE_COMMAND} -E remove "*usr*.gcov"
+        COMMAND ${CMAKE_COMMAND} -E make_directory coverage
+        COMMAND ${CMAKE_COMMAND} -E chdir
+                "${CMAKE_CURRENT_SOURCE_DIR}/coverage"
+                ${GCOV} ${SRC} -o ${BIN} -p > /dev/null
+        COMMAND ${CMAKE_COMMAND} -E chdir
+                "${CMAKE_CURRENT_SOURCE_DIR}/coverage"
+                ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
+        COMMAND ${CMAKE_COMMAND} -E remove
+                "${CMAKE_CURRENT_SOURCE_DIR}/coverage/*usr*.gcov"
+        COMMAND ${CMAKE_COMMAND} -E remove
+                "${CMAKE_CURRENT_SOURCE_DIR}/coverage/*extern*.gcov"
+        COMMAND ${CMAKE_COMMAND} -E remove
+                "${CMAKE_CURRENT_SOURCE_DIR}/coverage/*tests*.gcov"
     )
 endfunction ()
 
@@ -25,25 +38,28 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
 
-if (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
+if ((${CMAKE_CXX_COMPILER_ID} MATCHES "GNU") OR
+    (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang"))
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -std=c11")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++11")
-    if (DEFINED ENV{COVERAGE} AND $ENV{COVERAGE} STREQUAL "True")
-        if (NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
-            message(FATAL_ERROR "Code coverage needs an unoptimized build." )
+    if (DEFINED ENV{COVERAGE})
+        if ($ENV{COVERAGE} STREQUAL "True")
+            if (NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
+                message(FATAL_ERROR "Code coverage in an optimized build.")
+            endif ()
+            set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -coverage")
+            set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -coverage")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-inline")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-default-inline")
+            setup_target_for_coverage(coverage calculate)
         endif ()
-        set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
-        set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g -coverage")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -coverage")
-        setup_target_for_coverage(coverage calculate)
     else ()
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
     endif ()
-elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -O3 -std=c11")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -std=c++11")
 elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox /sdl")
 endif ()

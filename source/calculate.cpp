@@ -101,8 +101,8 @@ namespace calculate {
         return output;
     }
 
-    qSymbol Calculate::shuntingYard(qSymbol &&infix) const {
-        qSymbol postfix;
+    qEvaluable Calculate::shuntingYard(qSymbol &&infix) const {
+        qEvaluable postfix;
         sSymbol operations;
 
         while(!infix.empty()) {
@@ -111,7 +111,7 @@ namespace calculate {
 
             switch (element->type) {
                 case (Type::CONSTANT):
-                    postfix.push(element);
+                    postfix.push(castChild<Evaluable>(element));
                     break;
 
                 case (Type::FUNCTION):
@@ -122,7 +122,7 @@ namespace calculate {
                     while (!operations.empty()) {
                         auto another = operations.top();
                         if (!another->is(Type::LEFT)) {
-                            postfix.push(another);
+                            postfix.push(castChild<Evaluable>(another));
                             operations.pop();
                         }
                         else {
@@ -140,7 +140,7 @@ namespace calculate {
                             break;
                         }
                         else if (another->is(Type::FUNCTION)) {
-                            postfix.push(another);
+                            postfix.push(castChild<Evaluable>(another));
                             operations.pop();
                             break;
                         }
@@ -153,7 +153,7 @@ namespace calculate {
                                  op1->precedence < op2->precedence)
                                 ) {
                                 operations.pop();
-                                postfix.push(another);
+                                postfix.push(castChild<Evaluable>(another));
                             }
                             else {
                                 break;
@@ -172,7 +172,7 @@ namespace calculate {
                         auto another = operations.top();
                         if (!another->is(Type::LEFT)) {
                             operations.pop();
-                            postfix.push(another);
+                            postfix.push(castChild<Evaluable>(another));
                         }
                         else {
                             break;
@@ -193,14 +193,14 @@ namespace calculate {
             if (element->is(Type::LEFT))
                 throw ParenthesisMismatchException();
             operations.pop();
-            postfix.push(element);
+            postfix.push(castChild<Evaluable>(element));
         }
         return postfix;
     }
 
-    pSymbol Calculate::buildTree(qSymbol &&postfix) const {
-        sSymbol operands;
-        pSymbol element;
+    pEvaluable Calculate::buildTree(qEvaluable &&postfix) const {
+        sEvaluable operands;
+        pEvaluable element;
 
         while (!postfix.empty()) {
             element = postfix.front();
@@ -213,7 +213,7 @@ namespace calculate {
             else if (element->is(Type::FUNCTION)) {
                 auto function = castChild<Function>(element);
                 auto args = function->args;
-                vSymbol ops(args);
+                vEvaluable ops(args);
                 for (auto i = args; i > 0; i--) {
                     if (operands.empty())
                         throw MissingArgumentsException();
@@ -226,9 +226,7 @@ namespace calculate {
 
             else if (element->is(Type::OPERATOR)) {
                 auto binary = castChild<Operator>(element);
-                pSymbol a, b;
-                if (operands.size() < 2)
-                    throw MissingArgumentsException();
+                pEvaluable a, b;
                 b = operands.top();
                 operands.pop();
                 a = operands.top();
@@ -238,7 +236,7 @@ namespace calculate {
             }
         }
         if (operands.size() > 1)
-            throw ConstantsExcessException();
+            throw ArgumentsExcessException();
 
         return operands.top();
     }
@@ -268,9 +266,11 @@ namespace calculate {
     vString Calculate::validate(const vString &vars) {
         auto regex = std::regex("[A-Za-z]+\\d*");
 
-        if (!std::all_of(vars.begin(), vars.end(),
-            [&regex](String var) {return std::regex_match(var, regex);})
-            )
+        if (!std::all_of(
+                vars.begin(),
+                vars.end(),
+                [&regex](String var) {return std::regex_match(var, regex);}
+            ))
             throw BadNameException();
 
         auto no_duplicates = vars;
@@ -292,9 +292,9 @@ namespace calculate {
     }
 
     Calculate::Calculate(Calculate &&other) :
-        _values(new double[other.variables.size()]),
-        expression(other.expression), variables(other.variables) {
-        this->_tree = std::move(other._tree);
+        _values(std::move(other._values)), expression(other.expression),
+        variables(std::move(other.variables)) {
+        _tree = std::move(other._tree);
     }
 
     Calculate::Calculate(const String &expr, const String &vars) :
@@ -322,12 +322,7 @@ namespace calculate {
     }
 
     double Calculate::operator() () const {
-        try {
-            return _tree->evaluate();
-        }
-        catch (std::exception) {
-            throw EvaluationException();
-        }
+        return _tree->evaluate();
     };
 
     double Calculate::operator() (double value) const {
@@ -444,7 +439,7 @@ extern "C" const _calculate_c_library* _get_calculate_c_library() {
         calculate_c_interface::getExpression,
         calculate_c_interface::getVariables,
         calculate_c_interface::evaluateArray,
-        calculate_c_interface:: evalArray,
+        calculate_c_interface::evalArray,
         calculate_c_interface::eval
     };
     return &library;
