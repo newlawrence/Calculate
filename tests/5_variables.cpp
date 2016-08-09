@@ -61,5 +61,9 @@ TEST_CASE("Variable arguments", "[variables]") {
     SECTION("Variables excess") {
         CHECK_THROWS_AS(Calculate("1")(1.), WrongArgumentsException);
         CHECK_THROWS_AS(Calculate("x", "x")(1., 2.), WrongArgumentsException);
+        CHECK_THROWS_AS(
+            Calculate("x", "x")({1., 2.}),
+            WrongArgumentsException
+        );
     }
 }

@@ -25,13 +25,14 @@ before_install:
   - mkdir -p ${DEPS_DIR}
 
 install:
-  - sed -i -e 's/gcov/gcov-5/g' CMakeLists.txt
+  - sed -i -e 's/gcov)/gcov-5)/g' CMakeLists.txt
   - wget ${CMAKE_URL} --quiet --no-check-certificate
   - mkdir -p cmake
   - tar -xzf ${CMAKE_FILE} -C cmake --strip-components 1
   - mv cmake ${DEPS_DIR}
   - export PATH=${DEPS_DIR}/cmake/bin:${PATH}
   - cmake --version
+  - pip install --user gcovr
 
 script:
   - CC=gcc-5 CXX=g++-5 COVERAGE=True cmake . -DCMAKE_BUILD_TYPE=Debug
@@ -39,9 +40,6 @@ script:
   - make coverage
 
 after_success:
-  - rm coverage/*usr*
-  - rm coverage/*extern*
-  - rm coverage/*tests*
   - pushd coverage
   - bash <(curl -s https://codecov.io/bash) -X gcov
   - popd
