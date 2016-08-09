@@ -121,6 +121,7 @@ struct _calculate_c_library {
 #else
 #define calculate_init() \
 const struct _calculate_c_library* const calculate = _get_calculate_c_library()
+
 const struct _calculate_c_library* _get_calculate_c_library();
 #endif
 

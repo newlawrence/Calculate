@@ -10,7 +10,10 @@ TEST_CASE("Constructors test", "[Constructors]") {
         Calculate expression1(Calculate("1 + x", "x"));
         Calculate expression2(expression1);
         CHECK(expression1 == expression2);
-        CHECK(expression1(2) == expression2(2));
+        CHECK(
+            static_cast<int>(expression1(2)) ==
+            static_cast<int>(expression2(2))
+        );
     }
 
 }

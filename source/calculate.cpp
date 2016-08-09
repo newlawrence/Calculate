@@ -349,23 +349,23 @@ namespace calculate_c_interface {
     using namespace calculate;
 
     calculate_Expression createExpression(const char *expr, const char *vars,
-                                char *errors) {
+                                char *error) {
         try {
             auto expr_obj = static_cast<calculate_Expression>(
                 new Calculate(expr, vars)
             );
-            strcpy(errors, "");
+            strcpy(error, "");
             return expr_obj;
         }
         catch (const BaseCalculateException &e) {
-            strcpy(errors, e.what());
+            strcpy(error, e.what());
             return nullptr;
         }
     }
 
     calculate_Expression newExpression(const char *expr, const char *vars) {
-        char errors[64];
-        return createExpression(expr, vars, errors);
+        char error[64];
+        return createExpression(expr, vars, error);
     }
 
     void freeExpression(calculate_Expression expr_obj) {
@@ -388,24 +388,24 @@ namespace calculate_c_interface {
 
 
     double evaluateArray(calculate_Expression expr_obj, double *args,
-                         int size, char *errors) {
+                         int size, char *error) {
         if (!expr_obj)
             return std::numeric_limits<double>::quiet_NaN();
 
         vValue values(args, args + size);
         try {
-            strcpy(errors, "");
+            strcpy(error, "");
             return static_cast<Calculate*>(expr_obj)->operator()(values);
         }
         catch (const BaseCalculateException &e) {
-            strcpy(errors, e.what());
+            strcpy(error, e.what());
             return std::numeric_limits<double>::quiet_NaN();
         }
     }
 
     double evalArray(calculate_Expression expr_obj, double *args, int size) {
-        char errors[64];
-        return evaluateArray(expr_obj, args, size, errors);
+        char error[64];
+        return evaluateArray(expr_obj, args, size, error);
     }
 
     double eval(calculate_Expression expr_obj, ...) {
@@ -420,12 +420,7 @@ namespace calculate_c_interface {
             values.push_back(va_arg(list, double));
         va_end(list);
 
-        try {
-            return static_cast<Calculate*>(expr_obj)->operator()(values);
-        }
-        catch (BaseCalculateException) {
-            return std::numeric_limits<double>::quiet_NaN();
-        }
+        return static_cast<Calculate*>(expr_obj)->operator()(values);
     }
 
 }
