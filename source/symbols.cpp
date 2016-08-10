@@ -16,13 +16,17 @@ namespace symbols {
     }
 
     pSymbol newSymbol(const String &t) {
-        if ([&t] {
-            try {
-                std::stod(t);
-                return true;
-            }
-            catch (std::logic_error) {return false;}
-        }())
+        if (
+            [&t] {
+                try {
+                    std::stod(t);
+                    return true;
+                }
+                catch (std::logic_error) {
+                    return false;
+                }
+            }()
+        )
             return pSymbol(new Constant(t));
         else if (Constant::_symbols.find(t) != Constant::_symbols.end())
             return Constant::_symbols[t]();

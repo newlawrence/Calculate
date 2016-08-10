@@ -57,13 +57,13 @@ namespace calculate {
         pValue _values;
         pEvaluable _tree;
 
-        qSymbol tokenize(const String &expression) const;
-        qSymbol check(qSymbol &&input) const;
-        qEvaluable shuntingYard(qSymbol &&infix) const;
-        pEvaluable buildTree(qEvaluable &&postfix) const;
+        qSymbol _tokenize(const String &expression) const;
+        qSymbol _check(qSymbol &&input) const;
+        qEvaluable _shuntingYard(qSymbol &&infix) const;
+        pEvaluable _buildTree(qEvaluable &&postfix) const;
 
-        static vString extract(const String &vars);
-        static vString validate(const vString &vars);
+        static vString _extract(const String &vars);
+        static vString _validate(const vString &vars);
 
         Calculate() = delete;
         Calculate& operator=(const Calculate &other) = delete;

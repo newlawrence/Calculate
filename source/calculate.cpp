@@ -10,7 +10,7 @@
 namespace calculate {
     using namespace symbols;
 
-    qSymbol Calculate::tokenize(const String &expr) const {
+    qSymbol Calculate::_tokenize(const String &expr) const {
         qSymbol infix;
 
         auto regex = std::regex(
@@ -45,7 +45,7 @@ namespace calculate {
         return infix;
     }
 
-    qSymbol Calculate::check(qSymbol &&input) const {
+    qSymbol Calculate::_check(qSymbol &&input) const {
         qSymbol output;
         pSymbol current, next;
 
@@ -101,7 +101,7 @@ namespace calculate {
         return output;
     }
 
-    qEvaluable Calculate::shuntingYard(qSymbol &&infix) const {
+    qEvaluable Calculate::_shuntingYard(qSymbol &&infix) const {
         qEvaluable postfix;
         sSymbol operations;
 
@@ -147,11 +147,12 @@ namespace calculate {
                         else {
                             auto op1 = castChild<Operator>(element);
                             auto op2 = castChild<Operator>(another);
-                            if ((op1->left_assoc &&
+                            if (
+                                (op1->left_assoc &&
                                  op1->precedence <= op2->precedence) ||
                                 (!op1->left_assoc &&
                                  op1->precedence < op2->precedence)
-                                ) {
+                            ) {
                                 operations.pop();
                                 postfix.push(castChild<Evaluable>(another));
                             }
@@ -198,7 +199,7 @@ namespace calculate {
         return postfix;
     }
 
-    pEvaluable Calculate::buildTree(qEvaluable &&postfix) const {
+    pEvaluable Calculate::_buildTree(qEvaluable &&postfix) const {
         sEvaluable operands;
         pEvaluable element;
 
@@ -242,7 +243,7 @@ namespace calculate {
     }
 
 
-    vString Calculate::extract(const String &vars) {
+    vString Calculate::_extract(const String &vars) {
         auto no_spaces = vars;
         no_spaces.erase(
             std::remove_if(
@@ -263,14 +264,16 @@ namespace calculate {
         return variables;
     }
 
-    vString Calculate::validate(const vString &vars) {
+    vString Calculate::_validate(const vString &vars) {
         auto regex = std::regex("[A-Za-z]+\\d*");
 
-        if (!std::all_of(
+        if (
+            !std::all_of(
                 vars.begin(),
                 vars.end(),
                 [&regex](String var) {return std::regex_match(var, regex);}
-            ))
+            )
+        )
             throw BadNameException();
 
         auto no_duplicates = vars;
@@ -288,22 +291,24 @@ namespace calculate {
 
 
     Calculate::Calculate(const Calculate &other) :
-        Calculate(other.expression, other.variables) {
+            Calculate(other.expression, other.variables) {
     }
 
     Calculate::Calculate(Calculate &&other) :
-        _values(std::move(other._values)), expression(other.expression),
-        variables(std::move(other.variables)) {
+            _values(std::move(other._values)),
+            expression(other.expression),
+            variables(std::move(other.variables)) {
         _tree = std::move(other._tree);
     }
 
     Calculate::Calculate(const String &expr, const String &vars) :
-        Calculate(expr, extract(vars)) {
+            Calculate(expr, _extract(vars)) {
     }
 
     Calculate::Calculate(const String &expr, const vString &vars) :
-        _values(new double[vars.size()]),
-        expression(expr), variables(validate(vars)) {
+            _values(new double[vars.size()]),
+            expression(expr),
+            variables(_validate(vars)) {
 
         if (expr.length() == 0)
             throw EmptyExpressionException();
@@ -311,9 +316,9 @@ namespace calculate {
         for (auto i = 0u; i < vars.size(); i++)
             _values[i] = 0.;
 
-        auto infix = check(tokenize(expr));
-        auto postfix = shuntingYard(std::move(infix));
-        _tree = buildTree(std::move(postfix));
+        auto infix = _check(_tokenize(expr));
+        auto postfix = _shuntingYard(std::move(infix));
+        _tree = _buildTree(std::move(postfix));
     }
 
 

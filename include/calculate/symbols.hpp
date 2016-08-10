@@ -16,7 +16,7 @@ namespace symbols {                                                           \
         }                                                                     \
                                                                               \
         Constant_##TOKEN() noexcept :                                         \
-            Constant(std::to_string(VALUE)) {}                                \
+                Constant(std::to_string(VALUE)) {}                            \
                                                                               \
     public:                                                                   \
         virtual ~Constant_##TOKEN() {}                                        \
@@ -36,7 +36,7 @@ namespace symbols {                                                           \
         }                                                                     \
                                                                               \
         Operator_##NAME() noexcept :                                          \
-            Operator(TOKEN, PRECEDENCE, L_ASSOCIATION) {}                     \
+                Operator(TOKEN, PRECEDENCE, L_ASSOCIATION) {}                 \
                                                                               \
     public:                                                                   \
         virtual ~Operator_##NAME() {}                                         \
@@ -60,7 +60,7 @@ namespace symbols {                                                           \
         }                                                                     \
                                                                               \
         Function_##TOKEN() noexcept :                                         \
-             Function(#TOKEN, ARGS) {}                                        \
+                 Function(#TOKEN, ARGS) {}                                    \
                                                                               \
     public:                                                                   \
         virtual ~Function_##TOKEN() {}                                        \
@@ -112,7 +112,8 @@ namespace symbols {
 
     protected:
         Symbol(const String &t, Type y) noexcept :
-            token(t), type(y) {}
+                token(t),
+                type(y) {}
 
     public:
         const String token;
@@ -131,7 +132,7 @@ namespace symbols {
         constexpr static const char _symbol[2] = {s, '\0'};
 
         Parenthesis() noexcept :
-            Symbol(_symbol, _type) {}
+                Symbol(_symbol, _type) {}
 
     public:
         virtual ~Parenthesis() {}
@@ -142,8 +143,8 @@ namespace symbols {
 
 
     class Separator final : public Symbol {
-        Separator() noexcept
-            : Symbol(",", Type::SEPARATOR) {}
+        Separator() noexcept :
+                Symbol(",", Type::SEPARATOR) {}
 
     public:
         virtual ~Separator() {}
@@ -155,7 +156,7 @@ namespace symbols {
     class Evaluable : public Symbol {
     protected:
         Evaluable(const String &t, Type y) noexcept :
-            Symbol(t, y) {}
+                Symbol(t, y) {}
 
     public:
         virtual ~Evaluable() = 0;
@@ -166,7 +167,8 @@ namespace symbols {
 
     class Variable final : public Evaluable {
         Variable(double *v) noexcept :
-            Evaluable("var", Type::CONSTANT), _value(v) {}
+                Evaluable("var", Type::CONSTANT),
+                _value(v) {}
 
     public:
         const double *_value;
@@ -186,7 +188,8 @@ namespace symbols {
         static mSymbolGen _symbols;
 
         Constant(const String &s) noexcept :
-            Evaluable(s, Type::CONSTANT), value(std::stod(s)) {}
+                Evaluable(s, Type::CONSTANT),
+                value(std::stod(s)) {}
 
     public:
         const double value;
@@ -210,7 +213,9 @@ namespace symbols {
         pEvaluable _right_operand;
 
         Operator(const String &t, unsigned p, bool l) noexcept :
-            Evaluable(t, Type::OPERATOR), precedence(p), left_assoc(l) {}
+                Evaluable(t, Type::OPERATOR),
+                precedence(p),
+                left_assoc(l) {}
 
     public:
         const unsigned precedence;
@@ -234,7 +239,9 @@ namespace symbols {
         vEvaluable _operands;
 
         Function(const String &t, unsigned s) noexcept :
-            Evaluable(t, Type::FUNCTION), _operands(s), args(s) {}
+                Evaluable(t, Type::FUNCTION),
+                _operands(s),
+                args(s) {}
 
     public:
         const unsigned args;
