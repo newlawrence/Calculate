@@ -11,7 +11,7 @@ using namespace calculate;
 int main(int argc, char *argv[]) {
     try {
         if (argc == 2) {
-            auto expression = Calculate(argv[1]);
+            Calculate expression(argv[1]);
             cout << expression() << endl;
         }
         else if (argc > 2 && argc % 2 == 0) {
@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
                 values.push_back(stod(argv[i + 1]));
             }
 
-            auto expression = Calculate(argv[1], variables);
+            Calculate expression(argv[1], variables);
             cout << expression(values) << endl;
         }
     }

@@ -8,7 +8,6 @@
 
 
 namespace calculate {
-    using namespace symbols;
 
     qSymbol Calculate::_tokenize(const String &expr) const {
         qSymbol infix;

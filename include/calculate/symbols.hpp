@@ -1,5 +1,5 @@
-#ifndef __SYMBOLS_H__
-#define __SYMBOLS_H__
+#ifndef __CALCULATE_SYMBOLS_H__
+#define __CALCULATE_SYMBOLS_H__
 
 #include <memory>
 #include <string>
@@ -8,16 +8,14 @@
 
 
 #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
-namespace symbols {                                                           \
+namespace calculate_symbols {                                                 \
     class Constant_##TOKEN final : public Constant {                          \
         static const Constant::Recorder _recorder;                            \
         static pSymbol newConstant() noexcept {                               \
             return pSymbol(new Constant_##TOKEN);                             \
         }                                                                     \
-                                                                              \
         Constant_##TOKEN() noexcept :                                         \
                 Constant(std::to_string(VALUE)) {}                            \
-                                                                              \
     public:                                                                   \
         virtual ~Constant_##TOKEN() {}                                        \
         virtual double evaluate() const noexcept {return VALUE;}              \
@@ -28,16 +26,14 @@ namespace symbols {                                                           \
 
 
 #define RECORD_OPERATOR(NAME, TOKEN, PRECEDENCE, L_ASSOCIATION, FUNCTION)     \
-namespace symbols {                                                           \
+namespace calculate_symbols {                                                 \
     class Operator_##NAME final : public Operator {                           \
         static const Operator::Recorder _recorder;                            \
         static pSymbol newOperator() noexcept {                               \
             return pSymbol(new Operator_##NAME);                              \
         }                                                                     \
-                                                                              \
         Operator_##NAME() noexcept :                                          \
                 Operator(TOKEN, PRECEDENCE, L_ASSOCIATION) {}                 \
-                                                                              \
     public:                                                                   \
         virtual ~Operator_##NAME() {}                                         \
         virtual double evaluate() const noexcept {                            \
@@ -52,20 +48,18 @@ namespace symbols {                                                           \
 
 
 #define RECORD_FUNCTION(TOKEN, ARGS, FUNCTION)                                \
-namespace symbols {                                                           \
+namespace calculate_symbols {                                                 \
     class Function_##TOKEN final : public Function {                          \
         static const Function::Recorder _recorder;                            \
         static pSymbol newFunction() noexcept {                               \
             return pSymbol(new Function_##TOKEN);                             \
         }                                                                     \
-                                                                              \
         Function_##TOKEN() noexcept :                                         \
                  Function(#TOKEN, ARGS) {}                                    \
-                                                                              \
     public:                                                                   \
         virtual ~Function_##TOKEN() {}                                        \
         virtual double evaluate() const noexcept {                            \
-            vName x(args);                                                    \
+            vValue x(args);                                                    \
             for (auto i = 0u; i < args; i++)                                  \
                 x[i] = _operands[i]->evaluate();                              \
             return FUNCTION;                                                  \
@@ -76,10 +70,10 @@ namespace symbols {                                                           \
 }
 
 
-namespace symbols {
+namespace calculate_symbols {
 
     using String = std::string;
-    using vName = std::vector<double>;
+    using vValue = std::vector<double>;
     using mValue = std::unordered_map<String, double>;
 
     class Symbol;
@@ -255,4 +249,4 @@ namespace symbols {
 
 }
 
-#endif
+#endif // __CALCULATE_SYMBOLS_H__

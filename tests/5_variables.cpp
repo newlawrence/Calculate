@@ -5,6 +5,7 @@
 #include "calculate.h"
 
 using namespace calculate;
+using namespace calculate_exceptions;
 
 
 TEST_CASE("Variable arguments", "[variables]") {

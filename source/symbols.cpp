@@ -1,10 +1,10 @@
-#include <exception>
 #include <cmath>
 
+#include "calculate/exceptions.hpp"
 #include "calculate/symbols.hpp"
 
 
-namespace symbols {
+namespace calculate_symbols {
 
     mSymbolGen Constant::_symbols;
     mSymbolGen Operator::_symbols;
@@ -41,7 +41,7 @@ namespace symbols {
         else if (Function::_symbols.find(t) != Function::_symbols.end())
             return Function::_symbols[t]();
         else
-            throw std::exception();
+            throw calculate_exceptions::BaseCalculateException();
     }
 
 

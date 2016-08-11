@@ -2,6 +2,7 @@
 #include "calculate.h"
 
 using namespace calculate;
+using namespace calculate_exceptions;
 
 
 TEST_CASE("Constructors test", "[Constructors]") {
