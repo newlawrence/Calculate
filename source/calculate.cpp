@@ -6,7 +6,8 @@
 
 namespace calculate {
 
-    qSymbol Calculate::_tokenize(const String &expr) const {
+    qSymbol Calculate::_tokenize(const String &expr, const vString &vars,
+                                 const pValue &values) {
         qSymbol infix;
 
         auto regex = std::regex(
@@ -22,10 +23,10 @@ namespace calculate {
 
         while (next != end) {
             auto match = next->str();
-            auto it = std::find(variables.begin(), variables.end(), match);
-            if (it != variables.end()) {
-                auto position = it - variables.begin();
-                infix.push(newSymbol(_values.get() + position));
+            auto it = std::find(vars.begin(), vars.end(), match);
+            if (it != vars.end()) {
+                auto position = it - vars.begin();
+                infix.push(newSymbol(values.get() + position));
             }
             else {
                 try {
@@ -41,7 +42,7 @@ namespace calculate {
         return infix;
     }
 
-    qSymbol Calculate::_check(qSymbol &&input) const {
+    qSymbol Calculate::_check(qSymbol &&input) {
         qSymbol output;
         pSymbol current, next;
 
@@ -97,7 +98,7 @@ namespace calculate {
         return output;
     }
 
-    qEvaluable Calculate::_shuntingYard(qSymbol &&infix) const {
+    qEvaluable Calculate::_shuntingYard(qSymbol &&infix) {
         qEvaluable postfix;
         sSymbol operations;
 
@@ -195,7 +196,7 @@ namespace calculate {
         return postfix;
     }
 
-    pEvaluable Calculate::_buildTree(qEvaluable &&postfix) const {
+    pEvaluable Calculate::_buildTree(qEvaluable &&postfix) {
         sEvaluable operands;
         pEvaluable element;
 
@@ -287,13 +288,13 @@ namespace calculate {
 
 
     Calculate::Calculate(const Calculate &other) :
-            Calculate(other.expression, other.variables) {
+            Calculate(other._expression, other._variables) {
     }
 
     Calculate::Calculate(Calculate &&other) :
-            _values(std::move(other._values)),
-            expression(other.expression),
-            variables(std::move(other.variables)) {
+            _expression(std::move(other._expression)),
+            _variables(std::move(other._variables)),
+            _values(std::move(other._values)) {
         _tree = std::move(other._tree);
     }
 
@@ -302,9 +303,9 @@ namespace calculate {
     }
 
     Calculate::Calculate(const String &expr, const vString &vars) :
-            _values(new double[vars.size()]),
-            expression(expr),
-            variables(_validate(vars)) {
+            _expression(expr),
+            _variables(_validate(vars)),
+            _values(new double[vars.size()]) {
 
         if (expr.length() == 0)
             throw EmptyExpressionException();
@@ -312,14 +313,35 @@ namespace calculate {
         for (auto i = 0u; i < vars.size(); i++)
             _values[i] = 0.;
 
-        auto infix = _check(_tokenize(expr));
+        auto infix = _check(_tokenize(expr, _variables, _values));
         auto postfix = _shuntingYard(std::move(infix));
         _tree = _buildTree(std::move(postfix));
     }
 
 
+    Calculate& Calculate::operator=(const Calculate &other) {
+        auto copy = Calculate(other);
+
+        _expression = std::move(copy._expression);
+        _variables = std::move(copy._variables);
+        _values = std::move(copy._values);
+        _tree = std::move(copy._tree);
+
+        return *this;
+    }
+
+    Calculate& Calculate::operator=(Calculate &&other) {
+        _expression = std::move(other._expression);
+        _variables = std::move(other._variables);
+        _values = std::move(other._values);
+        _tree = std::move(other._tree);
+
+        return *this;
+    }
+
+
     bool Calculate::operator==(const Calculate &other) const noexcept {
-        return this->expression == other.expression;
+        return this->_expression == other._expression;
     }
 
     double Calculate::operator() () const {
@@ -327,15 +349,15 @@ namespace calculate {
     };
 
     double Calculate::operator() (double value) const {
-        if (variables.size() < 1)
+        if (_variables.size() < 1)
             throw WrongArgumentsException();
-        _values[variables.size() - 1] = value;
+        _values[_variables.size() - 1] = value;
 
         return this->operator()();
     }
 
     double Calculate::operator() (vValue values) const {
-        if (values.size() != variables.size())
+        if (values.size() != _variables.size())
             throw WrongArgumentsException();
         for (auto i = 0u; i < values.size(); i++)
             _values[i] = values[i];

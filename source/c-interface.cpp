@@ -38,13 +38,13 @@ namespace calculate_c_interface {
 
     const char* getExpression(Expression expr_obj) {
         return expr_obj ?
-               static_cast<Calculate*>(expr_obj)->expression.c_str() : "";
+               static_cast<Calculate*>(expr_obj)->getExpression().c_str() : "";
     }
 
     int getVariables(Expression expr_obj) {
         return expr_obj ?
                static_cast<int>(
-                   static_cast<Calculate*>(expr_obj)->variables.size()
+                   static_cast<Calculate*>(expr_obj)->getVariables().size()
                ) : -1;
     }
 
@@ -75,7 +75,7 @@ namespace calculate_c_interface {
         if (!expr_obj)
             return std::numeric_limits<double>::quiet_NaN();
 
-        auto vars = static_cast<Calculate*>(expr_obj)->variables.size();
+        auto vars = static_cast<Calculate*>(expr_obj)->getVariables().size();
         vValue values;
         va_list list;
         va_start(list, expr_obj);

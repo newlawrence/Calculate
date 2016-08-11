@@ -7,14 +7,16 @@ using namespace calculate_exceptions;
 
 TEST_CASE("Constructors test", "[Constructors]") {
 
-    SECTION("Constructors") {
-        Calculate expression1(Calculate("1 + x", "x"));
-        Calculate expression2(expression1);
-        CHECK(expression1 == expression2);
-        CHECK(
-            static_cast<int>(expression1(2)) ==
-            static_cast<int>(expression2(2))
-        );
+    SECTION("Constructors and assignments") {
+        auto expr1 = Calculate("1 + x", "x");
+        auto expr2 = expr1;
+        CHECK(expr1 == expr2);
+        CHECK(static_cast<int>(expr1(2)) == static_cast<int>(expr2(2)));
+
+        expr1 = Calculate("1 + x", "x");
+        expr2 = expr1;
+        CHECK(expr1 == expr2);
+        CHECK(static_cast<int>(expr1(2)) == static_cast<int>(expr2(2)));
     }
 
 }
