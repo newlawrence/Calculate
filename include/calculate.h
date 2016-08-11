@@ -3,54 +3,28 @@
 
 #ifdef __cplusplus
 
-#include <memory>
-#include <string>
-#include <vector>
 #include <queue>
 #include <stack>
 #include <regex>
 
+#include "calculate/exceptions.hpp"
 #include "calculate/symbols.hpp"
-
-
-#define CALCULATE_EXCEPTION(NAME, MESSAGE)                                    \
-struct NAME : public BaseCalculateException {                                 \
-    const char* what() const noexcept {                                       \
-        return MESSAGE;                                                       \
-    }                                                                         \
-};
 
 
 namespace calculate {
 
-    using pValue = std::unique_ptr<double[]>;
-    using vValue = std::vector<double>;
-    using String = std::string;
+    using namespace calculate_symbols;
+    using namespace calculate_exceptions;
+
     using vString = std::vector<String>;
+    using pValue = std::unique_ptr<double[]>;
     using Regex = std::regex;
 
-    using symbols::Type;
-
-    using symbols::pSymbol;
-    using symbols::vSymbol;
     using qSymbol = std::queue<pSymbol>;
     using sSymbol = std::stack<pSymbol>;
 
-    using symbols::pEvaluable;
     using qEvaluable = std::queue<pEvaluable>;
     using sEvaluable = std::stack<pEvaluable>;
-
-
-    struct BaseCalculateException : public std::exception {};
-    CALCULATE_EXCEPTION(EmptyExpressionException, "Empty expression")
-    CALCULATE_EXCEPTION(UndefinedSymbolException, "Undefined symbol")
-    CALCULATE_EXCEPTION(BadNameException, "Unsuitable variable name")
-    CALCULATE_EXCEPTION(DuplicateNameException, "Duplicated names")
-    CALCULATE_EXCEPTION(ParenthesisMismatchException, "Parenthesis mismatch")
-    CALCULATE_EXCEPTION(MissingArgumentsException, "Missing arguments")
-    CALCULATE_EXCEPTION(ArgumentsExcessException, "Too many arguments")
-    CALCULATE_EXCEPTION(SyntaxErrorException, "Syntax error")
-    CALCULATE_EXCEPTION(WrongArgumentsException, "Arguments mismatch")
 
 
     class Calculate final {
@@ -94,35 +68,10 @@ namespace calculate {
 
 }
 
-#endif
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef void* calculate_Expression;
-
-struct _calculate_c_library {
-    calculate_Expression (*createExpression)(const char*, const char*, char*);
-    calculate_Expression (*newExpression)(const char*, const char*);
-    void (*freeExpression)(calculate_Expression);
-
-    const char* (*getExpression)(calculate_Expression);
-    int (*getVariables)(calculate_Expression);
-
-    double (*evaluateArray)(calculate_Expression, double*, int, char*);
-    double (*evalArray)(calculate_Expression, double*, int);
-    double (*eval)(calculate_Expression, ...);
-};
-
-#ifdef __cplusplus
-}
 #else
-#define calculate_init() \
-const struct _calculate_c_library* const calculate = _get_calculate_c_library()
 
-const struct _calculate_c_library* _get_calculate_c_library();
+#include "calculate/c-interface.h"
+
 #endif
 
 #endif

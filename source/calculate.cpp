@@ -1,6 +1,3 @@
-#include <cstdarg>
-#include <cstring>
-#include <limits>
 #include <algorithm>
 #include <sstream>
 
@@ -8,7 +5,6 @@
 
 
 namespace calculate {
-    using namespace symbols;
 
     qSymbol Calculate::_tokenize(const String &expr) const {
         qSymbol infix;
@@ -347,100 +343,4 @@ namespace calculate {
         return this->operator()();
     }
 
-}
-
-
-namespace calculate_c_interface {
-    using namespace calculate;
-
-    calculate_Expression createExpression(const char *expr, const char *vars,
-                                char *error) {
-        try {
-            auto expr_obj = static_cast<calculate_Expression>(
-                new Calculate(expr, vars)
-            );
-            strcpy(error, "");
-            return expr_obj;
-        }
-        catch (const BaseCalculateException &e) {
-            strcpy(error, e.what());
-            return nullptr;
-        }
-    }
-
-    calculate_Expression newExpression(const char *expr, const char *vars) {
-        char error[64];
-        return createExpression(expr, vars, error);
-    }
-
-    void freeExpression(calculate_Expression expr_obj) {
-        if (expr_obj)
-            delete static_cast<Calculate*>(expr_obj);
-    }
-
-
-    const char* getExpression(calculate_Expression expr_obj) {
-        return expr_obj ?
-               static_cast<Calculate*>(expr_obj)->expression.c_str() : "";
-    }
-
-    int getVariables(calculate_Expression expr_obj) {
-        return expr_obj ?
-               static_cast<int>(
-                   static_cast<Calculate*>(expr_obj)->variables.size()
-               ) : -1;
-    }
-
-
-    double evaluateArray(calculate_Expression expr_obj, double *args,
-                         int size, char *error) {
-        if (!expr_obj)
-            return std::numeric_limits<double>::quiet_NaN();
-
-        vValue values(args, args + size);
-        try {
-            strcpy(error, "");
-            return static_cast<Calculate*>(expr_obj)->operator()(values);
-        }
-        catch (const BaseCalculateException &e) {
-            strcpy(error, e.what());
-            return std::numeric_limits<double>::quiet_NaN();
-        }
-    }
-
-    double evalArray(calculate_Expression expr_obj, double *args, int size) {
-        char error[64];
-        return evaluateArray(expr_obj, args, size, error);
-    }
-
-    double eval(calculate_Expression expr_obj, ...) {
-        if (!expr_obj)
-            return std::numeric_limits<double>::quiet_NaN();
-
-        auto vars = static_cast<Calculate*>(expr_obj)->variables.size();
-        vValue values;
-        va_list list;
-        va_start(list, expr_obj);
-        for (auto i = 0u; i < vars; i++)
-            values.push_back(va_arg(list, double));
-        va_end(list);
-
-        return static_cast<Calculate*>(expr_obj)->operator()(values);
-    }
-
-}
-
-
-extern "C" const _calculate_c_library* _get_calculate_c_library() {
-    static const _calculate_c_library library = {
-        calculate_c_interface::createExpression,
-        calculate_c_interface::newExpression,
-        calculate_c_interface::freeExpression,
-        calculate_c_interface::getExpression,
-        calculate_c_interface::getVariables,
-        calculate_c_interface::evaluateArray,
-        calculate_c_interface::evalArray,
-        calculate_c_interface::eval
-    };
-    return &library;
 }

@@ -7,6 +7,7 @@
 #define approx(x) Approx(x).epsilon(1e-12)
 
 using namespace calculate;
+using namespace calculate_exceptions;
 
 
 TEST_CASE("Builtin functions", "[functions]") {
