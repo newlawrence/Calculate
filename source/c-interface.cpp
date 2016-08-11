@@ -36,6 +36,20 @@ namespace calculate_c_interface {
     }
 
 
+    int compare(Expression one, Expression another) {
+        if (one && another) {
+            if (
+                static_cast<Calculate *>(one)->operator==(
+                    *static_cast<Calculate *>(another)
+                )
+            )
+                return 1;
+            else
+                return 0;
+        }
+        return -1;
+    }
+
     const char* getExpression(Expression expr_obj) {
         return expr_obj ?
                static_cast<Calculate*>(expr_obj)->getExpression().c_str() : "";
@@ -93,6 +107,7 @@ extern "C" const calculate_c_library_template Calculate = {
     calculate_c_interface::createExpression,
     calculate_c_interface::newExpression,
     calculate_c_interface::freeExpression,
+    calculate_c_interface::compare,
     calculate_c_interface::getExpression,
     calculate_c_interface::getVariables,
     calculate_c_interface::evaluateArray,
