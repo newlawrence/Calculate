@@ -1,5 +1,5 @@
-#ifndef __CALCULATE_EXCEPTIONS_H__
-#define __CALCULATE_EXCEPTIONS_H__
+#ifndef __CALCULATE_EXCEPTIONS_HPP__
+#define __CALCULATE_EXCEPTIONS_HPP__
 
 #include <exception>
 
@@ -31,4 +31,4 @@ DEFINE_EXCEPTION(ArgumentsExcessException, "Too many arguments")
 DEFINE_EXCEPTION(SyntaxErrorException, "Syntax error")
 DEFINE_EXCEPTION(WrongArgumentsException, "Arguments mismatch")
 
-#endif // __CALCULATE_EXCEPTIONS_H__
+#endif

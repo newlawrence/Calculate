@@ -1,5 +1,5 @@
-#ifndef __CALCULATE_SYMBOLS_H__
-#define __CALCULATE_SYMBOLS_H__
+#ifndef __CALCULATE_SYMBOLS_HPP__
+#define __CALCULATE_SYMBOLS_HPP__
 
 #include <memory>
 #include <string>
@@ -249,4 +249,4 @@ namespace calculate_symbols {
 
 }
 
-#endif // __CALCULATE_SYMBOLS_H__
+#endif

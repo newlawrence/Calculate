@@ -2,7 +2,7 @@
 #include <string>
 
 #include "catch.hpp"
-#include "calculate.h"
+#include "calculate/c-interface.h"
 
 extern "C" const calculate_c_library_template Calculate;
 
@@ -13,10 +13,7 @@ TEST_CASE("C interface", "[c_interface]") {
         Expression expr = Calculate.newExpression("1 + x", "x");
         double x = 2., *xp = &x;
 
-        CHECK(
-            std::string(Calculate.getExpression(expr)) ==
-            std::string("1 + x")
-        );
+        CHECK(std::string(Calculate.getExpression(expr)) == "1 + x");
         CHECK(Calculate.getVariables(expr) == 1);
         CHECK(static_cast<int>(Calculate.eval(expr)) == 1);
         CHECK(static_cast<int>(Calculate.eval(expr, x)) == 3);
@@ -29,10 +26,7 @@ TEST_CASE("C interface", "[c_interface]") {
         Expression expr = Calculate.newExpression("1 + x", "");
         double *xp = nullptr;
 
-        CHECK(
-            std::string(Calculate.getExpression(expr)) ==
-            std::string("")
-        );
+        CHECK(std::string(Calculate.getExpression(expr)) == "");
         CHECK(Calculate.getVariables(expr) == -1);
         CHECK(std::isnan(Calculate.eval(expr, 2.)));
         CHECK(std::isnan(Calculate.evalArray(expr, xp, 0)));

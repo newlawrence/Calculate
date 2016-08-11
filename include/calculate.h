@@ -68,32 +68,10 @@ namespace calculate {
 
 }
 
-#endif // __cplusplus
+#else
 
+#include "calculate/c-interface.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+#endif
 
-typedef void* Expression;
-
-struct calculate_c_library_template {
-    Expression (*createExpression)(const char*, const char*, char*);
-    Expression (*newExpression)(const char*, const char*);
-    void (*freeExpression)(Expression);
-
-    const char* (*getExpression)(Expression);
-    int (*getVariables)(Expression);
-
-    double (*evaluateArray)(Expression, double*, int, char*);
-    double (*evalArray)(Expression, double*, int);
-    double (*eval)(Expression, ...);
-};
-
-#ifdef __cplusplus
-}
-#else // __cplusplus
-extern const struct calculate_c_library_template Calculate;
-#endif // __cplusplus
-
-#endif // __CALCULATE_H__
+#endif
