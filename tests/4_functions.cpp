@@ -3,7 +3,7 @@
 #include "catch.hpp"
 #include "calculate.h"
 
-#define eval(e) calculate::Calculate(e)()
+#define eval(e) Calculate(e)()
 #define approx(x) Approx(x).epsilon(1e-12)
 
 using namespace calculate;

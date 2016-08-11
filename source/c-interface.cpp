@@ -36,15 +36,29 @@ namespace calculate_c_interface {
     }
 
 
+    int compare(Expression one, Expression another) {
+        if (one && another) {
+            if (
+                static_cast<Calculate *>(one)->operator==(
+                    *static_cast<Calculate *>(another)
+                )
+            )
+                return 1;
+            else
+                return 0;
+        }
+        return -1;
+    }
+
     const char* getExpression(Expression expr_obj) {
         return expr_obj ?
-               static_cast<Calculate*>(expr_obj)->expression.c_str() : "";
+               static_cast<Calculate*>(expr_obj)->getExpression().c_str() : "";
     }
 
     int getVariables(Expression expr_obj) {
         return expr_obj ?
                static_cast<int>(
-                   static_cast<Calculate*>(expr_obj)->variables.size()
+                   static_cast<Calculate*>(expr_obj)->getVariables().size()
                ) : -1;
     }
 
@@ -75,7 +89,7 @@ namespace calculate_c_interface {
         if (!expr_obj)
             return std::numeric_limits<double>::quiet_NaN();
 
-        auto vars = static_cast<Calculate*>(expr_obj)->variables.size();
+        auto vars = static_cast<Calculate*>(expr_obj)->getVariables().size();
         vValue values;
         va_list list;
         va_start(list, expr_obj);
@@ -93,6 +107,7 @@ extern "C" const calculate_c_library_template Calculate = {
     calculate_c_interface::createExpression,
     calculate_c_interface::newExpression,
     calculate_c_interface::freeExpression,
+    calculate_c_interface::compare,
     calculate_c_interface::getExpression,
     calculate_c_interface::getVariables,
     calculate_c_interface::evaluateArray,

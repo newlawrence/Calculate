@@ -12,6 +12,7 @@ struct calculate_c_library_template {
     Expression (*newExpression)(const char*, const char*);
     void (*freeExpression)(Expression);
 
+    int (*compare)(Expression, Expression);
     const char* (*getExpression)(Expression);
     int (*getVariables)(Expression);
 

@@ -10,28 +10,37 @@ extern "C" const calculate_c_library_template Calculate;
 TEST_CASE("C interface", "[c_interface]") {
 
     SECTION("Well constructed expression - No error checking") {
-        Expression expr = Calculate.newExpression("1 + x", "x");
+        Expression expr1 = Calculate.newExpression("1 + x", "x");
+        Expression expr2 = Calculate.newExpression("1 + x", "x");
+        Expression expr3 = Calculate.newExpression("2 + x", "x");
         double x = 2., *xp = &x;
 
-        CHECK(std::string(Calculate.getExpression(expr)) == "1 + x");
-        CHECK(Calculate.getVariables(expr) == 1);
-        CHECK(static_cast<int>(Calculate.eval(expr)) == 1);
-        CHECK(static_cast<int>(Calculate.eval(expr, x)) == 3);
-        CHECK(static_cast<int>(Calculate.evalArray(expr, xp, 1)) == 3);
+        CHECK(Calculate.compare(expr1, expr2) == 1);
+        CHECK(Calculate.compare(expr1, expr3) == 0);
+        CHECK(std::string(Calculate.getExpression(expr1)) == "1 + x");
+        CHECK(Calculate.getVariables(expr1) == 1);
+        CHECK(static_cast<int>(Calculate.eval(expr1)) == 1);
+        CHECK(static_cast<int>(Calculate.eval(expr1, x)) == 3);
+        CHECK(static_cast<int>(Calculate.evalArray(expr1, xp, 1)) == 3);
 
-        Calculate.freeExpression(expr);
+        Calculate.freeExpression(expr3);
+        Calculate.freeExpression(expr2);
+        Calculate.freeExpression(expr1);
     }
 
     SECTION("Bad constructed expression - No error checking") {
-        Expression expr = Calculate.newExpression("1 + x", "");
+        Expression expr1 = Calculate.newExpression("1 + x", "");
+        Expression expr2 = Calculate.newExpression("1 + x", "");
         double *xp = nullptr;
 
-        CHECK(std::string(Calculate.getExpression(expr)) == "");
-        CHECK(Calculate.getVariables(expr) == -1);
-        CHECK(std::isnan(Calculate.eval(expr, 2.)));
-        CHECK(std::isnan(Calculate.evalArray(expr, xp, 0)));
+        CHECK(Calculate.compare(expr1, expr2) == -1);
+        CHECK(std::string(Calculate.getExpression(expr1)) == "");
+        CHECK(Calculate.getVariables(expr1) == -1);
+        CHECK(std::isnan(Calculate.eval(expr1, 2.)));
+        CHECK(std::isnan(Calculate.evalArray(expr1, xp, 0)));
 
-        Calculate.freeExpression(expr);
+        Calculate.freeExpression(expr2);
+        Calculate.freeExpression(expr1);
     }
 
     SECTION("Error checking") {
@@ -48,5 +57,4 @@ TEST_CASE("C interface", "[c_interface]") {
         Calculate.evaluateArray(expr, values, 2, error);
         CHECK(std::string(error) == std::string("Arguments mismatch"));
     }
-
 }
