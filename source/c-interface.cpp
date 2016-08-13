@@ -38,22 +38,18 @@ namespace calculate_c_interface {
 
 
     int compare(Expression one, Expression another) {
-        if (one && another) {
-            if (uncast(one)->operator==(*uncast(another)))
-                return 1;
-            else
-                return 0;
-        }
+        if (one && another)
+            return (uncast(one)->operator==(*uncast(another))) ? 1 : 0;
+
         return -1;
     }
 
     const char* getExpression(Expression expr) {
-        return expr ? uncast(expr)->getExpression().c_str() : "";
+        return expr ? uncast(expr)->expression().c_str() : "";
     }
 
     int getVariables(Expression expr) {
-        return expr ?
-               static_cast<int>(uncast(expr)->getVariables().size()) : -1;
+        return expr ? static_cast<int>(uncast(expr)->variables().size()) : -1;
     }
 
 
@@ -83,8 +79,7 @@ namespace calculate_c_interface {
         if (!expr)
             return std::numeric_limits<double>::quiet_NaN();
 
-        auto vars = uncast(expr)
-            ->getVariables().size();
+        auto vars = uncast(expr)->variables().size();
         vValue values;
         va_list list;
         va_start(list, expr);
