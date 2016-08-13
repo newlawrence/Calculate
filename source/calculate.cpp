@@ -321,11 +321,7 @@ namespace calculate {
 
     Calculate& Calculate::operator=(const Calculate &other) {
         auto copy = Calculate(other);
-
-        _expression = std::move(copy._expression);
-        _variables = std::move(copy._variables);
-        _values = std::move(copy._values);
-        _tree = std::move(copy._tree);
+        *this = std::move(copy);
 
         return *this;
     }

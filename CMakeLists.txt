@@ -6,6 +6,7 @@ set(CATCH_URL "${CATCH_REPO}/single_include/catch.hpp")
 set(CATCH_PATH "${CMAKE_CURRENT_SOURCE_DIR}/extern/include/catch.hpp")
 if(NOT EXISTS "${CATCH_PATH}")
     file(DOWNLOAD "${CATCH_URL}" "${CATCH_PATH}")
+    message("Catch library successfully downloaded.")
 endif()
 
 function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
@@ -41,8 +42,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
 
-if ((${CMAKE_CXX_COMPILER_ID} MATCHES "GNU") OR
-    (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang"))
+if (
+        (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU") OR
+        (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -std=c11")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++11")
     if (DEFINED ENV{COVERAGE})
