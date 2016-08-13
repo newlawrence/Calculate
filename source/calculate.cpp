@@ -51,12 +51,10 @@ namespace calculate {
         output.push(current);
 
         switch (current->type) {
-            case (Type::RIGHT):
-            case (Type::SEPARATOR):
-            case (Type::OPERATOR):
-                throw SyntaxErrorException();
-            default:
-                break;
+        case (Type::RIGHT): case (Type::SEPARATOR): case (Type::OPERATOR):
+            throw SyntaxErrorException();
+        default:
+            break;
         }
 
         while (!input.empty()) {
@@ -65,34 +63,28 @@ namespace calculate {
             output.push(next);
 
             switch (current->type) {
-                case (Type::CONSTANT):
-                case (Type::RIGHT):
-                    if (next->is(Type::RIGHT)) break;
-                    else if (next->is(Type::SEPARATOR)) break;
-                    else if (next->is(Type::OPERATOR)) break;
-                    else throw SyntaxErrorException();
-                case (Type::LEFT):
-                case (Type::SEPARATOR):
-                case (Type::OPERATOR):
-                    if (next->is(Type::CONSTANT)) break;
-                    else if (next->is(Type::LEFT)) break;
-                    else if (next->is(Type::FUNCTION)) break;
-                    else throw SyntaxErrorException();
-                case (Type::FUNCTION):
-                    if (next->is(Type::LEFT)) break;
-                    else throw SyntaxErrorException();
+            case (Type::CONSTANT): case (Type::RIGHT):
+                if (next->is(Type::RIGHT)) break;
+                else if (next->is(Type::SEPARATOR)) break;
+                else if (next->is(Type::OPERATOR)) break;
+                else throw SyntaxErrorException();
+            case (Type::LEFT): case (Type::SEPARATOR): case (Type::OPERATOR):
+                if (next->is(Type::CONSTANT)) break;
+                else if (next->is(Type::LEFT)) break;
+                else if (next->is(Type::FUNCTION)) break;
+                else throw SyntaxErrorException();
+            case (Type::FUNCTION):
+                if (next->is(Type::LEFT)) break;
+                else throw SyntaxErrorException();
             }
             current = next;
         }
 
         switch (current->type) {
-            case (Type::LEFT):
-            case (Type::SEPARATOR):
-            case (Type::OPERATOR):
-            case (Type::FUNCTION):
-                throw SyntaxErrorException();
-            default:
-                break;
+        case (Type::CONSTANT): case (Type::RIGHT):
+            break;
+        default:
+            throw SyntaxErrorException();
         }
 
         return output;
@@ -107,82 +99,76 @@ namespace calculate {
             infix.pop();
 
             switch (element->type) {
-                case (Type::CONSTANT):
-                    postfix.push(castChild<Evaluable>(element));
-                    break;
+            case (Type::CONSTANT):
+                postfix.push(castChild<Evaluable>(element));
+                break;
 
-                case (Type::FUNCTION):
-                    operations.push(element);
-                    break;
+            case (Type::FUNCTION):
+                operations.push(element);
+                break;
 
-                case (Type::SEPARATOR):
-                    while (!operations.empty()) {
-                        auto another = operations.top();
-                        if (!another->is(Type::LEFT)) {
-                            postfix.push(castChild<Evaluable>(another));
-                            operations.pop();
-                        }
-                        else {
-                            break;
-                        }
-                    }
-                    if (operations.empty())
-                        throw ParenthesisMismatchException();
-                    break;
-
-                case (Type::OPERATOR):
-                    while (!operations.empty()) {
-                        auto another = operations.top();
-                        if (another->is(Type::LEFT)) {
-                            break;
-                        }
-                        else if (another->is(Type::FUNCTION)) {
-                            postfix.push(castChild<Evaluable>(another));
-                            operations.pop();
-                            break;
-                        }
-                        else {
-                            auto op1 = castChild<Operator>(element);
-                            auto op2 = castChild<Operator>(another);
-                            if (
-                                (op1->left_assoc &&
-                                 op1->precedence <= op2->precedence) ||
-                                (!op1->left_assoc &&
-                                 op1->precedence < op2->precedence)
-                            ) {
-                                operations.pop();
-                                postfix.push(castChild<Evaluable>(another));
-                            }
-                            else {
-                                break;
-                            }
-                        }
-                    }
-                    operations.push(element);
-                    break;
-
-                case (Type::LEFT):
-                    operations.push(element);
-                    break;
-
-                case (Type::RIGHT):
-                    while (!operations.empty()) {
-                        auto another = operations.top();
-                        if (!another->is(Type::LEFT)) {
-                            operations.pop();
-                            postfix.push(castChild<Evaluable>(another));
-                        }
-                        else {
-                            break;
-                        }
-                    }
-                    if (!operations.empty() &&
-                        operations.top()->is(Type::LEFT)
-                        )
+            case (Type::SEPARATOR):
+                while (!operations.empty()) {
+                    auto another = operations.top();
+                    if (!another->is(Type::LEFT)) {
+                        postfix.push(castChild<Evaluable>(another));
                         operations.pop();
-                    else
-                        throw ParenthesisMismatchException();
-                    break;
+                    }
+                    else {
+                        break;
+                    }
+                }
+                if (operations.empty())
+                    throw ParenthesisMismatchException();
+                break;
+
+            case (Type::OPERATOR):
+                while (!operations.empty()) {
+                    auto another = operations.top();
+                    if (another->is(Type::LEFT)) {
+                        break;
+                    }
+                    else if (another->is(Type::FUNCTION)) {
+                        postfix.push(castChild<Evaluable>(another));
+                        operations.pop();
+                        break;
+                    }
+                    else {
+                        auto left = castChild<Operator>(element)->left_assoc;
+                        auto p1 = castChild<Operator>(element)->precedence;
+                        auto p2 = castChild<Operator>(element)->precedence;
+                        if ((left && (p1 <= p2)) || (!left && (p1 < p2))) {
+                            operations.pop();
+                            postfix.push(castChild<Evaluable>(another));
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                }
+                operations.push(element);
+                break;
+
+            case (Type::LEFT):
+                operations.push(element);
+                break;
+
+            case (Type::RIGHT):
+                while (!operations.empty()) {
+                    auto another = operations.top();
+                    if (!another->is(Type::LEFT)) {
+                        operations.pop();
+                        postfix.push(castChild<Evaluable>(another));
+                    }
+                    else {
+                        break;
+                    }
+                }
+                if (!operations.empty() && operations.top()->is(Type::LEFT))
+                    operations.pop();
+                else
+                    throw ParenthesisMismatchException();
+                break;
             }
         }
 

@@ -67,8 +67,8 @@ namespace calculate {
             return this->operator() (tail...);
         };
         
-        const String& getExpression() const noexcept {return _expression;}
-        const vString& getVariables() const noexcept {return _variables;}
+        const String& expression() const noexcept {return _expression;}
+        const vString& variables() const noexcept {return _variables;}
     };
 
 }

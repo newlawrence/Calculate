@@ -5,6 +5,9 @@
 #include "calculate.h"
 #include "calculate/c-interface.h"
 
+#define cast(expression) reinterpret_cast<Expression>(expression)
+#define uncast(expression) reinterpret_cast<Calculate*>(expression)
+
 
 namespace calculate_c_interface {
     using namespace calculate;
@@ -12,9 +15,7 @@ namespace calculate_c_interface {
     Expression createExpression(const char *expr, const char *vars,
                                 char *error) {
         try {
-            auto expr_obj = static_cast<Expression>(
-                new Calculate(expr, vars)
-            );
+            auto expr_obj = cast(new Calculate(expr, vars));
             strcpy(error, "");
             return expr_obj;
         }
@@ -32,46 +33,35 @@ namespace calculate_c_interface {
 
     void freeExpression(Expression expr_obj) {
         if (expr_obj)
-            delete static_cast<Calculate*>(expr_obj);
+            delete uncast(expr_obj);
     }
 
 
     int compare(Expression one, Expression another) {
-        if (one && another) {
-            if (
-                static_cast<Calculate *>(one)->operator==(
-                    *static_cast<Calculate *>(another)
-                )
-            )
-                return 1;
-            else
-                return 0;
-        }
+        if (one && another)
+            return (uncast(one)->operator==(*uncast(another))) ? 1 : 0;
+
         return -1;
     }
 
-    const char* getExpression(Expression expr_obj) {
-        return expr_obj ?
-               static_cast<Calculate*>(expr_obj)->getExpression().c_str() : "";
+    const char* getExpression(Expression expr) {
+        return expr ? uncast(expr)->expression().c_str() : "";
     }
 
-    int getVariables(Expression expr_obj) {
-        return expr_obj ?
-               static_cast<int>(
-                   static_cast<Calculate*>(expr_obj)->getVariables().size()
-               ) : -1;
+    int getVariables(Expression expr) {
+        return expr ? static_cast<int>(uncast(expr)->variables().size()) : -1;
     }
 
 
-    double evaluateArray(Expression expr_obj, double *args, int size,
+    double evaluateArray(Expression expr, double *args, int size,
                          char *error) {
-        if (!expr_obj)
+        if (!expr)
             return std::numeric_limits<double>::quiet_NaN();
 
         vValue values(args, args + size);
         try {
             strcpy(error, "");
-            return static_cast<Calculate*>(expr_obj)->operator()(values);
+            return uncast(expr)->operator()(values);
         }
         catch (const BaseCalculateException &e) {
             strcpy(error, e.what());
@@ -80,24 +70,24 @@ namespace calculate_c_interface {
         return std::numeric_limits<double>::quiet_NaN();
     }
 
-    double evalArray(Expression expr_obj, double *args, int size) {
+    double evalArray(Expression expr, double *args, int size) {
         char error[64];
-        return evaluateArray(expr_obj, args, size, error);
+        return evaluateArray(expr, args, size, error);
     }
 
-    double eval(Expression expr_obj, ...) {
-        if (!expr_obj)
+    double eval(Expression expr, ...) {
+        if (!expr)
             return std::numeric_limits<double>::quiet_NaN();
 
-        auto vars = static_cast<Calculate*>(expr_obj)->getVariables().size();
+        auto vars = uncast(expr)->variables().size();
         vValue values;
         va_list list;
-        va_start(list, expr_obj);
+        va_start(list, expr);
         for (auto i = 0u; i < vars; i++)
             values.push_back(va_arg(list, double));
         va_end(list);
 
-        return static_cast<Calculate*>(expr_obj)->operator()(values);
+        return uncast(expr)->operator()(values);
     }
 
 }
