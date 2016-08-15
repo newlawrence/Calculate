@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-struct HCalculate;
-typedef struct HCalculate* Expression;
+struct CalculateClassHandler;
+typedef struct CalculateClassHandler* Expression;
 
 struct calculate_c_library_template {
     Expression (*createExpression)(const char*, const char*, char*);

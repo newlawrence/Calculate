@@ -31,9 +31,9 @@ namespace calculate_c_interface {
         return createExpression(expr, vars, error);
     }
 
-    void freeExpression(Expression expr_obj) {
-        if (expr_obj)
-            delete uncast(expr_obj);
+    void freeExpression(Expression expr) {
+        if (expr)
+            delete uncast(expr);
     }
 
 
