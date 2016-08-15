@@ -80,6 +80,7 @@ target_compile_definitions(calculate PUBLIC "_CRT_SECURE_NO_WARNINGS")
 
 add_library(calculate_static STATIC "${sources}")
 target_compile_definitions(calculate_static PUBLIC "_CRT_SECURE_NO_WARNINGS")
+set_target_properties(calculate_static PROPERTIES OUTPUT_NAME "calculate")
 
 file(GLOB tests "tests/*.cpp")
 add_executable(unittests "${tests}")
