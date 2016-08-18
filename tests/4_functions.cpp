@@ -3,7 +3,7 @@
 #include "catch.hpp"
 #include "calculate.h"
 
-#define eval(e) Calculate(e)()
+#define eval(e) Expression(e)()
 #define approx(x) Approx(x).epsilon(1e-12)
 
 using namespace calculate;
@@ -82,7 +82,7 @@ TEST_CASE("Builtin functions", "[functions]") {
     }
 
     SECTION("Incorrect number of arguments") {
-        CHECK_THROWS_AS(Calculate("hypot(1)"), MissingArgumentsException);
-        CHECK_THROWS_AS(Calculate("hypot(1, 2, 3)"), ArgumentsExcessException);
+        CHECK_THROWS_AS(Expression("hypot(1)"), MissingArgumentsException);
+        CHECK_THROWS_AS(Expression("hypot(1,2,3)"), ArgumentsExcessException);
     }
 }

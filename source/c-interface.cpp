@@ -8,20 +8,19 @@
 #include "calculate/c-interface.h"
 
 #define cast(expression) reinterpret_cast<Expression>(expression)
-#define uncast(expression) reinterpret_cast<Calculate*>(expression)
+#define uncast(expression) reinterpret_cast<calculate::Expression*>(expression)
 
 
 namespace calculate_c_interface {
-    using namespace calculate;
 
     Expression createExpression(const char *expr, const char *vars,
                                 char *error) {
         try {
-            auto expr_obj = cast(new Calculate(expr, vars));
+            auto expr_obj = cast(new calculate::Expression(expr, vars));
             strcpy(error, "");
             return expr_obj;
         }
-        catch (const BaseCalculateException &e) {
+        catch (const calculate::BaseCalculateException &e) {
             strcpy(error, e.what());
         }
 
@@ -52,7 +51,7 @@ namespace calculate_c_interface {
     }
 
     const char* getVariables(Expression expr) {
-        static String vars;
+        static std::string vars;
 
         const auto &variables = uncast(expr)->variables();
         if (expr && variables.size()) {
@@ -60,13 +59,13 @@ namespace calculate_c_interface {
                 variables.begin() + 1,
                 variables.end(),
                 variables[0],
-                [](const String &accumulator, const String &next) {
+                [](const std::string &accumulator, const std::string &next) {
                     return accumulator + "," + next;
                 }
             );
         }
         else {
-            vars = String();
+            vars = std::string();
         }
         return vars.c_str();
     }
@@ -79,12 +78,12 @@ namespace calculate_c_interface {
             return std::numeric_limits<double>::quiet_NaN();
         }
 
-        vValue values(args, args + size);
+        calculate::vValue values(args, args + size);
         try {
             strcpy(error, "");
             return uncast(expr)->operator()(values);
         }
-        catch (const BaseCalculateException &e) {
+        catch (const calculate::BaseCalculateException &e) {
             strcpy(error, e.what());
         }
 
@@ -102,7 +101,7 @@ namespace calculate_c_interface {
             return std::numeric_limits<double>::quiet_NaN();
 
         auto vars = uncast(expr)->variables().size();
-        vValue values;
+        calculate::vValue values;
         va_list list;
         va_start(list, expr);
         for (auto i = 0u; i < vars; i++)

@@ -27,7 +27,7 @@ namespace calculate {
     using sEvaluable = std::stack<pEvaluable>;
 
 
-    class Calculate final {
+    class Expression final {
         String _expression;
         vString _variables;
         pValue _values;
@@ -42,18 +42,18 @@ namespace calculate {
         static vString _extract(const String &vars);
         static vString _validate(const vString &vars);
 
-        Calculate() = delete;
+        Expression() = delete;
 
     public:
-        Calculate(const Calculate &other);
-        Calculate(Calculate &&other);
-        Calculate(const String &expr, const String &vars);
-        Calculate(const String &expr, const vString &vars={});
+        Expression(const Expression &other);
+        Expression(Expression &&other);
+        Expression(const String &expr, const String &vars);
+        Expression(const String &expr, const vString &vars={});
 
-        Calculate& operator=(const Calculate &other);
-        Calculate& operator=(Calculate &&other);
+        Expression& operator=(const Expression &other);
+        Expression& operator=(Expression &&other);
 
-        bool operator==(const Calculate &other) const noexcept;
+        bool operator==(const Expression &other) const noexcept;
 
         double operator() () const;
         double operator() (double value) const;

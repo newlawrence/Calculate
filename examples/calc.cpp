@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
                 values.push_back(stod(argv[i + 1]));
             }
 
-            auto expression = Calculate(argv[1], variables);
+            auto expression = Expression(argv[1], variables);
             cout << expression(values) << endl;
         }
     }
