@@ -74,8 +74,10 @@ namespace calculate_c_interface {
 
     double evaluateArray(Expression expr, double *args, int size,
                          char *error) {
-        if (!expr)
+        if (!expr) {
+            strcpy(error, "Not initialized");
             return std::numeric_limits<double>::quiet_NaN();
+        }
 
         vValue values(args, args + size);
         try {
