@@ -244,7 +244,7 @@ contains
     module procedure getExpressionFixed
         procedure(getExpressionWrapper), pointer :: get
 
-        expr = ""
+        expr = ''
         if (this%init_number == MAGIC_NUMBER) then
             call c_f_procpointer(CalculateLibrary%getExpression, get)
 
@@ -255,7 +255,7 @@ contains
     module procedure getVariablesFixed
         procedure(getVariablesWrapper), pointer :: get
 
-        vars = ""
+        vars = ''
         if (this%init_number == MAGIC_NUMBER) then
             call c_f_procpointer(CalculateLibrary%getVariables, get)
 
@@ -280,7 +280,7 @@ contains
             end if
             message = fromChars(cerror)
         else
-            message = "Not initialized"
+            message = 'Not initialized'
             result = ieee_value(result, ieee_quiet_nan)
         end if
 
