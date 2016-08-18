@@ -12,13 +12,14 @@ TEST_CASE("C interface", "[c_interface]") {
     SECTION("Well constructed expression - No error checking") {
         Expression expr1 = Calculate.newExpression("1 + x", "x");
         Expression expr2 = Calculate.newExpression("1 + x", "x");
-        Expression expr3 = Calculate.newExpression("2 + x", "x");
+        Expression expr3 = Calculate.newExpression("x + y", "x, y");
         double x = 2., *xp = &x;
 
         CHECK(Calculate.compare(expr1, expr2) == 1);
         CHECK(Calculate.compare(expr1, expr3) == 0);
         CHECK(std::string(Calculate.getExpression(expr1)) == "1 + x");
-        CHECK(Calculate.getVariables(expr1) == 1);
+        CHECK(std::string(Calculate.getVariables(expr1)) == "x");
+        CHECK(std::string(Calculate.getVariables(expr3)) == "x,y");
         CHECK(static_cast<int>(Calculate.eval(expr1)) == 1);
         CHECK(static_cast<int>(Calculate.eval(expr1, x)) == 3);
         CHECK(static_cast<int>(Calculate.evalArray(expr1, xp, 1)) == 3);
@@ -35,7 +36,7 @@ TEST_CASE("C interface", "[c_interface]") {
 
         CHECK(Calculate.compare(expr1, expr2) == -1);
         CHECK(std::string(Calculate.getExpression(expr1)) == "");
-        CHECK(Calculate.getVariables(expr1) == -1);
+        CHECK(std::string(Calculate.getVariables(expr1)) == "");
         CHECK(std::isnan(Calculate.eval(expr1, 2.)));
         CHECK(std::isnan(Calculate.evalArray(expr1, xp, 0)));
 

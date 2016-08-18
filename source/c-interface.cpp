@@ -1,6 +1,8 @@
 #include <cstdarg>
 #include <cstring>
+#include <numeric>
 #include <limits>
+
 
 #include "calculate.h"
 #include "calculate/c-interface.h"
@@ -28,6 +30,7 @@ namespace calculate_c_interface {
 
     Expression newExpression(const char *expr, const char *vars) {
         char error[64];
+
         return createExpression(expr, vars, error);
     }
 
@@ -48,8 +51,24 @@ namespace calculate_c_interface {
         return expr ? uncast(expr)->expression().c_str() : "";
     }
 
-    int getVariables(Expression expr) {
-        return expr ? static_cast<int>(uncast(expr)->variables().size()) : -1;
+    const char* getVariables(Expression expr) {
+        static String vars;
+
+        const auto &variables = uncast(expr)->variables();
+        if (expr && variables.size()) {
+            vars = std::accumulate(
+                variables.begin() + 1,
+                variables.end(),
+                variables[0],
+                [](const String &accumulator, const String &next) {
+                    return accumulator + "," + next;
+                }
+            );
+        }
+        else {
+            vars = String();
+        }
+        return vars.c_str();
     }
 
 
@@ -72,6 +91,7 @@ namespace calculate_c_interface {
 
     double evalArray(Expression expr, double *args, int size) {
         char error[64];
+
         return evaluateArray(expr, args, size, error);
     }
 
