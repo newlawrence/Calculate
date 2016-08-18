@@ -1,25 +1,26 @@
 #include <cstdarg>
 #include <cstring>
+#include <numeric>
 #include <limits>
+
 
 #include "calculate.h"
 #include "calculate/c-interface.h"
 
 #define cast(expression) reinterpret_cast<Expression>(expression)
-#define uncast(expression) reinterpret_cast<Calculate*>(expression)
+#define uncast(expression) reinterpret_cast<calculate::Expression*>(expression)
 
 
 namespace calculate_c_interface {
-    using namespace calculate;
 
     Expression createExpression(const char *expr, const char *vars,
                                 char *error) {
         try {
-            auto expr_obj = cast(new Calculate(expr, vars));
+            auto expr_obj = cast(new calculate::Expression(expr, vars));
             strcpy(error, "");
             return expr_obj;
         }
-        catch (const BaseCalculateException &e) {
+        catch (const calculate::BaseCalculateException &e) {
             strcpy(error, e.what());
         }
 
@@ -28,6 +29,7 @@ namespace calculate_c_interface {
 
     Expression newExpression(const char *expr, const char *vars) {
         char error[64];
+
         return createExpression(expr, vars, error);
     }
 
@@ -48,22 +50,40 @@ namespace calculate_c_interface {
         return expr ? uncast(expr)->expression().c_str() : "";
     }
 
-    int getVariables(Expression expr) {
-        return expr ? static_cast<int>(uncast(expr)->variables().size()) : -1;
+    const char* getVariables(Expression expr) {
+        static std::string vars;
+
+        const auto &variables = uncast(expr)->variables();
+        if (expr && variables.size()) {
+            vars = std::accumulate(
+                variables.begin() + 1,
+                variables.end(),
+                variables[0],
+                [](const std::string &accumulator, const std::string &next) {
+                    return accumulator + "," + next;
+                }
+            );
+        }
+        else {
+            vars = std::string();
+        }
+        return vars.c_str();
     }
 
 
     double evaluateArray(Expression expr, double *args, int size,
                          char *error) {
-        if (!expr)
+        if (!expr) {
+            strcpy(error, "Not initialized");
             return std::numeric_limits<double>::quiet_NaN();
+        }
 
-        vValue values(args, args + size);
+        calculate::vValue values(args, args + size);
         try {
             strcpy(error, "");
             return uncast(expr)->operator()(values);
         }
-        catch (const BaseCalculateException &e) {
+        catch (const calculate::BaseCalculateException &e) {
             strcpy(error, e.what());
         }
 
@@ -72,6 +92,7 @@ namespace calculate_c_interface {
 
     double evalArray(Expression expr, double *args, int size) {
         char error[64];
+
         return evaluateArray(expr, args, size, error);
     }
 
@@ -80,7 +101,7 @@ namespace calculate_c_interface {
             return std::numeric_limits<double>::quiet_NaN();
 
         auto vars = uncast(expr)->variables().size();
-        vValue values;
+        calculate::vValue values;
         va_list list;
         va_start(list, expr);
         for (auto i = 0u; i < vars; i++)

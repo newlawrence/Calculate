@@ -6,8 +6,8 @@
 
 namespace calculate {
 
-    qSymbol Calculate::_tokenize(const String &expr, const vString &vars,
-                                 const pValue &values) {
+    qSymbol Expression::_tokenize(const String &expr, const vString &vars,
+                                  const pValue &values) {
         qSymbol infix;
 
         auto regex = std::regex(
@@ -42,7 +42,7 @@ namespace calculate {
         return infix;
     }
 
-    qSymbol Calculate::_check(qSymbol &&input) {
+    qSymbol Expression::_check(qSymbol &&input) {
         qSymbol output;
         pSymbol current, next;
 
@@ -90,7 +90,7 @@ namespace calculate {
         return output;
     }
 
-    qEvaluable Calculate::_shuntingYard(qSymbol &&infix) {
+    qEvaluable Expression::_shuntingYard(qSymbol &&infix) {
         qEvaluable postfix;
         sSymbol operations;
 
@@ -182,7 +182,7 @@ namespace calculate {
         return postfix;
     }
 
-    pEvaluable Calculate::_buildTree(qEvaluable &&postfix) {
+    pEvaluable Expression::_buildTree(qEvaluable &&postfix) {
         sEvaluable operands;
         pEvaluable element;
 
@@ -226,7 +226,7 @@ namespace calculate {
     }
 
 
-    vString Calculate::_extract(const String &vars) {
+    vString Expression::_extract(const String &vars) {
         auto no_spaces = vars;
         no_spaces.erase(
             std::remove_if(
@@ -247,7 +247,7 @@ namespace calculate {
         return variables;
     }
 
-    vString Calculate::_validate(const vString &vars) {
+    vString Expression::_validate(const vString &vars) {
         auto regex = std::regex("[A-Za-z]+\\d*");
 
         if (
@@ -273,22 +273,22 @@ namespace calculate {
     }
 
 
-    Calculate::Calculate(const Calculate &other) :
-            Calculate(other._expression, other._variables) {
+    Expression::Expression(const Expression &other) :
+            Expression(other._expression, other._variables) {
     }
 
-    Calculate::Calculate(Calculate &&other) :
+    Expression::Expression(Expression &&other) :
             _expression(std::move(other._expression)),
             _variables(std::move(other._variables)),
             _values(std::move(other._values)) {
         _tree = std::move(other._tree);
     }
 
-    Calculate::Calculate(const String &expr, const String &vars) :
-            Calculate(expr, _extract(vars)) {
+    Expression::Expression(const String &expr, const String &vars) :
+            Expression(expr, _extract(vars)) {
     }
 
-    Calculate::Calculate(const String &expr, const vString &vars) :
+    Expression::Expression(const String &expr, const vString &vars) :
             _expression(expr),
             _variables(_validate(vars)),
             _values(new double[vars.size()]) {
@@ -305,14 +305,14 @@ namespace calculate {
     }
 
 
-    Calculate& Calculate::operator=(const Calculate &other) {
-        auto copy = Calculate(other);
+    Expression& Expression::operator=(const Expression &other) {
+        auto copy = Expression(other);
         *this = std::move(copy);
 
         return *this;
     }
 
-    Calculate& Calculate::operator=(Calculate &&other) {
+    Expression& Expression::operator=(Expression &&other) {
         _expression = std::move(other._expression);
         _variables = std::move(other._variables);
         _values = std::move(other._values);
@@ -322,15 +322,15 @@ namespace calculate {
     }
 
 
-    bool Calculate::operator==(const Calculate &other) const noexcept {
+    bool Expression::operator==(const Expression &other) const noexcept {
         return this->_expression == other._expression;
     }
 
-    double Calculate::operator() () const {
+    double Expression::operator() () const {
         return _tree->evaluate();
     };
 
-    double Calculate::operator() (double value) const {
+    double Expression::operator() (double value) const {
         if (_variables.size() < 1)
             throw WrongArgumentsException();
         _values[_variables.size() - 1] = value;
@@ -338,7 +338,7 @@ namespace calculate {
         return this->operator()();
     }
 
-    double Calculate::operator() (vValue values) const {
+    double Expression::operator() (vValue values) const {
         if (values.size() != _variables.size())
             throw WrongArgumentsException();
         for (auto i = 0u; i < values.size(); i++)

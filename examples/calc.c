@@ -37,11 +37,12 @@ int main(int argc, char *argv[]) {
                 printf("%f\n", result);
             else
                 printf("%s\n", errors);
-
-            Calculate.freeExpression(expression);
         }
-        else
+        else {
             printf("%s\n", errors);
+        }
+        Calculate.freeExpression(expression);
+
     }
 
     return 0;
