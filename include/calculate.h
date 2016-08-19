@@ -53,8 +53,6 @@ namespace calculate {
         Expression& operator=(const Expression &other);
         Expression& operator=(Expression &&other);
 
-        bool operator==(const Expression &other) const noexcept;
-
         double operator() () const;
         double operator() (double value) const;
         double operator() (vValue values) const;

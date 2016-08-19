@@ -101,11 +101,12 @@ contains
     end function
 
 
-    module procedure createRVExpression
+    module procedure createNewExpression
         procedure(createExpressionWrapper), pointer :: create
         procedure(freeExpressionWrapper), pointer :: free
         type(c_ptr) :: handler
         character(kind=c_char, len=1), dimension(ERROR_CHARS) :: cerror
+        character(len=:), allocatable :: message
         integer :: c
 
         call c_f_procpointer(CalculateLibrary%createExpression, create)
@@ -115,17 +116,17 @@ contains
         else
             handler = create(toChars(expr), toChars(''), cerror)
         end if
-        this%error = fromChars(cerror)
+        message = fromChars(cerror)
 
         this%expr = expr
         this%vars = vars
         call free(handler)
 
         if (present(error)) then
-            if (len(this%error) > len(error)) then
+            if (len(message) > len(error)) then
                 write (error, ERROR_FMT) ('*', c=1, len(error))
             else
-                error = this%error
+                error = message
             end if
         end if
     end procedure
@@ -148,64 +149,13 @@ contains
         end if
     end procedure
 
-    module procedure assignRVExpression
+    module procedure assignNewExpression
         procedure(newExpressionWrapper), pointer :: new
 
         call c_f_procpointer(CalculateLibrary%newExpression, new)
         if (this%init_number == MAGIC_NUMBER) call freeExpression(this)
         this%init_number = MAGIC_NUMBER
         this%handler = new(toChars(other%expr), toChars(other%vars))
-    end procedure
-
-    module procedure compareExpression
-        integer :: comparison
-        procedure(compareWrapper), pointer :: compare
-
-        comp = .false.
-        if ( &
-            this%init_number == MAGIC_NUMBER .and. &
-            other%init_number == MAGIC_NUMBER &
-        ) then
-            if (this%init_number == MAGIC_NUMBER) then
-                call c_f_procpointer(CalculateLibrary%compare, compare)
-
-                comparison = compare(this%handler, other%handler)
-                if (comparison > 0) comp = .true.
-            end if
-        end if
-    end procedure
-
-    module procedure compareRVExpression
-        integer :: comparison
-        type(Expression) :: another
-        procedure(compareWrapper), pointer :: compare
-
-        comp = .false.
-        if (this%init_number == MAGIC_NUMBER) then
-            call c_f_procpointer(CalculateLibrary%compare, compare)
-            another = other
-
-            comparison = compare(this%handler, another%handler)
-            call freeExpression(another)
-            if (comparison > 0) comp = .true.
-        end if
-    end procedure
-
-    module procedure compareRVExpressions
-        integer :: comparison
-        type(Expression) :: one
-        type(Expression) :: another
-        procedure(compareWrapper), pointer :: compare
-
-        comp = .false.
-        call c_f_procpointer(CalculateLibrary%compare, compare)
-        one = this
-        another = other
-
-        comparison = compare(one%handler, another%handler)
-        call freeExpression(another)
-        call freeExpression(one)
-        if (comparison > 0) comp = .true.
     end procedure
 
 

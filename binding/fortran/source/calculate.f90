@@ -25,27 +25,18 @@ module calculate
         procedure, non_overridable :: eval => evaluateArray
 
         procedure, non_overridable :: assign => assignExpression
-        procedure, non_overridable :: assignrv => assignRVExpression
-        generic :: assignment(=) => assign, assignrv
-
-        procedure, non_overridable :: compare => compareExpression
-        procedure, non_overridable :: comparerv => compareRVExpression
-        generic :: operator(==) => compare, comparerv
+        procedure, non_overridable :: assignNew => assignNewExpression
+        generic :: assignment(=) => assign, assignNew
     end type
 
 
     interface Expression
-        module procedure createRVExpression
+        module procedure createNewExpression
     end interface
 
-    type :: RVExpression
+    type :: NewExpression
         character(len=:), allocatable, private :: expr
         character(len=:), allocatable, private :: vars
-        character(len=:), allocatable, private :: error
-
-    contains
-        procedure, non_overridable :: compare => compareRVExpressions
-        generic :: operator(==) => compare
     end type
 
 
@@ -53,7 +44,6 @@ module calculate
         type(c_funptr) :: createExpression
         type(c_funptr) :: newExpression
         type(c_funptr) :: freeExpression
-        type(c_funptr) :: compare
         type(c_funptr) :: getExpression
         type(c_funptr) :: getVariables
         type(c_funptr) :: evaluateArray
@@ -65,11 +55,11 @@ module calculate
 
 
     interface
-        module function createRVExpression(expr, vars, error) result (this)
+        module function createNewExpression(expr, vars, error) result (this)
             character(len=*), intent(in) :: expr
             character(len=*), intent(in), optional :: vars
             character(len=*), intent(out), optional :: error
-            type(RVExpression) :: this
+            type(NewExpression) :: this
         end function
 
         module subroutine assignExpression(this, other)
@@ -77,28 +67,10 @@ module calculate
             type(Expression), intent(in) :: other
         end subroutine
 
-        module subroutine assignRVExpression(this, other)
+        module subroutine assignNewExpression(this, other)
             class(Expression), intent(inout) :: this
-            type(RVExpression), intent(in) :: other
+            type(NewExpression), intent(in) :: other
         end subroutine
-
-        module function compareExpression(this, other) result (comp)
-            class(Expression), intent(in) :: this
-            type(Expression), intent(in) :: other
-            logical :: comp
-        end function
-
-        module function compareRVExpression(this, other) result (comp)
-            class(Expression), intent(in) :: this
-            type(RVExpression), intent(in) :: other
-            logical :: comp
-        end function
-
-        module function compareRVExpressions(this, other) result (comp)
-            class(RVExpression), intent(in) :: this
-            type(RVExpression), intent(in) :: other
-            logical :: comp
-        end function
 
 
         module subroutine freeExpression(this)

@@ -39,13 +39,6 @@ namespace calculate_c_interface {
     }
 
 
-    int compare(Expression one, Expression another) {
-        if (one && another)
-            return (uncast(one)->operator==(*uncast(another))) ? 1 : 0;
-
-        return -1;
-    }
-
     const char* getExpression(Expression expr) {
         return expr ? uncast(expr)->expression().c_str() : "";
     }
@@ -118,7 +111,6 @@ extern "C" const calculate_c_library_template Calculate = {
     calculate_c_interface::createExpression,
     calculate_c_interface::newExpression,
     calculate_c_interface::freeExpression,
-    calculate_c_interface::compare,
     calculate_c_interface::getExpression,
     calculate_c_interface::getVariables,
     calculate_c_interface::evaluateArray,
