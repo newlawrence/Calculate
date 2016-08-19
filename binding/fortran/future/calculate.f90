@@ -4,7 +4,7 @@ module calculate
     implicit none
     private
 
-    public :: Expression, freeExpression, CalculateLibrary
+    public :: Expression, freeExpression
 
     integer(kind=8), parameter :: MAGIC_NUMBER = 103592
     integer, parameter :: MAX_CHARS = 8192
@@ -38,20 +38,6 @@ module calculate
         character(len=:), allocatable, private :: expr
         character(len=:), allocatable, private :: vars
     end type
-
-
-    type, bind(c) :: LibraryTemplate
-        type(c_funptr) :: createExpression
-        type(c_funptr) :: newExpression
-        type(c_funptr) :: freeExpression
-        type(c_funptr) :: getExpression
-        type(c_funptr) :: getVariables
-        type(c_funptr) :: evaluateArray
-        type(c_funptr) :: evalArray
-        type(c_funptr) :: eval  
-    end type
-
-    type(LibraryTemplate), bind(c, name='Calculate') :: CalculateLibrary
 
 
     interface
