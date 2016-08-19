@@ -4,29 +4,33 @@ module calculate
     implicit none
     private
 
-    public :: Expression, freeExpression, assignment(=), operator(==)
+    public :: Expression, freeExpression
 
     integer(kind=8), parameter :: MAGIC_NUMBER = 103592
     integer, parameter :: MAX_CHARS = 8192
     integer, parameter :: ERROR_CHARS = 64
+    character(len=7), parameter :: ERROR_FMT = '(8192A)'
 
 
     type :: Expression
         integer(kind=8), private :: init_number = MAGIC_NUMBER
         type(c_ptr), private :: handler = c_null_ptr
+
     contains
         final :: freeExpression
+
         procedure, non_overridable :: check => checkExpression
         procedure, non_overridable :: expression => getExpression
         procedure, non_overridable :: variables => getVariables
         procedure, non_overridable :: eval => evaluateArray
-    end type
 
+        procedure, non_overridable :: assign => assignExpression
+        procedure, non_overridable :: assignrv => assignRVExpression
+        generic :: assignment(=) => assign, assignrv
 
-    type :: RVExpression
-        character(len=:), allocatable, private :: expr
-        character(len=:), allocatable, private :: vars
-        character(len=:), allocatable, private :: error
+        procedure, non_overridable :: compare => compareExpression
+        procedure, non_overridable :: comparerv => compareRVExpression
+        generic :: operator(==) => compare, comparerv
     end type
 
 
@@ -34,16 +38,30 @@ module calculate
         module procedure createRVExpression
     end interface
 
-    interface assignment(=)
-        module procedure assignExpression
-        module procedure assignRVExpression
-    end interface
+    type :: RVExpression
+        character(len=:), allocatable, private :: expr
+        character(len=:), allocatable, private :: vars
+        character(len=:), allocatable, private :: error
 
-    interface operator(==)
-        module procedure compareExpression
-        module procedure compareRVExpression
-        module procedure compareRVExpressions
-    end interface
+    contains
+        procedure, non_overridable :: compare => compareRVExpressions
+        generic :: operator(==) => compare
+    end type
+
+
+    type, bind(c) :: LibraryTemplate
+        type(c_funptr) :: createExpression
+        type(c_funptr) :: newExpression
+        type(c_funptr) :: freeExpression
+        type(c_funptr) :: compare
+        type(c_funptr) :: getExpression
+        type(c_funptr) :: getVariables
+        type(c_funptr) :: evaluateArray
+        type(c_funptr) :: evalArray
+        type(c_funptr) :: eval  
+    end type
+
+    type(LibraryTemplate), bind(c, name='Calculate') :: CalculateLibrary
 
 
     interface
@@ -57,13 +75,11 @@ module calculate
         module subroutine assignExpression(this, other)
             class(Expression), intent(inout) :: this
             type(Expression), intent(in) :: other
-            logical :: comp
         end subroutine
 
         module subroutine assignRVExpression(this, other)
             class(Expression), intent(inout) :: this
             type(RVExpression), intent(in) :: other
-            logical :: comp
         end subroutine
 
         module function compareExpression(this, other) result (comp)
@@ -94,14 +110,14 @@ module calculate
             logical :: check
         end function
 
-        module function getExpressionFixed(this) result (expr)
+        module function getExpression(this) result (expr)
             class(Expression), intent(in) :: this
-            character(len=MAX_CHARS) :: expr
+            character(len=:), allocatable :: expr
         end function
 
-        module function getVariablesFixed(this) result (vars)
+        module function getVariables(this) result (vars)
             class(Expression), intent(in) :: this
-            character(len=MAX_CHARS) :: vars
+            character(len=:), allocatable :: vars
         end function
 
         module function evaluateArray(this, args, error) result (result)
@@ -111,22 +127,5 @@ module calculate
             real(kind=8) :: result
         end function
     end interface
-
-
-contains
-
-    function getExpression(this) result (expr)
-        class(Expression), intent(in) :: this
-        character(len=:), allocatable :: expr
-
-        expr = trim(getExpressionFixed(this))
-    end function
-
-    function getVariables(this) result (vars)
-        class(Expression), intent(in) :: this
-        character(len=:), allocatable :: vars
-
-        vars = trim(getVariablesFixed(this))
-    end function
 
 end module
