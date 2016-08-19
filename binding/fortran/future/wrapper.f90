@@ -24,13 +24,6 @@ submodule (calculate) calculate_wrapper
             type(c_ptr), value :: expr
         end subroutine
 
-        function compareWrapper(one, another) bind(c)
-            import :: c_ptr, c_int
-            type(c_ptr), value :: one
-            type(c_ptr), value :: another
-            integer(kind=c_int) :: compareWrapper
-        end function
-
         function getExpressionWrapper(expr) bind(c)
             import :: c_ptr
             type(c_ptr), value :: expr

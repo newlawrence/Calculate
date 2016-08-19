@@ -1,20 +1,23 @@
 cmake_minimum_required(VERSION 3.5)
 project(calculate)
+enable_language(Fortran)
+
+add_subdirectory(binding/fortran)
 
 set(CATCH_REPO "https://raw.githubusercontent.com/philsquared/Catch/master")
 set(CATCH_URL "${CATCH_REPO}/single_include/catch.hpp")
 set(CATCH_PATH "${CMAKE_CURRENT_SOURCE_DIR}/extern/include/catch.hpp")
-if(NOT EXISTS "${CATCH_PATH}")
+if (NOT EXISTS "${CATCH_PATH}")
     file(DOWNLOAD "${CATCH_URL}" "${CATCH_PATH}")
     message("Catch library successfully downloaded.")
-endif()
+endif ()
 
 function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
-    FIND_PROGRAM(GCOV gcov)
+    find_program(GCOV gcov)
     if (NOT GCOV)
         message(FATAL_ERROR "gcov not found.")
     endif ()
-    FIND_PROGRAM(GCOVR gcovr)
+    find_program(GCOVR gcovr)
     if (NOT GCOVR)
         message(FATAL_ERROR "gcovr not found.")
     endif ()
@@ -70,9 +73,24 @@ elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox /sdl")
 endif ()
 
+if (${CMAKE_Fortran_COMPILER_ID} MATCHES "GNU")
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -O3 -std=f2008ts")
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
+elseif (${CMAKE_Fortran_COMPILER_ID} MATCHES "Intel")
+    if (WIN32)
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /O3 /stand:f08")
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /free /warn:all")
+    else ()
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -O3 -stand f08")
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -free -warn all")
+    endif ()
+endif ()
+
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}/extern/include")
-file(GLOB sources "source/*.cpp")
+include_directories("${PROJECT_SOURCE_DIR}/binding/fortran/module")
+
+file(GLOB sources "${PROJECT_SOURCE_DIR}/source/*.cpp")
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 add_library(calculate SHARED "${sources}")
@@ -82,15 +100,18 @@ add_library(calculate_static STATIC "${sources}")
 target_compile_definitions(calculate_static PUBLIC "_CRT_SECURE_NO_WARNINGS")
 set_target_properties(calculate_static PROPERTIES OUTPUT_NAME "calculate")
 
-file(GLOB tests "tests/*.cpp")
+file(GLOB tests "${PROJECT_SOURCE_DIR}/tests/*.cpp")
 add_executable(unittests "${tests}")
 target_link_libraries(unittests LINK_PUBLIC calculate)
 
-add_executable(calc "examples/calc.c")
-target_link_libraries(calc LINK_PUBLIC calculate)
+add_executable(calc "${PROJECT_SOURCE_DIR}/examples/calc.c")
+target_link_libraries(calc LINK_PUBLIC calculate_static)
 
-add_executable(calcpp "examples/calc.cpp")
-target_link_libraries(calcpp LINK_PUBLIC calculate)
+add_executable(calcpp "${PROJECT_SOURCE_DIR}/examples/calc.cpp")
+target_link_libraries(calcpp LINK_PUBLIC calculate_static)
+
+add_executable(calcfor "${PROJECT_SOURCE_DIR}/examples/calc.f90")
+target_link_libraries(calcfor LINK_PUBLIC calculate_static calculate_fortran)
 
 add_custom_command(
     TARGET unittests
