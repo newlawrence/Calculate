@@ -322,10 +322,6 @@ namespace calculate {
     }
 
 
-    bool Expression::operator==(const Expression &other) const noexcept {
-        return this->_expression == other._expression;
-    }
-
     double Expression::operator() () const {
         return _tree->evaluate();
     };

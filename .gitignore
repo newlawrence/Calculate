@@ -9,6 +9,8 @@ Win32/
 # Binary content
 bin/
 lib/
+binding/fortran/module
+binding/fortran/lib
 
 # CMake related
 cmake_install.cmake
@@ -22,8 +24,8 @@ Release/
 *.vcxproj
 *.sln
 
-# CATCH library
-extern/include/catch.hpp
+# Extern libraries
+extern/
 
-# coverage reports
+# Coverage reports
 coverage/

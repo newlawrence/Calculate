@@ -10,12 +10,10 @@ TEST_CASE("Constructors test", "[Constructors]") {
     SECTION("Constructors and assignments") {
         auto expr1 = Expression("1 + x", "x");
         auto expr2 = expr1;
-        CHECK(expr1 == expr2);
         CHECK(static_cast<int>(expr1(2)) == static_cast<int>(expr2(2)));
 
         expr1 = Expression("1 + x", "x");
         expr2 = expr1;
-        CHECK(expr1 == expr2);
         CHECK(static_cast<int>(expr1(2)) == static_cast<int>(expr2(2)));
     }
 
