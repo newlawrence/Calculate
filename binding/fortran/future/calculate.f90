@@ -4,7 +4,7 @@ module calculate
     implicit none
     private
 
-    public :: Expression, freeExpression
+    public :: Expression, freeExpression, CalculateLibrary
 
     integer(kind=8), parameter :: MAGIC_NUMBER = 103592
     integer, parameter :: MAX_CHARS = 8192
