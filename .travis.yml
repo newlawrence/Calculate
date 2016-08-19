@@ -10,6 +10,7 @@ addons:
     packages:
       - gcc-5
       - g++-5
+      - gfortran-5
 
 env:
   global:
