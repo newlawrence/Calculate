@@ -4,20 +4,6 @@ submodule (calculate) calculate_wrapper
     implicit none
 
 
-    type, bind(c) :: LibraryTemplate
-        type(c_funptr) :: createExpression
-        type(c_funptr) :: newExpression
-        type(c_funptr) :: freeExpression
-        type(c_funptr) :: getExpression
-        type(c_funptr) :: getVariables
-        type(c_funptr) :: evaluateArray
-        type(c_funptr) :: evalArray
-        type(c_funptr) :: eval
-    end type
-
-    type(LibraryTemplate), bind(c, name='Calculate') :: CalculateLibrary
-
-
     abstract interface
         function createExpressionWrapper(expr, vars, error) bind(c)
             import :: c_ptr, c_char
