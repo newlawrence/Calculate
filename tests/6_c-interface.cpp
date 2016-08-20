@@ -13,6 +13,8 @@ TEST_CASE("C interface", "[c_interface]") {
         Expression expr3 = Calculate.newExpression("x + y", "x, y");
         double x = 2., *xp = &x;
 
+        CHECK(calculateReference() == &Calculate);
+
         CHECK(std::string(Calculate.getExpression(expr1)) == "1 + x");
         CHECK(std::string(Calculate.getVariables(expr1)) == "x");
         CHECK(std::string(Calculate.getVariables(expr3)) == "x,y");
