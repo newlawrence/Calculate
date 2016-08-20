@@ -4,8 +4,6 @@
 #include "catch.hpp"
 #include "calculate/c-interface.h"
 
-extern "C" const calculate_c_library_template Calculate;
-
 
 TEST_CASE("C interface", "[c_interface]") {
 

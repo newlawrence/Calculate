@@ -22,3 +22,7 @@ elseif (${CMAKE_Fortran_COMPILER_ID} MATCHES "Intel")
 endif ()
 
 add_library(calculate_fortran STATIC "${sources}")
+target_link_libraries(calculate_fortran PUBLIC calculate)
+
+add_library(calculate_fortran_static STATIC "${sources}")
+target_link_libraries(calculate_fortran PUBLIC calculate_static)
