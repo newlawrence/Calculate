@@ -117,3 +117,7 @@ extern "C" const calculate_c_library_template Calculate = {
     calculate_c_interface::evalArray,
     calculate_c_interface::eval
 };
+
+extern "C" const calculate_c_library_template* calculateReference() {
+    return &Calculate;
+}

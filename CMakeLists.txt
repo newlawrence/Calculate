@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.5)
 project(calculate)
 enable_language(Fortran)
 
-add_subdirectory(binding/fortran)
 
 set(CATCH_REPO "https://raw.githubusercontent.com/philsquared/Catch/master")
 set(CATCH_URL "${CATCH_REPO}/single_include/catch.hpp")
@@ -11,6 +10,7 @@ if (NOT EXISTS "${CATCH_PATH}")
     file(DOWNLOAD "${CATCH_URL}" "${CATCH_PATH}")
     message("Catch library successfully downloaded.")
 endif ()
+
 
 function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
     find_program(GCOV gcov)
@@ -40,6 +40,7 @@ function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
                 -g -k -s --html --html-details
     )
 endfunction ()
+
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
@@ -73,6 +74,33 @@ elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox /sdl")
 endif ()
 
+include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories("${PROJECT_SOURCE_DIR}/extern/include")
+file(GLOB sources "${PROJECT_SOURCE_DIR}/source/*.cpp")
+
+
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+add_library(calculate SHARED "${sources}")
+target_compile_definitions(calculate PUBLIC "_CRT_SECURE_NO_WARNINGS")
+
+add_library(calculate_static STATIC "${sources}")
+target_compile_definitions(calculate_static PUBLIC "_CRT_SECURE_NO_WARNINGS")
+set_target_properties(calculate_static PROPERTIES OUTPUT_NAME "calculate")
+
+
+file(GLOB tests "${PROJECT_SOURCE_DIR}/tests/*.cpp")
+add_executable(unittests "${tests}")
+target_link_libraries(unittests LINK_PUBLIC calculate)
+
+add_executable(calc "${PROJECT_SOURCE_DIR}/examples/calc.c")
+target_link_libraries(calc PRIVATE calculate)
+
+add_executable(calcpp "${PROJECT_SOURCE_DIR}/examples/calc.cpp")
+target_link_libraries(calcpp PRIVATE calculate)
+
+
+add_subdirectory(binding/fortran)
+
 if (${CMAKE_Fortran_COMPILER_ID} MATCHES "GNU")
     set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -O3 -std=f2008ts")
     set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
@@ -86,32 +114,11 @@ elseif (${CMAKE_Fortran_COMPILER_ID} MATCHES "Intel")
     endif ()
 endif ()
 
-include_directories("${PROJECT_SOURCE_DIR}/include")
-include_directories("${PROJECT_SOURCE_DIR}/extern/include")
 include_directories("${PROJECT_SOURCE_DIR}/binding/fortran/module")
 
-file(GLOB sources "${PROJECT_SOURCE_DIR}/source/*.cpp")
-
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-add_library(calculate SHARED "${sources}")
-target_compile_definitions(calculate PUBLIC "_CRT_SECURE_NO_WARNINGS")
-
-add_library(calculate_static STATIC "${sources}")
-target_compile_definitions(calculate_static PUBLIC "_CRT_SECURE_NO_WARNINGS")
-set_target_properties(calculate_static PROPERTIES OUTPUT_NAME "calculate")
-
-file(GLOB tests "${PROJECT_SOURCE_DIR}/tests/*.cpp")
-add_executable(unittests "${tests}")
-target_link_libraries(unittests LINK_PUBLIC calculate)
-
-add_executable(calc "${PROJECT_SOURCE_DIR}/examples/calc.c")
-target_link_libraries(calc LINK_PUBLIC calculate_static)
-
-add_executable(calcpp "${PROJECT_SOURCE_DIR}/examples/calc.cpp")
-target_link_libraries(calcpp LINK_PUBLIC calculate_static)
-
 add_executable(calcfor "${PROJECT_SOURCE_DIR}/examples/calc.f90")
-target_link_libraries(calcfor LINK_PUBLIC calculate_static calculate_fortran)
+target_link_libraries(calcfor PRIVATE calculate_fortran)
+
 
 add_custom_command(
     TARGET unittests

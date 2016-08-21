@@ -4,8 +4,6 @@
 #include "catch.hpp"
 #include "calculate/c-interface.h"
 
-extern "C" const calculate_c_library_template Calculate;
-
 
 TEST_CASE("C interface", "[c_interface]") {
 
@@ -14,6 +12,8 @@ TEST_CASE("C interface", "[c_interface]") {
         Expression expr2 = Calculate.newExpression("1 + x", "x");
         Expression expr3 = Calculate.newExpression("x + y", "x, y");
         double x = 2., *xp = &x;
+
+        CHECK(calculateReference() == &Calculate);
 
         CHECK(std::string(Calculate.getExpression(expr1)) == "1 + x");
         CHECK(std::string(Calculate.getVariables(expr1)) == "x");
