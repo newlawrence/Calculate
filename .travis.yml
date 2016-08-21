@@ -10,7 +10,6 @@ addons:
     packages:
       - gcc-5
       - g++-5
-      - gfortran-5
 
 env:
   global:
@@ -36,7 +35,7 @@ install:
   - pip install --user gcovr
 
 script:
-  - CC=gcc-5 CXX=g++-5 FC=gfortran-5 COVERAGE=True cmake . -DCMAKE_BUILD_TYPE=Debug
+  - CC=gcc-5 CXX=g++-5 COVERAGE=1 cmake . -DCMAKE_BUILD_TYPE=Debug
   - make unittests
   - make coverage
 

@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(calculate_fortran)
-enable_language(Fortran)
+project(calculate_forwrap Fortran)
 
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/module/")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
@@ -21,8 +20,8 @@ elseif (${CMAKE_Fortran_COMPILER_ID} MATCHES "Intel")
     endif ()
 endif ()
 
-add_library(calculate_fortran STATIC "${sources}")
-target_link_libraries(calculate_fortran PUBLIC calculate)
+add_library(calculate_forwrapd STATIC "${sources}")
+target_link_libraries(calculate_forwrapd PUBLIC calculate)
 
-add_library(calculate_fortran_static STATIC "${sources}")
-target_link_libraries(calculate_fortran PUBLIC calculate_static)
+add_library(calculate_forwraps STATIC "${sources}")
+target_link_libraries(calculate_forwraps PUBLIC calculate_static)

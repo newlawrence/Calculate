@@ -123,7 +123,6 @@ contains
         character(len=:), allocatable :: message
         integer :: c
 
-
         call c_f_pointer(libraryReference(), Calculate)
         call c_f_procpointer(Calculate%createExpression, create)
         call c_f_procpointer(Calculate%freeExpression, free)
