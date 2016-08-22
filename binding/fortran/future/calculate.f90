@@ -6,38 +6,26 @@ module calculate
 
     public :: Expression, freeExpression
 
-    integer(kind=8), parameter :: MAGIC_NUMBER = 103592
     integer, parameter :: MAX_CHARS = 8192
     integer, parameter :: ERROR_CHARS = 64
     character(len=7), parameter :: ERROR_FMT = '(8192A)'
 
 
     type :: Expression
-        integer(kind=8), private :: init_number = MAGIC_NUMBER
         type(c_ptr), private :: handler = c_null_ptr
-
     contains
         final :: freeExpression
-
         procedure, non_overridable :: check => checkExpression
         procedure, non_overridable :: expression => getExpression
         procedure, non_overridable :: variables => getVariables
         procedure, non_overridable :: eval => evaluateArray
-
         procedure, non_overridable :: assign => assignExpression
-        procedure, non_overridable :: assignNew => assignNewExpression
-        generic :: assignment(=) => assign, assignNew
+        generic :: assignment(=) => assign
     end type
-
 
     interface Expression
         module procedure createNewExpression
     end interface
-
-    type :: NewExpression
-        character(len=:), allocatable, private :: expr
-        character(len=:), allocatable, private :: vars
-    end type
 
 
     interface
@@ -45,17 +33,12 @@ module calculate
             character(len=*), intent(in) :: expr
             character(len=*), intent(in), optional :: vars
             character(len=*), intent(out), optional :: error
-            type(NewExpression) :: this
+            type(Expression) :: this
         end function
 
         module subroutine assignExpression(this, other)
             class(Expression), intent(inout) :: this
             type(Expression), intent(in) :: other
-        end subroutine
-
-        module subroutine assignNewExpression(this, other)
-            class(Expression), intent(inout) :: this
-            type(NewExpression), intent(in) :: other
         end subroutine
 
 
