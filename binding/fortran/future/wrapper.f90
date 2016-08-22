@@ -117,26 +117,19 @@ contains
     module procedure createNewExpression
         type(LibraryTemplate), pointer :: Calculate
         procedure(createExpressionWrapper), pointer :: create
-        procedure(freeExpressionWrapper), pointer :: free
-        type(c_ptr) :: handler
         character(kind=c_char, len=1), dimension(ERROR_CHARS) :: cerror
         character(len=:), allocatable :: message
         integer :: c
 
         call c_f_pointer(libraryReference(), Calculate)
         call c_f_procpointer(Calculate%createExpression, create)
-        call c_f_procpointer(Calculate%freeExpression, free)
 
         if (present(vars)) then
-            handler = create(toChars(expr), toChars(vars), cerror)
+            this%handler = create(toChars(expr), toChars(vars), cerror)
         else
-            handler = create(toChars(expr), toChars(''), cerror)
+            this%handler = create(toChars(expr), toChars(''), cerror)
         end if
         message = fromChars(cerror)
-
-        this%expr = expr
-        this%vars = vars
-        call free(handler)
 
         if (present(error)) then
             if (len(message) > len(error)) then
@@ -151,33 +144,14 @@ contains
         type(LibraryTemplate), pointer :: Calculate
         procedure(newExpressionWrapper), pointer :: new
 
-        if (other%init_number == MAGIC_NUMBER) then
-            call c_f_pointer(libraryReference(), Calculate)
-            call c_f_procpointer(Calculate%newExpression, new)
-
-            if (this%init_number == MAGIC_NUMBER) call freeExpression(this)
-            this%init_number = MAGIC_NUMBER
-            this%handler = new( &
-                toChars(other%expression()), &
-                toChars(other%variables()) &
-            )
-        else
-            this%init_number = MAGIC_NUMBER
-            this%handler = c_null_ptr
-        end if
-
-    end procedure
-
-    module procedure assignNewExpression
-        type(LibraryTemplate), pointer :: Calculate
-        procedure(newExpressionWrapper), pointer :: new
-
         call c_f_pointer(libraryReference(), Calculate)
         call c_f_procpointer(Calculate%newExpression, new)
 
-        if (this%init_number == MAGIC_NUMBER) call freeExpression(this)
-        this%init_number = MAGIC_NUMBER
-        this%handler = new(toChars(other%expr), toChars(other%vars))
+        call freeExpression(this)
+        this%handler = new( &
+            toChars(other%expression()), &
+            toChars(other%variables()) &
+        )
     end procedure
 
 
@@ -185,13 +159,11 @@ contains
         type(LibraryTemplate), pointer :: Calculate
         procedure(freeExpressionWrapper), pointer :: free
 
-        if (this%init_number == MAGIC_NUMBER) then
-            call c_f_pointer(libraryReference(), Calculate)
-            call c_f_procpointer(Calculate%freeExpression, free)
+        call c_f_pointer(libraryReference(), Calculate)
+        call c_f_procpointer(Calculate%freeExpression, free)
 
-            call free(this%handler)
-            this%handler = c_null_ptr
-        end if
+        call free(this%handler)
+        this%handler = c_null_ptr
     end procedure
 
     module procedure checkExpression
@@ -203,26 +175,20 @@ contains
         type(LibraryTemplate), pointer :: Calculate
         procedure(getExpressionWrapper), pointer :: get
 
-        expr = ''
-        if (this%init_number == MAGIC_NUMBER) then
-            call c_f_pointer(libraryReference(), Calculate)
-            call c_f_procpointer(Calculate%getExpression, get)
+        call c_f_pointer(libraryReference(), Calculate)
+        call c_f_procpointer(Calculate%getExpression, get)
 
-            expr = fromPointer(get(this%handler))
-        end if
+        expr = fromPointer(get(this%handler))
     end procedure
 
     module procedure getVariables
         type(LibraryTemplate), pointer :: Calculate
         procedure(getVariablesWrapper), pointer :: get
 
-        vars = ''
-        if (this%init_number == MAGIC_NUMBER) then
-            call c_f_pointer(libraryReference(), Calculate)
-            call c_f_procpointer(Calculate%getVariables, get)
+        call c_f_pointer(libraryReference(), Calculate)
+        call c_f_procpointer(Calculate%getVariables, get)
 
-            vars = fromPointer(get(this%handler))
-        end if
+        vars = fromPointer(get(this%handler))
     end procedure
 
     module procedure evaluateArray
@@ -233,20 +199,15 @@ contains
         character(len=:), allocatable :: message
         integer :: c
 
-        if (this%init_number == MAGIC_NUMBER) then
-            call c_f_pointer(libraryReference(), Calculate)
-            call c_f_procpointer(Calculate%evaluateArray, eval)
+        call c_f_pointer(libraryReference(), Calculate)
+        call c_f_procpointer(Calculate%evaluateArray, eval)
 
-            if (present(args)) then
-                result = eval(this%handler, args, size(args), cerror)
-            else
-                result = eval(this%handler, default, 0, cerror)
-            end if
-            message = fromChars(cerror)
+        if (present(args)) then
+            result = eval(this%handler, args, size(args), cerror)
         else
-            message = 'Not initialized'
-            result = ieee_value(result, ieee_quiet_nan)
+            result = eval(this%handler, default, 0, cerror)
         end if
+        message = fromChars(cerror)
 
         if (present(error)) then
             if (len(message) > len(error)) then
