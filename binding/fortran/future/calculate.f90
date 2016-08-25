@@ -4,7 +4,7 @@ module calculate
     implicit none
     private
 
-    public :: Expression, freeExpression
+    public :: Expression
 
     integer, parameter :: MAX_CHARS = 8192
     integer, parameter :: ERROR_CHARS = 64
@@ -15,6 +15,7 @@ module calculate
         type(c_ptr), private :: handler = c_null_ptr
     contains
         final :: freeExpression
+        procedure, non_overridable :: clear => clearExpression
         procedure, non_overridable :: check => checkExpression
         procedure, non_overridable :: expression => getExpression
         procedure, non_overridable :: variables => getVariables
@@ -41,9 +42,13 @@ module calculate
             type(Expression), intent(in) :: other
         end subroutine
 
-
         module subroutine freeExpression(this)
             type(Expression), intent(inout) :: this
+        end subroutine
+
+
+        module subroutine clearExpression(this)
+            class(Expression), intent(inout) :: this
         end subroutine
 
         module function checkExpression(this) result (check)

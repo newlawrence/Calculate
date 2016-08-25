@@ -40,7 +40,7 @@ program calcfor
             end if
 
             deallocate (vals)
-            call freeExpression(expr)
+            call expr%clear()
         else
             print '(A)', trim(error)
         end if

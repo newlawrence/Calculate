@@ -17,9 +17,9 @@ submodule (calculate) calculate_wrapper
     end type
 
     interface
-        function libraryReference() bind(c, name='calculateReference')
+        function getLibraryReference() bind(c, name='get_calculate_reference')
             import :: c_ptr
-            type(c_ptr) :: libraryReference
+            type(c_ptr) :: getLibraryReference
         end function
     end interface
 
@@ -121,7 +121,7 @@ contains
         character(len=:), allocatable :: message
         integer :: c
 
-        call c_f_pointer(libraryReference(), Calculate)
+        call c_f_pointer(getLibraryReference(), Calculate)
         call c_f_procpointer(Calculate%createExpression, create)
 
         if (present(vars)) then
@@ -144,7 +144,7 @@ contains
         type(LibraryTemplate), pointer :: Calculate
         procedure(newExpressionWrapper), pointer :: new
 
-        call c_f_pointer(libraryReference(), Calculate)
+        call c_f_pointer(getLibraryReference(), Calculate)
         call c_f_procpointer(Calculate%newExpression, new)
 
         call freeExpression(this)
@@ -154,16 +154,20 @@ contains
         )
     end procedure
 
-
     module procedure freeExpression
         type(LibraryTemplate), pointer :: Calculate
         procedure(freeExpressionWrapper), pointer :: free
 
-        call c_f_pointer(libraryReference(), Calculate)
+        call c_f_pointer(getLibraryReference(), Calculate)
         call c_f_procpointer(Calculate%freeExpression, free)
 
         call free(this%handler)
         this%handler = c_null_ptr
+    end procedure
+
+
+    module procedure clearExpression
+        call freeExpression(this)
     end procedure
 
     module procedure checkExpression
@@ -175,7 +179,7 @@ contains
         type(LibraryTemplate), pointer :: Calculate
         procedure(getExpressionWrapper), pointer :: get
 
-        call c_f_pointer(libraryReference(), Calculate)
+        call c_f_pointer(getLibraryReference(), Calculate)
         call c_f_procpointer(Calculate%getExpression, get)
 
         expr = fromPointer(get(this%handler))
@@ -185,7 +189,7 @@ contains
         type(LibraryTemplate), pointer :: Calculate
         procedure(getVariablesWrapper), pointer :: get
 
-        call c_f_pointer(libraryReference(), Calculate)
+        call c_f_pointer(getLibraryReference(), Calculate)
         call c_f_procpointer(Calculate%getVariables, get)
 
         vars = fromPointer(get(this%handler))
@@ -199,7 +203,7 @@ contains
         character(len=:), allocatable :: message
         integer :: c
 
-        call c_f_pointer(libraryReference(), Calculate)
+        call c_f_pointer(getLibraryReference(), Calculate)
         call c_f_procpointer(Calculate%evaluateArray, eval)
 
         if (present(args)) then

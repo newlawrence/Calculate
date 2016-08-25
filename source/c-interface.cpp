@@ -107,7 +107,7 @@ namespace calculate_c_interface {
 }
 
 
-extern "C" const calculate_c_library_template Calculate = {
+const calculate_c_library_template Calculate = {
     calculate_c_interface::createExpression,
     calculate_c_interface::newExpression,
     calculate_c_interface::freeExpression,
@@ -118,6 +118,6 @@ extern "C" const calculate_c_library_template Calculate = {
     calculate_c_interface::eval
 };
 
-extern "C" const calculate_c_library_template* calculateReference() {
+const calculate_c_library_template* get_calculate_reference() {
     return &Calculate;
 }
