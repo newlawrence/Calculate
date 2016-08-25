@@ -11,7 +11,7 @@
 #define uncast(expression) reinterpret_cast<calculate::Expression*>(expression)
 
 
-namespace calculate_c_interface {
+namespace {
 
     Expression createExpression(const char *expr, const char *vars,
                                 char *error) {
@@ -108,14 +108,14 @@ namespace calculate_c_interface {
 
 
 const calculate_c_library_template Calculate = {
-    calculate_c_interface::createExpression,
-    calculate_c_interface::newExpression,
-    calculate_c_interface::freeExpression,
-    calculate_c_interface::getExpression,
-    calculate_c_interface::getVariables,
-    calculate_c_interface::evaluateArray,
-    calculate_c_interface::evalArray,
-    calculate_c_interface::eval
+    createExpression,
+    newExpression,
+    freeExpression,
+    getExpression,
+    getVariables,
+    evaluateArray,
+    evalArray,
+    eval
 };
 
 const calculate_c_library_template* get_calculate_reference() {
