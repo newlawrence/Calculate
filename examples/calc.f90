@@ -1,4 +1,4 @@
-program calcfor
+program calc
 
     use calculate
     implicit none

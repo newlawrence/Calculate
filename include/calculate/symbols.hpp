@@ -59,7 +59,7 @@ namespace calculate_symbols {                                                 \
     public:                                                                   \
         virtual ~Function_##TOKEN() {}                                        \
         virtual double evaluate() const noexcept {                            \
-            vValue x(args);                                                    \
+            vValue x(args);                                                   \
             for (auto i = 0u; i < args; i++)                                  \
                 x[i] = _operands[i]->evaluate();                              \
             return FUNCTION;                                                  \

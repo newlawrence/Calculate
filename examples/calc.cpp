@@ -10,8 +10,8 @@ using namespace calculate_exceptions;
 
 
 int main(int argc, char *argv[]) {
-    try {
-        if (argc > 0 && argc % 2 == 0) {
+    if (argc > 0 && argc % 2 == 0) {
+        try {
             auto variables = vector<string>();
             auto values = vector<double>();
             for (auto i = 2; i < argc; i += 2) {
@@ -22,9 +22,9 @@ int main(int argc, char *argv[]) {
             auto expression = Expression(argv[1], variables);
             cout << expression(values) << endl;
         }
-    }
-    catch (const BaseCalculateException &e) {
-        cout << e.what() << endl;
+        catch (const BaseCalculateException &e) {
+            cout << e.what() << endl;
+        }
     }
 
     return 0;
