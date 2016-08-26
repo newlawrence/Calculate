@@ -11,6 +11,9 @@ bin/
 lib/
 binding/fortran/module
 binding/fortran/lib
+binding/python/calculate/*.so
+binding/python/calculate/*.dylib
+binding/python/calculate/*.dll
 
 # CMake related
 cmake_install.cmake
@@ -23,6 +26,12 @@ Release/
 *.filters
 *.vcxproj
 *.sln
+
+# Python related
+__pycache__/
+*.pyc
+*.pyo
+*ipynb_checkpoints
 
 # Extern libraries
 extern/
