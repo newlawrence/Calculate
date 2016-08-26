@@ -1,5 +1,3 @@
-import numpy as np
-
 from calculate.cffiwrap import ffi, Calculate
 from calculate.exceptions import raise_if
 
@@ -7,6 +5,8 @@ from calculate.exceptions import raise_if
 class Expression:
 
     def __init__(self, expression, variables=''):
+        if variables.__class__.__name__ != 'str':
+            variables = ','.join(variables) if len(variables) > 0 else ''
         error = ffi.new('char[64]')
         self.__handler = Calculate.createExpression(
             expression.encode(),
@@ -25,10 +25,11 @@ class Expression:
         return ffi.string(Calculate.getVariables(self.__handler)).decode()
 
     def __call__(self, *args):
-        values = np.array(args, dtype=np.double)
-        size = len(values)
+        size = len(args)
         if size > 0:
-            values = ffi.cast('double *', values.ctypes.data)
+            values = ffi.new('double[{}]'.format(size))
+            for i, arg in enumerate(args):
+                values[i] = float(arg)
         else:
             values = ffi.new('double *')
 
@@ -42,5 +43,7 @@ class Expression:
     def __del__(self):
         try:
             Calculate.freeExpression(self.__handler)
-        except TypeError:
+        except Exception:
+            pass
+        finally:
             self.handler = ffi.NULL

@@ -2,9 +2,13 @@ import os.path as path
 
 from cffi import FFI
 
-library_name = 'libcalculate.dylib'
-basedir = path.realpath(__file__).replace(path.basename(__file__), '')
-library_path = path.join(basedir, library_name)
+extensions = ['so', 'dylib', 'dll']
+library_name = 'libcalculate'
+for ext in extensions:
+    basedir = path.realpath(__file__).replace(path.basename(__file__), '')
+    library_path = path.join(basedir, library_name + '.' + ext)
+    if path.lexists(library_path):
+        break
 
 ffi = FFI()
 ffi.cdef('''

@@ -5,7 +5,8 @@ class BaseCalculateException(Exception):
     default_message = 'Unknown error'
 
     def __init__(self, message=default_message):
-        super().__init__(message)
+        self.message = message
+        super().__init__(self.message)
 
 __exceptions = {
     'EmptyExpressionException': 'Empty expression',
@@ -21,9 +22,8 @@ __exceptions = {
 
 
 def __constructor(self, message=''):
-    if not message:
-        message = self.__class__.default_message
-    super(self.__class__, self).__init__(message)
+    self.message = message if message else self.__class__.default_message
+    super(self.__class__, self).__init__(self.message)
 
 for exception, message in __exceptions.items():
     setattr(
@@ -39,9 +39,9 @@ for exception, message in __exceptions.items():
 
 def raise_if(condition, error):
     if condition:
-        for name, obj in globals().items():
-            if hasattr(globals()[name], 'default_message'):
-                if error == globals()[name].default_message:
-                    raise globals()[name]
+        for symbol in globals().values():
+            if hasattr(symbol, 'default_message'):
+                if error == symbol.default_message:
+                    raise symbol
         else:
             raise BaseCalculateException
