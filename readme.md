@@ -9,16 +9,28 @@
 
 Written in modern **C++** for learning purposes.
 
+Bindings for **C**, **Fortran** and **Python**.
+
 
 ### Requirements
 
-* **CMake** version >= 3.5, to generate the makefiles and **Visual Studio** solutions.
+* **CMake** *>= 3.5*, to generate the makefiles and **Visual Studio** solutions.
 * **C**/**C++** compiler, with **C++11** standard support (**GNU**, **Clang** and **MSVC** tested).
 * **Fortran** compiler (*optional*), with **2008** standard support (**GNU** and **Intel** tested).
+* **Python** *>= 3.5* (*optional*), along with **setuptools** and **cffi** *>=1.0* libraries.
 * **gcov** and **gcovr** tools (*optional*), for generating coverage reports.
 
 
 ### Building and testing
+
+Just making the library and the bindings:
+
+```
+$ BINDING=1 cmake .
+$ make calculate
+$ make calculate_fortran
+$ make calculate_python
+```
 
 Bulding and running the tests:
 

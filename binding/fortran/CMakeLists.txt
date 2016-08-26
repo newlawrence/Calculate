@@ -20,8 +20,8 @@ elseif (${CMAKE_Fortran_COMPILER_ID} MATCHES "Intel")
     endif ()
 endif ()
 
-add_library(calculate_forwrapd STATIC "${sources}")
-target_link_libraries(calculate_forwrapd PUBLIC calculate)
+add_library(calculate_fortran STATIC "${sources}")
+target_link_libraries(calculate_fortran PUBLIC calculate)
 
-add_library(calculate_forwraps STATIC "${sources}")
-target_link_libraries(calculate_forwraps PUBLIC calculate_static)
+add_library(calculate_fortran_static STATIC "${sources}")
+target_link_libraries(calculate_fortran_static PUBLIC calculate_static)
