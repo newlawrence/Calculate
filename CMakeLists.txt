@@ -127,3 +127,7 @@ if (DEFINED ENV{BINDING} OR DEFINED ENV{FC})
     add_executable(calcfor "${PROJECT_SOURCE_DIR}/examples/calc.f90")
     target_link_libraries(calcfor PRIVATE calculate_forwrapd)
 endif ()
+
+if (DEFINED ENV{BINDING} OR DEFINED ENV{PY})
+    add_subdirectory(binding/python)
+endif ()
