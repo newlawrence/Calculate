@@ -15,7 +15,7 @@ Bindings for **C**, **Fortran** and **Python**.
 ### Requirements
 
 * **CMake** *>= 3.5*, to generate the makefiles and **Visual Studio** solutions.
-* **C**/**C++** compiler, with **C++11** standard support (**GNU**, **Clang** and **MSVC** tested).
+* **C**/**C++** compiler, with **C++14** standard support (**GNU**, **Clang** and **MSVC** tested).
 * **Fortran** compiler (*optional*), with **2008** standard support (**GNU** and **Intel** tested).
 * **Python** *>= 3.5* (*optional*), along with **setuptools** and **cffi** *>=1.0* libraries.
 * **gcov** and **gcovr** tools (*optional*), for generating coverage reports.

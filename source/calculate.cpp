@@ -291,7 +291,7 @@ namespace calculate {
     Expression::Expression(const String &expr, const vString &vars) :
             _expression(expr),
             _variables(_validate(vars)),
-            _values(new double[vars.size()]) {
+            _values(std::make_unique<double[]>(vars.size())) {
 
         if (expr.length() == 0)
             throw EmptyExpressionException();
