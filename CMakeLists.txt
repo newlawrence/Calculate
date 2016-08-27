@@ -41,7 +41,7 @@ if (
     (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
 )
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -std=c11")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++14")
     if (DEFINED ENV{COVERAGE})
         if (NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
             message(FATAL_ERROR "Code coverage in an optimized build.")
@@ -58,7 +58,7 @@ if (
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
     endif ()
 elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox /sdl")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14 /sdl")
 endif ()
 
 include_directories("${PROJECT_SOURCE_DIR}/include")

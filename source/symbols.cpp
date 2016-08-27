@@ -12,7 +12,7 @@ namespace calculate_symbols {
 
 
     pSymbol newSymbol(double *v) {
-        return pSymbol(new Variable(v));
+        return std::make_shared<Variable>(Variable::key(), v);
     }
 
     pSymbol newSymbol(const String &t) {
@@ -22,20 +22,19 @@ namespace calculate_symbols {
                     std::stod(t);
                     return true;
                 }
-                catch (std::logic_error) {
-                    return false;
-                }
+                catch (std::logic_error) {}
+                return false;
             }()
         )
-            return pSymbol(new Constant(t));
+            return std::make_shared<Constant>(Constant::key(), t);
         else if (Constant::_symbols.find(t) != Constant::_symbols.end())
             return Constant::_symbols[t]();
         else if (t == "(")
-            return pSymbol(new Parenthesis<'('>);
+            return std::make_shared<Parenthesis<'('>>(Parenthesis<'('>::key());
         else if (t == ")")
-            return pSymbol(new Parenthesis<')'>);
+            return std::make_shared<Parenthesis<')'>>(Parenthesis<')'>::key());
         else if (t == ",")
-            return pSymbol(new Separator);
+            return std::make_shared<Separator>(Separator::key());
         else if (Operator::_symbols.find(t) != Operator::_symbols.end())
             return Operator::_symbols[t]();
         else if (Function::_symbols.find(t) != Function::_symbols.end())
