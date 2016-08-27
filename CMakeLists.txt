@@ -69,10 +69,12 @@ file(GLOB sources "${PROJECT_SOURCE_DIR}/source/*.cpp")
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 add_library(calculate SHARED "${sources}")
 target_compile_definitions(calculate PUBLIC "_CRT_SECURE_NO_WARNINGS")
+set_target_properties(calculate PROPERTIES PREFIX "lib")
 
 add_library(calculate_static STATIC "${sources}")
 target_compile_definitions(calculate_static PUBLIC "_CRT_SECURE_NO_WARNINGS")
 set_target_properties(calculate_static PROPERTIES OUTPUT_NAME "calculate")
+set_target_properties(calculate_static PROPERTIES PREFIX "lib")
 
 
 if (DEFINED ENV{TESTING} OR DEFINED ENV{COVERAGE})
