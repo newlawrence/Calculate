@@ -232,7 +232,7 @@ namespace calculate {
             std::remove_if(
                 no_spaces.begin(),
                 no_spaces.end(),
-                [](char c) {return c == ' ';}
+                [](char c) { return c == ' '; }
             ),
             no_spaces.end()
         );
@@ -254,7 +254,7 @@ namespace calculate {
             !std::all_of(
                 vars.begin(),
                 vars.end(),
-                [&regex](String var) {return std::regex_match(var, regex);}
+                [&regex](String var) { return std::regex_match(var, regex); }
             )
         )
             throw BadNameException();
