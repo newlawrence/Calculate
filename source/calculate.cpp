@@ -322,7 +322,7 @@ namespace calculate {
     }
 
 
-    double Expression::operator() (vValue values) const {
+    double Expression::operator() (const vValue &values) const {
         if (values.size() != _variables.size())
             throw WrongArgumentsException();
         for (auto i = 0u; i < values.size(); i++)

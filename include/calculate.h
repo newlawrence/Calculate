@@ -60,7 +60,7 @@ namespace calculate {
         Expression& operator=(const Expression &other);
         Expression& operator=(Expression &&other);
 
-        double operator() (vValue values) const;
+        double operator() (const vValue &values) const;
         template <typename... Args>
         double operator() (Args... args) const {
             vValue values;
