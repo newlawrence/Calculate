@@ -322,25 +322,13 @@ namespace calculate {
     }
 
 
-    double Expression::operator() () const {
-        return _tree->evaluate();
-    };
-
-    double Expression::operator() (double value) const {
-        if (_variables.size() < 1)
-            throw WrongArgumentsException();
-        _values[_variables.size() - 1] = value;
-
-        return this->operator()();
-    }
-
     double Expression::operator() (vValue values) const {
         if (values.size() != _variables.size())
             throw WrongArgumentsException();
         for (auto i = 0u; i < values.size(); i++)
             _values[i] = values[i];
 
-        return this->operator()();
+        return _tree->evaluate();
     }
 
 }

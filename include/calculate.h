@@ -42,6 +42,13 @@ namespace calculate {
         static vString _extract(const String &vars);
         static vString _validate(const vString &vars);
 
+        static vValue& _fill(vValue &vector) { return vector; }
+        template <typename Head, typename... Tail>
+        static vValue& _fill(vValue &vector, Head head, Tail... tail) {
+            vector.push_back(head);
+            return _fill(vector, tail...);
+        }
+
         Expression() = delete;
 
     public:
@@ -53,18 +60,14 @@ namespace calculate {
         Expression& operator=(const Expression &other);
         Expression& operator=(Expression &&other);
 
-        double operator() () const;
-        double operator() (double value) const;
         double operator() (vValue values) const;
-
-        template <typename Head, typename... Tail>
-        double operator() (Head head, Tail... tail) const {
-            if (sizeof...(tail) + 1 > _variables.size())
-                throw WrongArgumentsException();
-            _values[_variables.size() - sizeof...(tail) - 1] = head;
-            return this->operator() (tail...);
+        template <typename... Args>
+        double operator() (Args... args) const {
+            vValue values;
+            _fill(values, args...);
+            return this->operator() (values);
         };
-        
+
         const String& expression() const noexcept {return _expression;}
         const vString& variables() const noexcept {return _variables;}
     };
