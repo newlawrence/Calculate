@@ -42,11 +42,11 @@ namespace calculate {
         static vString _extract(const String &vars);
         static vString _validate(const vString &vars);
 
-        static vValue& _fill(vValue &vector) { return vector; }
+        static vValue _vectorize(vValue &&vector) { return vector; }
         template <typename Head, typename... Tail>
-        static vValue& _fill(vValue &vector, Head head, Tail... tail) {
+        static vValue _vectorize(vValue &&vector, Head head, Tail... tail) {
             vector.push_back(head);
-            return _fill(vector, tail...);
+            return _vectorize(std::move(vector), tail...);
         }
 
         Expression() = delete;
@@ -63,9 +63,7 @@ namespace calculate {
         double operator() (const vValue &values) const;
         template <typename... Args>
         double operator() (Args... args) const {
-            vValue values;
-            _fill(values, args...);
-            return this->operator() (values);
+            return this->operator() (_vectorize(vValue(), args...));
         };
 
         const String& expression() const noexcept {return _expression;}
