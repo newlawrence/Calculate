@@ -1,3 +1,5 @@
+from collections import Iterable
+
 from calculate.cffiwrap import ffi, Calculate
 from calculate.exceptions import raise_if
 
@@ -5,7 +7,7 @@ from calculate.exceptions import raise_if
 class Expression:
 
     def __init__(self, expression, variables=''):
-        if variables.__class__.__name__ != 'str':
+        if not isinstance(variables, str) and isinstance(variables, Iterable):
             variables = ','.join(variables) if len(variables) > 0 else ''
         error = ffi.new('char[64]')
         self.__handler = Calculate.createExpression(
@@ -27,6 +29,9 @@ class Expression:
     def __call__(self, *args):
         size = len(args)
         if size > 0:
+            if size == 1 and isinstance(args[0], Iterable):
+                args = args[0]
+                size = len(args)
             values = ffi.new('double[{}]'.format(size))
             for i, arg in enumerate(args):
                 values[i] = float(arg)
