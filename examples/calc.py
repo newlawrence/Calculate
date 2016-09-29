@@ -20,7 +20,7 @@ if __name__ == '__main__':
                     values.append(float(arg))
 
             expression = Expression(sys.argv[1], variables)
-            print(expression(*values))
+            print(expression(values))
 
         except BaseCalculateException as e:
             print(e.message)
