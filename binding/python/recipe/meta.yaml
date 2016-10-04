@@ -1,0 +1,22 @@
+package:
+  name: calculate
+  version: "1.0.0"
+
+build:
+  number: 1
+
+source:
+  path: ..
+
+requirements:
+  build:
+    - python >=3.3.5
+    - cffi >=1.0.0
+  run:
+    - python >=3.3.5
+    - cffi >=1.0.0
+
+about:
+  license: MIT License
+  home: https://github.com/newlawrence/Calculate
+  summary: "Little math expression parser"

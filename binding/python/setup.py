@@ -15,6 +15,7 @@ for ext in extensions:
 
 setup(
     name=library,
+    version='1.0.0',
     author='Alberto Lorenzo',
     author_email='alorenzo.md@gmail.com',
     home_page='https://github.com/newlawrence/Calculate',
