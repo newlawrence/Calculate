@@ -24,7 +24,8 @@ class Expression:
 
     @property
     def variables(self):
-        return ffi.string(Calculate.getVariables(self.__handler)).decode()
+        return ffi.string(Calculate.getVariables(self.__handler)) \
+               .decode().split(',')
 
     def __call__(self, *args):
         size = len(args)

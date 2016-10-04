@@ -11,3 +11,6 @@ copying linguist-vendored
 *.txt linguist-vendored
 *.md linguist-vendored
 *.yml linguist-vendored
+*.yaml linguist-vendored
+*.sh linguist-vendored
+*.bat linguist-vendored

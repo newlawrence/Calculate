@@ -1,7 +1,7 @@
 # Calculate
 
 
-### Little Math Expression Parser
+### Little Math Expression Parser (v1.0.0)
 
 [![Build Status](https://travis-ci.org/newlawrence/Calculate.svg?branch=master)](https://travis-ci.org/newlawrence/Calculate)
 [![codecov](https://codecov.io/gh/newlawrence/Calculate/branch/master/graph/badge.svg)](https://codecov.io/gh/newlawrence/Calculate)
@@ -9,7 +9,7 @@
 
 Written in modern **C++** for learning purposes.
 
-Bindings for **C**, **Fortran** and **Python**.
+With bindings for **C**, **Fortran** and **Python**.
 
 
 ### Requirements
