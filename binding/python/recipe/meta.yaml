@@ -1,6 +1,6 @@
 package:
   name: calculate
-  version: "1.0.0"
+  version: "1.0.1"
 
 build:
   number: 1
@@ -10,10 +10,10 @@ source:
 
 requirements:
   build:
-    - python >=3.3.5
+    - python >=2.7
     - cffi >=1.0.0
   run:
-    - python >=3.3.5
+    - python >=2.7
     - cffi >=1.0.0
 
 about:

@@ -1,7 +1,7 @@
 # Calculate
 
 
-### Little Math Expression Parser (v1.0.0)
+### Little Math Expression Parser
 
 [![Build Status](https://travis-ci.org/newlawrence/Calculate.svg?branch=master)](https://travis-ci.org/newlawrence/Calculate)
 [![codecov](https://codecov.io/gh/newlawrence/Calculate/branch/master/graph/badge.svg)](https://codecov.io/gh/newlawrence/Calculate)
@@ -17,7 +17,7 @@ With bindings for **C**, **Fortran** and **Python**.
 * **CMake** *>= 3.5*, to generate the makefiles and **Visual Studio** solutions.
 * **C**/**C++** compiler, with **C++14** standard support (**GNU**, **Clang** and **MSVC** tested).
 * **Fortran** compiler (*optional*), with **2008** standard support (**GNU** and **Intel** tested).
-* **Python** *>= 3.5* (*optional*), along with **setuptools** and **cffi** *>=1.0* libraries.
+* **Python** *>= 2.7* (*optional*), along with **setuptools** and **cffi** *>=1.0* libraries.
 * **gcov** and **gcovr** tools (*optional*), for generating coverage reports.
 
 

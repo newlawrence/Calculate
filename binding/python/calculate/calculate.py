@@ -1,10 +1,14 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 from collections import Iterable
 
 from calculate.cffiwrap import ffi, Calculate
 from calculate.exceptions import raise_if
 
 
-class Expression:
+class Expression(object):
 
     def __init__(self, expression, variables=''):
         if not isinstance(variables, str) and isinstance(variables, Iterable):
@@ -24,8 +28,9 @@ class Expression:
 
     @property
     def variables(self):
-        return ffi.string(Calculate.getVariables(self.__handler)) \
-               .decode().split(',')
+        return ffi.string(
+            Calculate.getVariables(self.__handler)
+        ).decode().split(',')
 
     def __call__(self, *args):
         size = len(args)
