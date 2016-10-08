@@ -31,6 +31,8 @@ TEST_CASE("Wrong expressions", "[Expressions]") {
         CHECK_THROWS_AS(Expression("1 + x"), UndefinedSymbolException);
         CHECK_THROWS_AS(Expression("x + 1"), UndefinedSymbolException);
         CHECK_THROWS_AS(Expression("1 + x 2"), UndefinedSymbolException);
+        CHECK_THROWS_AS(Expression("pi", "x"), ArgumentsExcessException);
+        CHECK_THROWS_AS(Expression("x + x", "x, y"), ArgumentsExcessException);
     }
 
     SECTION("Parenthesis mismatches") {
