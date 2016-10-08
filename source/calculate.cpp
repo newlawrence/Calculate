@@ -1,3 +1,5 @@
+#include <unordered_set>
+
 #include <algorithm>
 #include <sstream>
 
@@ -21,12 +23,14 @@ namespace calculate {
         auto next = std::sregex_iterator(expr.begin(), expr.end(), regex),
             end = std::sregex_iterator();
 
+        auto encountered = std::unordered_set<String>();
         while (next != end) {
             auto match = next->str();
             auto it = std::find(vars.begin(), vars.end(), match);
             if (it != vars.end()) {
                 auto position = it - vars.begin();
                 infix.push(newSymbol(values.get() + position));
+                encountered.emplace(match);
             }
             else {
                 try {
@@ -38,6 +42,8 @@ namespace calculate {
             }
             next++;
         }
+        if (encountered.size() < vars.size())
+            throw ArgumentsExcessException();
 
         return infix;
     }

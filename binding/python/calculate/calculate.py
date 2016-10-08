@@ -28,9 +28,8 @@ class Expression(object):
 
     @property
     def variables(self):
-        return ffi.string(
-            Calculate.getVariables(self.__handler)
-        ).decode().split(',')
+        vars = ffi.string(Calculate.getVariables(self.__handler)).decode()
+        return vars.split(',') if vars else []
 
     def __call__(self, *args):
         size = len(args)
