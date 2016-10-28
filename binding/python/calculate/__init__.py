@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 from calculate.calculate import Expression
 
-__version__ = '1.0.2'
+__version__ = '1.0.3'
 __license__ = 'MIT'
 __author__ = 'Alberto Lorenzo'
 __email__ = 'alorenzo.md@gmail.com'

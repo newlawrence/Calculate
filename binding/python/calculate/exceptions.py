@@ -40,8 +40,8 @@ for exception, message in __exceptions.items():
     )
 
 
-def raise_if(condition, error):
-    if condition:
+def raise_if(error):
+    if error:
         for symbol in globals().values():
             if hasattr(symbol, 'default_message'):
                 if error == symbol.default_message:

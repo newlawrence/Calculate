@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from collections import Iterable
 
@@ -19,34 +18,34 @@ class Expression(object):
             variables.encode(),
             error
         )
-        error = ffi.string(error).decode()
-        raise_if(self.__handler == ffi.NULL, error)
+        raise_if(Expression.__decode(error))
+
+    @staticmethod
+    def __decode(cstring):
+        string = ffi.string(cstring)
+        return string.decode() if not isinstance(string, str) else string
 
     @property
     def expression(self):
-        return ffi.string(Calculate.getExpression(self.__handler)).decode()
+        return Expression.__decode(Calculate.getExpression(self.__handler))
 
     @property
     def variables(self):
-        vars = ffi.string(Calculate.getVariables(self.__handler)).decode()
+        vars = Expression.__decode(Calculate.getVariables(self.__handler))
         return vars.split(',') if vars else []
 
     def __call__(self, *args):
-        size = len(args)
-        if size > 0:
-            if size == 1 and isinstance(args[0], Iterable):
-                args = args[0]
-                size = len(args)
-            values = ffi.new('double[{}]'.format(size))
-            for i, arg in enumerate(args):
-                values[i] = float(arg)
+        if args:
+            args = args[0] if isinstance(args[0], Iterable) else args
+            args = list(map(lambda x: float(x), args))
+            values = ffi.new('double[]', args)
         else:
             values = ffi.new('double *')
 
         error = ffi.new('char[64]')
+        size = len(args)
         result = Calculate.evaluateArray(self.__handler, values, size, error)
-        error = ffi.string(error).decode()
-        raise_if(error, error)
+        raise_if(Expression.__decode(error))
 
         return result
 
