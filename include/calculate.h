@@ -33,9 +33,10 @@ namespace calculate {
         pValue _values;
         pEvaluable _tree;
 
-        static Regex _var_regex;
-        static Regex _pre_regex;
-        static Regex _regex;
+        static const Regex _ext_regex;
+        static const Regex _var_regex;
+        static const Regex _pre_regex;
+        static const Regex _regex;
 
         static qSymbol _tokenize(const String &expr, const vString &vars,
                                  const pValue &values);

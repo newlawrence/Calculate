@@ -1,18 +1,18 @@
 #include <unordered_set>
 
 #include <algorithm>
-#include <sstream>
 
 #include "calculate.h"
 
 
 namespace calculate {
 
-    Regex Expression::_var_regex(R"_(([A-Za-z_]+[A-Za-z_\d]*)|[^\s,]+))_");
-    Regex Expression::_pre_regex(
+    const Regex Expression::_ext_regex(R"_(([^\s,]+)|(,))_");
+    const Regex Expression::_var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
+    const Regex Expression::_pre_regex(
         R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_"
     );
-    Regex Expression::_regex(
+    const Regex Expression::_regex(
         R"_(((?:[+\-])?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
         R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
         R"_(([^A-Za-z\d(),\s]+)|)_"
@@ -241,47 +241,41 @@ namespace calculate {
 
 
     vString Expression::_extract(const String &vars) {
-        auto no_spaces = vars;
-        no_spaces.erase(
-            std::remove_if(
-                no_spaces.begin(),
-                no_spaces.end(),
-                [](char c) { return c == ' '; }
-            ),
-            no_spaces.end()
-        );
-
-        auto stream = std::istringstream(no_spaces);
         vString variables;
 
-        String item;
-        while(std::getline(stream, item, ','))
-            variables.push_back(item);
+        auto next = std::sregex_iterator(
+                vars.begin(),
+                vars.end(),
+                _ext_regex
+            ),
+            end = std::sregex_iterator();
 
+        while (next != end) {
+            if (!(*next)[2].str().empty())
+                throw BadNameException();
+            else
+                variables.push_back(next->str());
+
+            next++;
+            if (!(*next)[2].str().empty() && next != end)
+                next++;
+        }
         return variables;
     }
 
     vString Expression::_validate(const vString &vars) {
-        auto regex = std::regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
-
         if (
             !std::all_of(
                 vars.begin(),
                 vars.end(),
-                [&regex](String var) { return std::regex_match(var, regex); }
+                [](String var) { return std::regex_match(var, _var_regex); }
             )
         )
             throw BadNameException();
 
-        auto no_duplicates = vars;
-        std::sort(no_duplicates.begin(), no_duplicates.end());
-        no_duplicates.erase(
-            std::unique(no_duplicates.begin(), no_duplicates.end()),
-            no_duplicates.end()
-        );
-
-        if (no_duplicates.size() != vars.size())
-            throw DuplicateNameException();
+        auto no_dups = std::unordered_set<String>(vars.begin(), vars.end());
+        if (no_dups.size() != vars.size())
+            throw DuplicatedNameException();
 
         return vars;
     }

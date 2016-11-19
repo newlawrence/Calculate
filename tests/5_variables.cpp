@@ -62,7 +62,7 @@ TEST_CASE("Variable arguments", "[variables]") {
     }
 
     SECTION("Duplicate variable names") {
-        CHECK_THROWS_AS(Expression("x + x", "x, x"), DuplicateNameException);
+        CHECK_THROWS_AS(Expression("x + x", "x, x"), DuplicatedNameException);
     }
 
     SECTION("Variables excess") {

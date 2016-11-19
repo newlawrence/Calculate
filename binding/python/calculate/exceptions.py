@@ -15,7 +15,7 @@ __exceptions = {
     'EmptyExpressionException': 'Empty expression',
     'UndefinedSymbolException': 'Undefined symbol',
     'BadNameException': 'Unsuitable variable name',
-    'DuplicateNameException': 'Duplicated names',
+    'DuplicatedNameException': 'Duplicated names',
     'ParenthesisMismatchException': 'Parenthesis mismatch',
     'MissingArgumentsException': 'Missing arguments',
     'ArgumentsExcessException': 'Too many arguments',

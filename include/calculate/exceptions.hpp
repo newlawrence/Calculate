@@ -24,7 +24,7 @@ namespace calculate_exceptions {
 DEFINE_EXCEPTION(EmptyExpressionException, "Empty expression")
 DEFINE_EXCEPTION(UndefinedSymbolException, "Undefined symbol")
 DEFINE_EXCEPTION(BadNameException, "Unsuitable variable name")
-DEFINE_EXCEPTION(DuplicateNameException, "Duplicated names")
+DEFINE_EXCEPTION(DuplicatedNameException, "Duplicated names")
 DEFINE_EXCEPTION(ParenthesisMismatchException, "Parenthesis mismatch")
 DEFINE_EXCEPTION(MissingArgumentsException, "Missing arguments")
 DEFINE_EXCEPTION(ArgumentsExcessException, "Too many arguments")
