@@ -8,19 +8,27 @@
 
 namespace calculate {
 
+    Regex Expression::_var_regex(R"_(([A-Za-z_]+[A-Za-z_\d]*)|[^\s,]+))_");
+    Regex Expression::_pre_regex(
+        R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_"
+    );
+    Regex Expression::_regex(
+        R"_(((?:[+\-])?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
+        R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
+        R"_(([^A-Za-z\d(),\s]+)|)_"
+        R"_((\()|(\))|(,))_"
+    );
+
     qSymbol Expression::_tokenize(const String &expr, const vString &vars,
                                   const pValue &values) {
         qSymbol infix;
 
-        auto regex = std::regex(
-            "-?[0-9.]+(?!e\\+?-?\\d+)|"
-            "-?\\d+e-?\\d+|"
-            "[A-Za-z]+\\d*[A-Za-z]*|"
-            "[^a-zA-Z\\d\\s\\.\\,()]+|"
-            "[(),]"
-        );
-
-        auto next = std::sregex_iterator(expr.begin(), expr.end(), regex),
+        auto expression = std::regex_replace(expr, _pre_regex, "$1 ");
+        auto next = std::sregex_iterator(
+                expression.begin(),
+                expression.end(),
+                _regex
+            ),
             end = std::sregex_iterator();
 
         auto encountered = std::unordered_set<String>();
@@ -254,7 +262,7 @@ namespace calculate {
     }
 
     vString Expression::_validate(const vString &vars) {
-        auto regex = std::regex("[A-Za-z]+\\d*");
+        auto regex = std::regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
 
         if (
             !std::all_of(

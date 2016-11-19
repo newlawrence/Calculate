@@ -47,12 +47,18 @@ TEST_CASE("Variable arguments", "[variables]") {
         );
     }
 
+    SECTION("Suitable variable names") {
+        CHECK_NOTHROW(Expression("var", "var"));
+        CHECK_NOTHROW(Expression("_", "_"));
+        CHECK_NOTHROW(Expression("_var1", "_var1"));
+        CHECK_NOTHROW(Expression("var_1_and_2", "var_1_and_2"));
+    }
+
     SECTION("Unsuitable variable names") {
         CHECK_THROWS_AS(Expression("var%", "var%"), BadNameException);
         CHECK_THROWS_AS(Expression("var$", "var$"), BadNameException);
         CHECK_THROWS_AS(Expression("var#", "var#"), BadNameException);
         CHECK_THROWS_AS(Expression("var&", "var&"), BadNameException);
-        CHECK_THROWS_AS(Expression("var_", "var_"), BadNameException);
     }
 
     SECTION("Duplicate variable names") {
