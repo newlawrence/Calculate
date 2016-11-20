@@ -12,15 +12,22 @@ namespace calculate {
                                   const pValue &values) {
         qSymbol infix;
 
+        auto prepare = std::regex(
+            R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_"
+        );
         auto regex = std::regex(
-            "-?[0-9.]+(?!e\\+?-?\\d+)|"
-            "-?\\d+e-?\\d+|"
-            "[A-Za-z]+\\d*[A-Za-z]*|"
-            "[^a-zA-Z\\d\\s\\.\\,()]+|"
-            "[(),]"
+            R"_(((?:[+\-])?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
+            R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
+            R"_(([^A-Za-z\d(),\s]+)|)_"
+            R"_((\()|(\))|(,))_"
         );
 
-        auto next = std::sregex_iterator(expr.begin(), expr.end(), regex),
+        auto expression = std::regex_replace(expr, prepare, "$1 ");
+        auto next = std::sregex_iterator(
+                expression.begin(),
+                expression.end(),
+                regex
+            ),
             end = std::sregex_iterator();
 
         auto encountered = std::unordered_set<String>();
@@ -142,7 +149,7 @@ namespace calculate {
                     else {
                         auto left = castChild<Operator>(element)->left_assoc;
                         auto p1 = castChild<Operator>(element)->precedence;
-                        auto p2 = castChild<Operator>(element)->precedence;
+                        auto p2 = castChild<Operator>(another)->precedence;
                         if ((left && (p1 <= p2)) || (!left && (p1 < p2))) {
                             operations.pop();
                             postfix.push(castChild<Evaluable>(another));
@@ -254,7 +261,7 @@ namespace calculate {
     }
 
     vString Expression::_validate(const vString &vars) {
-        auto regex = std::regex("[A-Za-z]+\\d*");
+        auto regex = std::regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
 
         if (
             !std::all_of(

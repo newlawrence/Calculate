@@ -52,7 +52,6 @@ TEST_CASE("Variable arguments", "[variables]") {
         CHECK_THROWS_AS(Expression("var$", "var$"), BadNameException);
         CHECK_THROWS_AS(Expression("var#", "var#"), BadNameException);
         CHECK_THROWS_AS(Expression("var&", "var&"), BadNameException);
-        CHECK_THROWS_AS(Expression("var_", "var_"), BadNameException);
     }
 
     SECTION("Duplicate variable names") {
