@@ -72,7 +72,6 @@ namespace calculate {
 
         const String& expression() const noexcept { return _expression; }
         const vString& variables() const noexcept { return _variables; }
-
         const String& infix() const noexcept { return _infix; };
         const String& postfix() const noexcept { return _postfix; };
         String tree() const noexcept;

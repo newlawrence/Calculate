@@ -12,6 +12,34 @@
 
 namespace {
 
+    std::string extract(const std::vector<std::string> &vector) {
+        if (vector.size())
+            return std::accumulate(
+                vector.begin() + 1,
+                vector.end(),
+                vector[0],
+                [](const std::string &accumulator, const std::string &next) {
+                     return accumulator + "," + next;
+                }
+            );
+        else
+            return std::string();
+    }
+
+
+    void queryConstants(char *query) {
+        strcpy(query, extract(calculate::queryConstants()).c_str());
+    }
+
+    void queryOperators(char *query) {
+        strcpy(query, extract(calculate::queryOperators()).c_str());
+    }
+
+    void queryFunctions(char *query) {
+        strcpy(query, extract(calculate::queryFunctions()).c_str());
+    }
+
+
     Expression createExpression(const char *expr, const char *vars,
                                 char *error) {
         try {
@@ -37,29 +65,30 @@ namespace {
             delete uncast(expr);
     }
 
-    const char* getExpression(Expression expr) {
-        return expr ? uncast(expr)->expression().c_str() : "";
+    void getExpression(Expression expr, char *expression) {
+        strcpy(expression, expr ? uncast(expr)->expression().c_str() : "");
     }
 
-    const char* getVariables(Expression expr) {
-        static std::string vars;
-
-        const auto &variables = uncast(expr)->variables();
-        if (expr && variables.size()) {
-            vars = std::accumulate(
-                variables.begin() + 1,
-                variables.end(),
-                variables[0],
-                [](const std::string &accumulator, const std::string &next) {
-                    return accumulator + "," + next;
-                }
-            );
-        }
-        else {
-            vars = std::string();
-        }
-        return vars.c_str();
+    void getVariables(Expression expr, char *variables) {
+        const auto &vars = uncast(expr)->variables();
+        if (expr)
+            strcpy(variables, extract(vars).c_str());
+        else
+            strcpy(variables, "");
     }
+
+    void getInfix(Expression expr, char *infix) {
+        strcpy(infix, expr ? uncast(expr)->infix().c_str() : "");
+    }
+
+    void getPostfix(Expression expr, char *postfix) {
+        strcpy(postfix, expr ? uncast(expr)->postfix().c_str() : "");
+    }
+
+    void getTree(Expression expr, char *tree) {
+        strcpy(tree, expr ? uncast(expr)->tree().c_str() : "");
+    }
+
 
     double evaluateArray(Expression expr, double *args, int size,
                          char *error) {
@@ -105,11 +134,17 @@ namespace {
 
 
 const calculate_c_library_template Calculate = {
+    queryConstants,
+    queryOperators,
+    queryFunctions,
     createExpression,
     newExpression,
     freeExpression,
     getExpression,
     getVariables,
+    getInfix,
+    getPostfix,
+    getTree,
     evaluateArray,
     evalArray,
     eval

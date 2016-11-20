@@ -18,12 +18,19 @@ struct ExpressionClassHandler;
 typedef struct ExpressionClassHandler* Expression;
 
 struct calculate_c_library_template {
+    void (*queryConstants)(char*);
+    void (*queryOperators)(char*);
+    void (*queryFunctions)(char*);
+
     Expression (*createExpression)(const char*, const char*, char*);
     Expression (*newExpression)(const char*, const char*);
     void (*freeExpression)(Expression);
 
-    const char* (*getExpression)(Expression);
-    const char* (*getVariables)(Expression);
+    void (*getExpression)(Expression, char*);
+    void (*getVariables)(Expression, char*);
+    void (*getInfix)(Expression, char*);
+    void (*getPostfix)(Expression, char*);
+    void (*getTree)(Expression, char*);
 
     double (*evaluateArray)(Expression, double*, int, char*);
     double (*evalArray)(Expression, double*, int);

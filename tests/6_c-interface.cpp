@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cstring>
 #include <string>
 
 #include "catch.hpp"
@@ -12,12 +13,16 @@ TEST_CASE("C interface", "[c_interface]") {
         Expression expr2 = Calculate.newExpression("1 + x", "x");
         Expression expr3 = Calculate.newExpression("x + y", "x, y");
         double x = 2., *xp = &x;
+        char expr[64], vars[64];
 
         CHECK(get_calculate_reference() == &Calculate);
 
-        CHECK(std::string(Calculate.getExpression(expr1)) == "1 + x");
-        CHECK(std::string(Calculate.getVariables(expr1)) == "x");
-        CHECK(std::string(Calculate.getVariables(expr3)) == "x,y");
+        Calculate.getExpression(expr1, expr);
+        CHECK(strcmp(expr, "1 + x") == 0);
+        Calculate.getVariables(expr1, vars);
+        CHECK(strcmp(vars, "x") == 0);
+        Calculate.getVariables(expr3, vars);
+        CHECK(strcmp(vars, "x,y") == 0);
         CHECK(static_cast<int>(Calculate.eval(expr1)) == 1);
         CHECK(static_cast<int>(Calculate.eval(expr1, x)) == 3);
         CHECK(static_cast<int>(Calculate.evalArray(expr1, xp, 1)) == 3);
@@ -31,9 +36,13 @@ TEST_CASE("C interface", "[c_interface]") {
         Expression expr1 = Calculate.newExpression("1 + x", "");
         Expression expr2 = Calculate.newExpression("1 + x", "");
         double *xp = nullptr;
+        char expr[64], vars[64];
 
-        CHECK(std::string(Calculate.getExpression(expr1)) == "");
-        CHECK(std::string(Calculate.getVariables(expr1)) == "");
+
+        Calculate.getExpression(expr1, expr);
+        CHECK(strcmp(expr, "") == 0);
+        Calculate.getVariables(expr1, vars);
+        CHECK(strcmp(vars, "") == 0);
         CHECK(std::isnan(Calculate.eval(expr1, 2.)));
         CHECK(std::isnan(Calculate.evalArray(expr1, xp, 0)));
 
