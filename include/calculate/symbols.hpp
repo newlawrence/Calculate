@@ -11,17 +11,17 @@
 namespace calculate_symbols {                                                 \
     class Constant_##TOKEN final : public Constant {                          \
         static const Constant::Recorder _recorder;                            \
-        static pSymbol newConstant() noexcept {                               \
+        static pSymbol make() noexcept {                                      \
             return std::make_shared<Constant_##TOKEN>();                      \
         }                                                                     \
     public:                                                                   \
         Constant_##TOKEN() noexcept :                                         \
                 Constant(std::to_string(VALUE)) {}                            \
-        virtual ~Constant_##TOKEN() {}                                        \
+        virtual ~Constant_##TOKEN() noexcept {}                               \
         virtual double evaluate() const noexcept { return VALUE; }            \
     };                                                                        \
     const Constant::Recorder Constant_##TOKEN::_recorder =                    \
-        Constant::Recorder(#TOKEN, &Constant_##TOKEN::newConstant);           \
+        Constant::Recorder(#TOKEN, &Constant_##TOKEN::make);                  \
 }
 
 
@@ -29,13 +29,13 @@ namespace calculate_symbols {                                                 \
 namespace calculate_symbols {                                                 \
     class Operator_##NAME final : public Operator {                           \
         static const Operator::Recorder _recorder;                            \
-        static pSymbol newOperator() noexcept {                               \
+        static pSymbol make() noexcept {                                      \
             return std::make_shared<Operator_##NAME>();                       \
         }                                                                     \
     public:                                                                   \
         Operator_##NAME() noexcept :                                          \
                 Operator(TOKEN, PRECEDENCE, L_ASSOCIATION) {}                 \
-        virtual ~Operator_##NAME() {}                                         \
+        virtual ~Operator_##NAME() noexcept {}                                \
         virtual double evaluate() const noexcept {                            \
             double a = _left_operand->evaluate();                             \
             double b = _right_operand->evaluate();                            \
@@ -43,7 +43,7 @@ namespace calculate_symbols {                                                 \
         }                                                                     \
     };                                                                        \
     const Operator::Recorder Operator_##NAME::_recorder =                     \
-        Operator::Recorder(TOKEN, &Operator_##NAME::newOperator);             \
+        Operator::Recorder(TOKEN, &Operator_##NAME::make);                    \
 }
 
 
@@ -51,7 +51,7 @@ namespace calculate_symbols {                                                 \
 namespace calculate_symbols {                                                 \
     class Function_##TOKEN final : public Function {                          \
         static const Function::Recorder _recorder;                            \
-        static pSymbol newFunction() noexcept {                               \
+        static pSymbol make() noexcept {                                      \
             return std::make_shared<Function_##TOKEN>();                      \
         }                                                                     \
     public:                                                                   \
@@ -66,13 +66,16 @@ namespace calculate_symbols {                                                 \
         }                                                                     \
     };                                                                        \
     const Function::Recorder Function_##TOKEN::_recorder =                    \
-        Function::Recorder(#TOKEN, &Function_##TOKEN::newFunction);           \
+        Function::Recorder(#TOKEN, &Function_##TOKEN::make);                  \
 }
 
 
 namespace calculate_symbols {
 
     using String = std::string;
+    using vString = std::vector<String>;
+
+    using pValue = std::unique_ptr<double[]>;
     using vValue = std::vector<double>;
     using mValue = std::unordered_map<String, double>;
 
@@ -94,9 +97,6 @@ namespace calculate_symbols {
          return std::dynamic_pointer_cast<T>(o);
     }
 
-    pSymbol newSymbol(double *v);
-    pSymbol newSymbol(const String &t);
-
 
     class Symbol {
         Symbol() = delete;
@@ -114,10 +114,11 @@ namespace calculate_symbols {
         const String token;
         const Type type;
 
-        virtual ~Symbol() = 0;
+        virtual ~Symbol() noexcept = 0;
         bool is(Type y) const noexcept { return type == y; }
+
     };
-    inline Symbol::~Symbol() {}
+    inline Symbol::~Symbol() noexcept {}
 
 
     template<char s>
@@ -129,7 +130,9 @@ namespace calculate_symbols {
     public:
         Parenthesis() noexcept :
             Symbol(_symbol, _type) {}
-        virtual ~Parenthesis() {}
+        virtual ~Parenthesis() noexcept {}
+
+        static pSymbol make() { return std::make_shared<Parenthesis<s>>(); }
     };
     template<char s> constexpr const char Parenthesis<s>::_symbol[2];
 
@@ -138,7 +141,9 @@ namespace calculate_symbols {
     public:
         Separator() noexcept :
             Symbol(",", Type::SEPARATOR) {}
-        virtual ~Separator() {}
+        virtual ~Separator() noexcept {}
+
+        static pSymbol make() { return std::make_shared<Separator>(); }
     };
 
 
@@ -148,10 +153,10 @@ namespace calculate_symbols {
                 Symbol(t, y) {}
 
     public:
-        virtual ~Evaluable() = 0;
+        virtual ~Evaluable() noexcept = 0;
         virtual double evaluate() const noexcept = 0;
     };
-    inline Evaluable::~Evaluable() {}
+    inline Evaluable::~Evaluable() noexcept {}
 
 
     class Variable final : public Evaluable {
@@ -161,8 +166,12 @@ namespace calculate_symbols {
         Variable(double *v) noexcept :
             Evaluable("var", Type::CONSTANT),
             _value(v) {}
-        virtual ~Variable() {}
+        virtual ~Variable() noexcept {}
         virtual double evaluate() const noexcept { return *_value; }
+
+        static pSymbol make(double *v) {
+            return std::make_shared<Variable>(v);
+        }
     };
 
 
@@ -179,10 +188,15 @@ namespace calculate_symbols {
         Constant(const String &s) noexcept :
             Evaluable(s, Type::CONSTANT),
             value(std::stod(s)) {}
-        virtual ~Constant() {};
+        virtual ~Constant() noexcept {};
         virtual double evaluate() const noexcept { return value; }
 
-        friend pSymbol newSymbol(const String &t);
+        static pSymbol makeNumbered(String t) {
+            return std::make_shared<Constant>(t);
+        }
+        static pSymbol makeNamed(String t) { return _symbols[t](); }
+        static bool hasToken(String t);
+        static vString queryTokens();
     };
 
 
@@ -205,11 +219,13 @@ namespace calculate_symbols {
         const unsigned precedence;
         const bool left_assoc;
 
-        virtual ~Operator() {}
+        virtual ~Operator() noexcept {}
         void addBranches(pEvaluable l, pEvaluable r) noexcept;
         virtual double evaluate() const noexcept = 0;
 
-        friend pSymbol newSymbol(const String &t);
+        static pSymbol make(String t) { return _symbols[t](); }
+        static bool hasToken(String t);
+        static vString queryTokens();
     };
 
 
@@ -230,11 +246,13 @@ namespace calculate_symbols {
     public:
         const unsigned args;
 
-        virtual ~Function() {}
+        virtual ~Function() noexcept {}
         void addBranches(vEvaluable &&x) noexcept;
         virtual double evaluate() const noexcept = 0;
 
-        friend pSymbol newSymbol(const String &t);
+        static pSymbol make(String t) { return _symbols[t](); }
+        static bool hasToken(String t);
+        static vString queryTokens();
     };
 
 }

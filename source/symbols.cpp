@@ -1,6 +1,5 @@
 #include <cmath>
 
-#include "calculate/exceptions.hpp"
 #include "calculate/symbols.hpp"
 
 
@@ -11,46 +10,25 @@ namespace calculate_symbols {
     mSymbolGen Function::_symbols;
 
 
-    pSymbol newSymbol(double *v) {
-        return std::make_shared<Variable>(v);
-    }
-
-    pSymbol newSymbol(const String &t) {
-        if (
-            [&t] {
-                try {
-                    std::stod(t);
-                    return true;
-                }
-                catch (std::logic_error) {}
-                return false;
-            }()
-        )
-            return std::make_shared<Constant>(t);
-        else if (Constant::_symbols.find(t) != Constant::_symbols.end())
-            return Constant::_symbols[t]();
-        else if (t == "(")
-            return std::make_shared<Parenthesis<'('>>();
-        else if (t == ")")
-            return std::make_shared<Parenthesis<')'>>();
-        else if (t == ",")
-            return std::make_shared<Separator>();
-        else if (Operator::_symbols.find(t) != Operator::_symbols.end())
-            return Operator::_symbols[t]();
-        else if (Function::_symbols.find(t) != Function::_symbols.end())
-            return Function::_symbols[t]();
-        else
-            throw calculate_exceptions::BaseCalculateException();
-    }
-
-
     Constant::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
-        Constant::_symbols[t] = g;
+        _symbols[t] = g;
+    }
+
+    bool Constant::hasToken(String t) {
+        return _symbols.find(t) != _symbols.end();
+    }
+
+    vString Constant::queryTokens() {
+        vString tokens;
+
+        for (const auto& pair : _symbols)
+            tokens.push_back(pair.first);
+        return tokens;
     }
 
 
     Operator::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
-        Operator::_symbols[t] = g;
+        _symbols[t] = g;
     }
 
     void Operator::addBranches(pEvaluable l, pEvaluable r) noexcept {
@@ -58,12 +36,37 @@ namespace calculate_symbols {
         _right_operand = r;
     }
 
+    bool Operator::hasToken(String t) {
+        return _symbols.find(t) != _symbols.end();
+    }
+
+    vString Operator::queryTokens() {
+        vString tokens;
+
+        for (const auto& pair : _symbols)
+            tokens.push_back(pair.first);
+        return tokens;
+    }
+
+
     Function::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
-        Function::_symbols[t] = g;
+        _symbols[t] = g;
     }
 
     void Function::addBranches(vEvaluable &&x) noexcept {
         _operands = std::move(x);
+    }
+
+    bool Function::hasToken(String t) {
+        return _symbols.find(t) != _symbols.end();
+    }
+
+    vString Function::queryTokens() {
+        vString tokens;
+
+        for (const auto& pair : _symbols)
+            tokens.push_back(pair.first);
+        return tokens;
     }
 
 }
@@ -74,13 +77,13 @@ RECORD_CONSTANT(e, 2.718281828459)
 RECORD_CONSTANT(phi, 1.618033988749)
 RECORD_CONSTANT(gamma, 0.577215664901)
 
-RECORD_OPERATOR(add, "+", 200, true, a + b)
-RECORD_OPERATOR(sub, "-", 200, true, a - b)
-RECORD_OPERATOR(mul, "*", 400, true, a * b)
-RECORD_OPERATOR(div, "/", 400, true, a / b)
-RECORD_OPERATOR(mod, "%", 400, true, std::fmod(a,b))
-RECORD_OPERATOR(pow, "^", 800, false, std::pow(a,b))
-RECORD_OPERATOR(pow2, "**", 800, false, std::pow(a,b))
+RECORD_OPERATOR(plus, "+", 200, true, a + b)
+RECORD_OPERATOR(minus, "-", 200, true, a - b)
+RECORD_OPERATOR(asterisk, "*", 400, true, a * b)
+RECORD_OPERATOR(slash, "/", 400, true, a / b)
+RECORD_OPERATOR(percent, "%", 400, true, std::fmod(a,b))
+RECORD_OPERATOR(caret, "^", 800, false, std::pow(a,b))
+RECORD_OPERATOR(double_asterisk, "**", 800, false, std::pow(a,b))
 
 RECORD_FUNCTION(fabs, 1, std::fabs(x[0]))
 RECORD_FUNCTION(abs, 1, std::abs(x[0]))

@@ -16,16 +16,14 @@ namespace calculate {
     using namespace calculate_symbols;
     using namespace calculate_exceptions;
 
-    using vString = std::vector<String>;
-    using pValue = std::unique_ptr<double[]>;
-    using Regex = std::regex;
-
     using qSymbol = std::queue<pSymbol>;
     using sSymbol = std::stack<pSymbol>;
 
     using qEvaluable = std::queue<pEvaluable>;
     using sEvaluable = std::stack<pEvaluable>;
 
+    using Regex = std::regex;
+    using Match = std::smatch;
 
     class Expression final {
         String _expression;

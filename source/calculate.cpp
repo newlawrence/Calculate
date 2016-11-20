@@ -1,7 +1,5 @@
 #include <unordered_set>
 
-#include <algorithm>
-
 #include "calculate.h"
 
 
@@ -22,34 +20,41 @@ namespace calculate {
     qSymbol Expression::_tokenize(const String &expr, const vString &vars,
                                   const pValue &values) {
         qSymbol infix;
+        Match match;
 
+        enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR};
         auto expression = std::regex_replace(expr, _pre_regex, "$1 ");
-        auto next = std::sregex_iterator(
-                expression.begin(),
-                expression.end(),
-                _regex
-            ),
-            end = std::sregex_iterator();
-
+        auto is = [&match](int group) { return !match[group].str().empty(); };
         auto encountered = std::unordered_set<String>();
-        while (next != end) {
-            auto match = next->str();
-            auto it = std::find(vars.begin(), vars.end(), match);
-            if (it != vars.end()) {
+
+        while (std::regex_search(expression, match, _regex)) {
+            auto token = match.str();
+            auto it = std::find(vars.begin(), vars.end(), token);
+
+            if (is(Group::NUMBER))
+                infix.push(Constant::makeNumbered(token));
+            else if (is(Group::NAME) && it != vars.end()) {
                 auto position = it - vars.begin();
-                infix.push(newSymbol(values.get() + position));
-                encountered.emplace(match);
+                infix.push(Variable::make(values.get() + position));
+                encountered.emplace(token);
             }
-            else {
-                try {
-                    infix.push(newSymbol(match));
-                }
-                catch (std::exception) {
-                    throw UndefinedSymbolException();
-                }
-            }
-            next++;
+            else if (is(Group::NAME) && Constant::hasToken(token))
+                infix.push(Constant::makeNamed(token));
+            else if (is(Group::NAME) && Function::hasToken(token))
+                infix.push(Function::make(token));
+            else if (is(Group::SYMBOL) && Operator::hasToken(token))
+                infix.push(Operator::make(token));
+            else if (is(Group::LEFT))
+                infix.push(Parenthesis<'('>::make());
+            else if (is(Group::RIGHT))
+                infix.push(Parenthesis<')'>::make());
+            else if (is(Group::SEPARATOR))
+                infix.push(Separator::make());
+            else
+                throw UndefinedSymbolException();
+            expression = match.suffix().str();
         }
+
         if (encountered.size() < vars.size())
             throw ArgumentsExcessException();
 
@@ -242,24 +247,21 @@ namespace calculate {
 
     vString Expression::_extract(const String &vars) {
         vString variables;
+        Match match;
 
-        auto next = std::sregex_iterator(
-                vars.begin(),
-                vars.end(),
-                _ext_regex
-            ),
-            end = std::sregex_iterator();
-
-        while (next != end) {
-            if (!(*next)[2].str().empty())
-                throw BadNameException();
+        auto suffix = vars;
+        auto counter = 0u;
+        while (std::regex_search(suffix, match, _ext_regex)) {
+            if (!match[2].str().empty()) {
+                if (counter % 2 == 0)
+                    throw BadNameException();
+            }
             else
-                variables.push_back(next->str());
-
-            next++;
-            if (!(*next)[2].str().empty() && next != end)
-                next++;
+                variables.push_back(match[1].str());
+            counter++;
+            suffix = match.suffix().str();
         }
+
         return variables;
     }
 
@@ -276,6 +278,7 @@ namespace calculate {
         auto no_dups = std::unordered_set<String>(vars.begin(), vars.end());
         if (no_dups.size() != vars.size())
             throw DuplicatedNameException();
+
 
         return vars;
     }
