@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 from calculate.calculate import Expression
+from calculate.calculate import queryConstants, queryOperators, queryFunctions
 
 __version__ = '1.1.0dev1'
 __license__ = 'MIT'

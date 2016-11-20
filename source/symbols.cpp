@@ -14,9 +14,9 @@ namespace calculate_symbols {
         if (lvl == 0u)
             stream << token << "\n";
         else if (lvl == 1u)
-            stream << "·· " << token << "\n";
+            stream << "\\_ " << token << "\n";
         else
-            stream << String((lvl - 1u) * 3u, ' ') << "·· " << token << "\n";
+            stream << String((lvl - 1u) * 3u, ' ') << "\\_ " << token << "\n";
     }
 
 
