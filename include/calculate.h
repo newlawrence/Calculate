@@ -25,8 +25,16 @@ namespace calculate {
     using Regex = std::regex;
     using Match = std::smatch;
 
+
+    vString queryConstants();
+    vString queryOperators();
+    vString queryFunctions();
+
+
     class Expression final {
         String _expression;
+        String _infix;
+        String _postfix;
         vString _variables;
         pValue _values;
         pEvaluable _tree;
@@ -36,14 +44,14 @@ namespace calculate {
         static const Regex _pre_regex;
         static const Regex _regex;
 
-        static qSymbol _tokenize(const String &expr, const vString &vars,
-                                 const pValue &values);
-        static qSymbol _check(qSymbol &&input);
-        static qEvaluable _shuntingYard(qSymbol &&infix);
-        static pEvaluable _buildTree(qEvaluable &&postfix);
-
         static vString _extract(const String &vars);
         static vString _validate(const vString &vars);
+
+
+        qSymbol _tokenize();
+        qSymbol _check(qSymbol &&input);
+        qEvaluable _shuntingYard(qSymbol &&infix);
+        pEvaluable _buildTree(qEvaluable &&postfix);
 
         Expression() = delete;
 
@@ -62,8 +70,12 @@ namespace calculate {
             return this->operator() ({static_cast<double>(args)...});
         };
 
-        const String& expression() const noexcept {return _expression;}
-        const vString& variables() const noexcept {return _variables;}
+        const String& expression() const noexcept { return _expression; }
+        const vString& variables() const noexcept { return _variables; }
+
+        const String& infix() const noexcept { return _infix; };
+        const String& postfix() const noexcept { return _postfix; };
+        String tree() const noexcept;
     };
 
 }

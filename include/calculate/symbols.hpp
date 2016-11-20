@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <limits>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -21,6 +22,9 @@ namespace calculate_symbols {                                                 \
                 Constant(std::to_string(VALUE)) {}                            \
         virtual ~Constant_##TOKEN() noexcept {}                               \
         virtual double evaluate() const noexcept { return VALUE; }            \
+        virtual void print(Stream &stream, unsigned lvl=0u) const noexcept {  \
+             Evaluable::print(stream, lvl);                                   \
+        }                                                                     \
     };                                                                        \
     const Constant::Recorder Constant_##TOKEN::_recorder =                    \
         Constant::Recorder(#TOKEN, &Constant_##TOKEN::make);                  \
@@ -42,6 +46,12 @@ namespace calculate_symbols {                                                 \
             double a = _left_operand->evaluate();                             \
             double b = _right_operand->evaluate();                            \
             return FUNCTION;                                                  \
+        }                                                                     \
+        virtual void print(Stream &stream, unsigned lvl=0u) const noexcept {  \
+             Evaluable::print(stream, lvl);                                   \
+             lvl++;                                                           \
+             _left_operand->print(stream, lvl);                               \
+             _right_operand->print(stream, lvl);                              \
         }                                                                     \
     };                                                                        \
     const Operator::Recorder Operator_##NAME::_recorder =                     \
@@ -66,6 +76,12 @@ namespace calculate_symbols {                                                 \
                 x[i] = _operands[i]->evaluate();                              \
             return FUNCTION;                                                  \
         }                                                                     \
+        virtual void print(Stream &stream, unsigned lvl=0u) const noexcept {  \
+             Evaluable::print(stream, lvl);                                   \
+             lvl++;                                                           \
+             for (auto i = 0u; i < args; i++)                                 \
+                 _operands[i]->print(stream, lvl);                            \
+        }                                                                     \
     };                                                                        \
     const Function::Recorder Function_##TOKEN::_recorder =                    \
         Function::Recorder(#TOKEN, &Function_##TOKEN::make);                  \
@@ -74,6 +90,7 @@ namespace calculate_symbols {                                                 \
 
 namespace calculate_symbols {
 
+    using Stream = std::ostringstream;
     using String = std::string;
     using vString = std::vector<String>;
 
@@ -133,7 +150,9 @@ namespace calculate_symbols {
             Symbol(_symbol, _type) {}
         virtual ~Parenthesis() noexcept {}
 
-        static pSymbol make() { return std::make_shared<Parenthesis<s>>(); }
+        static pSymbol make() {
+            return std::make_shared<Parenthesis<s>>();
+        }
     };
     template<char s> constexpr const char Parenthesis<s>::_symbol[2];
 
@@ -144,7 +163,9 @@ namespace calculate_symbols {
             Symbol(",", Type::SEPARATOR) {}
         virtual ~Separator() noexcept {}
 
-        static pSymbol make() { return std::make_shared<Separator>(); }
+        static pSymbol make() {
+            return std::make_shared<Separator>();
+        }
     };
 
 
@@ -156,6 +177,7 @@ namespace calculate_symbols {
     public:
         virtual ~Evaluable() noexcept = 0;
         virtual double evaluate() const noexcept = 0;
+        virtual void print(Stream &stream, unsigned lvl=0u) const noexcept;
     };
     inline Evaluable::~Evaluable() noexcept {}
 
@@ -166,6 +188,10 @@ namespace calculate_symbols {
         virtual ~EmptyEvaluable() noexcept {}
         virtual double evaluate() const noexcept {
             return std::numeric_limits<double>::quiet_NaN();
+        }
+
+        static pSymbol make() {
+            return std::make_shared<EmptyEvaluable>();
         }
     };
 
@@ -205,7 +231,9 @@ namespace calculate_symbols {
         static pSymbol makeNumbered(String t) {
             return std::make_shared<Constant>(t);
         }
-        static pSymbol makeNamed(String t) { return _symbols[t](); }
+        static pSymbol makeNamed(String t) {
+            return _symbols[t]();
+        }
         static bool hasToken(String t);
         static vString queryTokens();
     };
@@ -223,8 +251,8 @@ namespace calculate_symbols {
 
         Operator(const String &t, unsigned p, bool l) noexcept :
                 Evaluable(t, Type::OPERATOR),
-                _left_operand(std::make_shared<EmptyEvaluable>()),
-                _right_operand(std::make_shared<EmptyEvaluable>()),
+                _left_operand(castChild<Evaluable>(EmptyEvaluable::make())),
+                _right_operand(castChild<Evaluable>(EmptyEvaluable::make())),
                 precedence(p),
                 left_assoc(l) {}
 
@@ -236,7 +264,9 @@ namespace calculate_symbols {
         void addBranches(pEvaluable l, pEvaluable r) noexcept;
         virtual double evaluate() const noexcept = 0;
 
-        static pSymbol make(String t) { return _symbols[t](); }
+        static pSymbol make(String t) {
+            return _symbols[t]();
+        }
         static bool hasToken(String t);
         static vString queryTokens();
     };
@@ -253,7 +283,7 @@ namespace calculate_symbols {
 
         Function(const String &t, unsigned s) noexcept :
                 Evaluable(t, Type::FUNCTION),
-                _operands(s, std::make_shared<EmptyEvaluable>()),
+                _operands(s, castChild<Evaluable>(EmptyEvaluable::make())),
                 args(s) {}
 
     public:
@@ -263,7 +293,9 @@ namespace calculate_symbols {
         void addBranches(const vEvaluable &x) noexcept;
         virtual double evaluate() const noexcept = 0;
 
-        static pSymbol make(String t) { return _symbols[t](); }
+        static pSymbol make(String t) {
+            return _symbols[t]();
+        }
         static bool hasToken(String t);
         static vString queryTokens();
     };

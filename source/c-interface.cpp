@@ -3,7 +3,6 @@
 #include <numeric>
 #include <limits>
 
-
 #include "calculate.h"
 #include "calculate/c-interface.h"
 
@@ -38,7 +37,6 @@ namespace {
             delete uncast(expr);
     }
 
-
     const char* getExpression(Expression expr) {
         return expr ? uncast(expr)->expression().c_str() : "";
     }
@@ -62,7 +60,6 @@ namespace {
         }
         return vars.c_str();
     }
-
 
     double evaluateArray(Expression expr, double *args, int size,
                          char *error) {

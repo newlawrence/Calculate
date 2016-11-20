@@ -6,10 +6,13 @@
 namespace calculate {
 
     const Regex Expression::_ext_regex(R"_(([^\s,]+)|(,))_");
+
     const Regex Expression::_var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
+
     const Regex Expression::_pre_regex(
         R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_"
     );
+
     const Regex Expression::_regex(
         R"_(((?:[+\-])?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
         R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
@@ -17,25 +20,76 @@ namespace calculate {
         R"_((\()|(\))|(,))_"
     );
 
-    qSymbol Expression::_tokenize(const String &expr, const vString &vars,
-                                  const pValue &values) {
-        qSymbol infix;
+
+    vString queryConstants() {
+        return Constant::queryTokens();
+    };
+
+    vString queryOperators() {
+        return Operator::queryTokens();
+    };
+
+    vString queryFunctions() {
+        return Function::queryTokens();
+    };
+
+
+    vString Expression::_extract(const String &vars) {
+        vString variables;
         Match match;
 
+        auto suffix = vars;
+        auto counter = 0u;
+        while (std::regex_search(suffix, match, _ext_regex)) {
+            if (!match[2].str().empty()) {
+                if (counter % 2 == 0)
+                    throw BadNameException();
+            }
+            else
+                variables.push_back(match[1].str());
+            counter++;
+            suffix = match.suffix().str();
+        }
+
+        return variables;
+    }
+
+    vString Expression::_validate(const vString &vars) {
+        if (
+            !std::all_of(
+                vars.begin(),
+                vars.end(),
+                [](String var) { return std::regex_match(var, _var_regex); }
+            )
+        )
+            throw BadNameException();
+
+        auto no_dups = std::unordered_set<String>(vars.begin(), vars.end());
+        if (no_dups.size() != vars.size())
+            throw DuplicatedNameException();
+
+        return vars;
+    }
+
+    qSymbol Expression::_tokenize() {
+        qSymbol infix;
+        Match match;
+        Stream stream;
+
         enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR};
-        auto expression = std::regex_replace(expr, _pre_regex, "$1 ");
         auto is = [&match](int group) { return !match[group].str().empty(); };
         auto encountered = std::unordered_set<String>();
 
+        auto expression = std::regex_replace(_expression, _pre_regex, "$1 ");
         while (std::regex_search(expression, match, _regex)) {
             auto token = match.str();
-            auto vars_iterator = std::find(vars.begin(), vars.end(), token);
+            auto it = std::find(_variables.begin(), _variables.end(), token);
 
             if (is(Group::NUMBER))
                 infix.push(Constant::makeNumbered(token));
-            else if (is(Group::NAME) && vars_iterator != vars.end()) {
-                auto position = vars_iterator - vars.begin();
-                infix.push(Variable::make(token, values.get() + position));
+            else if (is(Group::NAME) && it != _variables.end()) {
+                auto position = it - _variables.begin();
+                infix.push(Variable::make(token, _values.get() + position));
                 encountered.emplace(token);
             }
             else if (is(Group::NAME) && Constant::hasToken(token))
@@ -52,12 +106,15 @@ namespace calculate {
                 infix.push(Separator::make());
             else
                 throw UndefinedSymbolException();
+
             expression = match.suffix().str();
+            stream << " " << token;
         }
 
-        if (encountered.size() < vars.size())
+        if (encountered.size() < _variables.size())
             throw ArgumentsExcessException();
 
+        _infix = stream.str().erase(0, 1);
         return infix;
     }
 
@@ -112,6 +169,7 @@ namespace calculate {
     qEvaluable Expression::_shuntingYard(qSymbol &&infix) {
         qEvaluable postfix;
         sSymbol operations;
+        Stream stream;
 
         while(!infix.empty()) {
             auto element = infix.front();
@@ -120,6 +178,7 @@ namespace calculate {
             switch (element->type) {
             case (Type::CONSTANT):
                 postfix.push(castChild<Evaluable>(element));
+                stream << " " << element->token;
                 break;
 
             case (Type::FUNCTION):
@@ -131,6 +190,7 @@ namespace calculate {
                     auto another = operations.top();
                     if (!another->is(Type::LEFT)) {
                         postfix.push(castChild<Evaluable>(another));
+                        stream << " " << another->token;
                         operations.pop();
                     }
                     else {
@@ -149,16 +209,18 @@ namespace calculate {
                     }
                     else if (another->is(Type::FUNCTION)) {
                         postfix.push(castChild<Evaluable>(another));
+                        stream << " " << another->token;
                         operations.pop();
                         break;
                     }
                     else {
                         auto left = castChild<Operator>(element)->left_assoc;
                         auto p1 = castChild<Operator>(element)->precedence;
-                        auto p2 = castChild<Operator>(element)->precedence;
+                        auto p2 = castChild<Operator>(another)->precedence;
                         if ((left && (p1 <= p2)) || (!left && (p1 < p2))) {
                             operations.pop();
                             postfix.push(castChild<Evaluable>(another));
+                            stream << " " << another->token;
                         }
                         else {
                             break;
@@ -178,6 +240,7 @@ namespace calculate {
                     if (!another->is(Type::LEFT)) {
                         operations.pop();
                         postfix.push(castChild<Evaluable>(another));
+                        stream << " " << another->token;
                     }
                     else {
                         break;
@@ -197,7 +260,10 @@ namespace calculate {
                 throw ParenthesisMismatchException();
             operations.pop();
             postfix.push(castChild<Evaluable>(element));
+            stream << " " << element->token;
         }
+
+        _postfix = stream.str().erase(0, 1);
         return postfix;
     }
 
@@ -244,46 +310,6 @@ namespace calculate {
         return operands.top();
     }
 
-
-    vString Expression::_extract(const String &vars) {
-        vString variables;
-        Match match;
-
-        auto suffix = vars;
-        auto counter = 0u;
-        while (std::regex_search(suffix, match, _ext_regex)) {
-            if (!match[2].str().empty()) {
-                if (counter % 2 == 0)
-                    throw BadNameException();
-            }
-            else
-                variables.push_back(match[1].str());
-            counter++;
-            suffix = match.suffix().str();
-        }
-
-        return variables;
-    }
-
-    vString Expression::_validate(const vString &vars) {
-        if (
-            !std::all_of(
-                vars.begin(),
-                vars.end(),
-                [](String var) { return std::regex_match(var, _var_regex); }
-            )
-        )
-            throw BadNameException();
-
-        auto no_dups = std::unordered_set<String>(vars.begin(), vars.end());
-        if (no_dups.size() != vars.size())
-            throw DuplicatedNameException();
-
-
-        return vars;
-    }
-
-
     Expression::Expression(const Expression &other) :
             Expression(other._expression, other._variables) {
     }
@@ -310,11 +336,10 @@ namespace calculate {
         for (auto i = 0u; i < vars.size(); i++)
             _values[i] = 0.;
 
-        auto infix = _check(_tokenize(expr, _variables, _values));
+        auto infix = _check(_tokenize());
         auto postfix = _shuntingYard(std::move(infix));
         _tree = _buildTree(std::move(postfix));
     }
-
 
     Expression& Expression::operator=(const Expression &other) {
         auto copy = Expression(other);
@@ -332,7 +357,6 @@ namespace calculate {
         return *this;
     }
 
-
     double Expression::operator() (const vValue &values) const {
         if (values.size() != _variables.size())
             throw WrongArgumentsException();
@@ -340,6 +364,13 @@ namespace calculate {
             _values[i] = values[i];
 
         return _tree->evaluate();
+    }
+
+    String Expression::tree() const noexcept {
+        Stream stream;
+
+        _tree->print(stream);
+        return stream.str();
     }
 
 }

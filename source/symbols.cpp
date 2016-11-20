@@ -10,6 +10,16 @@ namespace calculate_symbols {
     mSymbolGen Function::_symbols;
 
 
+    void Evaluable::print(Stream &stream, unsigned lvl) const noexcept {
+        if (lvl == 0u)
+            stream << token << "\n";
+        else if (lvl == 1u)
+            stream << "·· " << token << "\n";
+        else
+            stream << String((lvl - 1u) * 3u, ' ') << "·· " << token << "\n";
+    }
+
+
     Constant::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
         _symbols[t] = g;
     }
