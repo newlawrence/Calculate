@@ -53,8 +53,9 @@ namespace calculate_symbols {
         _symbols[t] = g;
     }
 
-    void Function::addBranches(vEvaluable &&x) noexcept {
-        _operands = std::move(x);
+    void Function::addBranches(const vEvaluable &x) noexcept {
+        if (x.size() == _operands.size())
+            _operands = x;
     }
 
     bool Function::hasToken(String t) {

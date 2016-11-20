@@ -29,13 +29,13 @@ namespace calculate {
 
         while (std::regex_search(expression, match, _regex)) {
             auto token = match.str();
-            auto it = std::find(vars.begin(), vars.end(), token);
+            auto vars_iterator = std::find(vars.begin(), vars.end(), token);
 
             if (is(Group::NUMBER))
                 infix.push(Constant::makeNumbered(token));
-            else if (is(Group::NAME) && it != vars.end()) {
-                auto position = it - vars.begin();
-                infix.push(Variable::make(values.get() + position));
+            else if (is(Group::NAME) && vars_iterator != vars.end()) {
+                auto position = vars_iterator - vars.begin();
+                infix.push(Variable::make(token, values.get() + position));
                 encountered.emplace(token);
             }
             else if (is(Group::NAME) && Constant::hasToken(token))
@@ -223,7 +223,7 @@ namespace calculate {
                     ops[i - 1] = operands.top();
                     operands.pop();
                 }
-                function->addBranches(std::move(ops));
+                function->addBranches(ops);
                 operands.push(element);
             }
 

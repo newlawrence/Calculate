@@ -2,9 +2,11 @@
 #define __CALCULATE_SYMBOLS_HPP__
 
 #include <memory>
+#include <limits>
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <cstdlib>
 
 
 #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
@@ -116,7 +118,6 @@ namespace calculate_symbols {
 
         virtual ~Symbol() noexcept = 0;
         bool is(Type y) const noexcept { return type == y; }
-
     };
     inline Symbol::~Symbol() noexcept {}
 
@@ -159,18 +160,28 @@ namespace calculate_symbols {
     inline Evaluable::~Evaluable() noexcept {}
 
 
+    class EmptyEvaluable final : public Evaluable {
+    public:
+        EmptyEvaluable() noexcept : Evaluable("{empty}", Type::CONSTANT) {}
+        virtual ~EmptyEvaluable() noexcept {}
+        virtual double evaluate() const noexcept {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+    };
+
+
     class Variable final : public Evaluable {
     public:
         const double *_value;
 
-        Variable(double *v) noexcept :
-            Evaluable("var", Type::CONSTANT),
+        Variable(const String &t, double *v) noexcept :
+            Evaluable(t, Type::CONSTANT),
             _value(v) {}
         virtual ~Variable() noexcept {}
         virtual double evaluate() const noexcept { return *_value; }
 
-        static pSymbol make(double *v) {
-            return std::make_shared<Variable>(v);
+        static pSymbol make(const String &t, double *v) {
+            return std::make_shared<Variable>(t, v);
         }
     };
 
@@ -185,9 +196,9 @@ namespace calculate_symbols {
     public:
         const double value;
 
-        Constant(const String &s) noexcept :
-            Evaluable(s, Type::CONSTANT),
-            value(std::stod(s)) {}
+        Constant(const String &t) noexcept :
+            Evaluable(t, Type::CONSTANT),
+            value(std::strtod(t.c_str(), nullptr)) {}
         virtual ~Constant() noexcept {};
         virtual double evaluate() const noexcept { return value; }
 
@@ -212,6 +223,8 @@ namespace calculate_symbols {
 
         Operator(const String &t, unsigned p, bool l) noexcept :
                 Evaluable(t, Type::OPERATOR),
+                _left_operand(std::make_shared<EmptyEvaluable>()),
+                _right_operand(std::make_shared<EmptyEvaluable>()),
                 precedence(p),
                 left_assoc(l) {}
 
@@ -240,14 +253,14 @@ namespace calculate_symbols {
 
         Function(const String &t, unsigned s) noexcept :
                 Evaluable(t, Type::FUNCTION),
-                _operands(s),
+                _operands(s, std::make_shared<EmptyEvaluable>()),
                 args(s) {}
 
     public:
         const unsigned args;
 
         virtual ~Function() noexcept {}
-        void addBranches(vEvaluable &&x) noexcept;
+        void addBranches(const vEvaluable &x) noexcept;
         virtual double evaluate() const noexcept = 0;
 
         static pSymbol make(String t) { return _symbols[t](); }
