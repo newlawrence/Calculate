@@ -3,37 +3,50 @@ from __future__ import absolute_import
 
 from collections import Iterable
 
-from calculate.cffiwrap import ffi, Calculate, decode
+from calculate.cffiwrap import ffi, Calculate, decode, ERROR_CHARS, MAX_CHARS
 from calculate.exceptions import raise_if
 
 
+def _query(what):
+
+    _query_functions = {
+        'constants': Calculate.queryConstants,
+        'operators': Calculate.queryOperators,
+        'functions': Calculate.queryFunctions
+    }
+
+    output = ffi.new('char[{}]'.format(MAX_CHARS))
+    _query_functions[what](output)
+    output = decode(output)
+    return output.split(',') if output else []
+
+
 def queryConstants():
-    constants = ffi.new('char[4096]')
-    Calculate.queryConstants(constants)
-    constants = decode(constants)
-    return constants.split(',') if constants else []
+    return _query('constants')
 
 
 def queryOperators():
-    operators = ffi.new('char[4096]')
-    Calculate.queryOperators(operators)
-    operators = decode(operators)
-    return operators.split(',') if operators else []
+    return _query('operators')
 
 
 def queryFunctions():
-    functions = ffi.new('char[4096]')
-    Calculate.queryFunctions(functions)
-    functions = decode(functions)
-    return functions.split(',') if functions else []
+    return _query('functions')
 
 
 class Expression(object):
 
+    _properties = {
+        'expression': Calculate.getExpression,
+        'variables': Calculate.getVariables,
+        'infix': Calculate.getInfix,
+        'postfix': Calculate.getPostfix,
+        'tree': Calculate.getTree
+    }
+
     def __init__(self, expression, variables=''):
         if not isinstance(variables, str) and isinstance(variables, Iterable):
             variables = ','.join(variables) if len(variables) > 0 else ''
-        error = ffi.new('char[64]')
+        error = ffi.new('char[{}]'.format(ERROR_CHARS))
         self.__handler = Calculate.createExpression(
             expression.encode(),
             variables.encode(),
@@ -41,36 +54,16 @@ class Expression(object):
         )
         raise_if(decode(error))
 
-    @property
-    def expression(self):
-        _expression = ffi.new('char[256]')
-        Calculate.getExpression(self.__handler, _expression)
-        return decode(_expression)
-
-    @property
-    def variables(self):
-        _variables = ffi.new('char[256]')
-        Calculate.getVariables(self.__handler, _variables)
-        _variables = decode(_variables)
-        return _variables.split(',') if _variables else []
-
-    @property
-    def infix(self):
-        _infix = ffi.new('char[256]')
-        Calculate.getInfix(self.__handler, _infix)
-        return decode(_infix)
-
-    @property
-    def postfix(self):
-        _postfix = ffi.new('char[256]')
-        Calculate.getPostfix(self.__handler, _postfix)
-        return decode(_postfix)
-
-    @property
-    def tree(self):
-        _tree = ffi.new('char[4096]')
-        Calculate.getTree(self.__handler, _tree)
-        return decode(_tree)
+    def __getattr__(self, item):
+        try:
+            output = ffi.new('char[{}]'.format(MAX_CHARS))
+            self._properties[item](self.__handler, output)
+            return decode(output)
+        except KeyError:
+            raise AttributeError(
+                '{} object has no attribute {}'
+                .format(repr(self.__class__.__name__), repr(item))
+            )
 
     def __call__(self, *args):
         if args:
@@ -80,7 +73,7 @@ class Expression(object):
         else:
             values = ffi.new('double *')
 
-        error = ffi.new('char[64]')
+        error = ffi.new('char[{}]'.format(ERROR_CHARS))
         size = len(args)
         result = Calculate.evaluateArray(self.__handler, values, size, error)
         raise_if(decode(error))

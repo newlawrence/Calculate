@@ -5,6 +5,9 @@ import os.path as path
 
 from cffi import FFI
 
+ERROR_CHARS = 64
+MAX_CHARS = 4096
+
 extensions = ['so', 'dylib', 'dll']
 library_name = 'libcalculate'
 for ext in extensions:

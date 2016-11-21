@@ -8,7 +8,6 @@ module calculate
     public :: queryConstants, queryOperators, queryFunctions, Expression
 
     integer, parameter :: MAX_CHARS = 4096
-    integer, parameter :: AVERAGE_CHARS = 256
     integer, parameter :: ERROR_CHARS = 64
     character(len=7), parameter :: ERROR_FMT = '(4096A)'
 
