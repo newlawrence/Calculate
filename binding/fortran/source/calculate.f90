@@ -47,7 +47,7 @@ module calculate
         type(c_funptr) :: getTree
         type(c_funptr) :: evaluateArray
         type(c_funptr) :: evalArray
-        type(c_funptr) :: eval  
+        type(c_funptr) :: eval
     end type
 
     interface
@@ -130,7 +130,7 @@ contains
     end function
 
     function queryString(input, this) result (output)
-	    character(len=*), intent(in) :: input
+        character(len=*), intent(in) :: input
         class(Expression), intent(in), optional :: this
         character(len=:), allocatable :: output
 
