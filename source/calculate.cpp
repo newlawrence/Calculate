@@ -370,7 +370,7 @@ namespace calculate {
         Stream stream;
 
         _tree->print(stream);
-        return stream.str();
+        return stream.str().erase(stream.str().size() - 1, 1);
     }
 
 }

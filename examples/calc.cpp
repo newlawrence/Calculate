@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
             cout << "Postfix notation:" << endl;
             cout << expression.postfix() << endl;
             cout << "Expression tree:" << endl;
-            cout << expression.tree() << flush;
+            cout << expression.tree() << endl;
             cout << "Result:" << endl;
             cout << result << endl;
         }

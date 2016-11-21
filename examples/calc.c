@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
                 printf("%s\n", output);
                 printf("Expression tree:\n");
                 Calculate.getTree(expression, output);
-                printf("%s", output);
+                printf("%s\n", output);
                 printf("Result:\n");
                 printf("%f\n", result);
             }

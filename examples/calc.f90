@@ -43,7 +43,7 @@ program calc
                 print '(A)', 'Postfix notation:'
                 print '(A)', expr%postfix()
                 print '(A)', 'Expression tree:'
-                write(*, '(A)', advance='no') expr%tree()
+                print '(A)', expr%tree()
                 print '(A)', 'Result:'
                 print '(ES14.6E3)', result
             else

@@ -129,48 +129,67 @@ contains
         end do
     end function
 
+    function queryString(input, this) result (output)
+	    character(len=*), intent(in) :: input
+        class(Expression), intent(in), optional :: this
+        character(len=:), allocatable :: output
+
+        type(LibraryTemplate), pointer :: Calculate
+        character(kind=c_char, len=1), dimension(MAX_CHARS) :: coutput
+
+        procedure(queryWrapper), pointer :: query
+        procedure(getWrapper), pointer :: get
+        call c_f_pointer(getLibraryReference(), Calculate)
+
+        call c_f_procpointer(Calculate%queryConstants, query)
+        call c_f_procpointer(Calculate%getExpression, get)
+        select case (input)
+            case ("constants")
+                call c_f_procpointer(Calculate%queryConstants, query)
+            case ("operators")
+                call c_f_procpointer(Calculate%queryOperators, query)
+            case ("functions")
+                call c_f_procpointer(Calculate%queryFunctions, query)
+            case ("expression")
+                call c_f_procpointer(Calculate%getExpression, get)
+            case ("variables")
+                call c_f_procpointer(Calculate%getVariables, get)
+            case ("infix")
+                call c_f_procpointer(Calculate%getInfix, get)
+            case ("postfix")
+                call c_f_procpointer(Calculate%getPostfix, get)
+            case ("tree")
+                call c_f_procpointer(Calculate%getTree, get)
+        end select
+
+        if (.not. present(this)) then
+            call query(coutput)
+        else
+            call get(this%handler, coutput)
+        end if
+
+        output = fromChars(coutput)
+    end function
+
 
     function queryConstants() result (constants)
         character(len=:), allocatable :: constants
 
-        type(LibraryTemplate), pointer :: Calculate
-        character(kind=c_char, len=1), dimension(MAX_CHARS) :: cconstants
-        procedure(queryWrapper), pointer :: query
-
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%queryConstants, query)
-
-        call query(cconstants)
-        constants = fromChars(cconstants)
+        constants = queryString('constants')
     end function
 
     function queryOperators() result (operators)
         character(len=:), allocatable :: operators
 
-        type(LibraryTemplate), pointer :: Calculate
-        character(kind=c_char, len=1), dimension(MAX_CHARS) :: coperators
-        procedure(queryWrapper), pointer :: query
-
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%queryOperators, query)
-
-        call query(coperators)
-        operators = fromChars(coperators)
+        operators = queryString('operators')
     end function
 
     function queryFunctions() result (functions)
         character(len=:), allocatable :: functions
 
-        type(LibraryTemplate), pointer :: Calculate
-        character(kind=c_char, len=1), dimension(MAX_CHARS) :: cfunctions
-        procedure(queryWrapper), pointer :: query
-
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%queryFunctions, query)
-
-        call query(cfunctions)
-        functions = fromChars(cfunctions)
+        functions = queryString('functions')
     end function
+
 
     function createNewExpression(expr, vars, error) result (this)
         character(len=*), intent(in) :: expr
@@ -252,75 +271,35 @@ contains
         class(Expression), intent(in) :: this
         character(len=:), allocatable :: expr
 
-        type(LibraryTemplate), pointer :: Calculate
-        character(kind=c_char, len=1), dimension(MAX_CHARS) :: cexpression
-        procedure(getWrapper), pointer :: get
-
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%getExpression, get)
-
-        call get(this%handler, cexpression)
-        expr = fromChars(cexpression)
+        expr = queryString('expression', this)
     end function
 
     function getVariables(this) result (vars)
         class(Expression), intent(in) :: this
         character(len=:), allocatable :: vars
 
-        type(LibraryTemplate), pointer :: Calculate
-        character(kind=c_char, len=1), dimension(MAX_CHARS) :: cvariables
-        procedure(getWrapper), pointer :: get
-
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%getVariables, get)
-
-        call get(this%handler, cvariables)
-        vars = fromChars(cvariables)
+        vars = queryString('variables', this)
     end function
 
     function getInfix(this) result (infix)
         class(Expression), intent(in) :: this
         character(len=:), allocatable :: infix
 
-        type(LibraryTemplate), pointer :: Calculate
-        character(kind=c_char, len=1), dimension(MAX_CHARS) :: cinfix
-        procedure(getWrapper), pointer :: get
-
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%getInfix, get)
-
-        call get(this%handler, cinfix)
-        infix = fromChars(cinfix)
+        infix = queryString('infix', this)
     end function
 
     function getPostfix(this) result (postfix)
         class(Expression), intent(in) :: this
         character(len=:), allocatable :: postfix
 
-        type(LibraryTemplate), pointer :: Calculate
-        character(kind=c_char, len=1), dimension(MAX_CHARS) :: cpostfix
-        procedure(getWrapper), pointer :: get
-
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%getPostfix, get)
-
-        call get(this%handler, cpostfix)
-        postfix = fromChars(cpostfix)
+        postfix = queryString('postfix', this)
     end function
 
     function getTree(this) result (tree)
         class(Expression), intent(in) :: this
         character(len=:), allocatable :: tree
 
-        type(LibraryTemplate), pointer :: Calculate
-        character(kind=c_char, len=1), dimension(MAX_CHARS) :: ctree
-        procedure(getWrapper), pointer :: get
-
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%getTree, get)
-
-        call get(this%handler, ctree)
-        tree = fromChars(ctree)
+        tree = queryString('tree', this)
     end function
 
     function evaluateArray(this, args, error) result (result)

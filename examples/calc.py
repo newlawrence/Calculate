@@ -36,7 +36,7 @@ if __name__ == '__main__':
             print('Postfix notation:')
             print(expression.postfix)
             print('Expression tree:')
-            print(expression.tree, end='')
+            print(expression.tree)
             print('Result:')
             print(result)
 
