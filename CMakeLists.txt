@@ -100,11 +100,11 @@ if (DEFINED ENV{TESTING} OR DEFINED ENV{COVERAGE})
 endif()
 
 
-add_executable(calc "${PROJECT_SOURCE_DIR}/examples/calc.c")
-target_link_libraries(calc PRIVATE calculate)
+add_executable(calc_c "${PROJECT_SOURCE_DIR}/examples/calc.c")
+target_link_libraries(calc_c PRIVATE calculate)
 
-add_executable(calcpp "${PROJECT_SOURCE_DIR}/examples/calc.cpp")
-target_link_libraries(calcpp PRIVATE calculate)
+add_executable(calc_cpp "${PROJECT_SOURCE_DIR}/examples/calc.cpp")
+target_link_libraries(calc_cpp PRIVATE calculate)
 
 
 if (DEFINED ENV{BINDING} OR DEFINED ENV{FC})
@@ -127,8 +127,8 @@ if (DEFINED ENV{BINDING} OR DEFINED ENV{FC})
 
     include_directories("${PROJECT_SOURCE_DIR}/binding/fortran/module")
 
-    add_executable(calcfor "${PROJECT_SOURCE_DIR}/examples/calc.f90")
-    target_link_libraries(calcfor PRIVATE calculate_fortran)
+    add_executable(calc_for "${PROJECT_SOURCE_DIR}/examples/calc.f90")
+    target_link_libraries(calc_for PRIVATE calculate_fortran)
 endif ()
 
 if (DEFINED ENV{BINDING} OR DEFINED ENV{PY})

@@ -8,6 +8,7 @@
 int main(int argc, char *argv[]) {
     Expression expression;
     char variables[256];
+    char output[4096];
     char errors[64];
     double *values;
     double result;
@@ -33,8 +34,25 @@ int main(int argc, char *argv[]) {
                 expression, values, (argc - 2) / 2, errors
             );
 
-            if (!strcmp(errors, ""))
+            if (!strcmp(errors, "")) {
+                printf("Expression:\n");
+                Calculate.getExpression(expression, output);
+                printf("%s\n", output);
+                printf("Variables:\n");
+                Calculate.getVariables(expression, output);
+                printf("%s\n", output);
+                printf("Infix notation:\n");
+                Calculate.getInfix(expression, output);
+                printf("%s\n", output);
+                printf("Postfix notation:\n");
+                Calculate.getPostfix(expression, output);
+                printf("%s\n", output);
+                printf("Expression tree:\n");
+                Calculate.getTree(expression, output);
+                printf("%s", output);
+                printf("Result:\n");
                 printf("%f\n", result);
+            }
             else
                 printf("%s\n", errors);
         }

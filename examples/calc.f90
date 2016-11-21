@@ -13,7 +13,6 @@ program calc
     integer :: count
     integer :: i
 
-
     count = command_argument_count()
     if (mod(count, 2) == 1) then
         vars = ''
@@ -23,6 +22,7 @@ program calc
         end do
         vars = vars(2 :)
         call get_command_argument(1, arg)
+
         expr = Expression(arg, vars=vars, error=error)
 
         if (expr%check()) then
@@ -34,6 +34,17 @@ program calc
 
             result = expr%eval(vals, error=error)
             if (len(trim(error)) == 0) then
+                print '(A)', 'Expression:'
+                print '(A)', expr%expression()
+                print '(A)', 'Variables:'
+                print '(A)', expr%variables()
+                print '(A)', 'Infix notation:'
+                print '(A)', expr%infix()
+                print '(A)', 'Postfix notation:'
+                print '(A)', expr%postfix()
+                print '(A)', 'Expression tree:'
+                write(*, '(A)', advance='no') expr%tree()
+                print '(A)', 'Result:'
                 print '(ES14.6E3)', result
             else
                 print '(A)', error
