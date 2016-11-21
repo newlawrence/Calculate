@@ -10,13 +10,13 @@ namespace calculate_symbols {
     mSymbolGen Function::_symbols;
 
 
-    void Evaluable::print(Stream &stream, unsigned lvl) const noexcept {
-        if (lvl == 0u)
-            stream << token << "\n";
-        else if (lvl == 1u)
-            stream << "\\_ " << token << "\n";
+    void Evaluable::print(Stream &stream, String ind) const noexcept {
+        if (ind.size() == 0u)
+            stream << "[" << token << "]\n";
+        else if (ind.size() == 3u)
+            stream << " \\_[" << token << "]\n";
         else
-            stream << String((lvl - 1u) * 3u, ' ') << "\\_ " << token << "\n";
+            stream << ind.substr(0, ind.size() - 3) << " \\_[" << token << "]\n";
     }
 
 
