@@ -33,10 +33,10 @@ namespace calculate {
 
     class Expression final {
         String _expression;
-        String _infix;
-        String _postfix;
         vString _variables;
         pValue _values;
+        String _infix;
+        String _postfix;
         pEvaluable _tree;
 
         static const Regex _ext_regex;

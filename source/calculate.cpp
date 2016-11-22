@@ -317,9 +317,10 @@ namespace calculate {
     Expression::Expression(Expression &&other) :
             _expression(std::move(other._expression)),
             _variables(std::move(other._variables)),
-            _values(std::move(other._values)) {
-        _tree = std::move(other._tree);
-    }
+            _values(std::move(other._values)),
+            _infix(std::move(other._infix)),
+            _postfix(std::move(other._postfix)),
+            _tree(std::move(other._tree)) {}
 
     Expression::Expression(const String &expr, const String &vars) :
             Expression(expr, _extract(vars)) {
@@ -352,6 +353,8 @@ namespace calculate {
         _expression = std::move(other._expression);
         _variables = std::move(other._variables);
         _values = std::move(other._values);
+        _infix = std::move(other._infix);
+        _postfix = std::move(other._postfix);
         _tree = std::move(other._tree);
 
         return *this;

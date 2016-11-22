@@ -22,13 +22,16 @@ int main(int argc, char *argv[]) {
 
             ostringstream stream;
             auto expression = Expression(argv[1], vars);
+            auto variables = String("");
             auto result = expression(values);
-            copy(
-                expression.variables().begin(),
-                expression.variables().end(),
-                ostream_iterator<string>(stream, ",")
-            );
-            auto variables = stream.str().erase(stream.str().size() - 1, 1);
+            if (expression.variables().size()) {
+                copy(
+                    expression.variables().begin(),
+                    expression.variables().end(),
+                    ostream_iterator<string>(stream, ",")
+                );
+                variables = stream.str().erase(stream.str().size() - 1, 1);
+            }
 
             cout << "Expression:" << endl;
             cout << expression.expression() << endl;
