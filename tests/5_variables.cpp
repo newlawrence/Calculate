@@ -79,4 +79,9 @@ TEST_CASE("Variable arguments", "[variables]") {
             WrongArgumentsException
         );
     }
+
+    SECTION("Bad variable list") {
+        CHECK_THROWS_AS(Expression("x+y", "x,,y"), BadNameException);
+    }
+
 }
