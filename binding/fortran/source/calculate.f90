@@ -252,7 +252,6 @@ contains
         this%handler = c_null_ptr
     end subroutine
 
-
     subroutine clearExpression(this)
         class(Expression), intent(inout) :: this
 

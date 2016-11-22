@@ -62,7 +62,6 @@ module calculate
             type(Expression), intent(inout) :: this
         end subroutine
 
-
         module subroutine clearExpression(this)
             class(Expression), intent(inout) :: this
         end subroutine
