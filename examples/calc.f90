@@ -9,7 +9,7 @@ program calc
     real(kind=8), dimension(:), allocatable :: vals
     real(kind=8) :: result
 
-    character(len=32) :: arg
+    character(len=256) :: arg
     integer :: count
     integer :: i
 
