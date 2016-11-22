@@ -3,16 +3,16 @@ from __future__ import absolute_import
 
 from collections import Iterable
 
-from calculate.cffiwrap import ffi, Calculate, decode, ERROR_CHARS, MAX_CHARS
+from calculate.cffiwrap import ffi, calculate, decode, ERROR_CHARS, MAX_CHARS
 from calculate.exceptions import raise_if
 
 
 def _query(what):
 
     _query_functions = {
-        'constants': Calculate.queryConstants,
-        'operators': Calculate.queryOperators,
-        'functions': Calculate.queryFunctions
+        'constants': calculate.queryConstants,
+        'operators': calculate.queryOperators,
+        'functions': calculate.queryFunctions
     }
 
     output = ffi.new('char[{}]'.format(MAX_CHARS))
@@ -36,18 +36,18 @@ def queryFunctions():
 class Expression(object):
 
     _properties = {
-        'expression': Calculate.getExpression,
-        'variables': Calculate.getVariables,
-        'infix': Calculate.getInfix,
-        'postfix': Calculate.getPostfix,
-        'tree': Calculate.getTree
+        'expression': calculate.getExpression,
+        'variables': calculate.getVariables,
+        'infix': calculate.getInfix,
+        'postfix': calculate.getPostfix,
+        'tree': calculate.getTree
     }
 
     def __init__(self, expression, variables=''):
         if not isinstance(variables, str) and isinstance(variables, Iterable):
             variables = ','.join(variables) if len(variables) > 0 else ''
         error = ffi.new('char[{}]'.format(ERROR_CHARS))
-        self.__handler = Calculate.createExpression(
+        self.__handler = calculate.createExpression(
             expression.encode(),
             variables.encode(),
             error
@@ -75,14 +75,14 @@ class Expression(object):
 
         error = ffi.new('char[{}]'.format(ERROR_CHARS))
         size = len(args)
-        result = Calculate.evaluateArray(self.__handler, values, size, error)
+        result = calculate.evaluateArray(self.__handler, values, size, error)
         raise_if(decode(error))
 
         return result
 
     def __del__(self):
         try:
-            Calculate.freeExpression(self.__handler)
+            calculate.freeExpression(self.__handler)
         except Exception:
             pass
         finally:

@@ -44,7 +44,7 @@ struct calculate_c_library_template {
 const struct calculate_c_library_template* get_calculate_reference();
 ''')
 clib = ffi.dlopen(library_path)
-Calculate = clib.get_calculate_reference()
+calculate = clib.get_calculate_reference()
 
 
 def decode(cstring):

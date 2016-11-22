@@ -35,15 +35,15 @@ program calc
             result = expr%eval(vals, error=error)
             if (len(trim(error)) == 0) then
                 print '(A)', 'Expression:'
-                print '(A)', expr%expression()
+                print '(A)', trim(expr%expression())
                 print '(A)', 'Variables:'
-                print '(A)', expr%variables()
+                print '(A)', trim(expr%variables())
                 print '(A)', 'Infix notation:'
-                print '(A)', expr%infix()
+                print '(A)', trim(expr%infix())
                 print '(A)', 'Postfix notation:'
-                print '(A)', expr%postfix()
+                print '(A)', trim(expr%postfix())
                 print '(A)', 'Expression tree:'
-                print '(A)', expr%tree()
+                print '(A)', trim(expr%tree())
                 print '(A)', 'Result:'
                 print '(ES14.6E3)', result
             else

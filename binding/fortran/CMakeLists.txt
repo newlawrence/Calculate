@@ -28,4 +28,5 @@ target_link_libraries(calculate_fortran_s PUBLIC calculate_static)
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/module")
 add_executable(calc_for "${CMAKE_CURRENT_SOURCE_DIR}/../../examples/calc.f90")
-target_link_libraries(calc_for PRIVATE calculate_fortran_d)
+target_link_libraries(calc_for PUBLIC calculate_fortran_d)
+set_target_properties(calc_for PROPERTIES LINKER_LANGUAGE CXX)

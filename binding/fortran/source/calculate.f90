@@ -134,32 +134,32 @@ contains
         class(Expression), intent(in), optional :: this
         character(len=:), allocatable :: output
 
-        type(LibraryTemplate), pointer :: Calculate
+        type(LibraryTemplate), pointer :: calculate
         character(kind=c_char, len=1), dimension(MAX_CHARS) :: coutput
 
         procedure(queryWrapper), pointer :: query
         procedure(getWrapper), pointer :: get
-        call c_f_pointer(getLibraryReference(), Calculate)
+        call c_f_pointer(getLibraryReference(), calculate)
 
-        call c_f_procpointer(Calculate%queryConstants, query)
-        call c_f_procpointer(Calculate%getExpression, get)
+        call c_f_procpointer(calculate%queryConstants, query)
+        call c_f_procpointer(calculate%getExpression, get)
         select case (input)
             case ("constants")
-                call c_f_procpointer(Calculate%queryConstants, query)
+                call c_f_procpointer(calculate%queryConstants, query)
             case ("operators")
-                call c_f_procpointer(Calculate%queryOperators, query)
+                call c_f_procpointer(calculate%queryOperators, query)
             case ("functions")
-                call c_f_procpointer(Calculate%queryFunctions, query)
+                call c_f_procpointer(calculate%queryFunctions, query)
             case ("expression")
-                call c_f_procpointer(Calculate%getExpression, get)
+                call c_f_procpointer(calculate%getExpression, get)
             case ("variables")
-                call c_f_procpointer(Calculate%getVariables, get)
+                call c_f_procpointer(calculate%getVariables, get)
             case ("infix")
-                call c_f_procpointer(Calculate%getInfix, get)
+                call c_f_procpointer(calculate%getInfix, get)
             case ("postfix")
-                call c_f_procpointer(Calculate%getPostfix, get)
+                call c_f_procpointer(calculate%getPostfix, get)
             case ("tree")
-                call c_f_procpointer(Calculate%getTree, get)
+                call c_f_procpointer(calculate%getTree, get)
         end select
 
         if (.not. present(this)) then
@@ -197,14 +197,14 @@ contains
         character(len=*), intent(out), optional :: error
         type(Expression) :: this
 
-        type(LibraryTemplate), pointer :: Calculate
+        type(LibraryTemplate), pointer :: calculate
         procedure(createExpressionWrapper), pointer :: create
         character(kind=c_char, len=1), dimension(ERROR_CHARS) :: cerror
         character(len=:), allocatable :: message
         integer :: c
 
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%createExpression, create)
+        call c_f_pointer(getLibraryReference(), calculate)
+        call c_f_procpointer(calculate%createExpression, create)
 
         if (present(vars)) then
             this%handler = create(toChars(expr), toChars(vars), cerror)
@@ -226,11 +226,11 @@ contains
         class(Expression), intent(inout) :: this
         type(Expression), intent(in) :: other
 
-        type(LibraryTemplate), pointer :: Calculate
+        type(LibraryTemplate), pointer :: calculate
         procedure(newExpressionWrapper), pointer :: new
 
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%newExpression, new)
+        call c_f_pointer(getLibraryReference(), calculate)
+        call c_f_procpointer(calculate%newExpression, new)
 
         call freeExpression(this)
         this%handler = new( &
@@ -242,11 +242,11 @@ contains
     subroutine freeExpression(this)
         type(Expression), intent(inout) :: this
 
-        type(LibraryTemplate), pointer :: Calculate
+        type(LibraryTemplate), pointer :: calculate
         procedure(freeExpressionWrapper), pointer :: free
 
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%freeExpression, free)
+        call c_f_pointer(getLibraryReference(), calculate)
+        call c_f_procpointer(calculate%freeExpression, free)
 
         call free(this%handler)
         this%handler = c_null_ptr
@@ -307,15 +307,15 @@ contains
         character(len=*), intent(out), optional :: error
         real(kind=8) :: result
 
-        type(LibraryTemplate), pointer :: Calculate
+        type(LibraryTemplate), pointer :: calculate
         procedure(evaluateArrayWrapper), pointer :: eval
         real(kind=8), dimension(1) :: default
         character(kind=c_char, len=1), dimension(ERROR_CHARS) :: cerror
         character(len=:), allocatable :: message
         integer :: c
 
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%evaluateArray, eval)
+        call c_f_pointer(getLibraryReference(), calculate)
+        call c_f_procpointer(calculate%evaluateArray, eval)
 
         if (present(args)) then
             result = eval(this%handler, args, size(args), cerror)
