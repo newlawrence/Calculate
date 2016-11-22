@@ -7,28 +7,36 @@ function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
     if (NOT GCOV)
         message(FATAL_ERROR "gcov not found.")
     endif ()
-    find_program(GCOVR gcovr)
-    if (NOT GCOVR)
-        message(FATAL_ERROR "gcovr not found.")
-    endif ()
     set(SRC "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
     set(TSRC "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
     set(BIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${LIBRARYNAME}.dir/source")
     set(TBIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${TESTSNAME}.dir/tests")
     set(COVERAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coverage")
-    add_custom_target(${TARGETNAME}
-        COMMAND ${CMAKE_COMMAND} -E make_directory coverage
-        COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
-                ${GCOV} ${SRC} -o ${BIN} -p > /dev/null
-        COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
-                ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
-        COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
-                ${GCOVR} -r .. --object-directory . -o coverage.html
-                "--gcov-filter=\".*#(usr|extern|tests)#.*\"" -g 
-        COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
-                ${GCOVR} -r .. --object-directory . -o coverage.html
-                -g -k -s --html --html-details
-    )
+
+	find_program(GCOVR gcovr)
+    if (GCOVR)
+        add_custom_target(${TARGETNAME}
+            COMMAND ${CMAKE_COMMAND} -E make_directory coverage
+            COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+                    ${GCOV} ${SRC} -o ${BIN} -p > /dev/null
+            COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+                    ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
+            COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+                    ${GCOVR} -r .. --object-directory . -o coverage.html
+                    "--gcov-filter=\".*#(usr|extern|tests)#.*\"" -g 
+            COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+                    ${GCOVR} -r .. --object-directory . -o coverage.html
+                    -g -k -s --html --html-details
+        )
+    else ()
+        add_custom_target(${TARGETNAME}
+            COMMAND ${CMAKE_COMMAND} -E make_directory coverage
+            COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+                    ${GCOV} ${SRC} -o ${BIN} -p > /dev/null
+            COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+                    ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
+        )
+    endif ()
 endfunction ()
 
 
@@ -108,26 +116,7 @@ target_link_libraries(calc_cpp PRIVATE calculate)
 
 
 if (DEFINED ENV{BINDING} OR DEFINED ENV{FC})
-    enable_language(Fortran)
     add_subdirectory(binding/fortran)
-
-    if (${CMAKE_Fortran_COMPILER_ID} MATCHES "GNU")
-        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -O3 -std=f2008")
-        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
-    elseif (${CMAKE_Fortran_COMPILER_ID} MATCHES "Intel")
-        if (WIN32)
-            set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /O3 /stand:f08")
-            set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /free /warn:all")
-        else ()
-            set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -O3 -stand f08")
-            set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -free -warn all")
-        endif ()
-    endif()
-
-    include_directories("${PROJECT_SOURCE_DIR}/binding/fortran/module")
-
-    add_executable(calc_for "${PROJECT_SOURCE_DIR}/examples/calc.f90")
-    target_link_libraries(calc_for PRIVATE calculate_fortran)
 endif ()
 
 if (DEFINED ENV{BINDING} OR DEFINED ENV{PY})
