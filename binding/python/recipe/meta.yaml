@@ -1,6 +1,6 @@
 package:
   name: calculate
-  version: "1.1.0dev1"
+  version: "1.1.0dev2"
 
 build:
   number: 1
