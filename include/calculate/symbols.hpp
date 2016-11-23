@@ -19,7 +19,7 @@ namespace calculate_symbols {                                                 \
         }                                                                     \
     public:                                                                   \
         Constant_##TOKEN() noexcept :                                         \
-                Constant(std::to_string(VALUE)) {}                            \
+                Constant(#TOKEN, VALUE) {}                                    \
         virtual ~Constant_##TOKEN() noexcept {}                               \
         virtual double evaluate() const noexcept { return VALUE; }            \
         virtual void print(Stream &stream, String ind="") const noexcept {    \
@@ -146,7 +146,7 @@ namespace calculate_symbols {
 
     public:
         Parenthesis() noexcept :
-            Symbol(_symbol, _type) {}
+                Symbol(_symbol, _type) {}
         virtual ~Parenthesis() noexcept {}
 
         static pSymbol make() {
@@ -159,7 +159,7 @@ namespace calculate_symbols {
     class Separator final : public Symbol {
     public:
         Separator() noexcept :
-            Symbol(",", Type::SEPARATOR) {}
+                Symbol(",", Type::SEPARATOR) {}
         virtual ~Separator() noexcept {}
 
         static pSymbol make() {
@@ -200,8 +200,8 @@ namespace calculate_symbols {
         const double *_value;
 
         Variable(const String &t, double *v) noexcept :
-            Evaluable(t, Type::CONSTANT),
-            _value(v) {}
+                Evaluable(t, Type::CONSTANT),
+                _value(v) {}
         virtual ~Variable() noexcept {}
         virtual double evaluate() const noexcept { return *_value; }
 
@@ -222,8 +222,11 @@ namespace calculate_symbols {
         const double value;
 
         Constant(const String &t) noexcept :
-            Evaluable(t, Type::CONSTANT),
-            value(std::strtod(t.c_str(), nullptr)) {}
+                Evaluable(t, Type::CONSTANT),
+                value(std::strtod(t.c_str(), nullptr)) {}
+        Constant(const String &t, double v) noexcept :
+                Evaluable(t, Type::CONSTANT),
+                value(v) {}
         virtual ~Constant() noexcept {};
         virtual double evaluate() const noexcept { return value; }
 

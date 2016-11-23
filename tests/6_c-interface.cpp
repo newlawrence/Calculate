@@ -76,13 +76,13 @@ TEST_CASE("C interface", "[c_interface]") {
         char error[64];
 
         Calculate.createExpression("x", "", error);
-        CHECK(std::string(error) == std::string("Undefined symbol"));
+        CHECK(std::string(error) == std::string("Undefined symbol 'x'"));
 
         expr = Calculate.createExpression("x", "x", error);
         CHECK(std::string(error) == std::string(""));
 
         Calculate.evaluateArray(expr, values, 2, error);
-        CHECK(std::string(error) == std::string("Arguments mismatch"));
+        CHECK(std::string(error) == std::string("Variables mismatch"));
     }
 
     SECTION("Query functions") {

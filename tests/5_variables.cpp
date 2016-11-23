@@ -23,27 +23,27 @@ TEST_CASE("Variable arguments", "[variables]") {
     SECTION("Arguments mismatch") {
         CHECK_THROWS_AS(
             Expression("0")(0),
-            WrongArgumentsException
+            WrongVariablesException
         );
         CHECK_THROWS_AS(
             Expression("x0", "x0")(0, 1),
-            WrongArgumentsException
+            WrongVariablesException
         );
         CHECK_THROWS_AS(
             Expression("x0 + x1", "x0, x1")(0, 1, 2),
-            WrongArgumentsException
+            WrongVariablesException
         );
         CHECK_THROWS_AS(
             Expression("x0 * x1 * x2", "x0, x1, x2")(0, 1, 2, 3),
-            WrongArgumentsException
+            WrongVariablesException
         );
         CHECK_THROWS_AS(
             Expression("x0 + x1", "x0, x1")(std::vector<double>({0})),
-            WrongArgumentsException
+            WrongVariablesException
         );
         CHECK_THROWS_AS(
             Expression("x0 + x1", "x0, x1")({0, 1, 2}),
-            WrongArgumentsException
+            WrongVariablesException
         );
     }
 
@@ -68,15 +68,15 @@ TEST_CASE("Variable arguments", "[variables]") {
     SECTION("Variables excess") {
         CHECK_THROWS_AS(
             Expression("1")(1),
-            WrongArgumentsException
+            WrongVariablesException
         );
         CHECK_THROWS_AS(
             Expression("x", "x")(),
-            WrongArgumentsException
+            WrongVariablesException
         );
         CHECK_THROWS_AS(
             Expression("x", "x")(1, 2),
-            WrongArgumentsException
+            WrongVariablesException
         );
     }
 

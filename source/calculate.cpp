@@ -43,7 +43,7 @@ namespace calculate {
         while (std::regex_search(suffix, match, _ext_regex)) {
             if (!match[2].str().empty()) {
                 if (counter % 2 == 0)
-                    throw BadNameException();
+                    throw BadNameException(match[2].str());
             }
             else
                 variables.push_back(match[1].str());
@@ -55,18 +55,14 @@ namespace calculate {
     }
 
     vString Expression::_validate(const vString &vars) {
-        if (
-            !std::all_of(
-                vars.begin(),
-                vars.end(),
-                [](String var) { return std::regex_match(var, _var_regex); }
-            )
-        )
-            throw BadNameException();
+        for (auto &var : vars)
+            if (!std::regex_match(var, _var_regex))
+                throw BadNameException(var);
 
         auto no_dups = std::unordered_set<String>(vars.begin(), vars.end());
-        if (no_dups.size() != vars.size())
-            throw DuplicatedNameException();
+        for (auto &var : vars)
+            if (no_dups.erase(var) == 0)
+                throw DuplicatedNameException(var);
 
         return vars;
     }
@@ -105,14 +101,17 @@ namespace calculate {
             else if (is(Group::SEPARATOR))
                 infix.push(Separator::make());
             else
-                throw UndefinedSymbolException();
+                throw UndefinedSymbolException(token);
 
             expression = match.suffix().str();
             stream << " " << token;
         }
 
-        if (encountered.size() < _variables.size())
-            throw ArgumentsExcessException();
+        if (encountered.size() < _variables.size()) {
+            for (auto &var : _variables)
+                if (encountered.find(var) == encountered.end())
+                    throw WrongVariablesException(var);
+        }
 
         _infix = stream.str().erase(0, 1);
         return infix;
@@ -169,10 +168,11 @@ namespace calculate {
     qEvaluable Expression::_shuntingYard(qSymbol &&infix) {
         qEvaluable postfix;
         sSymbol operations;
+        pSymbol element, another;
         Stream stream;
 
         while(!infix.empty()) {
-            auto element = infix.front();
+            element = infix.front();
             infix.pop();
 
             switch (element->type) {
@@ -187,7 +187,7 @@ namespace calculate {
 
             case (Type::SEPARATOR):
                 while (!operations.empty()) {
-                    auto another = operations.top();
+                    another = operations.top();
                     if (!another->is(Type::LEFT)) {
                         postfix.push(castChild<Evaluable>(another));
                         stream << " " << another->token;
@@ -203,7 +203,7 @@ namespace calculate {
 
             case (Type::OPERATOR):
                 while (!operations.empty()) {
-                    auto another = operations.top();
+                    another = operations.top();
                     if (another->is(Type::LEFT)) {
                         break;
                     }
@@ -236,7 +236,7 @@ namespace calculate {
 
             case (Type::RIGHT):
                 while (!operations.empty()) {
-                    auto another = operations.top();
+                    another = operations.top();
                     if (!another->is(Type::LEFT)) {
                         operations.pop();
                         postfix.push(castChild<Evaluable>(another));
@@ -255,7 +255,7 @@ namespace calculate {
         }
 
         while(!operations.empty()) {
-            auto element = operations.top();
+            element = operations.top();
             if (element->is(Type::LEFT))
                 throw ParenthesisMismatchException();
             operations.pop();
@@ -285,7 +285,7 @@ namespace calculate {
                 vEvaluable ops(args);
                 for (auto i = args; i > 0; i--) {
                     if (operands.empty())
-                        throw MissingArgumentsException();
+                        throw MissingArgumentsException(function->token);
                     ops[i - 1] = operands.top();
                     operands.pop();
                 }
@@ -305,7 +305,7 @@ namespace calculate {
             }
         }
         if (operands.size() > 1)
-            throw ArgumentsExcessException();
+            throw ArgumentsExcessException(operands.top()->token);
 
         return operands.top();
     }
@@ -362,7 +362,7 @@ namespace calculate {
 
     double Expression::operator() (const vValue &values) const {
         if (values.size() != _variables.size())
-            throw WrongArgumentsException();
+            throw WrongVariablesException();
         for (auto i = 0u; i < values.size(); i++)
             _values[i] = values[i];
 
