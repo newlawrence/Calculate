@@ -9,11 +9,6 @@ using namespace calculate_symbols;
 
 TEST_CASE("Builtin operators", "[operators]") {
 
-    SECTION("empty_evaluable") {
-        auto empty = castChild<Evaluable>(EmptyEvaluable::make());
-        CHECK(std::isnan(empty->evaluate()));
-    }
-
     SECTION("addition") {
         auto x = static_cast<double>(rand() % 1000 + 1);
         auto y = static_cast<double>(rand() % 1000 + 1);

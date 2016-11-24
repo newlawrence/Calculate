@@ -183,15 +183,21 @@ TEST_CASE("Queries test", "[Queries]") {
             "    \\_[^]\n"
             "       \\_[-]\n"
             "       |  \\_[1]\n"
-            "       |  \\_[5]\n"
+            "       |  \\_[hypot]\n"
+            "       |     \\_[+]\n"
+            "       |     |  \\_[1]\n"
+            "       |     |  \\_[2]\n"
+            "       |     \\_[4]\n"
             "       \\_[^]\n"
             "          \\_[2]\n"
             "          \\_[3]"
         );
-        auto expr1 = Expression("abs(3)+4*2/(1-5)^2^3");
-        CHECK(expr1.expression() == "abs(3)+4*2/(1-5)^2^3");
-        CHECK(expr1.infix() == "abs ( 3 ) + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3");
-        CHECK(expr1.postfix() == "3 abs 4 2 * 1 5 - 2 3 ^ ^ / +");
+        auto expr1 = Expression("abs(3)+4*2/(1-hypot(1+2,4))^2^3");
+        CHECK(expr1.expression() == "abs(3)+4*2/(1-hypot(1+2,4))^2^3");
+        CHECK(expr1.infix() ==
+            "abs ( 3 ) + 4 * 2 / ( 1 - hypot ( 1 + 2 , 4 ) ) ^ 2 ^ 3"
+        );
+        CHECK(expr1.postfix() == "3 abs 4 2 * 1 1 2 + 4 hypot - 2 3 ^ ^ / +");
         CHECK(expr1.tree() == tree);
         CHECK(expr1() == Approx(3.0001220703125).epsilon(1e-12));
 
