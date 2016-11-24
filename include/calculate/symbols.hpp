@@ -50,7 +50,7 @@ namespace calculate_symbols {                                                 \
 }
 
 
-#define RECORD_FUNCTION(TOKEN, ARGS, FUNCTION)                                \
+#define RECORD_FUNCTION(TOKEN, FUNCTION)                                      \
 namespace calculate_symbols {                                                 \
     class Function_##TOKEN final : public Function {                          \
         static const Function::Recorder _recorder;                            \
@@ -59,7 +59,7 @@ namespace calculate_symbols {                                                 \
         }                                                                     \
     public:                                                                   \
         Function_##TOKEN() noexcept :                                         \
-                 Function(#TOKEN, ARGS) {}                                    \
+                 Function(#TOKEN, count_args(#FUNCTION)) {}                   \
         virtual ~Function_##TOKEN() {}                                        \
         virtual double evaluate() const noexcept {                            \
             vValue x(args);                                                   \
@@ -70,6 +70,19 @@ namespace calculate_symbols {                                                 \
     };                                                                        \
     const Function::Recorder Function_##TOKEN::_recorder =                    \
         Function::Recorder(#TOKEN, &Function_##TOKEN::make);                  \
+}
+
+
+namespace {
+
+    constexpr unsigned long hash_djb2(const char *s, unsigned long h=5381) {
+	    return !*s ? h : hash_djb2(s + 1, 33 * h ^ (unsigned)*s);
+    }
+
+    constexpr unsigned count_args(char const * const s) {
+        return *s == '\0' ? 1 : (*s == ',') + count_args(s + 1);
+    }
+
 }
 
 
