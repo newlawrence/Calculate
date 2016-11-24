@@ -174,7 +174,8 @@ TEST_CASE("Queries test", "[Queries]") {
     SECTION("Instance queries") {
         auto tree = String(
             "[+]\n"
-            " \\_[3]\n"
+            " \\_[abs]\n"
+            " |  \\_[3]\n"
             " \\_[/]\n"
             "    \\_[*]\n"
             "    |  \\_[4]\n"
@@ -187,10 +188,10 @@ TEST_CASE("Queries test", "[Queries]") {
             "          \\_[2]\n"
             "          \\_[3]"
         );
-        auto expr1 = Expression("3+4*2/(1-5)^2^3");
-        CHECK(expr1.expression() == "3+4*2/(1-5)^2^3");
-        CHECK(expr1.infix() == "3 + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3");
-        CHECK(expr1.postfix() == "3 4 2 * 1 5 - 2 3 ^ ^ / +");
+        auto expr1 = Expression("abs(3)+4*2/(1-5)^2^3");
+        CHECK(expr1.expression() == "abs(3)+4*2/(1-5)^2^3");
+        CHECK(expr1.infix() == "abs ( 3 ) + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3");
+        CHECK(expr1.postfix() == "3 abs 4 2 * 1 5 - 2 3 ^ ^ / +");
         CHECK(expr1.tree() == tree);
         CHECK(expr1() == Approx(3.0001220703125).epsilon(1e-12));
 

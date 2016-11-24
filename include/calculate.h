@@ -80,7 +80,7 @@ namespace calculate {
 
 #else
 
-#include "calculate/c-interface.h"
+#include "calculate/binding.h"
 
 #endif
 

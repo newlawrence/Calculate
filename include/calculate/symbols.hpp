@@ -10,66 +10,51 @@
 #include <cstdlib>
 
 
+#define nan std::numeric_limits<double>::quiet_NaN
+
 #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
 namespace calculate_symbols {                                                 \
-    class Constant_##TOKEN final : public Constant {                          \
-        static const Constant::Recorder _recorder;                            \
-        static pSymbol make() noexcept {                                      \
-            return std::make_shared<Constant_##TOKEN>();                      \
-        }                                                                     \
-    public:                                                                   \
-        Constant_##TOKEN() noexcept :                                         \
-                Constant(#TOKEN, VALUE) {}                                    \
-        virtual ~Constant_##TOKEN() noexcept {}                               \
-        virtual double evaluate() const noexcept { return VALUE; }            \
-    };                                                                        \
-    const Constant::Recorder Constant_##TOKEN::_recorder =                    \
-        Constant::Recorder(#TOKEN, &Constant_##TOKEN::make);                  \
+    template <>                                                               \
+    BuiltinConstant<hash_djb2(#TOKEN)>::BuiltinConstant() noexcept :          \
+            Constant(#TOKEN, VALUE) {}                                        \
+    template <>                                                               \
+    const Constant::Recorder BuiltinConstant<hash_djb2(#TOKEN)>::_recorder =  \
+        Constant::Recorder(#TOKEN, &BuiltinConstant::make);                   \
 }
 
 
-#define RECORD_OPERATOR(NAME, TOKEN, PRECEDENCE, L_ASSOCIATION, FUNCTION)     \
+#define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION)        \
 namespace calculate_symbols {                                                 \
-    class Operator_##NAME final : public Operator {                           \
-        static const Operator::Recorder _recorder;                            \
-        static pSymbol make() noexcept {                                      \
-            return std::make_shared<Operator_##NAME>();                       \
-        }                                                                     \
-    public:                                                                   \
-        Operator_##NAME() noexcept :                                          \
-                Operator(TOKEN, PRECEDENCE, L_ASSOCIATION) {}                 \
-        virtual ~Operator_##NAME() noexcept {}                                \
-        virtual double evaluate() const noexcept {                            \
-            double a = _left_operand->evaluate();                             \
-            double b = _right_operand->evaluate();                            \
-            return FUNCTION;                                                  \
-        }                                                                     \
-    };                                                                        \
-    const Operator::Recorder Operator_##NAME::_recorder =                     \
-        Operator::Recorder(TOKEN, &Operator_##NAME::make);                    \
+    template <>                                                               \
+    BuiltinOperator<hash_djb2(TOKEN)>::BuiltinOperator() noexcept :           \
+            Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION) {}                  \
+    template <>                                                               \
+    double BuiltinOperator<hash_djb2(TOKEN)>::evaluate() const noexcept {     \
+        double a = _left_operand->evaluate();                                 \
+        double b = _right_operand->evaluate();                                \
+        return FUNCTION;                                                      \
+    }                                                                         \
+    template <>                                                               \
+    const Operator::Recorder BuiltinOperator<hash_djb2(TOKEN)>::_recorder =   \
+        Operator::Recorder(TOKEN, &BuiltinOperator::make);                    \
 }
 
 
 #define RECORD_FUNCTION(TOKEN, FUNCTION)                                      \
 namespace calculate_symbols {                                                 \
-    class Function_##TOKEN final : public Function {                          \
-        static const Function::Recorder _recorder;                            \
-        static pSymbol make() noexcept {                                      \
-            return std::make_shared<Function_##TOKEN>();                      \
-        }                                                                     \
-    public:                                                                   \
-        Function_##TOKEN() noexcept :                                         \
-                 Function(#TOKEN, count_args(#FUNCTION)) {}                   \
-        virtual ~Function_##TOKEN() {}                                        \
-        virtual double evaluate() const noexcept {                            \
-            vValue x(args);                                                   \
-            for (auto i = 0u; i < args; i++)                                  \
-                x[i] = _operands[i]->evaluate();                              \
-            return FUNCTION;                                                  \
-        }                                                                     \
-    };                                                                        \
-    const Function::Recorder Function_##TOKEN::_recorder =                    \
-        Function::Recorder(#TOKEN, &Function_##TOKEN::make);                  \
+    template <>                                                               \
+    BuiltinFunction<hash_djb2(#TOKEN)>::BuiltinFunction() noexcept :          \
+            Function(#TOKEN, count_args(#FUNCTION)) {}                        \
+    template <>                                                               \
+    double BuiltinFunction<hash_djb2(#TOKEN)>::evaluate() const noexcept {    \
+        vValue x(args);                                                       \
+        for (auto i = 0u; i < args; i++)                                      \
+            x[i] = _operands[i]->evaluate();                                  \
+        return FUNCTION;                                                      \
+    }                                                                         \
+    template <>                                                               \
+    const Function::Recorder BuiltinFunction<hash_djb2(#TOKEN)>::_recorder =  \
+        Function::Recorder(#TOKEN, &BuiltinFunction::make);                   \
 }
 
 
@@ -184,9 +169,7 @@ namespace calculate_symbols {
     public:
         EmptyEvaluable() noexcept : Evaluable("{empty}", Type::CONSTANT) {}
         virtual ~EmptyEvaluable() noexcept {}
-        virtual double evaluate() const noexcept {
-            return std::numeric_limits<double>::quiet_NaN();
-        }
+        virtual double evaluate() const noexcept { return nan(); }
 
         static pSymbol make() {
             return std::make_shared<EmptyEvaluable>();
@@ -241,6 +224,22 @@ namespace calculate_symbols {
     };
 
 
+    template <unsigned long hash>
+    class BuiltinConstant final : public Constant {
+        static const Constant::Recorder _recorder;
+        static pSymbol make() noexcept {
+            return std::make_shared<BuiltinConstant>();
+        }
+    public:
+        BuiltinConstant() noexcept :
+                Constant("{constant}", nan()) {}
+        virtual ~BuiltinConstant() noexcept {}
+        virtual double evaluate() const noexcept {
+            return value;
+        }
+    };
+
+
     class Operator : public Evaluable {
     protected:
         struct Recorder {
@@ -275,6 +274,20 @@ namespace calculate_symbols {
     };
 
 
+    template <unsigned long hash>
+    class BuiltinOperator final : public Operator {
+        static const Operator::Recorder _recorder;
+        static pSymbol make() noexcept {
+            return std::make_shared<BuiltinOperator>();
+        }
+    public:
+        BuiltinOperator() noexcept :
+                Operator("{operator}", 0, true) {}
+        virtual ~BuiltinOperator() noexcept {}
+        virtual double evaluate() const noexcept { return nan(); }
+    };
+
+
     class Function : public Evaluable {
     protected:
         struct Recorder {
@@ -302,6 +315,20 @@ namespace calculate_symbols {
         }
         static bool hasToken(String t);
         static vString queryTokens();
+    };
+
+
+    template <unsigned long hash>
+    class BuiltinFunction final : public Function {
+        static const Function::Recorder _recorder;
+        static pSymbol make() noexcept {
+            return std::make_shared<BuiltinFunction>();
+        }
+    public:
+        BuiltinFunction() noexcept :
+                 Function("{function}", 0) {}
+        virtual ~BuiltinFunction() {}
+        virtual double evaluate() const noexcept { return nan(); }
     };
 
 }
