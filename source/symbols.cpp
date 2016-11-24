@@ -11,9 +11,9 @@ namespace calculate_symbols {
 
 
     void Evaluable::print(Stream &stream, String ind) const noexcept {
-        if (ind.size() == 0u)
+        if (ind.size() == 0)
             stream << "[" << token << "]\n";
-        else if (ind.size() == 3u)
+        else if (ind.size() == 3)
             stream << " \\_[" << token << "]\n";
         else
             stream << ind.substr(0, ind.size() - 3) << " \\_[" << token << "]\n";
@@ -22,6 +22,10 @@ namespace calculate_symbols {
 
     Constant::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
         _symbols[t] = g;
+    }
+
+    void Constant::print(Stream &stream, String ind) const noexcept {
+        Evaluable::print(stream, ind);
     }
 
     bool Constant::hasToken(String t) {
@@ -46,6 +50,12 @@ namespace calculate_symbols {
         _right_operand = r;
     }
 
+    void Operator::print(Stream &stream, String ind) const noexcept {
+        Evaluable::print(stream, ind);
+        _left_operand->print(stream, ind + " | ");
+        _right_operand->print(stream, ind + "   ");
+    }
+
     bool Operator::hasToken(String t) {
         return _symbols.find(t) != _symbols.end();
     }
@@ -66,6 +76,13 @@ namespace calculate_symbols {
     void Function::addBranches(const vEvaluable &x) noexcept {
         if (x.size() == _operands.size())
             _operands = x;
+    }
+
+    void Function::print(Stream &stream, String ind) const noexcept {
+        Evaluable::print(stream, ind);
+        for (auto i = 0u; i < args - 1; i++)
+            _operands[i]->print(stream, ind + " | ");
+        _operands[args - 1]->print(stream, ind + "   ");
     }
 
     bool Function::hasToken(String t) {

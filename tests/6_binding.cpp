@@ -3,7 +3,7 @@
 #include <string>
 
 #include "catch.hpp"
-#include "calculate/c-interface.h"
+#include "calculate/binding.h"
 
 
 TEST_CASE("C interface", "[c_interface]") {

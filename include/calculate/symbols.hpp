@@ -22,9 +22,6 @@ namespace calculate_symbols {                                                 \
                 Constant(#TOKEN, VALUE) {}                                    \
         virtual ~Constant_##TOKEN() noexcept {}                               \
         virtual double evaluate() const noexcept { return VALUE; }            \
-        virtual void print(Stream &stream, String ind="") const noexcept {    \
-             Evaluable::print(stream, ind);                                   \
-        }                                                                     \
     };                                                                        \
     const Constant::Recorder Constant_##TOKEN::_recorder =                    \
         Constant::Recorder(#TOKEN, &Constant_##TOKEN::make);                  \
@@ -46,11 +43,6 @@ namespace calculate_symbols {                                                 \
             double a = _left_operand->evaluate();                             \
             double b = _right_operand->evaluate();                            \
             return FUNCTION;                                                  \
-        }                                                                     \
-        virtual void print(Stream &stream, String ind="") const noexcept {    \
-             Evaluable::print(stream, ind);                                   \
-             _left_operand->print(stream, ind + " | ");                       \
-             _right_operand->print(stream, ind + "   ");                      \
         }                                                                     \
     };                                                                        \
     const Operator::Recorder Operator_##NAME::_recorder =                     \
@@ -74,12 +66,6 @@ namespace calculate_symbols {                                                 \
             for (auto i = 0u; i < args; i++)                                  \
                 x[i] = _operands[i]->evaluate();                              \
             return FUNCTION;                                                  \
-        }                                                                     \
-        virtual void print(Stream &stream, String ind="") const noexcept {    \
-             Evaluable::print(stream, ind);                                   \
-             for (auto i = 0u; i < args - 1; i++)                             \
-                 _operands[i]->print(stream, ind + " | ");                    \
-             _operands[args - 1]->print(stream, ind + "   ");                 \
         }                                                                     \
     };                                                                        \
     const Function::Recorder Function_##TOKEN::_recorder =                    \
@@ -229,6 +215,7 @@ namespace calculate_symbols {
                 value(v) {}
         virtual ~Constant() noexcept {};
         virtual double evaluate() const noexcept { return value; }
+        virtual void print(Stream &stream, String ind="") const noexcept;
 
         static pSymbol makeNumbered(String t) {
             return std::make_shared<Constant>(t);
@@ -265,6 +252,7 @@ namespace calculate_symbols {
         virtual ~Operator() noexcept {}
         void addBranches(pEvaluable l, pEvaluable r) noexcept;
         virtual double evaluate() const noexcept = 0;
+        virtual void print(Stream &stream, String ind="") const noexcept;
 
         static pSymbol make(String t) {
             return _symbols[t]();
@@ -294,6 +282,7 @@ namespace calculate_symbols {
         virtual ~Function() noexcept {}
         void addBranches(const vEvaluable &x) noexcept;
         virtual double evaluate() const noexcept = 0;
+        virtual void print(Stream &stream, String ind="") const noexcept;
 
         static pSymbol make(String t) {
             return _symbols[t]();

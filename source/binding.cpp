@@ -4,7 +4,7 @@
 #include <limits>
 
 #include "calculate.h"
-#include "calculate/c-interface.h"
+#include "calculate/binding.h"
 
 #define cast(expression) reinterpret_cast<Expression>(expression)
 #define uncast(expression) reinterpret_cast<calculate::Expression*>(expression)
