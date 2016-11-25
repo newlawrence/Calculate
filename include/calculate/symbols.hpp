@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <limits>
+#include <functional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -15,11 +16,11 @@
 #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
-    BuiltinConstant<hash_djb2(#TOKEN)>::BuiltinConstant() noexcept :          \
-            Constant(#TOKEN, VALUE) {}                                        \
+    BuiltinConstant<hash_djb2(TOKEN)>::BuiltinConstant() noexcept :           \
+            Constant(TOKEN, VALUE) {}                                         \
     template <>                                                               \
-    const Constant::Recorder BuiltinConstant<hash_djb2(#TOKEN)>::_recorder =  \
-        Constant::Recorder(#TOKEN, &BuiltinConstant::make);                   \
+    const Constant::Recorder BuiltinConstant<hash_djb2(TOKEN)>::_recorder =   \
+        Constant::Recorder(TOKEN, &BuiltinConstant::make);                    \
 }
 
 
@@ -43,18 +44,18 @@ namespace calculate_symbols {                                                 \
 #define RECORD_FUNCTION(TOKEN, FUNCTION)                                      \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
-    BuiltinFunction<hash_djb2(#TOKEN)>::BuiltinFunction() noexcept :          \
-            Function(#TOKEN, count_args(#FUNCTION)) {}                        \
+    BuiltinFunction<hash_djb2(TOKEN)>::BuiltinFunction() noexcept :           \
+            Function(TOKEN, count_args(#FUNCTION)) {}                         \
     template <>                                                               \
-    double BuiltinFunction<hash_djb2(#TOKEN)>::evaluate() const noexcept {    \
+    double BuiltinFunction<hash_djb2(TOKEN)>::evaluate() const noexcept {     \
         vValue x(args);                                                       \
         for (auto i = 0u; i < args; i++)                                      \
             x[i] = _operands[i]->evaluate();                                  \
         return FUNCTION;                                                      \
     }                                                                         \
     template <>                                                               \
-    const Function::Recorder BuiltinFunction<hash_djb2(#TOKEN)>::_recorder =  \
-        Function::Recorder(#TOKEN, &BuiltinFunction::make);                   \
+    const Function::Recorder BuiltinFunction<hash_djb2(TOKEN)>::_recorder =   \
+        Function::Recorder(TOKEN, &BuiltinFunction::make);                    \
 }
 
 
@@ -84,7 +85,7 @@ namespace calculate_symbols {
     class Symbol;
     using pSymbol = std::shared_ptr<Symbol>;
     using vSymbol = std::vector<pSymbol>;
-    using fSymbolGen = pSymbol (*)();
+    using fSymbolGen = std::function<pSymbol()>;
     using mSymbolGen = std::unordered_map<String, fSymbolGen>;
 
     class Evaluable;
