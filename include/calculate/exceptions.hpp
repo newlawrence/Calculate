@@ -3,24 +3,26 @@
 
 #include <stdexcept>
 
-using namespace std;
+#include "calculate/definitions.hpp"
 
 
 #define DEFINE_EXCEPTION(NAME, MESSAGE)                                       \
 namespace calculate_exceptions {                                              \
     struct NAME : public BaseCalculateException {                             \
         NAME() :                                                              \
-               BaseCalculateException(string(MESSAGE)) {}                     \
-        NAME(const string &token) :                                           \
-               BaseCalculateException(string(MESSAGE) + " '" + token + "'") {}\
+               BaseCalculateException(String(MESSAGE)) {}                     \
+        NAME(const String &token) :                                           \
+               BaseCalculateException(String(MESSAGE) + " '" + token + "'") {}\
     };                                                                        \
 }
 
 
 namespace calculate_exceptions {
 
-    struct BaseCalculateException : public runtime_error {
-        BaseCalculateException(const string &what) :
+    using namespace calculate_definitions;
+
+    struct BaseCalculateException : public std::runtime_error {
+        BaseCalculateException(const String &what) :
                 runtime_error(what) {}
     };
 

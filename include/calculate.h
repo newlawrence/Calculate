@@ -3,28 +3,16 @@
 
 #ifdef __cplusplus
 
-#include <queue>
-#include <stack>
-#include <regex>
-
+#include "calculate/definitions.hpp"
 #include "calculate/exceptions.hpp"
 #include "calculate/symbols.hpp"
 
 
 namespace calculate {
 
+    using namespace calculate_definitions;
     using namespace calculate_symbols;
     using namespace calculate_exceptions;
-
-    using qSymbol = std::queue<pSymbol>;
-    using sSymbol = std::stack<pSymbol>;
-
-    using qEvaluable = std::queue<pEvaluable>;
-    using sEvaluable = std::stack<pEvaluable>;
-
-    using Regex = std::regex;
-    using Match = std::smatch;
-
 
     vString queryConstants();
     vString queryOperators();

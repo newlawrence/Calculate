@@ -1,16 +1,8 @@
 #ifndef __CALCULATE_SYMBOLS_HPP__
 #define __CALCULATE_SYMBOLS_HPP__
 
-#include <memory>
-#include <limits>
-#include <functional>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <unordered_map>
+#include "calculate/definitions.hpp"
 
-
-#define nan std::numeric_limits<Value>::quiet_NaN
 
 #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
 namespace calculate_symbols {                                                 \
@@ -66,11 +58,13 @@ namespace calculate_symbols {                                                 \
 
 namespace {
 
-    constexpr unsigned long hash_djb2(const char *s, unsigned long h=5381) {
-	    return !*s ? h : hash_djb2(s + 1, 33 * h ^ static_cast<unsigned>(*s));
+    using namespace calculate_definitions;
+
+    constexpr Hash hash_djb2(const Byte *s, Hash h=5381) {
+	    return !*s ? h : hash_djb2(s + 1, 33 * h ^ static_cast<Unsigned>(*s));
     }
 
-    constexpr unsigned count_args(char const * const s) {
+    constexpr Unsigned count_args(Byte const * const s) {
         return *s == '\0' ? 1 : (*s == ',') + count_args(s + 1);
     }
 
@@ -79,27 +73,21 @@ namespace {
 
 namespace calculate_symbols {
 
-    using Stream = std::ostringstream;
-    using Byte = char;
-    using String = std::string;
-    using vString = std::vector<String>;
-
-    using Unsigned = unsigned;
-    using Hash = unsigned long;
-    using Value = double;
-    using pValue = std::unique_ptr<Value[]>;
-    using vValue = std::vector<Value>;
-    using mValue = std::unordered_map<String, Value>;
+    using namespace calculate_definitions;
 
     class Symbol;
     using pSymbol = std::shared_ptr<Symbol>;
     using vSymbol = std::vector<pSymbol>;
     using fSymbolGen = std::function<pSymbol()>;
     using mSymbolGen = std::unordered_map<String, fSymbolGen>;
+    using qSymbol = std::queue<pSymbol>;
+    using sSymbol = std::stack<pSymbol>;
 
     class Evaluable;
     using pEvaluable = std::shared_ptr<Evaluable>;
     using vEvaluable = std::vector<pEvaluable>;
+    using qEvaluable = std::queue<pEvaluable>;
+    using sEvaluable = std::stack<pEvaluable>;
 
     enum Type {LEFT, RIGHT, SEPARATOR, CONSTANT, OPERATOR, FUNCTION};
 
