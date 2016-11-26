@@ -15,35 +15,17 @@ namespace calculate_symbols {
             stream << "[" << token << "]\n";
         else if (ind.size() == 3)
             stream << " \\_[" << token << "]\n";
-        else
-            stream << ind.substr(0, ind.size() - 3) << " \\_[" << token << "]\n";
+        else {
+            stream << ind.substr(0, ind.size() - 3);
+            stream << " \\_[" << token << "]\n";
+        }
     }
 
-
-    Constant::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
-        _symbols[t] = g;
-    }
 
     void Constant::print(Stream &stream, String ind) const noexcept {
         Evaluable::print(stream, ind);
     }
 
-    bool Constant::hasToken(String t) {
-        return _symbols.find(t) != _symbols.end();
-    }
-
-    vString Constant::queryTokens() {
-        vString tokens;
-
-        for (const auto& pair : _symbols)
-            tokens.push_back(pair.first);
-        return tokens;
-    }
-
-
-    Operator::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
-        _symbols[t] = g;
-    }
 
     void Operator::addBranches(pEvaluable l, pEvaluable r) noexcept {
         _left_operand = l;
@@ -56,22 +38,6 @@ namespace calculate_symbols {
         _right_operand->print(stream, ind + "   ");
     }
 
-    bool Operator::hasToken(String t) {
-        return _symbols.find(t) != _symbols.end();
-    }
-
-    vString Operator::queryTokens() {
-        vString tokens;
-
-        for (const auto& pair : _symbols)
-            tokens.push_back(pair.first);
-        return tokens;
-    }
-
-
-    Function::Recorder::Recorder(const String &t, fSymbolGen g) noexcept {
-        _symbols[t] = g;
-    }
 
     void Function::addBranches(const vEvaluable &x) noexcept {
         if (x.size() == _operands.size())
@@ -83,18 +49,6 @@ namespace calculate_symbols {
         for (auto i = 0u; i < args - 1; i++)
             _operands[i]->print(stream, ind + " | ");
         _operands[args - 1]->print(stream, ind + "   ");
-    }
-
-    bool Function::hasToken(String t) {
-        return _symbols.find(t) != _symbols.end();
-    }
-
-    vString Function::queryTokens() {
-        vString tokens;
-
-        for (const auto& pair : _symbols)
-            tokens.push_back(pair.first);
-        return tokens;
     }
 
 }

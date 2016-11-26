@@ -63,10 +63,10 @@ namespace calculate {
         Expression& operator=(const Expression &other);
         Expression& operator=(Expression &&other);
 
-        double operator() (const vValue &values) const;
+        Value operator() (const vValue &values) const;
         template <typename... Args>
-        double operator() (Args... args) const {
-            return this->operator() ({static_cast<double>(args)...});
+        Value operator() (Args... args) const {
+            return this->operator() ({static_cast<Value>(args)...});
         };
 
         const String& expression() const noexcept { return _expression; }

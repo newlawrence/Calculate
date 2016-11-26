@@ -22,15 +22,15 @@ namespace calculate {
 
 
     vString queryConstants() {
-        return Constant::queryTokens();
+        return query<Constant>();
     };
 
     vString queryOperators() {
-        return Operator::queryTokens();
+        return query<Operator>();
     };
 
     vString queryFunctions() {
-        return Function::queryTokens();
+        return query<Function>();
     };
 
 
@@ -82,24 +82,26 @@ namespace calculate {
             auto it = std::find(_variables.begin(), _variables.end(), token);
 
             if (is(Group::NUMBER))
-                infix.push(Constant::makeNumbered(token));
+                infix.push(make<Constant, Value>(token, std::stod(token)));
             else if (is(Group::NAME) && it != _variables.end()) {
                 auto position = it - _variables.begin();
-                infix.push(Variable::make(token, _values.get() + position));
+                infix.push(
+                    make<Variable, Value *>(token, _values.get() + position)
+                );
                 encountered.emplace(token);
             }
-            else if (is(Group::NAME) && Constant::hasToken(token))
-                infix.push(Constant::makeNamed(token));
-            else if (is(Group::NAME) && Function::hasToken(token))
-                infix.push(Function::make(token));
-            else if (is(Group::SYMBOL) && Operator::hasToken(token))
-                infix.push(Operator::make(token));
+            else if (is(Group::NAME) && defined<Constant>(token))
+                infix.push(make<Constant>(token));
+            else if (is(Group::NAME) && defined<Function>(token))
+                infix.push(make<Function>(token));
+            else if (is(Group::SYMBOL) && defined<Operator>(token))
+                infix.push(make<Operator>(token));
             else if (is(Group::LEFT))
-                infix.push(Parenthesis<'('>::make());
+                infix.push(make<Parenthesis<'('>>());
             else if (is(Group::RIGHT))
-                infix.push(Parenthesis<')'>::make());
+                infix.push(make<Parenthesis<')'>>());
             else if (is(Group::SEPARATOR))
-                infix.push(Separator::make());
+                infix.push(make<Separator>());
             else
                 throw UndefinedSymbolException(token);
 
@@ -177,7 +179,7 @@ namespace calculate {
 
             switch (element->type) {
             case (Type::CONSTANT):
-                postfix.push(castChild<Evaluable>(element));
+                postfix.push(cast<Evaluable>(element));
                 stream << " " << element->token;
                 break;
 
@@ -189,7 +191,7 @@ namespace calculate {
                 while (!operations.empty()) {
                     another = operations.top();
                     if (!another->is(Type::LEFT)) {
-                        postfix.push(castChild<Evaluable>(another));
+                        postfix.push(cast<Evaluable>(another));
                         stream << " " << another->token;
                         operations.pop();
                     }
@@ -208,18 +210,18 @@ namespace calculate {
                         break;
                     }
                     else if (another->is(Type::FUNCTION)) {
-                        postfix.push(castChild<Evaluable>(another));
+                        postfix.push(cast<Evaluable>(another));
                         stream << " " << another->token;
                         operations.pop();
                         break;
                     }
                     else {
-                        auto left = castChild<Operator>(element)->left_assoc;
-                        auto p1 = castChild<Operator>(element)->precedence;
-                        auto p2 = castChild<Operator>(another)->precedence;
+                        auto left = cast<Operator>(element)->left_assoc;
+                        auto p1 = cast<Operator>(element)->precedence;
+                        auto p2 = cast<Operator>(another)->precedence;
                         if ((left && (p1 <= p2)) || (!left && (p1 < p2))) {
                             operations.pop();
-                            postfix.push(castChild<Evaluable>(another));
+                            postfix.push(cast<Evaluable>(another));
                             stream << " " << another->token;
                         }
                         else {
@@ -239,7 +241,7 @@ namespace calculate {
                     another = operations.top();
                     if (!another->is(Type::LEFT)) {
                         operations.pop();
-                        postfix.push(castChild<Evaluable>(another));
+                        postfix.push(cast<Evaluable>(another));
                         stream << " " << another->token;
                     }
                     else {
@@ -259,7 +261,7 @@ namespace calculate {
             if (element->is(Type::LEFT))
                 throw ParenthesisMismatchException();
             operations.pop();
-            postfix.push(castChild<Evaluable>(element));
+            postfix.push(cast<Evaluable>(element));
             stream << " " << element->token;
         }
 
@@ -280,7 +282,7 @@ namespace calculate {
             }
 
             else if (element->is(Type::FUNCTION)) {
-                auto function = castChild<Function>(element);
+                auto function = cast<Function>(element);
                 auto args = function->args;
                 vEvaluable ops(args);
                 for (auto i = args; i > 0; i--) {
@@ -294,7 +296,7 @@ namespace calculate {
             }
 
             else if (element->is(Type::OPERATOR)) {
-                auto binary = castChild<Operator>(element);
+                auto binary = cast<Operator>(element);
                 pEvaluable a, b;
                 b = operands.top();
                 operands.pop();
@@ -329,7 +331,7 @@ namespace calculate {
     Expression::Expression(const String &expr, const vString &vars) :
             _expression(expr),
             _variables(_validate(vars)),
-            _values(std::make_unique<double[]>(vars.size())) {
+            _values(std::make_unique<Value[]>(vars.size())) {
 
         if (expr.length() == 0)
             throw EmptyExpressionException();
@@ -360,7 +362,7 @@ namespace calculate {
         return *this;
     }
 
-    double Expression::operator() (const vValue &values) const {
+    Value Expression::operator() (const vValue &values) const {
         if (values.size() != _variables.size())
             throw WrongVariablesException();
         for (auto i = 0u; i < values.size(); i++)

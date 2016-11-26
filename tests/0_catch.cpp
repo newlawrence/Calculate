@@ -9,7 +9,7 @@ using namespace calculate_exceptions;
 TEST_CASE("Random stuff to get 100% coverage", "[Random]") {
 
     SECTION("Non generated symbols") {
-        auto empty = castChild<Evaluable>(EmptyEvaluable::make());
+        auto empty = cast<Evaluable>(make<EmptyEvaluable>());
         CHECK(std::isnan(empty->evaluate()));
     }
 
