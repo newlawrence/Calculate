@@ -7,12 +7,11 @@
 #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
-    BuiltinConstant<hash_djb2(TOKEN)>::BuiltinConstant() noexcept :           \
+    BuiltinConstant<djb2(TOKEN)>::BuiltinConstant() noexcept :                \
             Constant(TOKEN, VALUE) {}                                         \
     template <>                                                               \
-    const Recorder<Constant> BuiltinConstant<hash_djb2(TOKEN)>::_recorder(    \
-        TOKEN,                                                                \
-        static_cast<pSymbol(*)()>(make<BuiltinConstant<hash_djb2(TOKEN)>>)    \
+    const Recorder<Constant> BuiltinConstant<djb2(TOKEN)>::_recorder(         \
+        TOKEN, static_cast<pSymbol(*)()>(make<BuiltinConstant<djb2(TOKEN)>>)  \
     );                                                                        \
 }
 
@@ -20,18 +19,17 @@ namespace calculate_symbols {                                                 \
 #define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION)        \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
-    BuiltinOperator<hash_djb2(TOKEN)>::BuiltinOperator() noexcept :           \
+    BuiltinOperator<djb2(TOKEN)>::BuiltinOperator() noexcept :                \
             Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION) {}                  \
     template <>                                                               \
-    Value BuiltinOperator<hash_djb2(TOKEN)>::evaluate() const noexcept {     \
-        Value a = _left_operand->evaluate();                                 \
-        Value b = _right_operand->evaluate();                                \
+    Value BuiltinOperator<djb2(TOKEN)>::evaluate() const noexcept {           \
+        Value a = _left_operand->evaluate();                                  \
+        Value b = _right_operand->evaluate();                                 \
         return FUNCTION;                                                      \
     }                                                                         \
     template <>                                                               \
-    const Recorder<Operator> BuiltinOperator<hash_djb2(TOKEN)>::_recorder(    \
-        TOKEN,                                                                \
-        static_cast<pSymbol(*)()>(make<BuiltinOperator<hash_djb2(TOKEN)>>)    \
+    const Recorder<Operator> BuiltinOperator<djb2(TOKEN)>::_recorder(         \
+        TOKEN, static_cast<pSymbol(*)()>(make<BuiltinOperator<djb2(TOKEN)>>)  \
     );                                                                        \
 }
 
@@ -39,19 +37,18 @@ namespace calculate_symbols {                                                 \
 #define RECORD_FUNCTION(TOKEN, FUNCTION)                                      \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
-    BuiltinFunction<hash_djb2(TOKEN)>::BuiltinFunction() noexcept :           \
+    BuiltinFunction<djb2(TOKEN)>::BuiltinFunction() noexcept :                \
             Function(TOKEN, count_args(#FUNCTION)) {}                         \
     template <>                                                               \
-    Value BuiltinFunction<hash_djb2(TOKEN)>::evaluate() const noexcept {     \
+    Value BuiltinFunction<djb2(TOKEN)>::evaluate() const noexcept {           \
         vValue x(args);                                                       \
         for (auto i = 0u; i < args; i++)                                      \
             x[i] = _operands[i]->evaluate();                                  \
         return FUNCTION;                                                      \
     }                                                                         \
     template <>                                                               \
-    const Recorder<Function> BuiltinFunction<hash_djb2(TOKEN)>::_recorder(    \
-        TOKEN,                                                                \
-        static_cast<pSymbol(*)()>(make<BuiltinFunction<hash_djb2(TOKEN)>>)    \
+    const Recorder<Function> BuiltinFunction<djb2(TOKEN)>::_recorder(         \
+        TOKEN, static_cast<pSymbol(*)()>(make<BuiltinFunction<djb2(TOKEN)>>)  \
     );                                                                        \
 }
 
@@ -60,8 +57,8 @@ namespace {
 
     using namespace calculate_definitions;
 
-    constexpr Hash hash_djb2(const Byte *s, Hash h=5381) {
-	    return !*s ? h : hash_djb2(s + 1, 33 * h ^ static_cast<Unsigned>(*s));
+    constexpr Hash djb2(const Byte *s, Hash h=5381) {
+	    return !*s ? h : djb2(s + 1, 33 * h ^ static_cast<Unsigned>(*s));
     }
 
     constexpr Unsigned count_args(Byte const * const s) {
@@ -198,7 +195,7 @@ namespace calculate_symbols {
     public:
         EmptyEvaluable() noexcept : Evaluable("{empty}", Type::CONSTANT) {}
         virtual ~EmptyEvaluable() noexcept {}
-        virtual Value evaluate() const noexcept { return nan(); }
+        virtual Value evaluate() const noexcept { return nan; }
     };
 
 
@@ -240,11 +237,8 @@ namespace calculate_symbols {
 
     public:
         BuiltinConstant() noexcept :
-                Constant("{constant}", nan()) {}
+                Constant("{constant}", nan) {}
         virtual ~BuiltinConstant() noexcept {}
-        virtual Value evaluate() const noexcept {
-            return value;
-        }
     };
 
 
@@ -286,7 +280,7 @@ namespace calculate_symbols {
         BuiltinOperator() noexcept :
                 Operator("{operator}", 0, true) {}
         virtual ~BuiltinOperator() noexcept {}
-        virtual Value evaluate() const noexcept { return nan(); }
+        virtual Value evaluate() const noexcept { return nan; }
     };
 
 
@@ -324,7 +318,7 @@ namespace calculate_symbols {
         BuiltinFunction() noexcept :
                  Function("{function}", 0) {}
         virtual ~BuiltinFunction() {}
-        virtual Value evaluate() const noexcept { return nan(); }
+        virtual Value evaluate() const noexcept { return nan; }
     };
 
 }

@@ -8,6 +8,7 @@
 #endif
 
 #ifdef __cplusplus
+#include "calculate/definitions.hpp"
 extern "C" {
 #define STRUCT
 #else
@@ -18,23 +19,23 @@ struct ExpressionClassHandler;
 typedef struct ExpressionClassHandler* Expression;
 
 struct calculate_c_library_template {
-    void (*queryConstants)(char*);
-    void (*queryOperators)(char*);
-    void (*queryFunctions)(char*);
+    void (*queryConstants)(Byte*);
+    void (*queryOperators)(Byte*);
+    void (*queryFunctions)(Byte*);
 
-    Expression (*createExpression)(const char*, const char*, char*);
-    Expression (*newExpression)(const char*, const char*);
+    Expression (*createExpression)(const Byte*, const Byte*, Byte*);
+    Expression (*newExpression)(const Byte*, const Byte*);
     void (*freeExpression)(Expression);
 
-    void (*getExpression)(Expression, char*);
-    void (*getVariables)(Expression, char*);
-    void (*getInfix)(Expression, char*);
-    void (*getPostfix)(Expression, char*);
-    void (*getTree)(Expression, char*);
+    void (*getExpression)(Expression, Byte*);
+    void (*getVariables)(Expression, Byte*);
+    void (*getInfix)(Expression, Byte*);
+    void (*getPostfix)(Expression, Byte*);
+    void (*getTree)(Expression, Byte*);
 
-    double (*evaluateArray)(Expression, double*, int, char*);
-    double (*evalArray)(Expression, double*, int);
-    double (*eval)(Expression, ...);
+    Value (*evaluateArray)(Expression, Value*, int, Byte*);
+    Value (*evalArray)(Expression, Value*, int);
+    Value (*eval)(Expression, ...);
 };
 
 EXPORT_GLOBAL extern const STRUCT calculate_c_library_template Calculate;
