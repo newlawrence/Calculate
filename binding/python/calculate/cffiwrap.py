@@ -5,6 +5,9 @@ import os.path as path
 
 from cffi import FFI
 
+ERROR_CHARS = 64
+MAX_CHARS = 4096
+
 extensions = ['so', 'dylib', 'dll']
 library_name = 'libcalculate'
 for ext in extensions:
@@ -19,12 +22,19 @@ struct ExpressionClassHandler;
 typedef struct ExpressionClassHandler* Expression;
 
 struct calculate_c_library_template {
+    void (*queryConstants)(char*);
+    void (*queryOperators)(char*);
+    void (*queryFunctions)(char*);
+
     Expression (*createExpression)(const char*, const char*, char*);
     Expression (*newExpression)(const char*, const char*);
     void (*freeExpression)(Expression);
 
-    const char* (*getExpression)(Expression);
-    const char* (*getVariables)(Expression);
+    void (*getExpression)(Expression, char*);
+    void (*getVariables)(Expression, char*);
+    void (*getInfix)(Expression, char*);
+    void (*getPostfix)(Expression, char*);
+    void (*getTree)(Expression, char*);
 
     double (*evaluateArray)(Expression, double*, int, char*);
     double (*evalArray)(Expression, double*, int);
@@ -34,4 +44,9 @@ struct calculate_c_library_template {
 const struct calculate_c_library_template* get_calculate_reference();
 ''')
 clib = ffi.dlopen(library_path)
-Calculate = clib.get_calculate_reference()
+calculate = clib.get_calculate_reference()
+
+
+def decode(cstring):
+    string = ffi.string(cstring)
+    return string.decode() if not isinstance(string, str) else string

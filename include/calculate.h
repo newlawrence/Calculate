@@ -3,44 +3,37 @@
 
 #ifdef __cplusplus
 
-#include <queue>
-#include <stack>
-#include <regex>
-
+#include "calculate/definitions.hpp"
 #include "calculate/exceptions.hpp"
 #include "calculate/symbols.hpp"
 
 
 namespace calculate {
 
+    using namespace calculate_definitions;
     using namespace calculate_symbols;
     using namespace calculate_exceptions;
 
-    using vString = std::vector<String>;
-    using pValue = std::unique_ptr<double[]>;
-    using Regex = std::regex;
-
-    using qSymbol = std::queue<pSymbol>;
-    using sSymbol = std::stack<pSymbol>;
-
-    using qEvaluable = std::queue<pEvaluable>;
-    using sEvaluable = std::stack<pEvaluable>;
+    vString queryConstants();
+    vString queryOperators();
+    vString queryFunctions();
 
 
     class Expression final {
         String _expression;
         vString _variables;
         pValue _values;
+        String _infix;
+        String _postfix;
         pEvaluable _tree;
-
-        static qSymbol _tokenize(const String &expr, const vString &vars,
-                                 const pValue &values);
-        static qSymbol _check(qSymbol &&input);
-        static qEvaluable _shuntingYard(qSymbol &&infix);
-        static pEvaluable _buildTree(qEvaluable &&postfix);
 
         static vString _extract(const String &vars);
         static vString _validate(const vString &vars);
+
+        qSymbol _tokenize();
+        qSymbol _check(qSymbol &&input);
+        qEvaluable _shuntingYard(qSymbol &&infix);
+        pEvaluable _buildTree(qEvaluable &&postfix);
 
         Expression() = delete;
 
@@ -53,21 +46,24 @@ namespace calculate {
         Expression& operator=(const Expression &other);
         Expression& operator=(Expression &&other);
 
-        double operator() (const vValue &values) const;
+        Value operator() (const vValue &values) const;
         template <typename... Args>
-        double operator() (Args... args) const {
-            return this->operator() ({static_cast<double>(args)...});
+        Value operator() (Args... args) const {
+            return this->operator() ({static_cast<Value>(args)...});
         };
 
-        const String& expression() const noexcept {return _expression;}
-        const vString& variables() const noexcept {return _variables;}
+        const String& expression() const noexcept { return _expression; }
+        const vString& variables() const noexcept { return _variables; }
+        const String& infix() const noexcept { return _infix; };
+        const String& postfix() const noexcept { return _postfix; };
+        String tree() const noexcept;
     };
 
 }
 
 #else
 
-#include "calculate/c-interface.h"
+#include "calculate/binding.h"
 
 #endif
 

@@ -13,14 +13,14 @@ class BaseCalculateException(Exception):
 
 __exceptions = {
     'EmptyExpressionException': 'Empty expression',
+    'SyntaxErrorException': 'Syntax error',
+    'ParenthesisMismatchException': 'Parenthesis mismatch',
     'UndefinedSymbolException': 'Undefined symbol',
     'BadNameException': 'Unsuitable variable name',
-    'DuplicateNameException': 'Duplicated names',
-    'ParenthesisMismatchException': 'Parenthesis mismatch',
+    'DuplicatedNameException': 'Duplicated names',
     'MissingArgumentsException': 'Missing arguments',
     'ArgumentsExcessException': 'Too many arguments',
-    'SyntaxErrorException': 'Syntax error',
-    'WrongArgumentsException': 'Arguments mismatch'
+    'WrongVariablesException': 'Variables mismatch'
 }
 
 
@@ -44,7 +44,7 @@ def raise_if(error):
     if error:
         for symbol in globals().values():
             if hasattr(symbol, 'default_message'):
-                if error == symbol.default_message:
-                    raise symbol
+                if error.startswith(symbol.default_message):
+                    raise symbol(error)
         else:
             raise BaseCalculateException

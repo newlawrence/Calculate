@@ -5,6 +5,7 @@
 #include "calculate.h"
 
 using namespace calculate;
+using namespace calculate_symbols;
 
 TEST_CASE("Builtin operators", "[operators]") {
 

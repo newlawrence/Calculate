@@ -5,11 +5,11 @@ module calculate
     implicit none
     private
 
-    public :: Expression
+    public :: queryConstants, queryOperators, queryFunctions, Expression
 
-    integer, parameter :: MAX_CHARS = 8192
+    integer, parameter :: MAX_CHARS = 4096
     integer, parameter :: ERROR_CHARS = 64
-    character(len=7), parameter :: ERROR_FMT = '(8192A)'
+    character(len=7), parameter :: ERROR_FMT = '(4096A)'
 
 
     type :: Expression
@@ -20,6 +20,9 @@ module calculate
         procedure, non_overridable :: check => checkExpression
         procedure, non_overridable :: expression => getExpression
         procedure, non_overridable :: variables => getVariables
+        procedure, non_overridable :: infix => getInfix
+        procedure, non_overridable :: postfix => getPostfix
+        procedure, non_overridable :: tree => getTree
         procedure, non_overridable :: eval => evaluateArray
         procedure, non_overridable :: assign => assignExpression
         generic :: assignment(=) => assign
@@ -31,14 +34,20 @@ module calculate
 
 
     type, bind(c) :: LibraryTemplate
+        type(c_funptr) :: queryConstants
+        type(c_funptr) :: queryOperators
+        type(c_funptr) :: queryFunctions
         type(c_funptr) :: createExpression
         type(c_funptr) :: newExpression
         type(c_funptr) :: freeExpression
         type(c_funptr) :: getExpression
         type(c_funptr) :: getVariables
+        type(c_funptr) :: getInfix
+        type(c_funptr) :: getPostfix
+        type(c_funptr) :: getTree
         type(c_funptr) :: evaluateArray
         type(c_funptr) :: evalArray
-        type(c_funptr) :: eval  
+        type(c_funptr) :: eval
     end type
 
     interface
@@ -49,6 +58,11 @@ module calculate
     end interface
 
     abstract interface
+        subroutine queryWrapper(query) bind(c)
+            import :: c_char
+            character(kind=c_char, len=1), dimension(*) :: query
+        end subroutine
+
         function createExpressionWrapper(expr, vars, error) bind(c)
             import :: c_ptr, c_char
             character(kind=c_char, len=1), dimension(*) :: expr
@@ -69,17 +83,11 @@ module calculate
             type(c_ptr), value :: expr
         end subroutine
 
-        function getExpressionWrapper(expr) bind(c)
-            import :: c_ptr
+        subroutine getWrapper(expr, get) bind(c)
+            import :: c_ptr, c_char
             type(c_ptr), value :: expr
-            type(c_ptr) :: getExpressionWrapper
-        end function
-
-        function getVariablesWrapper(expr) bind(c)
-            import :: c_ptr
-            type(c_ptr), value :: expr
-            type(c_ptr) :: getVariablesWrapper
-        end function
+            character(kind=c_char, len=1), dimension(*) :: get
+        end subroutine
 
         function evaluateArrayWrapper(expr, args, size, error) bind(c)
             import :: c_ptr, c_char, c_int, c_double
@@ -121,21 +129,65 @@ contains
         end do
     end function
 
-    function fromPointer(cptr) result (forstr)
-        type(c_ptr), intent(in) :: cptr
-        character(len=:), allocatable :: forstr
+    function queryString(input, this) result (output)
+        character(len=*), intent(in) :: input
+        class(Expression), intent(in), optional :: this
+        character(len=:), allocatable :: output
 
-        character, pointer, dimension(:) :: strptr
-        integer :: c
+        type(LibraryTemplate), pointer :: calculate
+        character(kind=c_char, len=1), dimension(MAX_CHARS) :: coutput
 
-        call c_f_pointer(cptr, strptr, [MAX_CHARS])
-        do c = 1, MAX_CHARS
-            if (strptr(c) == c_null_char) exit
-        end do
-        c = c - 1
+        procedure(queryWrapper), pointer :: query
+        procedure(getWrapper), pointer :: get
+        call c_f_pointer(getLibraryReference(), calculate)
 
-        allocate(character(len=c) :: forstr)
-        forstr = transfer(strptr(1 : c), forstr)
+        call c_f_procpointer(calculate%queryConstants, query)
+        call c_f_procpointer(calculate%getExpression, get)
+        select case (input)
+            case ("constants")
+                call c_f_procpointer(calculate%queryConstants, query)
+            case ("operators")
+                call c_f_procpointer(calculate%queryOperators, query)
+            case ("functions")
+                call c_f_procpointer(calculate%queryFunctions, query)
+            case ("expression")
+                call c_f_procpointer(calculate%getExpression, get)
+            case ("variables")
+                call c_f_procpointer(calculate%getVariables, get)
+            case ("infix")
+                call c_f_procpointer(calculate%getInfix, get)
+            case ("postfix")
+                call c_f_procpointer(calculate%getPostfix, get)
+            case ("tree")
+                call c_f_procpointer(calculate%getTree, get)
+        end select
+
+        if (.not. present(this)) then
+            call query(coutput)
+        else
+            call get(this%handler, coutput)
+        end if
+
+        output = fromChars(coutput)
+    end function
+
+
+    function queryConstants() result (constants)
+        character(len=:), allocatable :: constants
+
+        constants = queryString('constants')
+    end function
+
+    function queryOperators() result (operators)
+        character(len=:), allocatable :: operators
+
+        operators = queryString('operators')
+    end function
+
+    function queryFunctions() result (functions)
+        character(len=:), allocatable :: functions
+
+        functions = queryString('functions')
     end function
 
 
@@ -145,14 +197,14 @@ contains
         character(len=*), intent(out), optional :: error
         type(Expression) :: this
 
-        type(LibraryTemplate), pointer :: Calculate
+        type(LibraryTemplate), pointer :: calculate
         procedure(createExpressionWrapper), pointer :: create
         character(kind=c_char, len=1), dimension(ERROR_CHARS) :: cerror
         character(len=:), allocatable :: message
         integer :: c
 
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%createExpression, create)
+        call c_f_pointer(getLibraryReference(), calculate)
+        call c_f_procpointer(calculate%createExpression, create)
 
         if (present(vars)) then
             this%handler = create(toChars(expr), toChars(vars), cerror)
@@ -174,11 +226,11 @@ contains
         class(Expression), intent(inout) :: this
         type(Expression), intent(in) :: other
 
-        type(LibraryTemplate), pointer :: Calculate
+        type(LibraryTemplate), pointer :: calculate
         procedure(newExpressionWrapper), pointer :: new
 
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%newExpression, new)
+        call c_f_pointer(getLibraryReference(), calculate)
+        call c_f_procpointer(calculate%newExpression, new)
 
         call freeExpression(this)
         this%handler = new( &
@@ -190,16 +242,15 @@ contains
     subroutine freeExpression(this)
         type(Expression), intent(inout) :: this
 
-        type(LibraryTemplate), pointer :: Calculate
+        type(LibraryTemplate), pointer :: calculate
         procedure(freeExpressionWrapper), pointer :: free
 
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%freeExpression, free)
+        call c_f_pointer(getLibraryReference(), calculate)
+        call c_f_procpointer(calculate%freeExpression, free)
 
         call free(this%handler)
         this%handler = c_null_ptr
     end subroutine
-
 
     subroutine clearExpression(this)
         class(Expression), intent(inout) :: this
@@ -219,26 +270,35 @@ contains
         class(Expression), intent(in) :: this
         character(len=:), allocatable :: expr
 
-        type(LibraryTemplate), pointer :: Calculate
-        procedure(getExpressionWrapper), pointer :: get
-
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%getExpression, get)
-
-        expr = fromPointer(get(this%handler))
+        expr = queryString('expression', this)
     end function
 
     function getVariables(this) result (vars)
         class(Expression), intent(in) :: this
         character(len=:), allocatable :: vars
 
-        type(LibraryTemplate), pointer :: Calculate
-        procedure(getVariablesWrapper), pointer :: get
+        vars = queryString('variables', this)
+    end function
 
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%getVariables, get)
+    function getInfix(this) result (infix)
+        class(Expression), intent(in) :: this
+        character(len=:), allocatable :: infix
 
-        vars = fromPointer(get(this%handler))
+        infix = queryString('infix', this)
+    end function
+
+    function getPostfix(this) result (postfix)
+        class(Expression), intent(in) :: this
+        character(len=:), allocatable :: postfix
+
+        postfix = queryString('postfix', this)
+    end function
+
+    function getTree(this) result (tree)
+        class(Expression), intent(in) :: this
+        character(len=:), allocatable :: tree
+
+        tree = queryString('tree', this)
     end function
 
     function evaluateArray(this, args, error) result (result)
@@ -247,15 +307,15 @@ contains
         character(len=*), intent(out), optional :: error
         real(kind=8) :: result
 
-        type(LibraryTemplate), pointer :: Calculate
+        type(LibraryTemplate), pointer :: calculate
         procedure(evaluateArrayWrapper), pointer :: eval
         real(kind=8), dimension(1) :: default
         character(kind=c_char, len=1), dimension(ERROR_CHARS) :: cerror
         character(len=:), allocatable :: message
         integer :: c
 
-        call c_f_pointer(getLibraryReference(), Calculate)
-        call c_f_procpointer(Calculate%evaluateArray, eval)
+        call c_f_pointer(getLibraryReference(), calculate)
+        call c_f_procpointer(calculate%evaluateArray, eval)
 
         if (present(args)) then
             result = eval(this%handler, args, size(args), cerror)
