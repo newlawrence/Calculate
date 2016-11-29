@@ -46,7 +46,7 @@ namespace calculate {
                     throw BadNameException(match[2].str());
             }
             else
-                variables.push_back(match[1].str());
+                variables.emplace_back(match[1].str());
             counter++;
             suffix = match.suffix().str();
         }

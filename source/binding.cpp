@@ -127,7 +127,7 @@ namespace {
         va_list list;
         va_start(list, expr);
         for (auto i = 0u; i < vars; i++)
-            values.push_back(va_arg(list, Value));
+            values.emplace_back(va_arg(list, Value));
         va_end(list);
 
         return uncast(expr)->operator()(values);

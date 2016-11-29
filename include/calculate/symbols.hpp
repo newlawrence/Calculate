@@ -121,7 +121,7 @@ namespace calculate_symbols {
         vString tokens;
 
         for (const auto& pair : T::_symbols)
-            tokens.push_back(pair.first);
+            tokens.emplace_back(pair.first);
         return tokens;
     }
 
