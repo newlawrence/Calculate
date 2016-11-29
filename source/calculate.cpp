@@ -3,23 +3,25 @@
 #include "calculate.h"
 
 
-namespace calculate {
+namespace {
+    
+    const Regex ext_regex(R"_(([^\s,]+)|(,))_");
 
-    const Regex Expression::_ext_regex(R"_(([^\s,]+)|(,))_");
+    const Regex var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
 
-    const Regex Expression::_var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
+    const Regex pre_regex(R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_");
 
-    const Regex Expression::_pre_regex(
-        R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_"
-    );
-
-    const Regex Expression::_regex(
+    const Regex regex(
         R"_(((?:[+\-])?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
-        R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-        R"_(([^A-Za-z\d(),\s]+)|)_"
-        R"_((\()|(\))|(,))_"
+            R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
+            R"_(([^A-Za-z\d(),\s]+)|)_"
+            R"_((\()|(\))|(,))_"
     );
 
+}
+
+
+namespace calculate {
 
     vString queryConstants() {
         return query<Constant>();
@@ -40,7 +42,7 @@ namespace calculate {
 
         auto suffix = vars;
         auto counter = 0u;
-        while (std::regex_search(suffix, match, _ext_regex)) {
+        while (std::regex_search(suffix, match, ext_regex)) {
             if (!match[2].str().empty()) {
                 if (counter % 2 == 0)
                     throw BadNameException(match[2].str());
@@ -56,7 +58,7 @@ namespace calculate {
 
     vString Expression::_validate(const vString &vars) {
         for (auto &var : vars)
-            if (!std::regex_match(var, _var_regex))
+            if (!std::regex_match(var, var_regex))
                 throw BadNameException(var);
 
         auto no_dups = std::unordered_set<String>(vars.begin(), vars.end());
@@ -76,8 +78,8 @@ namespace calculate {
         auto is = [&match](int group) { return !match[group].str().empty(); };
         auto encountered = std::unordered_set<String>();
 
-        auto expression = std::regex_replace(_expression, _pre_regex, "$1 ");
-        while (std::regex_search(expression, match, _regex)) {
+        auto expression = std::regex_replace(_expression, pre_regex, "$1 ");
+        while (std::regex_search(expression, match, regex)) {
             auto token = match.str();
             auto it = std::find(_variables.begin(), _variables.end(), token);
 

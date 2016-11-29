@@ -27,11 +27,6 @@ namespace calculate {
         String _postfix;
         pEvaluable _tree;
 
-        static const Regex _ext_regex;
-        static const Regex _var_regex;
-        static const Regex _pre_regex;
-        static const Regex _regex;
-
         static vString _extract(const String &vars);
         static vString _validate(const vString &vars);
 

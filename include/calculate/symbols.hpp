@@ -119,7 +119,6 @@ namespace calculate_symbols {
     template <typename T>
     vString query() {
         vString tokens;
-
         for (const auto& pair : T::_symbols)
             tokens.emplace_back(pair.first);
         return tokens;
