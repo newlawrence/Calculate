@@ -7,12 +7,9 @@
 #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
-    BuiltinConstant<djb2(TOKEN)>::BuiltinConstant() noexcept :                \
+    BuiltinConstant<TypeString(TOKEN)>::BuiltinConstant() noexcept :          \
             Constant(TOKEN, VALUE) {}                                         \
-    template <>                                                               \
-    const Recorder<Constant> BuiltinConstant<djb2(TOKEN)>::_recorder(         \
-        TOKEN, static_cast<pSymbol(*)()>(make<BuiltinConstant<djb2(TOKEN)>>)  \
-    );                                                                        \
+    template class BuiltinConstant<TypeString(TOKEN)>;                        \
 }
 
 
@@ -230,7 +227,7 @@ namespace calculate_symbols {
         friend vString query<Constant>();
     };
 
-    template <Hash hash>
+    template <typename Token>
     class BuiltinConstant final : public Constant {
         static const Recorder<Constant> _recorder;
 
@@ -239,8 +236,12 @@ namespace calculate_symbols {
                 Constant("{constant}", nan) {}
         virtual ~BuiltinConstant() noexcept {}
     };
-
-
+    template <typename Token>
+    const Recorder<Constant> BuiltinConstant<Token>::_recorder(
+        Token::str(), static_cast<pSymbol(*)()>(make<BuiltinConstant<Token>>)
+    );
+   
+ 
     class Operator : public Evaluable {
     protected:
         static mSymbolGen _symbols;

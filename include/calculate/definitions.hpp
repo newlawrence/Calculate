@@ -19,6 +19,7 @@ typedef double Value;
 #include <regex>
 #include <unordered_map>
 
+#define TypeString(TOKEN) _TypeString<decltype(TOKEN##_tstr)>
 #define nan std::numeric_limits<Value>::quiet_NaN()
 
 namespace calculate_definitions {
@@ -35,6 +36,23 @@ namespace calculate_definitions {
     using Match = std::smatch;
 
 }
+
+template <char... chars>
+using _TypeStringType = std::integer_sequence<char, chars...>;
+
+template <typename Type, Type... chars>
+constexpr _TypeStringType<chars...> operator""_tstr() { return {}; }
+
+template <typename Type>
+struct _TypeString;
+
+template <char... chars>
+struct _TypeString<_TypeStringType<chars...>> {
+    static const char* const str() {
+        static constexpr char _str[sizeof...(chars) + 1] = { chars..., '\0' };
+        return _str;
+    }
+};
 
 #endif
 
