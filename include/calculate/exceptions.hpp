@@ -1,8 +1,6 @@
 #ifndef __CALCULATE_EXCEPTIONS_HPP__
 #define __CALCULATE_EXCEPTIONS_HPP__
 
-#include <stdexcept>
-
 #include "calculate/definitions.hpp"
 
 

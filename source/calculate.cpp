@@ -86,11 +86,11 @@ namespace calculate {
             auto it = std::find(_variables.begin(), _variables.end(), token);
 
             if (is(Group::NUMBER))
-                infix.push(make<Constant>(token, std::stod(token)));
+                infix.push(make<Constant, Value>(token, std::stod(token)));
             else if (is(Group::NAME) && it != _variables.end()) {
                 auto position = it - _variables.begin();
                 infix.push(
-                    make<Variable>(token, _values.get() + position)
+                    make<Variable, Value*>(token, _values.get() + position)
                 );
                 encountered.emplace(token);
             }

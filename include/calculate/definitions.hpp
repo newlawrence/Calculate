@@ -8,6 +8,7 @@ typedef double Value;
 
 #ifdef __cplusplus
 
+#include <stdexcept>
 #include <memory>
 #include <limits>
 #include <functional>

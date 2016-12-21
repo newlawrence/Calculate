@@ -9,6 +9,7 @@ namespace calculate_symbols {                                                 \
     template <>                                                               \
     BuiltinConstant<TypeString(TOKEN)>::BuiltinConstant() noexcept :          \
             Constant(TOKEN, VALUE) {}                                         \
+    template class BuiltinConstant<TypeString(TOKEN)>;                        \
 }
 
 
@@ -17,6 +18,7 @@ namespace calculate_symbols {                                                 \
     template <>                                                               \
     BuiltinOperator<TypeString(TOKEN)>::BuiltinOperator() noexcept :          \
             Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION) {}        \
+    template class BuiltinOperator<TypeString(TOKEN)>;                        \
 }
 
 
@@ -25,6 +27,7 @@ namespace calculate_symbols {                                                 \
     template <>                                                               \
     BuiltinFunction<TypeString(TOKEN)>::BuiltinFunction() noexcept :          \
             Function(TOKEN, ARGS, FUNCTION) {}                                \
+    template class BuiltinFunction<TypeString(TOKEN)>;                        \
 }
 
 
@@ -35,7 +38,7 @@ namespace calculate_symbols {
     class Symbol;
     using pSymbol = std::shared_ptr<Symbol>;
     using vSymbol = std::vector<pSymbol>;
-    using fSymbolGen = std::function<pSymbol()>;
+    using fSymbolGen = pSymbol(*)();
     using mSymbolGen = std::unordered_map<String, fSymbolGen>;
     using qSymbol = std::queue<pSymbol>;
     using sSymbol = std::stack<pSymbol>;
@@ -62,7 +65,7 @@ namespace calculate_symbols {
 
     template <typename Type>
     pSymbol make(const String &t) {
-        return Type::_symbols.at(t)();
+        return Type::symbols().at(t)();
     }
 
     template <typename Type, typename VType>
@@ -70,20 +73,16 @@ namespace calculate_symbols {
         return std::make_shared<Type>(t, v);
     }
 
-    template <typename Type>
-    pSymbol makeBuiltin() {
-        return std::make_shared<Type>();
-    }
 
     template <typename Type>
     Bool defined(String t) {
-        return Type::_symbols.find(t) != Type::_symbols.end();
+        return Type::symbols().find(t) != Type::symbols().end();
     }
 
     template <typename Type>
     vString query() {
         vString tokens;
-        for (const auto& pair : Type::_symbols)
+        for (const auto& pair : Type::symbols())
             tokens.emplace_back(pair.first);
         return tokens;
     }
@@ -92,7 +91,7 @@ namespace calculate_symbols {
     template <typename Type>
     struct Recorder {
         Recorder(const String &t, fSymbolGen g) noexcept {
-            Type::_symbols[t] = g;
+            Type::symbols()[t] = g;
         }
     };
 
@@ -149,7 +148,6 @@ namespace calculate_symbols {
         Evaluable(const String &t, Type y, Unsigned s, fValue f) noexcept :
                 Symbol(t, y),
                 _function(f),
-                _operands({}),
                 args(s) {}
 
     public:
@@ -173,7 +171,10 @@ namespace calculate_symbols {
 
     class Constant : public Evaluable {
     protected:
-        static mSymbolGen _symbols;
+        static mSymbolGen& symbols() {
+            static mSymbolGen _symbols;
+            return _symbols;
+        }
 
     public:
         Constant(const String &t, Value v) noexcept :
@@ -193,17 +194,19 @@ namespace calculate_symbols {
     public:
         BuiltinConstant() noexcept :
                 Constant("{constant}", nan) {}
-        virtual ~BuiltinConstant() noexcept {}
     };
     template <typename Token>
     const Recorder<Constant> BuiltinConstant<Token>::_recorder(
-        Token::str(), makeBuiltin<BuiltinConstant<Token>>
+        Token::str(), make<BuiltinConstant<Token>>
     );
    
  
     class Operator : public Evaluable {
     protected:
-        static mSymbolGen _symbols;
+        static mSymbolGen& symbols() {
+            static mSymbolGen _symbols;
+            return _symbols;
+        }
 
         Operator(const String &t, Unsigned p, Bool l, fValue f) noexcept :
                 Evaluable(t, Type::OPERATOR, 2, f),
@@ -230,17 +233,19 @@ namespace calculate_symbols {
     public:
         BuiltinOperator() noexcept :
                 Operator("{operator}", 0, true, 0, [](vArg){ return nan; }) {}
-        virtual ~BuiltinOperator() noexcept {}
     };
     template <typename Token>
     const Recorder<Operator> BuiltinOperator<Token>::_recorder(
-        Token::str(), makeBuiltin<BuiltinOperator<Token>>
+        Token::str(), make<BuiltinOperator<Token>>
     );
 
 
     class Function : public Evaluable {
     protected:
-        static mSymbolGen _symbols;
+        static mSymbolGen& symbols() {
+            static mSymbolGen _symbols;
+            return _symbols;
+        }
 
         Function(const String &t, Unsigned s, fValue f) noexcept :
                 Evaluable(t, Type::FUNCTION, s, f) {}
@@ -262,11 +267,10 @@ namespace calculate_symbols {
     public:
         BuiltinFunction() noexcept :
                 Function("{function}", 0, [](vArg){ return nan; }) {}
-        virtual ~BuiltinFunction() {}
     };
     template <typename Token>
     const Recorder<Function> BuiltinFunction<Token>::_recorder(
-        Token::str(), makeBuiltin<BuiltinFunction<Token>>
+        Token::str(), make<BuiltinFunction<Token>>
     );
 
 }

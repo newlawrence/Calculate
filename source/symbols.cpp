@@ -5,11 +5,6 @@
 
 namespace calculate_symbols {
 
-    mSymbolGen Constant::_symbols;
-    mSymbolGen Operator::_symbols;
-    mSymbolGen Function::_symbols;
-
-
     void Evaluable::addBranches(const vEvaluable &x) noexcept {
         if (x.size() == args)
             _operands = x;
