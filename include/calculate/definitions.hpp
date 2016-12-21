@@ -22,6 +22,8 @@ typedef double Value;
 #define TypeString(TOKEN) _TypeString<decltype(TOKEN##_tstr)>
 #define nan std::numeric_limits<Value>::quiet_NaN()
 
+typedef bool Bool;
+
 namespace calculate_definitions {
 
     using Stream = std::ostringstream;
@@ -31,6 +33,7 @@ namespace calculate_definitions {
     using pValue = std::unique_ptr<Value[]>;
     using vValue = std::vector<Value>;
     using mValue = std::unordered_map<String, Value>;
+    using fValue = std::function<Value(const vValue&)>;
 
     using Regex = std::regex;
     using Match = std::smatch;
