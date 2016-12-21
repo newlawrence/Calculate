@@ -34,6 +34,7 @@ namespace calculate_definitions {
     using vValue = std::vector<Value>;
     using mValue = std::unordered_map<String, Value>;
     using fValue = std::function<Value(const vValue&)>;
+    using vArg = const vValue&;
 
     using Regex = std::regex;
     using Match = std::smatch;

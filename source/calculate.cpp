@@ -4,7 +4,9 @@
 
 
 namespace {
-    
+
+    using namespace calculate_definitions;
+
     const Regex ext_regex(R"_(([^\s,]+)|(,))_");
 
     const Regex var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
@@ -84,11 +86,11 @@ namespace calculate {
             auto it = std::find(_variables.begin(), _variables.end(), token);
 
             if (is(Group::NUMBER))
-                infix.push(make<Constant, Value>(token, std::stod(token)));
+                infix.push(make<Constant>(token, std::stod(token)));
             else if (is(Group::NAME) && it != _variables.end()) {
                 auto position = it - _variables.begin();
                 infix.push(
-                    make<Variable, Value *>(token, _values.get() + position)
+                    make<Variable>(token, _values.get() + position)
                 );
                 encountered.emplace(token);
             }
@@ -279,34 +281,15 @@ namespace calculate {
             element = postfix.front();
             postfix.pop();
 
-            if (element->is(Type::CONSTANT)) {
-                operands.push(element);
-            }
-
-            else if (element->is(Type::FUNCTION)) {
-                auto function = cast<Function>(element);
-                auto args = function->args;
-                vEvaluable ops(args);
-                for (auto i = args; i > 0; i--) {
-                    if (operands.empty())
-                        throw MissingArgumentsException(function->token);
-                    ops[i - 1] = operands.top();
-                    operands.pop();
-                }
-                function->addBranches(ops);
-                operands.push(element);
-            }
-
-            else if (element->is(Type::OPERATOR)) {
-                auto binary = cast<Operator>(element);
-                pEvaluable a, b;
-                b = operands.top();
+            vEvaluable ops(element->args);
+            for (auto i = element->args; i > 0; i--) {
+                if (operands.empty())
+                    throw MissingArgumentsException(element->token);
+                ops[i - 1] = operands.top();
                 operands.pop();
-                a = operands.top();
-                operands.pop();
-                binary->addBranches(a, b);
-                operands.push(element);
             }
+            element->addBranches(ops);
+            operands.push(element);
         }
         if (operands.size() > 1)
             throw ArgumentsExcessException(operands.top()->token);

@@ -50,6 +50,7 @@ if (
 )
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -std=c11")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-string-literal-operator-template")
     if (DEFINED ENV{COVERAGE})
         if (NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
             message(FATAL_ERROR "Code coverage in an optimized build.")
