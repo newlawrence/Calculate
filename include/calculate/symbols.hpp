@@ -194,6 +194,7 @@ namespace calculate_symbols {
     public:
         BuiltinConstant() noexcept :
                 Constant("{constant}", nan) {}
+        virtual ~BuiltinConstant() noexcept {}
     };
     template <typename Token>
     const Recorder<Constant> BuiltinConstant<Token>::_recorder(
@@ -233,6 +234,7 @@ namespace calculate_symbols {
     public:
         BuiltinOperator() noexcept :
                 Operator("{operator}", 0, true, 0, [](vArg){ return nan; }) {}
+        virtual ~BuiltinOperator() noexcept {}
     };
     template <typename Token>
     const Recorder<Operator> BuiltinOperator<Token>::_recorder(
@@ -267,6 +269,7 @@ namespace calculate_symbols {
     public:
         BuiltinFunction() noexcept :
                 Function("{function}", 0, [](vArg){ return nan; }) {}
+        virtual ~BuiltinFunction() noexcept {}
     };
     template <typename Token>
     const Recorder<Function> BuiltinFunction<Token>::_recorder(

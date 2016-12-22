@@ -12,24 +12,29 @@ namespace calculate_symbols {
  
     Value Evaluable::evaluate() const noexcept {
         vValue x(args);
+        if (args != _operands.size())
+            return nan;
+
         for (auto i = 0u; i < args; i++)
             x[i] = _operands[i]->evaluate();
         return _function(x);
     }
 
     void Evaluable::print(Stream &stream, String ind) const noexcept {
-        if (ind.size() == 0)
-            stream << "[" << token << "]\n";
-        else if (ind.size() == 3)
-            stream << " \\_[" << token << "]\n";
-        else {
-            stream << ind.substr(0, ind.size() - 3);
-            stream << " \\_[" << token << "]\n";
-        }
-        if (args > 0) {
-            for (auto i = 0u; i < args - 1; i++)
-                _operands[i]->print(stream, ind + " | ");
-            _operands[args - 1]->print(stream, ind + "   ");
+        if (args == _operands.size()) {
+            if (ind.size() == 0)
+                stream << "[" << token << "]\n";
+            else if (ind.size() == 3)
+                stream << " \\_[" << token << "]\n";
+            else {
+                stream << ind.substr(0, ind.size() - 3);
+                stream << " \\_[" << token << "]\n";
+            }
+            if (args > 0) {
+                for (auto i = 0u; i < args - 1; i++)
+                    _operands[i]->print(stream, ind + " | ");
+                _operands[args - 1]->print(stream, ind + "   ");
+            }
         }
     }
 
