@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 import os.path as path
+import platform.system
 from setuptools import setup
 
 
@@ -10,15 +11,13 @@ with open('{}/__init__.py'.format(library), 'r') as file:
     metadata = {entry.split('=')[0].strip(' '): eval(entry.split('=')[-1])
                 for entry in file.read().split('\n') if '=' in entry}
 
-extensions = ['so', 'dylib', 'dll', '']
+extensions = {'Linux': 'so', 'Darwin': 'dylib', 'Windows': 'dll'}
+extension = extensions.get(platform.system(), '')
 library_name = 'lib' + library
-for extension in extensions:
-    basedir = path.realpath(__file__).replace(path.basename(__file__), '')
-    basedir = path.join(basedir, library)
-    library_path = path.join(basedir, library_name + '.' + extension)
-    if path.lexists(library_path):
-        break
-else:
+basedir = path.realpath(__file__).replace(path.basename(__file__), '')
+basedir = path.join(basedir, library)
+library_path = path.join(basedir, library_name + '.' + extension)
+if not path.lexists(library_path):
     raise EnvironmentError('Missing shared library')
 
 setup(

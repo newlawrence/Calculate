@@ -54,7 +54,6 @@ RECORD_OPERATOR("%",400,true,[](Value x,Value y){return std::fmod(x,y);})
 RECORD_OPERATOR("^",800,false,[](Value x,Value y){return std::pow(x,y);})
 RECORD_OPERATOR("**",800,false,[](Value x,Value y){return std::pow(x,y);})
 
-
 RECORD_FUNCTION("fabs",[](Value x){return std::fabs(x);})
 RECORD_FUNCTION("abs",[](Value x){return std::abs(x);})
 RECORD_FUNCTION("fma",[](Value x,Value y,Value z){return std::fma(x,y,z);})
