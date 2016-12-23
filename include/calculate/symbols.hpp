@@ -146,10 +146,12 @@ namespace calculate_symbols {
         fValue _function;
         vEvaluable _operands;
 
-        Evaluable(const String &t, Type y, Unsigned s, fValue f) noexcept :
-                Symbol(t, y),
-                _function(f),
-                args(s) {}
+        Evaluable(
+            const String &t,
+            Type y,
+            Unsigned s = 0u,
+            fValue f = [](vArg){ return nan; }
+        ) noexcept : Symbol(t, y), _function(f), args(s) {}
 
     public:
         const Unsigned args;
