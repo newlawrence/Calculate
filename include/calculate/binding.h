@@ -1,6 +1,8 @@
 #ifndef __CALCULATE_C_INTERFACE_H__
 #define __CALCULATE_C_INTERFACE_H__
 
+#include "calculate/definitions.hpp"
+
 #ifdef _MSC_VER
 #define EXPORT_GLOBAL __declspec(dllimport)
 #else
@@ -8,7 +10,6 @@
 #endif
 
 #ifdef __cplusplus
-#include "calculate/definitions.hpp"
 extern "C" {
 #define STRUCT
 #else
