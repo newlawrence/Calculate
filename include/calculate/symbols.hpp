@@ -2,6 +2,7 @@
 #define __CALCULATE_SYMBOLS_HPP__
 
 #include "calculate/definitions.hpp"
+#include "calculate/meta.hpp"
 
 
 #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
@@ -17,16 +18,16 @@ namespace calculate_symbols {                                                 \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
     BuiltinOperator<TypeString(TOKEN)>::BuiltinOperator() noexcept :          \
-            Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION) {}        \
+      Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, wrapFunctor(FUNCTION)) {} \
     template class BuiltinOperator<TypeString(TOKEN)>;                        \
 }
 
 
-#define RECORD_FUNCTION(TOKEN, ARGS, FUNCTION)                                \
+#define RECORD_FUNCTION(TOKEN, FUNCTION)                                      \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
     BuiltinFunction<TypeString(TOKEN)>::BuiltinFunction() noexcept :          \
-            Function(TOKEN, ARGS, FUNCTION) {}                                \
+      Function(TOKEN, wrapFunctor(FUNCTION).args(), wrapFunctor(FUNCTION)) {} \
     template class BuiltinFunction<TypeString(TOKEN)>;                        \
 }
 
