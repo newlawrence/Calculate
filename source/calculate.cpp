@@ -9,8 +9,8 @@ namespace {
 
     const Regex ext_regex(R"_(([^\s,]+)|(,))_");
     const Regex var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
-    const Regex p1_regex(R"_(^(\-)([A-Za-z_]+[A-Za-z_\d]*))_");
-    const Regex p2_regex(R"_(([(,])(\s*-)([A-Za-z_]+[A-Za-z_\d]*))_");
+    const Regex p1_regex(R"_(^(\s*\-)([A-Za-z_]+[A-Za-z_\d]*))_");
+    const Regex p2_regex(R"_(([(,])(\s*\-)([A-Za-z_]+[A-Za-z_\d]*))_");
     const Regex p3_regex(R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_");
     const Regex regex(
         R"_(((?:[+\-])?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
