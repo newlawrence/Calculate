@@ -8,16 +8,15 @@ namespace {
     using namespace calculate_definitions;
 
     const Regex ext_regex(R"_(([^\s,]+)|(,))_");
-
     const Regex var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
-
-    const Regex pre_regex(R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_");
-
+    const Regex p1_regex(R"_(^(\-)([A-Za-z_]+[A-Za-z_\d]*))_");
+    const Regex p2_regex(R"_(([(,])(\s*-)([A-Za-z_]+[A-Za-z_\d]*))_");
+    const Regex p3_regex(R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_");
     const Regex regex(
         R"_(((?:[+\-])?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
-            R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-            R"_(([^A-Za-z\d(),\s]+)|)_"
-            R"_((\()|(\))|(,))_"
+        R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
+        R"_(([^A-Za-z\d(),\s]+)|)_"
+        R"_((\()|(\))|(,))_"
     );
 
 }
@@ -82,7 +81,11 @@ namespace calculate {
         };
         auto encountered = std::unordered_set<String>();
 
-        auto expression = std::regex_replace(_expression, pre_regex, "$1 ");
+        auto expression = _expression;
+        expression = std::regex_replace(expression, p1_regex, "(-1 * $2)");
+        expression = std::regex_replace(expression, p2_regex, "$1(-1 * $3)");
+        expression = std::regex_replace(expression, p3_regex, "$1 ");
+
         while (std::regex_search(expression, match, regex)) {
             auto token = match.str();
             auto it = std::find(_variables.begin(), _variables.end(), token);
