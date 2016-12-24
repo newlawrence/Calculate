@@ -77,7 +77,9 @@ namespace calculate {
         Stream stream;
 
         enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR};
-        auto is = [&match](int group) { return !match[group].str().empty(); };
+        auto is = [&match](Integer group) {
+            return !match[group].str().empty();
+        };
         auto encountered = std::unordered_set<String>();
 
         auto expression = std::regex_replace(_expression, pre_regex, "$1 ");
@@ -86,11 +88,11 @@ namespace calculate {
             auto it = std::find(_variables.begin(), _variables.end(), token);
 
             if (is(Group::NUMBER))
-                infix.push(make<Constant, Value>(token, std::stod(token)));
+                infix.push(make<Constant>(token, std::stod(token)));
             else if (is(Group::NAME) && it != _variables.end()) {
                 auto position = it - _variables.begin();
                 infix.push(
-                    make<Variable, Value*>(token, _values.get() + position)
+                    make<Variable>(token, _values.get() + position)
                 );
                 encountered.emplace(token);
             }

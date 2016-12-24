@@ -108,14 +108,14 @@ auto wrapFunctor(Functor&& functor) {
 
     static_assert(
         std::is_same<LambdaResult<FunctorType>, Value>::value,
-        "Return type of builtin function must be Value"
+        "Return type of builtin function must be double"
     );
     static_assert(
         std::is_same<
             LambdaParams<FunctorType>,
         DoubleTuple<lambdaArgs<FunctorType>()>
         >::value,
-        "All type parameters of builtin function must be Value"
+        "All type parameters of builtin function must be double"
     );
 
     return FunctorWrapper<Functor, lambdaArgs<FunctorType>()>{

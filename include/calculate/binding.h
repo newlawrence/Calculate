@@ -34,8 +34,8 @@ struct calculate_c_library_template {
     void (*getPostfix)(Expression, Byte*);
     void (*getTree)(Expression, Byte*);
 
-    Value (*evaluateArray)(Expression, Value*, int, Byte*);
-    Value (*evalArray)(Expression, Value*, int);
+    Value (*evaluateArray)(Expression, Value*, Integer, Byte*);
+    Value (*evalArray)(Expression, Value*, Integer);
     Value (*eval)(Expression, ...);
 };
 

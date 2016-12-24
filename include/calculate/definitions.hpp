@@ -2,6 +2,7 @@
 #define __CALCULATE_DEFINITIONS_HPP__
 
 typedef char Byte;
+typedef int Integer;
 typedef unsigned Unsigned;
 typedef unsigned long Hash;
 typedef double Value;
