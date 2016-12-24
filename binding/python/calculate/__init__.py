@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from calculate.calculate import Expression
 from calculate.calculate import queryConstants, queryOperators, queryFunctions
 
-__version__ = '1.1.1rc1'
+__version__ = '1.1.1rc2'
 __license__ = 'MIT'
 __author__ = 'Alberto Lorenzo'
 __email__ = 'alorenzo.md@gmail.com'

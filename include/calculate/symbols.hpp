@@ -9,7 +9,7 @@
 namespace calculate_symbols {                                                 \
     template <>                                                               \
     BuiltinConstant<TypeString(TOKEN)>::BuiltinConstant() noexcept :          \
-            Constant(TOKEN, VALUE) {}                                         \
+      Constant(TOKEN, VALUE) {}                                               \
     template class BuiltinConstant<TypeString(TOKEN)>;                        \
 }
 
@@ -150,7 +150,7 @@ namespace calculate_symbols {
             const String &t,
             Type y,
             Unsigned s = 0u,
-            fValue f = [](vArg){ return nan; }
+            fValue f = [](const vValue &){ return nan; }
         ) noexcept : Symbol(t, y), _function(f), args(s) {}
 
     public:
@@ -167,7 +167,9 @@ namespace calculate_symbols {
     class Variable final : public Evaluable {
     public:
         Variable(const String &t, Value *v) noexcept :
-                Evaluable(t, Type::CONSTANT, 0, [v](vArg){ return *v; }) {}
+                Evaluable(
+                    t, Type::CONSTANT, 0, [v](const vValue &){ return *v; }
+                ) {}
         virtual ~Variable() noexcept {}
     };
 
@@ -181,7 +183,9 @@ namespace calculate_symbols {
 
     public:
         Constant(const String &t, Value v) noexcept :
-                Evaluable(t, Type::CONSTANT, 0, [v](vArg){ return v; }) {}
+                Evaluable(
+                    t, Type::CONSTANT, 0, [v](const vValue &){ return v; }
+                ) {}
         virtual ~Constant() noexcept {};
 
         friend struct Recorder<Constant>;
@@ -196,7 +200,9 @@ namespace calculate_symbols {
 
     public:
         BuiltinConstant() noexcept :
-                Constant("{constant}", nan) {}
+                Constant(
+                    "{constant}", nan
+                ) {}
         virtual ~BuiltinConstant() noexcept {}
     };
     template <typename Token>
@@ -213,7 +219,9 @@ namespace calculate_symbols {
         }
 
         Operator(const String &t, Unsigned p, Bool l, fValue f) noexcept :
-                Evaluable(t, Type::OPERATOR, 2, f),
+                Evaluable(
+                    t, Type::OPERATOR, 2, f
+                ),
                 precedence(p),
                 left_assoc(l) {}
 
@@ -236,7 +244,9 @@ namespace calculate_symbols {
 
     public:
         BuiltinOperator() noexcept :
-                Operator("{operator}", 0, true, 0, [](vArg){ return nan; }) {}
+                Operator(
+                    "{operator}", 0, true, 0, [](const vValue &){ return nan; }
+                ) {}
         virtual ~BuiltinOperator() noexcept {}
     };
     template <typename Token>
@@ -253,7 +263,9 @@ namespace calculate_symbols {
         }
 
         Function(const String &t, Unsigned s, fValue f) noexcept :
-                Evaluable(t, Type::FUNCTION, s, f) {}
+                Evaluable(
+                    t, Type::FUNCTION, s, f
+                ) {}
 
     public:
         virtual ~Function() noexcept {}
@@ -271,7 +283,9 @@ namespace calculate_symbols {
 
     public:
         BuiltinFunction() noexcept :
-                Function("{function}", 0, [](vArg){ return nan; }) {}
+                Function(
+                    "{function}", 0, [](const vValue &){ return nan; }
+                ) {}
         virtual ~BuiltinFunction() noexcept {}
     };
     template <typename Token>

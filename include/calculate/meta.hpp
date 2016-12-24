@@ -79,7 +79,7 @@ namespace calculate_meta {
 
 
     template<typename Type, SizeT... Indices>
-    Value evalVector(Type &function, vArg &args,
+    Value evalVector(Type &function, const vValue &args,
                        std::index_sequence<Indices...>) {
         return function(args[Indices]...);
     }
@@ -90,7 +90,7 @@ namespace calculate_meta {
         Functor functor;
         constexpr SizeT args() { return n; };
 
-        Value operator()(vArg &args) {
+        Value operator()(const vValue &args) {
             if (args.size() != n)
                 return std::numeric_limits<Value>::quiet_NaN();
             return evalVector(functor, args, std::make_index_sequence<n>());
