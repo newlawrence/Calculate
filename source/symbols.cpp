@@ -17,7 +17,13 @@ namespace calculate_symbols {
 
         for (auto i = 0u; i < args; i++)
             x[i] = _operands[i]->evaluate();
-        return _function(x);
+
+        try {
+            return _function(x);
+        }
+        catch (const std::exception &) {
+            return nan;
+        }
     }
 
     void Evaluable::print(Stream &stream, String ind) const noexcept {
@@ -53,6 +59,7 @@ RECORD_OPERATOR("/",400,true,[](Value x,Value y){return x/y;})
 RECORD_OPERATOR("%",400,true,[](Value x,Value y){return std::fmod(x,y);})
 RECORD_OPERATOR("^",800,false,[](Value x,Value y){return std::pow(x,y);})
 RECORD_OPERATOR("**",800,false,[](Value x,Value y){return std::pow(x,y);})
+RECORD_OPERATOR("#",1000,true,[](Value x,Value y){return x*y;})
 
 RECORD_FUNCTION("fabs",[](Value x){return std::fabs(x);})
 RECORD_FUNCTION("abs",[](Value x){return std::abs(x);})

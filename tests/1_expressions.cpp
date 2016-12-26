@@ -141,7 +141,7 @@ TEST_CASE("Queries test", "[Queries]") {
     SECTION("Global queries") {
         auto expected_constants = vString({"pi", "e", "phi", "gamma"});
         auto expected_operators = vString({
-            "+", "-", "*", "/", "%", "^", "**"
+            "+", "-", "*", "/", "%", "^", "**", "#"
         });
         auto expected_functions = vString({
             "fabs", "abs", "fma", "copysign", "nextafter",

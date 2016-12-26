@@ -92,8 +92,16 @@ namespace calculate_meta {
 
         Value operator()(const vValue &args) {
             if (args.size() != n)
-                return std::numeric_limits<Value>::quiet_NaN();
-            return evalVector(functor, args, std::make_index_sequence<n>());
+                return nan;
+
+            try {
+                return evalVector(
+                    functor, args, std::make_index_sequence<n>()
+                );
+            }
+            catch (const std::exception &) {
+                return nan;
+            }
         }
     };
 

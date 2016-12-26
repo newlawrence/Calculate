@@ -91,7 +91,7 @@ TEST_CASE("C interface", "[c_interface]") {
         Calculate.queryConstants(output);
         CHECK(strlen(output) == 14);
         Calculate.queryOperators(output);
-        CHECK(strlen(output) == 14);
+        CHECK(strlen(output) == 16);
         Calculate.queryFunctions(output);
         CHECK(strlen(output) == 249);
     }
