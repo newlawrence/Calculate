@@ -6,14 +6,16 @@ add_library(calculate_python SHARED "${sources}")
 target_compile_definitions(calculate_python PUBLIC "_CRT_SECURE_NO_WARNINGS")
 set_target_properties(calculate_python PROPERTIES PREFIX "lib")
 
-if(
-    (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU") OR
-    (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
-)
-    target_link_libraries(calculate_python PUBLIC -static)
-elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+if(WIN32 OR CYGWIN)
+    if(
+        (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU") OR
+        (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+    )
+        target_link_libraries(calculate_python PUBLIC -static)
+    elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+    endif()
 endif()
 
 add_custom_command(
