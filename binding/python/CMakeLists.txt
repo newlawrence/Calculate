@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.5)
 project(calculate_python_wrapper NONE)
 
 
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/calculate/")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/calculate/")
-
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 add_library(calculate_python SHARED "${sources}")
 target_compile_definitions(calculate_python PUBLIC "_CRT_SECURE_NO_WARNINGS")
@@ -29,6 +26,14 @@ elseif(WIN32)
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
     endif()
 endif()
+
+add_custom_command(
+    TARGET calculate_python
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+            "$<TARGET_FILE:calculate_python>"
+            "${CMAKE_CURRENT_SOURCE_DIR}/calculate"
+)
 
 
 find_program(PYTHON "python")
