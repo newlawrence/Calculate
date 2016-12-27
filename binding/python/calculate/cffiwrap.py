@@ -2,19 +2,21 @@
 from __future__ import absolute_import
 
 import os.path as path
+from platform import system
 
 from cffi import FFI
 
 ERROR_CHARS = 64
 MAX_CHARS = 4096
 
-extensions = ['so', 'dylib', 'dll']
-library_name = 'libcalculate_python'
-for ext in extensions:
-    basedir = path.realpath(__file__).replace(path.basename(__file__), '')
-    library_path = path.join(basedir, library_name + '.' + ext)
-    if path.lexists(library_path):
-        break
+library = 'calculate'
+extensions = {'Linux': 'so', 'Darwin': 'dylib', 'Windows': 'dll'}
+extension = extensions.get(system(), '')
+library_name = 'lib' + library + '_python'
+basedir = path.abspath(path.dirname(__file__))
+library_path = path.join(basedir, library_name + '.' + extension)
+if not path.lexists(library_path):
+    raise EnvironmentError('Missing shared library')
 
 ffi = FFI()
 ffi.cdef('''

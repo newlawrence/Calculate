@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
 project(calculate C CXX)
-set(PACKAGE_VERSION "1.1.1rc3")
+set(MAJOR_VERSION 1)
+set(MINOR_VERSION 1)
+set(PATCH_VERSION 1)
+set(DEV rc3)
 set(BUILD_NUMBER 1)
+
+set(PACKAGE_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}${DEV}")
 string(TIMESTAMP COMPILE_DATE %Y/%m/%d)
 
 
@@ -81,12 +86,14 @@ file(GLOB sources "${PROJECT_SOURCE_DIR}/source/*.cpp")
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 add_library(calculate SHARED "${sources}")
 target_compile_definitions(calculate PUBLIC "_CRT_SECURE_NO_WARNINGS")
+set_property(TARGET calculate PROPERTY VERSION ${PACKAGE_VERSION})
+set_property(TARGET calculate PROPERTY SOVERSION ${MAJOR_VERSION})
 set_target_properties(calculate PROPERTIES PREFIX "lib")
 
 add_library(calculate_static STATIC "${sources}")
 target_compile_definitions(calculate_static PUBLIC "_CRT_SECURE_NO_WARNINGS")
-set_target_properties(calculate_static PROPERTIES OUTPUT_NAME "calculate")
-set_target_properties(calculate_static PROPERTIES PREFIX "lib")
+set_target_properties(calculate_static PROPERTIES OUTPUT_NAME
+                      "calculate.${PACKAGE_VERSION}")
 
 
 if(DEFINED ENV{TESTING} OR DEFINED ENV{COVERAGE})
