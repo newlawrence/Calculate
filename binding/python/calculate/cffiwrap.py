@@ -9,7 +9,7 @@ ERROR_CHARS = 64
 MAX_CHARS = 4096
 
 extensions = ['so', 'dylib', 'dll']
-library_name = 'libcalculate'
+library_name = 'libcalculate_python'
 for ext in extensions:
     basedir = path.realpath(__file__).replace(path.basename(__file__), '')
     library_path = path.join(basedir, library_name + '.' + ext)

@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 import os.path as path
-import platform.system
+from platform import system
 from setuptools import setup
 
 
@@ -12,8 +12,8 @@ with open('{}/__init__.py'.format(library), 'r') as file:
                 for entry in file.read().split('\n') if '=' in entry}
 
 extensions = {'Linux': 'so', 'Darwin': 'dylib', 'Windows': 'dll'}
-extension = extensions.get(platform.system(), '')
-library_name = 'lib' + library
+extension = extensions.get(system(), '')
+library_name = 'lib' + library + '_python'
 basedir = path.realpath(__file__).replace(path.basename(__file__), '')
 basedir = path.join(basedir, library)
 library_path = path.join(basedir, library_name + '.' + extension)

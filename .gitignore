@@ -9,8 +9,10 @@ Win32/
 # Binary content
 bin/
 lib/
-binding/fortran/module
-binding/fortran/lib
+binding/fortran/module/
+binding/fortran/lib/
+binding/python/calculate.egg-info/
+binding/python/dist/
 binding/python/calculate/*.so
 binding/python/calculate/*.dylib
 binding/python/calculate/*.dll
@@ -40,3 +42,7 @@ extern/
 
 # Coverage reports
 coverage/
+
+# Templated sources
+binding/python/calculate/__init__.py
+binding/python/recipe/meta.yaml
