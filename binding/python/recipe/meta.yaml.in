@@ -12,11 +12,9 @@ requirements:
   build:
     - python >=2.7
     - cffi >=1.0.0
-    - vs2015_runtime # [win]
   run:
     - python >=2.7
     - cffi >=1.0.0
-    - vs2015_runtime # [win]
 
 about:
   license: MIT License

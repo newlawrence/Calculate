@@ -28,6 +28,13 @@ find_program(PYTHON "python")
 find_program(CONDA "conda")
 
 if(PYTHON)
+    execute_process(
+        COMMAND ${PYTHON} --version
+        OUTPUT_VARIABLE PYTHON_VER
+        ERROR_VARIABLE PYTHON_VER
+    )
+    string(STRIP ${PYTHON_VER} PYTHON_VER)
+    message("-- The Python interpreter specification is ${PYTHON_VER}")
     set(SETUP "${CMAKE_CURRENT_SOURCE_DIR}/setup.py")
 
     set(INIT_IN "${CMAKE_CURRENT_SOURCE_DIR}/calculate/__init__.py.in")
@@ -44,6 +51,14 @@ if(PYTHON)
     )
 
     if(CONDA)
+        execute_process(
+            COMMAND ${CONDA} --version
+            OUTPUT_VARIABLE CONDA_VER
+            ERROR_VARIABLE CONDA_VER
+        )
+        string(STRIP ${CONDA_VER} CONDA_VER)
+        message("-- The Conda package manager specification is ${CONDA_VER}")
+    
         add_custom_target(conda_package
             DEPENDS calculate_python
             COMMAND ${CONDA} build ${CMAKE_CURRENT_SOURCE_DIR}/recipe
