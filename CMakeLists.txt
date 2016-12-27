@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(calculate C CXX)
-set(PACKAGE_VERSION "1.1.1rc2")
+set(PACKAGE_VERSION "1.1.1rc3")
 set(BUILD_NUMBER 1)
 string(TIMESTAMP COMPILE_DATE %Y/%m/%d)
 
