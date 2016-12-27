@@ -47,5 +47,13 @@ $ make unittests
 $ make coverage
 ```
 
+Generating the **Python** binary distributions:
+
+```
+$ BINDING=1 cmake . -DCMAKE_BUILD_TYPE=Release
+$ make python_wheel
+$ make conda_package
+
+```
 
 **License:** MIT (see `copying`).
