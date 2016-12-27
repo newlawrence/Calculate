@@ -10,7 +10,11 @@ add_library(calculate_python SHARED "${sources}")
 target_compile_definitions(calculate_python PUBLIC "_CRT_SECURE_NO_WARNINGS")
 set_target_properties(calculate_python PROPERTIES PREFIX "lib")
 
-if(WIN32)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(calculate_python PUBLIC
+        -static-libgcc -static-libstdc++
+    )
+elseif(WIN32)
     if(
         (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU") OR
         (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
