@@ -6,7 +6,7 @@
 
 #include "calculate/definitions.hpp"
 
-#define TypeString(TOKEN) TypeStringGenerator<decltype(TOKEN##_tstr)>
+#define TypeString(TOKEN) decltype(TOKEN##_tstr)
 
 
 namespace calculate_meta {
@@ -136,21 +136,17 @@ auto wrapFunctor(Functor&& functor) {
 }
 
 
-template <Byte... chars>
-using TypeStringType = std::integer_sequence<char, chars...>;
-
-template <typename Type, Type... chars>
-constexpr TypeStringType<chars...> operator""_tstr() { return {}; }
-
-template <typename Type>
-struct TypeStringGenerator;
-
-template <Byte... chars>
-struct TypeStringGenerator<TypeStringType<chars...>> {
-    static const char* const str() {
-        static constexpr char _str[sizeof...(chars) + 1] = { chars..., '\0' };
-        return _str;
+template <char ... chars>
+struct StringLiteral {
+    static constexpr const char str[sizeof...(chars) + 1] = {chars..., '\0'};
+    constexpr operator const char* (void) const {
+        return str;
     }
 };
+template <char... chars>
+constexpr const char StringLiteral<chars...>::str[sizeof...(chars) + 1];
+
+template <typename Type, Type... chars>
+constexpr StringLiteral<chars...> operator ""_tstr() { return {}; }
 
 #endif

@@ -207,7 +207,7 @@ namespace calculate_symbols {
     };
     template <typename Token>
     const Recorder<Constant> BuiltinConstant<Token>::_recorder(
-        Token::str(), make<BuiltinConstant<Token>>
+        Token::str, make<BuiltinConstant<Token>>
     );
    
  
@@ -251,7 +251,7 @@ namespace calculate_symbols {
     };
     template <typename Token>
     const Recorder<Operator> BuiltinOperator<Token>::_recorder(
-        Token::str(), make<BuiltinOperator<Token>>
+        Token::str, make<BuiltinOperator<Token>>
     );
 
 
@@ -290,7 +290,7 @@ namespace calculate_symbols {
     };
     template <typename Token>
     const Recorder<Function> BuiltinFunction<Token>::_recorder(
-        Token::str(), make<BuiltinFunction<Token>>
+        Token::str, make<BuiltinFunction<Token>>
     );
 
 }
