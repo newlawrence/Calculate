@@ -10,7 +10,7 @@ file(GLOB sources "${PROJECT_SOURCE_DIR}/source/*.f90")
 
 if(${CMAKE_Fortran_COMPILER_ID} MATCHES "GNU")
     set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -O3 -std=f2008")
-    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall")
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall -Wno-surprising")
 elseif(${CMAKE_Fortran_COMPILER_ID} MATCHES "Intel")
     if(WIN32)
         set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /O3 /stand:f08")

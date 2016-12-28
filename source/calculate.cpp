@@ -11,7 +11,7 @@ namespace {
     Regex var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
 
     Regex prg0(R"_(^(\s*[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
-    Regex prg1(R"_(([^A-Za-z\d)\s]+)(\s+[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
+    Regex prg1(R"_(([^A-Za-z\d)_\s]+)(\s+[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
     Regex prg2(R"_(([(,])(\s*[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
     Regex prg3(R"_(([+\-])(\()(1)(\)))_");
     Regex prg4(R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_");
@@ -20,7 +20,7 @@ namespace {
     Regex regex(
         R"_(((?:[+\-])?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
         R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-        R"_(([^A-Za-z\d(),\s]+)|)_"
+        R"_(([^A-Za-z\d(),_\s]+)|)_"
         R"_((\()|(\))|(,))_"
     );
 
