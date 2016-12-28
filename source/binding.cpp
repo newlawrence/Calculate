@@ -15,7 +15,7 @@ namespace {
 
     using namespace calculate_definitions;
 
-    String extract(const std::vector<String> &vector) {
+    String extract(const vString &vector) {
         if (vector.size())
             return std::accumulate(
                 vector.begin() + 1,
@@ -93,8 +93,8 @@ namespace {
     }
 
 
-    Value evaluateArray(Expression expr, Value *args, int size,
-                         Byte *error) {
+    Value evaluateArray(Expression expr, Value *args, Integer size,
+                        Byte *error) {
         if (!expr) {
             strcpy(error, "Not initialized");
             return std::numeric_limits<Value>::quiet_NaN();
@@ -112,7 +112,7 @@ namespace {
         return std::numeric_limits<Value>::quiet_NaN();
     }
 
-    Value evalArray(Expression expr, Value *args, int size) {
+    Value evalArray(Expression expr, Value *args, Integer size) {
         Byte error[64];
 
         return evaluateArray(expr, args, size, error);

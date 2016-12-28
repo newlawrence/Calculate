@@ -5,7 +5,6 @@
 .codecov.yml export-ignore
 
 # Exclude files from language statistics
-binding/fortran/future/* linguist-vendored
 copying linguist-vendored
 *.txt linguist-vendored
 *.md linguist-vendored
@@ -14,3 +13,8 @@ copying linguist-vendored
 *.yaml linguist-vendored
 *.sh linguist-vendored
 *.bat linguist-vendored
+*.in linguist-vendored
+
+# Exclude folders from language statistics
+examples/* linguist-vendored
+tests/* linguist-vendored

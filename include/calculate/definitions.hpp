@@ -2,12 +2,14 @@
 #define __CALCULATE_DEFINITIONS_HPP__
 
 typedef char Byte;
+typedef int Integer;
 typedef unsigned Unsigned;
 typedef unsigned long Hash;
 typedef double Value;
 
 #ifdef __cplusplus
 
+#include <stdexcept>
 #include <memory>
 #include <limits>
 #include <functional>
@@ -21,6 +23,9 @@ typedef double Value;
 
 #define nan std::numeric_limits<Value>::quiet_NaN()
 
+typedef bool Bool;
+typedef std::size_t SizeT;
+
 namespace calculate_definitions {
 
     using Stream = std::ostringstream;
@@ -30,6 +35,7 @@ namespace calculate_definitions {
     using pValue = std::unique_ptr<Value[]>;
     using vValue = std::vector<Value>;
     using mValue = std::unordered_map<String, Value>;
+    using fValue = std::function<Value(const vValue&)>;
 
     using Regex = std::regex;
     using Match = std::smatch;

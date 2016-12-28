@@ -80,6 +80,13 @@ class Expression(object):
 
         return result
 
+    def __repr__(self):
+        return "{}('{}', '{}')".format(
+            self.__class__.__name__,
+            self.expression,
+            self.variables
+        )
+
     def __del__(self):
         try:
             calculate.freeExpression(self.__handler)

@@ -1,9 +1,9 @@
 package:
   name: calculate
-  version: "1.1.0"
+  version: "${PACKAGE_VERSION}"
 
 build:
-  number: 1
+  number: ${BUILD_NUMBER}
 
 source:
   path: ..
@@ -12,11 +12,9 @@ requirements:
   build:
     - python >=2.7
     - cffi >=1.0.0
-    - vs2015_runtime # [win]
   run:
     - python >=2.7
     - cffi >=1.0.0
-    - vs2015_runtime # [win]
 
 about:
   license: MIT License

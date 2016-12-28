@@ -5,117 +5,104 @@
 
 namespace calculate_symbols {
 
-    mSymbolGen Constant::_symbols;
-    mSymbolGen Operator::_symbols;
-    mSymbolGen Function::_symbols;
-
-
-    void Evaluable::print(Stream &stream, String ind) const noexcept {
-        if (ind.size() == 0)
-            stream << "[" << token << "]\n";
-        else if (ind.size() == 3)
-            stream << " \\_[" << token << "]\n";
-        else {
-            stream << ind.substr(0, ind.size() - 3);
-            stream << " \\_[" << token << "]\n";
-        }
-    }
-
-
-    void Constant::print(Stream &stream, String ind) const noexcept {
-        Evaluable::print(stream, ind);
-    }
-
-
-    void Operator::addBranches(pEvaluable l, pEvaluable r) noexcept {
-        _left_operand = l;
-        _right_operand = r;
-    }
-
-    void Operator::print(Stream &stream, String ind) const noexcept {
-        Evaluable::print(stream, ind);
-        _left_operand->print(stream, ind + " | ");
-        _right_operand->print(stream, ind + "   ");
-    }
-
-
-    void Function::addBranches(const vEvaluable &x) noexcept {
-        if (x.size() == _operands.size())
+    void Evaluable::addBranches(const vEvaluable &x) noexcept {
+        if (x.size() == args)
             _operands = x;
     }
+ 
+    Value Evaluable::evaluate() const noexcept {
+        vValue x(args);
 
-    void Function::print(Stream &stream, String ind) const noexcept {
-        Evaluable::print(stream, ind);
-        for (auto i = 0u; i < args - 1; i++)
-            _operands[i]->print(stream, ind + " | ");
-        _operands[args - 1]->print(stream, ind + "   ");
+        for (auto i = 0u; i < args; i++)
+            x[i] = _operands[i]->evaluate();
+
+        return _function(x);
+    }
+
+    void Evaluable::print(Stream &stream, String ind) const noexcept {
+        if (args == _operands.size()) {
+            if (ind.size() == 0)
+                stream << "[" << token << "]\n";
+            else if (ind.size() == 3)
+                stream << " \\_[" << token << "]\n";
+            else {
+                stream << ind.substr(0, ind.size() - 3);
+                stream << " \\_[" << token << "]\n";
+            }
+            if (args > 0) {
+                for (auto i = 0u; i < args - 1; i++)
+                    _operands[i]->print(stream, ind + " | ");
+                _operands[args - 1]->print(stream, ind + "   ");
+            }
+        }
     }
 
 }
 
 
-RECORD_CONSTANT("pi", 3.141592653589)
-RECORD_CONSTANT("e", 2.718281828459)
-RECORD_CONSTANT("phi", 1.618033988749)
-RECORD_CONSTANT("gamma", 0.577215664901)
+RECORD_CONSTANT("pi",3.141592653589)
+RECORD_CONSTANT("e",2.718281828459)
+RECORD_CONSTANT("phi",1.618033988749)
+RECORD_CONSTANT("gamma",0.577215664901)
 
-RECORD_OPERATOR("+", 200, true, a + b)
-RECORD_OPERATOR("-", 200, true, a - b)
-RECORD_OPERATOR("*", 400, true, a * b)
-RECORD_OPERATOR("/", 400, true, a / b)
-RECORD_OPERATOR("%", 400, true, std::fmod(a,b))
-RECORD_OPERATOR("^", 800, false, std::pow(a,b))
-RECORD_OPERATOR("**", 800, false, std::pow(a,b))
+RECORD_OPERATOR("+",200,true,[](Value x,Value y){return x+y;})
+RECORD_OPERATOR("-",200,true,[](Value x,Value y){return x-y;})
+RECORD_OPERATOR("*",400,true,[](Value x,Value y){return x*y;})
+RECORD_OPERATOR("/",400,true,[](Value x,Value y){return x/y;})
+RECORD_OPERATOR("%",400,true,[](Value x,Value y){return std::fmod(x,y);})
+RECORD_OPERATOR("^",800,false,[](Value x,Value y){return std::pow(x,y);})
+RECORD_OPERATOR("**",800,false,[](Value x,Value y){return std::pow(x,y);})
+RECORD_OPERATOR("#",1000,true,[](Value x,Value y){return x*y;})
 
-RECORD_FUNCTION("fabs", std::fabs(x[0]))
-RECORD_FUNCTION("abs", std::abs(x[0]))
-RECORD_FUNCTION("fma", std::fma(x[0], x[1], x[2]))
-RECORD_FUNCTION("copysign", std::copysign(x[0], x[1]))
-RECORD_FUNCTION("nextafter", std::nextafter(x[0], x[1]))
+RECORD_FUNCTION("fabs",[](Value x){return std::fabs(x);})
+RECORD_FUNCTION("abs",[](Value x){return std::abs(x);})
+RECORD_FUNCTION("fma",[](Value x,Value y,Value z){return std::fma(x,y,z);})
+RECORD_FUNCTION("copysign",[](Value x,Value y){return std::copysign(x,y);})
+RECORD_FUNCTION("nextafter",[](Value x,Value y){return std::nextafter(x,y);})
 
-RECORD_FUNCTION("fdim", std::fdim(x[0], x[1]))
-RECORD_FUNCTION("fmax", std::fmax(x[0], x[1]))
-RECORD_FUNCTION("fmin", std::fmin(x[0], x[1]))
+RECORD_FUNCTION("fdim",[](Value x,Value y){return std::fdim(x,y);})
+RECORD_FUNCTION("fmax",[](Value x,Value y){return std::fmax(x,y);})
+RECORD_FUNCTION("fmin",[](Value x,Value y){return std::fmin(x,y);})
 
-RECORD_FUNCTION("ceil", std::ceil(x[0]))
-RECORD_FUNCTION("floor", std::floor(x[0]))
-RECORD_FUNCTION("fmod", std::fmod(x[0], x[1]))
-RECORD_FUNCTION("trunc", std::trunc(x[0]))
-RECORD_FUNCTION("round", std::round(x[0]))
-RECORD_FUNCTION("rint", std::rint(x[0]))
-RECORD_FUNCTION("nearbyint", std::nearbyint(x[0]))
-RECORD_FUNCTION("remainder", std::remainder(x[0], x[1]))
+RECORD_FUNCTION("ceil",[](Value x){return std::ceil(x);})
+RECORD_FUNCTION("floor",[](Value x){return std::floor(x);})
+RECORD_FUNCTION("fmod",[](Value x,Value y){return std::fmod(x,y);})
+RECORD_FUNCTION("trunc",[](Value x){return std::trunc(x);})
+RECORD_FUNCTION("round",[](Value x){return std::round(x);})
+RECORD_FUNCTION("rint",[](Value x){return std::rint(x);})
+RECORD_FUNCTION("nearbyint",[](Value x){return std::nearbyint(x);})
+RECORD_FUNCTION("remainder",[](Value x,Value y){return std::remainder(x,y);})
 
-RECORD_FUNCTION("pow", std::pow(x[0], x[1]))
-RECORD_FUNCTION("sqrt", std::sqrt(x[0]))
-RECORD_FUNCTION("cbrt", std::cbrt(x[0]))
-RECORD_FUNCTION("hypot", std::hypot(x[0], x[1]))
+RECORD_FUNCTION("pow",[](Value x,Value y){return std::pow(x,y);})
+RECORD_FUNCTION("sqrt",[](Value x){return std::sqrt(x);})
+RECORD_FUNCTION("cbrt",[](Value x){return std::cbrt(x);})
+RECORD_FUNCTION("hypot",[](Value x,Value y){return std::hypot(x,y);})
 
-RECORD_FUNCTION("exp", std::exp(x[0]))
-RECORD_FUNCTION("expm1", std::expm1(x[0]))
-RECORD_FUNCTION("exp2", std::exp2(x[0]))
-RECORD_FUNCTION("log", std::log(x[0]))
-RECORD_FUNCTION("log10", std::log10(x[0]))
-RECORD_FUNCTION("log1p", std::log1p(x[0]))
-RECORD_FUNCTION("log2", std::log2(x[0]))
-RECORD_FUNCTION("logb", std::logb(x[0]))
+RECORD_FUNCTION("exp",[](Value x){return std::exp(x);})
+RECORD_FUNCTION("expm1",[](Value x){return std::expm1(x);})
+RECORD_FUNCTION("exp2",[](Value x){return std::exp2(x);})
+RECORD_FUNCTION("log",[](Value x){return std::log(x);})
+RECORD_FUNCTION("log10",[](Value x){return std::log10(x);})
+RECORD_FUNCTION("log1p",[](Value x){return std::log1p(x);})
+RECORD_FUNCTION("log2",[](Value x){return std::log2(x);})
+RECORD_FUNCTION("logb",[](Value x){return std::logb(x);})
 
-RECORD_FUNCTION("sin", std::sin(x[0]))
-RECORD_FUNCTION("cos", std::cos(x[0]))
-RECORD_FUNCTION("tan", std::tan(x[0]))
-RECORD_FUNCTION("asin", std::asin(x[0]))
-RECORD_FUNCTION("acos", std::acos(x[0]))
-RECORD_FUNCTION("atan", std::atan(x[0]))
-RECORD_FUNCTION("atan2", std::atan2(x[0], x[1]))
+RECORD_FUNCTION("sin",[](Value x){return std::sin(x);})
+RECORD_FUNCTION("cos",[](Value x){return std::cos(x);})
+RECORD_FUNCTION("tan",[](Value x){return std::tan(x);})
+RECORD_FUNCTION("asin",[](Value x){return std::asin(x);})
+RECORD_FUNCTION("acos",[](Value x){return std::acos(x);})
+RECORD_FUNCTION("atan",[](Value x){return std::atan(x);})
+RECORD_FUNCTION("atan2",[](Value x,Value y){return std::atan2(x,y);})
 
-RECORD_FUNCTION("sinh", std::sinh(x[0]))
-RECORD_FUNCTION("cosh", std::cosh(x[0]))
-RECORD_FUNCTION("tanh", std::tanh(x[0]))
-RECORD_FUNCTION("asinh", std::asinh(x[0]))
-RECORD_FUNCTION("acosh", std::acosh(x[0]))
-RECORD_FUNCTION("atanh", std::atanh(x[0]))
+RECORD_FUNCTION("sinh",[](Value x){return std::sinh(x);})
+RECORD_FUNCTION("cosh",[](Value x){return std::cosh(x);})
+RECORD_FUNCTION("tanh",[](Value x){return std::tanh(x);})
+RECORD_FUNCTION("asinh",[](Value x){return std::asinh(x);})
+RECORD_FUNCTION("acosh",[](Value x){return std::acosh(x);})
+RECORD_FUNCTION("atanh",[](Value x){return std::atanh(x);})
 
-RECORD_FUNCTION("erf", std::erf(x[0]))
-RECORD_FUNCTION("erfc", std::erfc(x[0]))
-RECORD_FUNCTION("tgamma", std::tgamma(x[0]))
-RECORD_FUNCTION("lgamma", std::lgamma(x[0]))
+RECORD_FUNCTION("erf",[](Value x){return std::erf(x);})
+RECORD_FUNCTION("erfc",[](Value x){return std::erfc(x);})
+RECORD_FUNCTION("tgamma",[](Value x){return std::tgamma(x);})
+RECORD_FUNCTION("lgamma",[](Value x){return std::lgamma(x);})

@@ -1,6 +1,8 @@
 #ifndef __CALCULATE_C_INTERFACE_H__
 #define __CALCULATE_C_INTERFACE_H__
 
+#include "calculate/definitions.hpp"
+
 #ifdef _MSC_VER
 #define EXPORT_GLOBAL __declspec(dllimport)
 #else
@@ -8,7 +10,6 @@
 #endif
 
 #ifdef __cplusplus
-#include "calculate/definitions.hpp"
 extern "C" {
 #define STRUCT
 #else
@@ -33,8 +34,8 @@ struct calculate_c_library_template {
     void (*getPostfix)(Expression, Byte*);
     void (*getTree)(Expression, Byte*);
 
-    Value (*evaluateArray)(Expression, Value*, int, Byte*);
-    Value (*evalArray)(Expression, Value*, int);
+    Value (*evaluateArray)(Expression, Value*, Integer, Byte*);
+    Value (*evalArray)(Expression, Value*, Integer);
     Value (*eval)(Expression, ...);
 };
 

@@ -14,11 +14,11 @@ With bindings for **C**, **Fortran** and **Python**.
 
 ### Requirements
 
-* **CMake** *>= 3.5*, to generate the makefiles and **Visual Studio** solutions.
-* **C**/**C++** compiler, with **C++14** standard support (**GNU**, **Clang** and **MSVC** tested).
-* **Fortran** compiler (*optional*), with **2008** standard support (**GNU** and **Intel** tested).
+* **CMake** *>= 3.5* (*3.7* in the case of **Fortran**), to generate the build scripts .
+* **C**/**C++** compiler, with **C++14** standard support (**GNU** *>= 5.3*, **Clang** *>= 3.8*).
+* **Fortran** compiler (*optional*), with **2008** standard support (**Intel** *>= 16.3*).
 * **Python** *>= 2.7* (*optional*), along with **setuptools** and **cffi** *>=1.0* libraries.
-* **gcov** and **gcovr** tools (*optional*), for generating coverage reports.
+* **gcov** and **gcovr** tools (*optional*), to build the coverage reports.
 
 
 ### Building and testing
@@ -45,6 +45,15 @@ Generating the coverage reports (only **GNU** and **Clang**):
 $ COVERAGE=1 cmake . -DCMAKE_BUILD_TYPE=Debug
 $ make unittests
 $ make coverage
+```
+
+Generating the **Python** binary distributions:
+
+```
+$ BINDING=1 cmake . -DCMAKE_BUILD_TYPE=Release
+$ make python_wheel
+$ make conda_package
+
 ```
 
 **License:** MIT (see `copying`).

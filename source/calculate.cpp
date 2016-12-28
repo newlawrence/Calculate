@@ -4,18 +4,24 @@
 
 
 namespace {
-    
-    const Regex ext_regex(R"_(([^\s,]+)|(,))_");
 
-    const Regex var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
+    using namespace calculate_definitions;
 
-    const Regex pre_regex(R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_");
+    Regex ext_regex(R"_(([^\s,]+)|(,))_");
+    Regex var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
 
-    const Regex regex(
+    Regex prg0(R"_(^(\s*[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
+    Regex prg1(R"_(([^A-Za-z\d)_\s]+)(\s+[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
+    Regex prg2(R"_(([(,])(\s*[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
+    Regex prg3(R"_(([+\-])(\()(1)(\)))_");
+    Regex prg4(R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_");
+    Regex prg5(R"_(((?:\d+\.?\d*|\.\d+)+[eE][+\-])(\s+)(\d+))_");
+
+    Regex regex(
         R"_(((?:[+\-])?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
-            R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-            R"_(([^A-Za-z\d(),\s]+)|)_"
-            R"_((\()|(\))|(,))_"
+        R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
+        R"_(([^A-Za-z\d(),_\s]+)|)_"
+        R"_((\()|(\))|(,))_"
     );
 
 }
@@ -75,20 +81,29 @@ namespace calculate {
         Stream stream;
 
         enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR};
-        auto is = [&match](int group) { return !match[group].str().empty(); };
+        auto is = [&match](Integer group) {
+            return !match[group].str().empty();
+        };
         auto encountered = std::unordered_set<String>();
 
-        auto expression = std::regex_replace(_expression, pre_regex, "$1 ");
+        auto expression = _expression;
+        expression = std::regex_replace(expression, prg0, "$1(1) # $2");
+        expression = std::regex_replace(expression, prg1, "$1 $2(1) # $3");
+        expression = std::regex_replace(expression, prg2, "$1 $2(1) # $3");
+        expression = std::regex_replace(expression, prg3, "$1$3");
+        expression = std::regex_replace(expression, prg4, "$1 ");
+        expression = std::regex_replace(expression, prg5, "$1$3");
+
         while (std::regex_search(expression, match, regex)) {
             auto token = match.str();
             auto it = std::find(_variables.begin(), _variables.end(), token);
 
             if (is(Group::NUMBER))
-                infix.push(make<Constant, Value>(token, std::stod(token)));
+                infix.push(make<Constant>(token, std::stod(token)));
             else if (is(Group::NAME) && it != _variables.end()) {
                 auto position = it - _variables.begin();
                 infix.push(
-                    make<Variable, Value *>(token, _values.get() + position)
+                    make<Variable>(token, _values.get() + position)
                 );
                 encountered.emplace(token);
             }
@@ -279,34 +294,15 @@ namespace calculate {
             element = postfix.front();
             postfix.pop();
 
-            if (element->is(Type::CONSTANT)) {
-                operands.push(element);
-            }
-
-            else if (element->is(Type::FUNCTION)) {
-                auto function = cast<Function>(element);
-                auto args = function->args;
-                vEvaluable ops(args);
-                for (auto i = args; i > 0; i--) {
-                    if (operands.empty())
-                        throw MissingArgumentsException(function->token);
-                    ops[i - 1] = operands.top();
-                    operands.pop();
-                }
-                function->addBranches(ops);
-                operands.push(element);
-            }
-
-            else if (element->is(Type::OPERATOR)) {
-                auto binary = cast<Operator>(element);
-                pEvaluable a, b;
-                b = operands.top();
+            vEvaluable ops(element->args);
+            for (auto i = element->args; i > 0; i--) {
+                if (operands.empty())
+                    throw MissingArgumentsException(element->token);
+                ops[i - 1] = operands.top();
                 operands.pop();
-                a = operands.top();
-                operands.pop();
-                binary->addBranches(a, b);
-                operands.push(element);
             }
+            element->addBranches(ops);
+            operands.push(element);
         }
         if (operands.size() > 1)
             throw ArgumentsExcessException(operands.top()->token);

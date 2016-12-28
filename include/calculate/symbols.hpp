@@ -2,69 +2,33 @@
 #define __CALCULATE_SYMBOLS_HPP__
 
 #include "calculate/definitions.hpp"
+#include "calculate/meta.hpp"
 
 
 #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
-    BuiltinConstant<djb2(TOKEN)>::BuiltinConstant() noexcept :                \
-            Constant(TOKEN, VALUE) {}                                         \
-    template <>                                                               \
-    const Recorder<Constant> BuiltinConstant<djb2(TOKEN)>::_recorder(         \
-        TOKEN, static_cast<pSymbol(*)()>(make<BuiltinConstant<djb2(TOKEN)>>)  \
-    );                                                                        \
+    BuiltinConstant<TypeString(TOKEN)>::BuiltinConstant() noexcept :          \
+      Constant(TOKEN, VALUE) {}                                               \
+    template class BuiltinConstant<TypeString(TOKEN)>;                        \
 }
 
 
 #define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION)        \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
-    BuiltinOperator<djb2(TOKEN)>::BuiltinOperator() noexcept :                \
-            Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION) {}                  \
-    template <>                                                               \
-    Value BuiltinOperator<djb2(TOKEN)>::evaluate() const noexcept {           \
-        Value a = _left_operand->evaluate();                                  \
-        Value b = _right_operand->evaluate();                                 \
-        return FUNCTION;                                                      \
-    }                                                                         \
-    template <>                                                               \
-    const Recorder<Operator> BuiltinOperator<djb2(TOKEN)>::_recorder(         \
-        TOKEN, static_cast<pSymbol(*)()>(make<BuiltinOperator<djb2(TOKEN)>>)  \
-    );                                                                        \
+    BuiltinOperator<TypeString(TOKEN)>::BuiltinOperator() noexcept :          \
+      Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, wrapFunctor(FUNCTION)) {} \
+    template class BuiltinOperator<TypeString(TOKEN)>;                        \
 }
 
 
 #define RECORD_FUNCTION(TOKEN, FUNCTION)                                      \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
-    BuiltinFunction<djb2(TOKEN)>::BuiltinFunction() noexcept :                \
-            Function(TOKEN, count_args(#FUNCTION)) {}                         \
-    template <>                                                               \
-    Value BuiltinFunction<djb2(TOKEN)>::evaluate() const noexcept {           \
-        vValue x(args);                                                       \
-        for (auto i = 0u; i < args; i++)                                      \
-            x[i] = _operands[i]->evaluate();                                  \
-        return FUNCTION;                                                      \
-    }                                                                         \
-    template <>                                                               \
-    const Recorder<Function> BuiltinFunction<djb2(TOKEN)>::_recorder(         \
-        TOKEN, static_cast<pSymbol(*)()>(make<BuiltinFunction<djb2(TOKEN)>>)  \
-    );                                                                        \
-}
-
-
-namespace {
-
-    using namespace calculate_definitions;
-
-    constexpr Hash djb2(const Byte *s, Hash h=5381) {
-	    return !*s ? h : djb2(s + 1, 33 * h ^ static_cast<Unsigned>(*s));
-    }
-
-    constexpr Unsigned count_args(Byte const * const s) {
-        return *s == '\0' ? 1 : (*s == ',') + count_args(s + 1);
-    }
-
+    BuiltinFunction<TypeString(TOKEN)>::BuiltinFunction() noexcept :          \
+      Function(TOKEN, wrapFunctor(FUNCTION).args(), wrapFunctor(FUNCTION)) {} \
+    template class BuiltinFunction<TypeString(TOKEN)>;                        \
 }
 
 
@@ -75,7 +39,7 @@ namespace calculate_symbols {
     class Symbol;
     using pSymbol = std::shared_ptr<Symbol>;
     using vSymbol = std::vector<pSymbol>;
-    using fSymbolGen = std::function<pSymbol()>;
+    using fSymbolGen = pSymbol(*)();
     using mSymbolGen = std::unordered_map<String, fSymbolGen>;
     using qSymbol = std::queue<pSymbol>;
     using sSymbol = std::stack<pSymbol>;
@@ -89,46 +53,46 @@ namespace calculate_symbols {
     enum Type {LEFT, RIGHT, SEPARATOR, CONSTANT, OPERATOR, FUNCTION};
 
 
-    template <typename T>
-    std::shared_ptr<T> cast(pSymbol o) noexcept {
-         return std::dynamic_pointer_cast<T>(o);
+    template <typename Type>
+    std::shared_ptr<Type> cast(pSymbol o) noexcept {
+         return std::dynamic_pointer_cast<Type>(o);
     }
 
 
-    template <typename T>
+    template <typename Type>
     pSymbol make() {
-        return std::make_shared<T>();
+        return std::make_shared<Type>();
     }
 
-    template <typename T>
+    template <typename Type>
     pSymbol make(const String &t) {
-        return T::_symbols.at(t)();
+        return Type::symbols().at(t)();
     }
 
-    template <typename T, typename D>
-    pSymbol make(const String &t, D v) {
-        return std::make_shared<T>(t, v);
+    template <typename Type, typename VType>
+    pSymbol make(const String &t, VType v) {
+        return std::make_shared<Type>(t, v);
     }
 
 
-    template <typename T>
-    bool defined(String t) {
-        return T::_symbols.find(t) != T::_symbols.end();
+    template <typename Type>
+    Bool defined(String t) {
+        return Type::symbols().find(t) != Type::symbols().end();
     }
 
-    template <typename T>
+    template <typename Type>
     vString query() {
         vString tokens;
-        for (const auto& pair : T::_symbols)
+        for (const auto& pair : Type::symbols())
             tokens.emplace_back(pair.first);
         return tokens;
     }
 
 
-    template <typename T>
+    template <typename Type>
     struct Recorder {
         Recorder(const String &t, fSymbolGen g) noexcept {
-            T::_symbols[t] = g;
+            Type::symbols()[t] = g;
         }
     };
 
@@ -150,7 +114,7 @@ namespace calculate_symbols {
         const Type type;
 
         virtual ~Symbol() noexcept = 0;
-        bool is(Type y) const noexcept { return type == y; }
+        Bool is(Type y) const noexcept { return type == y; }
     };
     inline Symbol::~Symbol() noexcept {}
 
@@ -179,146 +143,155 @@ namespace calculate_symbols {
 
     class Evaluable : public Symbol {
     protected:
-        Evaluable(const String &t, Type y) noexcept :
-                Symbol(t, y) {}
+        fValue _function;
+        vEvaluable _operands;
+
+        Evaluable(
+            const String &t,
+            Type y,
+            Unsigned s = 0u,
+            fValue f = [](const vValue &){ return nan; }
+        ) noexcept : Symbol(t, y), _function(f), args(s) {}
 
     public:
+        const Unsigned args;
+
         virtual ~Evaluable() noexcept = 0;
-        virtual Value evaluate() const noexcept = 0;
-        virtual void print(Stream &stream, String ind="") const noexcept;
+        void addBranches(const vEvaluable &x) noexcept;
+        Value evaluate() const noexcept;
+        void print(Stream &stream, String ind="") const noexcept;
     };
     inline Evaluable::~Evaluable() noexcept {}
 
 
-    class EmptyEvaluable final : public Evaluable {
-    public:
-        EmptyEvaluable() noexcept : Evaluable("{empty}", Type::CONSTANT) {}
-        virtual ~EmptyEvaluable() noexcept {}
-        virtual Value evaluate() const noexcept { return nan; }
-    };
-
-
     class Variable final : public Evaluable {
     public:
-        const Value *_value;
-
         Variable(const String &t, Value *v) noexcept :
-                Evaluable(t, Type::CONSTANT),
-                _value(v) {}
+                Evaluable(
+                    t, Type::CONSTANT, 0, [v](const vValue &){ return *v; }
+                ) {}
         virtual ~Variable() noexcept {}
-        virtual Value evaluate() const noexcept { return *_value; }
     };
 
 
     class Constant : public Evaluable {
     protected:
-        static mSymbolGen _symbols;
+        static mSymbolGen& symbols() {
+            static mSymbolGen _symbols;
+            return _symbols;
+        }
 
     public:
-        const Value value;
-
         Constant(const String &t, Value v) noexcept :
-                Evaluable(t, Type::CONSTANT),
-                value(v) {}
+                Evaluable(
+                    t, Type::CONSTANT, 0, [v](const vValue &){ return v; }
+                ) {}
         virtual ~Constant() noexcept {};
-        virtual Value evaluate() const noexcept { return value; }
-        virtual void print(Stream &stream, String ind="") const noexcept;
 
         friend struct Recorder<Constant>;
         friend pSymbol make<Constant>(const String &t);
-        friend bool defined<Constant>(String t);
+        friend Bool defined<Constant>(String t);
         friend vString query<Constant>();
     };
 
-    template <Hash hash>
+    template <typename Token>
     class BuiltinConstant final : public Constant {
         static const Recorder<Constant> _recorder;
 
     public:
         BuiltinConstant() noexcept :
-                Constant("{constant}", nan) {}
+                Constant(
+                    "{constant}", nan
+                ) {}
         virtual ~BuiltinConstant() noexcept {}
     };
-
-
+    template <typename Token>
+    const Recorder<Constant> BuiltinConstant<Token>::_recorder(
+        Token::str, make<BuiltinConstant<Token>>
+    );
+   
+ 
     class Operator : public Evaluable {
     protected:
-        static mSymbolGen _symbols;
+        static mSymbolGen& symbols() {
+            static mSymbolGen _symbols;
+            return _symbols;
+        }
 
-        pEvaluable _left_operand;
-        pEvaluable _right_operand;
-
-        Operator(const String &t, Unsigned p, bool l) noexcept :
-                Evaluable(t, Type::OPERATOR),
-                _left_operand(cast<Evaluable>(make<EmptyEvaluable>())),
-                _right_operand(cast<Evaluable>(make<EmptyEvaluable>())),
+        Operator(const String &t, Unsigned p, Bool l, fValue f) noexcept :
+                Evaluable(
+                    t, Type::OPERATOR, 2, f
+                ),
                 precedence(p),
                 left_assoc(l) {}
 
     public:
         const Unsigned precedence;
-        const bool left_assoc;
+        const Bool left_assoc;
 
         virtual ~Operator() noexcept {}
-        void addBranches(pEvaluable l, pEvaluable r) noexcept;
-        virtual Value evaluate() const noexcept = 0;
-        virtual void print(Stream &stream, String ind="") const noexcept;
 
         friend struct Recorder<Operator>;
         friend pSymbol make<Operator>(const String &t);
-        friend bool defined<Operator>(String t);
+        friend Bool defined<Operator>(String t);
         friend vString query<Operator>();
     };
 
 
-    template <Hash hash>
+    template <typename Token>
     class BuiltinOperator final : public Operator {
         static const Recorder<Operator> _recorder;
 
     public:
         BuiltinOperator() noexcept :
-                Operator("{operator}", 0, true) {}
+                Operator(
+                    "{operator}", 0, true, 0, [](const vValue &){ return nan; }
+                ) {}
         virtual ~BuiltinOperator() noexcept {}
-        virtual Value evaluate() const noexcept { return nan; }
     };
+    template <typename Token>
+    const Recorder<Operator> BuiltinOperator<Token>::_recorder(
+        Token::str, make<BuiltinOperator<Token>>
+    );
 
 
     class Function : public Evaluable {
     protected:
-        static mSymbolGen _symbols;
+        static mSymbolGen& symbols() {
+            static mSymbolGen _symbols;
+            return _symbols;
+        }
 
-        vEvaluable _operands;
-
-        Function(const String &t, Unsigned s) noexcept :
-                Evaluable(t, Type::FUNCTION),
-                _operands(s, cast<Evaluable>(make<EmptyEvaluable>())),
-                args(s) {}
+        Function(const String &t, Unsigned s, fValue f) noexcept :
+                Evaluable(
+                    t, Type::FUNCTION, s, f
+                ) {}
 
     public:
-        const Unsigned args;
-
         virtual ~Function() noexcept {}
-        void addBranches(const vEvaluable &x) noexcept;
-        virtual Value evaluate() const noexcept = 0;
-        virtual void print(Stream &stream, String ind="") const noexcept;
 
         friend struct Recorder<Function>;
         friend pSymbol make<Function>(const String &t);
-        friend bool defined<Function>(String t);
+        friend Bool defined<Function>(String t);
         friend vString query<Function>();
     };
 
 
-    template <Hash hash>
+    template <typename Token>
     class BuiltinFunction final : public Function {
         static const Recorder<Function> _recorder;
 
     public:
         BuiltinFunction() noexcept :
-                 Function("{function}", 0) {}
-        virtual ~BuiltinFunction() {}
-        virtual Value evaluate() const noexcept { return nan; }
+                Function(
+                    "{function}", 0, [](const vValue &){ return nan; }
+                ) {}
+        virtual ~BuiltinFunction() noexcept {}
     };
+    template <typename Token>
+    const Recorder<Function> BuiltinFunction<Token>::_recorder(
+        Token::str, make<BuiltinFunction<Token>>
+    );
 
 }
 
