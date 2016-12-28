@@ -45,6 +45,7 @@ function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
                     ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
         )
     endif()
+    add_dependencies(${TARGETNAME} ${TESTSNAME})
 endfunction()
 
 

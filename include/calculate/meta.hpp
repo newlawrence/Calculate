@@ -91,17 +91,9 @@ namespace calculate_meta {
         constexpr SizeT args() { return n; };
 
         Value operator()(const vValue &args) {
-            if (args.size() != n)
-                return nan;
-
-            try {
-                return evalVector(
-                    functor, args, std::make_index_sequence<n>()
-                );
-            }
-            catch (const std::exception &) {
-                return nan;
-            }
+            return evalVector(
+                functor, args, std::make_index_sequence<n>()
+            );
         }
     };
 
