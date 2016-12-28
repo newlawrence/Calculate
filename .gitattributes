@@ -15,6 +15,6 @@ copying linguist-vendored
 *.bat linguist-vendored
 *.in linguist-vendored
 
-#Exclude folders from language statistics
+# Exclude folders from language statistics
 examples/* linguist-vendored
 tests/* linguist-vendored
