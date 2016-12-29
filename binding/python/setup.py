@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+import sys
 import os.path as path
 from platform import system
 from setuptools import setup
 
+if sys.version_info < (2, 7):
+    sys.exit('Only Python versions superior or equal than 2.7 supported')
 
 library = 'calculate'
 with open('{}/__init__.py'.format(library), 'r') as file:

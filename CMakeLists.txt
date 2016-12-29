@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
 project(calculate C CXX)
+
+
 set(MAJOR_VERSION 1)
 set(MINOR_VERSION 1)
 set(PATCH_VERSION 1)
 set(DEV )
-set(BUILD_NUMBER 1)
-
+set(BUILD_NUMBER 0)
 set(PACKAGE_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}${DEV}")
 string(TIMESTAMP COMPILE_DATE %Y/%m/%d)
 

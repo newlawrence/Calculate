@@ -4,16 +4,17 @@ package:
 
 build:
   number: ${BUILD_NUMBER}
+  script: python setup.py install
 
 source:
   path: ..
 
 requirements:
   build:
-    - python >=2.7
+    - python
     - cffi >=1.0.0
   run:
-    - python >=2.7
+    - python
     - cffi >=1.0.0
 
 about:
