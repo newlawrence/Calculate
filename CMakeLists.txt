@@ -135,7 +135,7 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 add_library(calculate SHARED "${sources}")
 target_compile_definitions(calculate PUBLIC "_CRT_SECURE_NO_WARNINGS")
 set_property(TARGET calculate PROPERTY VERSION ${PACKAGE_VERSION})
-set_property(TARGET calculate PROPERTY SOVERSION ${MAJOR_VERSION})
+set_property(TARGET calculate PROPERTY SOVERSION ${MAJOR})
 set_target_properties(calculate PROPERTIES PREFIX "lib")
 
 add_library(calculate_static STATIC "${sources}")
