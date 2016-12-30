@@ -4,25 +4,30 @@ project(calculate C CXX)
 
 set(MAJOR_VERSION 1)
 set(MINOR_VERSION 1)
-set(PATCH_VERSION 1)
-set(DEV )
+set(PATCH_VERSION 2)
+set(DEV "dev0")
 set(BUILD_NUMBER 0)
 set(PACKAGE_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}${DEV}")
 string(TIMESTAMP COMPILE_DATE %Y/%m/%d)
 
 
+set(PATCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patch")
 macro(apply_patch COMPILER)
     find_program(PATCH patch)
     find_program(GIT git)
-    message("-- Applying patch...")
+    message("-- Applying ${COMPILER} patch...")
     if(PATCH)
-        execute_process(COMMAND ${PATCH} -p1 -i patch/${COMPILER}.patch)
+        execute_process(
+            COMMAND ${PATCH} -p1 -i
+                    ${PATCH_DIR}/${COMPILER}.patch
+        )
     elseif(GIT)
         execute_process(
-            COMMAND ${GIT} apply --whitespace=fix patch/${COMPILER}.patch
+            COMMAND ${GIT} apply --whitespace=fix
+                    ${PATCH_DIR}/${COMPILER}.patch
         )
     else()
-        message(FATAL_ERROR "Suitable patching program not found!")
+        message(FATAL_ERROR "Suitable patching command not found!")
     endif()
 endmacro()
 
@@ -109,7 +114,6 @@ elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
 endif()
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
-include_directories("${PROJECT_SOURCE_DIR}/extern/include")
 file(GLOB sources "${PROJECT_SOURCE_DIR}/source/*.cpp")
 
 
@@ -130,6 +134,7 @@ if(DEFINED ENV{TESTING} OR DEFINED ENV{COVERAGE})
     set(CATCH_GIT "https://raw.githubusercontent.com/philsquared/Catch/master")
     set(CATCH_URL "${CATCH_GIT}/single_include/catch.hpp")
     set(CATCH_PATH "${CMAKE_CURRENT_SOURCE_DIR}/extern/include/catch.hpp")
+    include_directories("${PROJECT_SOURCE_DIR}/extern/include")
     if(NOT EXISTS "${CATCH_PATH}")
         message("-- Downloading catch library...")
         file(DOWNLOAD "${CATCH_URL}" "${CATCH_PATH}")
