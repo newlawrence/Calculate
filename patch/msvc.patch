@@ -1,5 +1,5 @@
 diff --git a/include/calculate/meta.hpp b/include/calculate/meta.hpp
-index fc2b52a..47a4ff2 100644
+index d22a5b1..ee14578 100644
 --- a/include/calculate/meta.hpp
 +++ b/include/calculate/meta.hpp
 @@ -6,13 +6,16 @@
@@ -21,11 +21,19 @@ index fc2b52a..47a4ff2 100644
      template<typename Type>
      struct FunctionTraits : FunctionTraits<decltype(&Type::operator())> {
      };
-@@ -127,18 +130,4 @@ auto wrapFunctor(Functor&& functor) {
-     };
+@@ -107,7 +110,7 @@ namespace calculate_meta {
+             "Return type of builtin function must be double"
+         );
+         static_assert(
+-            lambdaArgs<FunctorType>()> 0,
++            lambdaArgs<FunctorType>() > 0,
+             "At least one argument required for builtin function"
+         );
+         static_assert(
+@@ -125,17 +128,4 @@ namespace calculate_meta {
+ 
  }
  
--
 -template <char ... chars>
 -struct StringLiteral {
 -    static constexpr const char str[sizeof...(chars) + 1] = {chars..., '\0'};
@@ -41,10 +49,10 @@ index fc2b52a..47a4ff2 100644
 -
  #endif
 diff --git a/include/calculate/symbols.hpp b/include/calculate/symbols.hpp
-index 2cac96b..d4a330a 100755
+index 66fa170..d4a330a 100755
 --- a/include/calculate/symbols.hpp
 +++ b/include/calculate/symbols.hpp
-@@ -8,33 +8,43 @@
+@@ -8,27 +8,36 @@
  #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
  namespace calculate_symbols {                                                 \
      template <>                                                               \
@@ -87,14 +95,7 @@ index 2cac96b..d4a330a 100755
  }
  
  
- namespace calculate_symbols {
- 
-     using namespace calculate_definitions;
-+    using namespace calculate_meta;
- 
-     class Symbol;
-     using pSymbol = std::shared_ptr<Symbol>;
-@@ -194,7 +204,7 @@ namespace calculate_symbols {
+@@ -195,7 +204,7 @@ namespace calculate_symbols {
          friend vString query<Constant>();
      };
  
@@ -103,7 +104,7 @@ index 2cac96b..d4a330a 100755
      class BuiltinConstant final : public Constant {
          static const Recorder<Constant> _recorder;
  
-@@ -205,10 +215,6 @@ namespace calculate_symbols {
+@@ -206,10 +215,6 @@ namespace calculate_symbols {
                  ) {}
          virtual ~BuiltinConstant() noexcept {}
      };
@@ -114,7 +115,7 @@ index 2cac96b..d4a330a 100755
  
  
      class Operator : public Evaluable {
-@@ -238,7 +244,7 @@ namespace calculate_symbols {
+@@ -239,7 +244,7 @@ namespace calculate_symbols {
      };
  
  
@@ -123,7 +124,7 @@ index 2cac96b..d4a330a 100755
      class BuiltinOperator final : public Operator {
          static const Recorder<Operator> _recorder;
  
-@@ -249,10 +255,6 @@ namespace calculate_symbols {
+@@ -250,10 +255,6 @@ namespace calculate_symbols {
                  ) {}
          virtual ~BuiltinOperator() noexcept {}
      };
@@ -134,7 +135,7 @@ index 2cac96b..d4a330a 100755
  
  
      class Function : public Evaluable {
-@@ -277,7 +279,7 @@ namespace calculate_symbols {
+@@ -278,7 +279,7 @@ namespace calculate_symbols {
      };
  
  
@@ -143,7 +144,7 @@ index 2cac96b..d4a330a 100755
      class BuiltinFunction final : public Function {
          static const Recorder<Function> _recorder;
  
-@@ -288,10 +290,6 @@ namespace calculate_symbols {
+@@ -289,10 +290,6 @@ namespace calculate_symbols {
                  ) {}
          virtual ~BuiltinFunction() noexcept {}
      };
@@ -153,4 +154,4 @@ index 2cac96b..d4a330a 100755
 -    );
  
  }
-
+ 
