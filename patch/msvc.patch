@@ -1,0 +1,156 @@
+diff --git a/include/calculate/meta.hpp b/include/calculate/meta.hpp
+index fc2b52a..47a4ff2 100644
+--- a/include/calculate/meta.hpp
++++ b/include/calculate/meta.hpp
+@@ -6,13 +6,16 @@
+ 
+ #include "calculate/definitions.hpp"
+ 
+-#define TypeString(TOKEN) decltype(TOKEN##_tstr)
+-
+ 
+ namespace calculate_meta {
+ 
+     using namespace calculate_definitions;
+ 
++    constexpr Hash djb2(const Byte *s, Hash h=5381) {
++	    return !*s ? h : djb2(s + 1, 33 * h ^ static_cast<Hash>(*s));
++    }
++
++
+     template<typename Type>
+     struct FunctionTraits : FunctionTraits<decltype(&Type::operator())> {
+     };
+@@ -127,18 +130,4 @@ auto wrapFunctor(Functor&& functor) {
+     };
+ }
+ 
+-
+-template <char ... chars>
+-struct StringLiteral {
+-    static constexpr const char str[sizeof...(chars) + 1] = {chars..., '\0'};
+-    constexpr operator const char* (void) const {
+-        return str;
+-    }
+-};
+-template <char... chars>
+-constexpr const char StringLiteral<chars...>::str[sizeof...(chars) + 1];
+-
+-template <typename Type, Type... chars>
+-constexpr StringLiteral<chars...> operator ""_tstr() { return {}; }
+-
+ #endif
+diff --git a/include/calculate/symbols.hpp b/include/calculate/symbols.hpp
+index 2cac96b..d4a330a 100755
+--- a/include/calculate/symbols.hpp
++++ b/include/calculate/symbols.hpp
+@@ -8,33 +8,43 @@
+ #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
+ namespace calculate_symbols {                                                 \
+     template <>                                                               \
+-    BuiltinConstant<TypeString(TOKEN)>::BuiltinConstant() noexcept :          \
++    BuiltinConstant<djb2(TOKEN)>::BuiltinConstant() noexcept :                \
+       Constant(TOKEN, VALUE) {}                                               \
+-    template class BuiltinConstant<TypeString(TOKEN)>;                        \
++    template <>                                                               \
++    const Recorder<Constant> BuiltinConstant<djb2(TOKEN)>::_recorder(         \
++        TOKEN, static_cast<pSymbol(*)()>(make<BuiltinConstant<djb2(TOKEN)>>)  \
++    );                                                                        \
+ }
+ 
+ 
+ #define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION)        \
+ namespace calculate_symbols {                                                 \
+     template <>                                                               \
+-    BuiltinOperator<TypeString(TOKEN)>::BuiltinOperator() noexcept :          \
++    BuiltinOperator<djb2(TOKEN)>::BuiltinOperator() noexcept :                \
+       Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, wrapFunctor(FUNCTION)) {} \
+-    template class BuiltinOperator<TypeString(TOKEN)>;                        \
++    template <>                                                               \
++    const Recorder<Operator> BuiltinOperator<djb2(TOKEN)>::_recorder(         \
++        TOKEN, static_cast<pSymbol(*)()>(make<BuiltinOperator<djb2(TOKEN)>>)  \
++    );                                                                        \
+ }
+ 
+ 
+ #define RECORD_FUNCTION(TOKEN, FUNCTION)                                      \
+ namespace calculate_symbols {                                                 \
+     template <>                                                               \
+-    BuiltinFunction<TypeString(TOKEN)>::BuiltinFunction() noexcept :          \
++    BuiltinFunction<djb2(TOKEN)>::BuiltinFunction() noexcept :                \
+       Function(TOKEN, wrapFunctor(FUNCTION).args(), wrapFunctor(FUNCTION)) {} \
+-    template class BuiltinFunction<TypeString(TOKEN)>;                        \
++    template <>                                                               \
++    const Recorder<Function> BuiltinFunction<djb2(TOKEN)>::_recorder(         \
++        TOKEN, static_cast<pSymbol(*)()>(make<BuiltinFunction<djb2(TOKEN)>>)  \
++    );                                                                        \
+ }
+ 
+ 
+ namespace calculate_symbols {
+ 
+     using namespace calculate_definitions;
++    using namespace calculate_meta;
+ 
+     class Symbol;
+     using pSymbol = std::shared_ptr<Symbol>;
+@@ -194,7 +204,7 @@ namespace calculate_symbols {
+         friend vString query<Constant>();
+     };
+ 
+-    template <typename Token>
++    template <Hash hash>
+     class BuiltinConstant final : public Constant {
+         static const Recorder<Constant> _recorder;
+ 
+@@ -205,10 +215,6 @@ namespace calculate_symbols {
+                 ) {}
+         virtual ~BuiltinConstant() noexcept {}
+     };
+-    template <typename Token>
+-    const Recorder<Constant> BuiltinConstant<Token>::_recorder(
+-        Token::str, make<BuiltinConstant<Token>>
+-    );
+ 
+ 
+     class Operator : public Evaluable {
+@@ -238,7 +244,7 @@ namespace calculate_symbols {
+     };
+ 
+ 
+-    template <typename Token>
++    template <Hash hash>
+     class BuiltinOperator final : public Operator {
+         static const Recorder<Operator> _recorder;
+ 
+@@ -249,10 +255,6 @@ namespace calculate_symbols {
+                 ) {}
+         virtual ~BuiltinOperator() noexcept {}
+     };
+-    template <typename Token>
+-    const Recorder<Operator> BuiltinOperator<Token>::_recorder(
+-        Token::str, make<BuiltinOperator<Token>>
+-    );
+ 
+ 
+     class Function : public Evaluable {
+@@ -277,7 +279,7 @@ namespace calculate_symbols {
+     };
+ 
+ 
+-    template <typename Token>
++    template <Hash hash>
+     class BuiltinFunction final : public Function {
+         static const Recorder<Function> _recorder;
+ 
+@@ -288,10 +290,6 @@ namespace calculate_symbols {
+                 ) {}
+         virtual ~BuiltinFunction() noexcept {}
+     };
+-    template <typename Token>
+-    const Recorder<Function> BuiltinFunction<Token>::_recorder(
+-        Token::str, make<BuiltinFunction<Token>>
+-    );
+ 
+ }
+

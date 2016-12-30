@@ -18,8 +18,8 @@ macro(apply_patch COMPILER)
     if(PATCH)
         execute_process(COMMAND ${PATCH} -p1 -i patch/${COMPILER}.patch)
     elseif(GIT)
-        execute_process(COMMAND ${GIT} apply --whitespace=fix
-                                patch/${COMPILER}.patch
+        execute_process(
+            COMMAND ${GIT} apply --whitespace=fix patch/${COMPILER}.patch
         )
     else()
         message(FATAL_ERROR "Suitable patching program not found!")
@@ -76,8 +76,8 @@ if(
 )
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -std=c11")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++14")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}
-                        -Wno-gnu-string-literal-operator-template"
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -Wno-gnu-string-literal-operator-template"
     )
     if(DEFINED ENV{COVERAGE})
         if(NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
