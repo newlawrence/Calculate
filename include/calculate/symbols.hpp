@@ -209,8 +209,8 @@ namespace calculate_symbols {
     const Recorder<Constant> BuiltinConstant<Token>::_recorder(
         Token::str, make<BuiltinConstant<Token>>
     );
-   
- 
+
+
     class Operator : public Evaluable {
     protected:
         static mSymbolGen& symbols() {

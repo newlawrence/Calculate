@@ -11,14 +11,16 @@ set(PACKAGE_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}${DEV}")
 string(TIMESTAMP COMPILE_DATE %Y/%m/%d)
 
 
-macro(apply_patch)
+macro(apply_patch COMPILER)
     find_program(PATCH patch)
     find_program(GIT git)
     message("-- Applying patch...")
     if(PATCH)
-        execute_process(COMMAND ${PATCH} -p1 -i patch.diff)
+        execute_process(COMMAND ${PATCH} -p1 -i patch/${COMPILER}.patch)
     elseif(GIT)
-        execute_process(COMMAND ${GIT} apply --whitespace=fix patch.diff)
+        execute_process(COMMAND ${GIT} apply --whitespace=fix
+                                patch/${COMPILER}.patch
+        )
     else()
         message(FATAL_ERROR "Suitable patching program not found!")
     endif()
@@ -74,7 +76,9 @@ if(
 )
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -std=c11")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++14")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-string-literal-operator-template")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}
+                        -Wno-gnu-string-literal-operator-template"
+    )
     if(DEFINED ENV{COVERAGE})
         if(NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
             message(FATAL_ERROR "Code coverage in an optimized build.")
@@ -91,10 +95,10 @@ if(
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
     endif()
 elseif((${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC") OR MSVC)
-    apply_patch()
+    apply_patch(msvc)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14 /sdl")
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
-    apply_patch()
+    apply_patch(icpc)
     if(WIN32)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O3 /std:c++14")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall")

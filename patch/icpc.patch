@@ -1,5 +1,5 @@
 diff --git a/include/calculate/meta.hpp b/include/calculate/meta.hpp
-index e716585..41f2088 100644
+index fc2b52a..12a61dd 100644
 --- a/include/calculate/meta.hpp
 +++ b/include/calculate/meta.hpp
 @@ -6,13 +6,23 @@
@@ -27,6 +27,15 @@ index e716585..41f2088 100644
      template<typename Type>
      struct FunctionTraits : FunctionTraits<decltype(&Type::operator())> {
      };
+@@ -88,7 +98,7 @@ namespace calculate_meta {
+     template<typename Functor, SizeT n>
+     struct FunctorWrapper {
+         Functor functor;
+-        constexpr const SizeT args() { return n; };
++        constexpr SizeT args() { return n; };
+ 
+         Value operator()(const vValue &args) {
+             return evalVector(
 @@ -128,17 +138,11 @@ auto wrapFunctor(Functor&& functor) {
  }
  
@@ -49,7 +58,7 @@ index e716585..41f2088 100644
  
  #endif
 diff --git a/include/calculate/symbols.hpp b/include/calculate/symbols.hpp
-index 687a0ac..4c1b222 100755
+index 26752ee..9acccc2 100755
 --- a/include/calculate/symbols.hpp
 +++ b/include/calculate/symbols.hpp
 @@ -6,6 +6,7 @@
