@@ -100,7 +100,7 @@ if(
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
     endif()
-elseif((${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC") OR MSVC)
+elseif(MSVC)
     apply_patch(msvc)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14 /sdl")
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")

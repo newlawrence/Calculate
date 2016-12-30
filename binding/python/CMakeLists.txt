@@ -23,7 +23,7 @@ if(DEFINED ENV{NORUNTIME})
                 -Wl,-Bstatic -lstdc++ -lpthread
                 -Wl,-Bdynamic
             )
-        elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+        elseif(MSVC)
             set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
             set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
         endif()
