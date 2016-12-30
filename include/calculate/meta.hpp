@@ -6,23 +6,13 @@
 
 #include "calculate/definitions.hpp"
 
-#define RECORD_TOKEN(TOKEN)                                                   \
-template <>                                                                   \
-constexpr const char* StringLiteral<calculate_meta::hashDJB2(TOKEN)>::str() { \
-    return TOKEN;                                                             \
-}
-#define TypeString(TOKEN) StringLiteral<calculate_meta::hashDJB2(TOKEN)>
+#define TypeString(TOKEN) decltype(TOKEN##_tstr)
 
 
 namespace calculate_meta {
 
     using namespace calculate_definitions;
 
-    constexpr Hash hashDJB2(const Byte *s, Hash h=5381) {
-        return !*s ? h : hashDJB2(s + 1, 33 * h ^ static_cast<Unsigned>(*s));
-    }
-    
-    
     template<typename Type>
     struct FunctionTraits : FunctionTraits<decltype(&Type::operator())> {
     };
@@ -138,11 +128,17 @@ auto wrapFunctor(Functor&& functor) {
 }
 
 
-template <Hash hash>
+template <char ... chars>
 struct StringLiteral {
-    static constexpr const char* str() {
-        return "";
+    static constexpr const char str[sizeof...(chars) + 1] = {chars..., '\0'};
+    constexpr operator const char* (void) const {
+        return str;
     }
 };
+template <char... chars>
+constexpr const char StringLiteral<chars...>::str[sizeof...(chars) + 1];
+
+template <typename Type, Type... chars>
+constexpr StringLiteral<chars...> operator ""_tstr() { return {}; }
 
 #endif
