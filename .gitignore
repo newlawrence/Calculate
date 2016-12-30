@@ -33,6 +33,7 @@ Release/
 *.rc
 *.opensdf
 *.sdf
+*.db
 
 # Python related
 __pycache__/
