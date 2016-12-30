@@ -88,7 +88,7 @@ namespace calculate_meta {
     template<typename Functor, SizeT n>
     struct FunctorWrapper {
         Functor functor;
-        constexpr SizeT args() { return n; };
+        constexpr const SizeT args() { return n; };
 
         Value operator()(const vValue &args) {
             return evalVector(

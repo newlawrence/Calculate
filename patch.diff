@@ -20,7 +20,7 @@ index e716585..41f2088 100644
      using namespace calculate_definitions;
  
 +    constexpr Hash hashDJB2(const Byte *s, Hash h=5381) {
-+        return !*s ? h : hashDJB2(s + 1, 33 * h ^ static_cast<Unsigned>(*s));
++        return !*s ? h : hashDJB2(s + 1, 33 * h ^ static_cast<Hash>(*s));
 +    }
 +
 +

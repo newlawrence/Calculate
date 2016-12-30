@@ -4,7 +4,7 @@
 typedef char Byte;
 typedef int Integer;
 typedef unsigned Unsigned;
-typedef unsigned long Hash;
+typedef unsigned long long Hash;
 typedef double Value;
 
 #ifdef __cplusplus
