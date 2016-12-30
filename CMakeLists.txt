@@ -2,12 +2,13 @@ cmake_minimum_required(VERSION 3.5)
 project(calculate C CXX)
 
 
-set(MAJOR_VERSION 1)
-set(MINOR_VERSION 1)
-set(PATCH_VERSION 2)
+set(MAJOR 1)
+set(MINOR 1)
+set(PATCH 2)
 set(DEV "dev0")
-set(BUILD_NUMBER 0)
-set(PACKAGE_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}${DEV}")
+set(BUILD 0)
+set(PACKAGE_VERSION "${MAJOR}.${MINOR}.${PATCH}${DEV}")
+set(WINDOWS_VERSION "${MAJOR},${MINOR},${PATCH},${BUILD}")
 string(TIMESTAMP COMPILE_DATE %Y/%m/%d)
 
 
@@ -115,6 +116,19 @@ endif()
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 file(GLOB sources "${PROJECT_SOURCE_DIR}/source/*.cpp")
+if(WIN32)
+    set(RESOURCE_IN "${PROJECT_SOURCE_DIR}/resource/version.rc.in")
+    set(RESOURCE "${PROJECT_SOURCE_DIR}/resource/version.rc")
+    configure_file(${RESOURCE_IN} ${RESOURCE})
+    set(sources "${sources};${RESOURCE}")
+    if(NOT MSVC)
+        set(CMAKE_RC_COMPILER_INIT windres)
+        ENABLE_LANGUAGE(RC)
+        SET(CMAKE_RC_COMPILE_OBJECT
+            "<CMAKE_RC_COMPILER> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>"
+        )
+    endif()
+endif()
 
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)

@@ -30,6 +30,7 @@ Release/
 *.filters
 *.vcxproj
 *.sln
+*.rc
 
 # Python related
 __pycache__/
