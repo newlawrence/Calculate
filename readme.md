@@ -14,10 +14,12 @@ With bindings for **C**, **Fortran** and **Python**.
 
 ### Requirements
 
-* **CMake** *>= 3.5* (*3.7* in the case of **Fortran**), to generate the build scripts .
-* **C**/**C++** compiler, **C++14** compliant (**g++** *>= 5.3*, **clang** *>= 3.8*, **icpc** >= *17.0*, **MSVC** >= *19*).
-* **Fortran** compiler (*optional*), with **2008** standard support (**ifort** *>= 16.3*).
-* **Python** *>= 2.7* (*optional*), along with **setuptools** and **cffi** *>=1.0* libraries.
+*Version numbers listed below are the lowest supported tested*
+
+* **CMake** *3.5* (*3.7* in the case of **Fortran**), to generate the build scripts .
+* **C**/**C++** compiler, **C++14** compliant (**g++** *5.3*, **clang** *3.8*, **icpc** *17.0*, **MSVC** *19.0*).
+* **Fortran** compiler (*optional*), with **2008** standard support (**ifort** *16.3*).
+* **Python** *2.7* (*optional*), along with **setuptools** and **cffi** *1.0* libraries.
 * **gcov** and **gcovr** tools (*optional*), to build the coverage reports.
 
 
