@@ -1,0 +1,114 @@
+diff --git a/include/calculate/meta.hpp b/include/calculate/meta.hpp
+index d22a5b1..08232c6 100644
+--- a/include/calculate/meta.hpp
++++ b/include/calculate/meta.hpp
+@@ -6,13 +6,23 @@
+ 
+ #include "calculate/definitions.hpp"
+ 
+-#define TypeString(TOKEN) decltype(TOKEN##_tstr)
++#define RECORD_TOKEN(TOKEN)                                                   \
++template <>                                                                   \
++constexpr const char* StringLiteral<calculate_meta::hashDJB2(TOKEN)>::str() { \
++    return TOKEN;                                                             \
++}
++#define TypeString(TOKEN) StringLiteral<calculate_meta::hashDJB2(TOKEN)>
+ 
+ 
+ namespace calculate_meta {
+ 
+     using namespace calculate_definitions;
+ 
++    constexpr Hash hashDJB2(const Byte *s, Hash h=5381) {
++        return !*s ? h : hashDJB2(s + 1, 33 * h ^ static_cast<Hash>(*s));
++    }
++
++
+     template<typename Type>
+     struct FunctionTraits : FunctionTraits<decltype(&Type::operator())> {
+     };
+@@ -88,7 +98,7 @@ namespace calculate_meta {
+     template<typename Functor, SizeT n>
+     struct FunctorWrapper {
+         Functor functor;
+-        constexpr const SizeT args() const { return n; };
++        constexpr SizeT args() { return n; };
+ 
+         Value operator()(const vValue &args) const {
+             return evalVector(
+@@ -125,17 +135,11 @@ namespace calculate_meta {
+ 
+ }
+ 
+-template <char ... chars>
++template <Hash hash>
+ struct StringLiteral {
+-    static constexpr const char str[sizeof...(chars) + 1] = {chars..., '\0'};
+-    constexpr operator const char* (void) const {
+-        return str;
++    static constexpr const char* str() {
++        return "";
+     }
+ };
+-template <char... chars>
+-constexpr const char StringLiteral<chars...>::str[sizeof...(chars) + 1];
+-
+-template <typename Type, Type... chars>
+-constexpr StringLiteral<chars...> operator ""_tstr() { return {}; }
+ 
+ #endif
+diff --git a/include/calculate/symbols.hpp b/include/calculate/symbols.hpp
+index 66fa170..3ee970b 100755
+--- a/include/calculate/symbols.hpp
++++ b/include/calculate/symbols.hpp
+@@ -6,6 +6,7 @@
+ 
+ 
+ #define RECORD_CONSTANT(TOKEN, VALUE)                                         \
++RECORD_TOKEN(TOKEN)                                                           \
+ namespace calculate_symbols {                                                 \
+     template <>                                                               \
+     BuiltinConstant<TypeString(TOKEN)>::BuiltinConstant() noexcept :          \
+@@ -15,6 +16,7 @@ namespace calculate_symbols {                                                 \
+ 
+ 
+ #define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION)        \
++RECORD_TOKEN(TOKEN)                                                           \
+ namespace calculate_symbols {                                                 \
+     template <>                                                               \
+     BuiltinOperator<TypeString(TOKEN)>::BuiltinOperator() noexcept :          \
+@@ -24,6 +26,7 @@ namespace calculate_symbols {                                                 \
+ 
+ 
+ #define RECORD_FUNCTION(TOKEN, FUNCTION)                                      \
++RECORD_TOKEN(TOKEN)                                                           \
+ namespace calculate_symbols {                                                 \
+     template <>                                                               \
+     BuiltinFunction<TypeString(TOKEN)>::BuiltinFunction() noexcept :          \
+@@ -208,7 +211,7 @@ namespace calculate_symbols {
+     };
+     template <typename Token>
+     const Recorder<Constant> BuiltinConstant<Token>::_recorder(
+-        Token::str, make<BuiltinConstant<Token>>
++        Token::str(), make<BuiltinConstant<Token>>
+     );
+ 
+ 
+@@ -252,7 +255,7 @@ namespace calculate_symbols {
+     };
+     template <typename Token>
+     const Recorder<Operator> BuiltinOperator<Token>::_recorder(
+-        Token::str, make<BuiltinOperator<Token>>
++        Token::str(), make<BuiltinOperator<Token>>
+     );
+ 
+ 
+@@ -291,7 +294,7 @@ namespace calculate_symbols {
+     };
+     template <typename Token>
+     const Recorder<Function> BuiltinFunction<Token>::_recorder(
+-        Token::str, make<BuiltinFunction<Token>>
++        Token::str(), make<BuiltinFunction<Token>>
+     );
+ 
+ }

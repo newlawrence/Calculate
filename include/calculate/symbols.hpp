@@ -35,6 +35,7 @@ namespace calculate_symbols {                                                 \
 namespace calculate_symbols {
 
     using namespace calculate_definitions;
+    using namespace calculate_meta;
 
     class Symbol;
     using pSymbol = std::shared_ptr<Symbol>;
@@ -149,12 +150,12 @@ namespace calculate_symbols {
         Evaluable(
             const String &t,
             Type y,
-            Unsigned s = 0u,
+            SizeT s = 0u,
             fValue f = [](const vValue &){ return nan; }
         ) noexcept : Symbol(t, y), _function(f), args(s) {}
 
     public:
-        const Unsigned args;
+        const SizeT args;
 
         virtual ~Evaluable() noexcept = 0;
         void addBranches(const vEvaluable &x) noexcept;
@@ -209,8 +210,8 @@ namespace calculate_symbols {
     const Recorder<Constant> BuiltinConstant<Token>::_recorder(
         Token::str, make<BuiltinConstant<Token>>
     );
-   
- 
+
+
     class Operator : public Evaluable {
     protected:
         static mSymbolGen& symbols() {
@@ -218,7 +219,7 @@ namespace calculate_symbols {
             return _symbols;
         }
 
-        Operator(const String &t, Unsigned p, Bool l, fValue f) noexcept :
+        Operator(const String &t, SizeT p, Bool l, fValue f) noexcept :
                 Evaluable(
                     t, Type::OPERATOR, 2, f
                 ),
@@ -226,7 +227,7 @@ namespace calculate_symbols {
                 left_assoc(l) {}
 
     public:
-        const Unsigned precedence;
+        const SizeT precedence;
         const Bool left_assoc;
 
         virtual ~Operator() noexcept {}
@@ -262,7 +263,7 @@ namespace calculate_symbols {
             return _symbols;
         }
 
-        Function(const String &t, Unsigned s, fValue f) noexcept :
+        Function(const String &t, SizeT s, fValue f) noexcept :
                 Evaluable(
                     t, Type::FUNCTION, s, f
                 ) {}

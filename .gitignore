@@ -30,6 +30,10 @@ Release/
 *.filters
 *.vcxproj
 *.sln
+*.rc
+*.opensdf
+*.sdf
+*.db
 
 # Python related
 __pycache__/

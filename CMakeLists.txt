@@ -2,19 +2,41 @@ cmake_minimum_required(VERSION 3.5)
 project(calculate C CXX)
 
 
-set(MAJOR_VERSION 1)
-set(MINOR_VERSION 1)
-set(PATCH_VERSION 1)
+set(MAJOR 1)
+set(MINOR 1)
+set(PTH 2)
 set(DEV )
-set(BUILD_NUMBER 0)
-set(PACKAGE_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}${DEV}")
+set(BUILD 0)
+set(PACKAGE_VERSION "${MAJOR}.${MINOR}.${PTH}${DEV}")
+set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
 string(TIMESTAMP COMPILE_DATE %Y/%m/%d)
+
+
+set(PATCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patch")
+macro(apply_patch COMPILER)
+    find_program(PATCH patch)
+    find_program(GIT git)
+    message("-- Applying ${COMPILER} patch...")
+    if(PATCH)
+        execute_process(
+            COMMAND ${PATCH} -p1 -i
+                    ${PATCH_DIR}/${COMPILER}.patch
+        )
+    elseif(GIT)
+        execute_process(
+            COMMAND ${GIT} apply --whitespace=fix
+                    ${PATCH_DIR}/${COMPILER}.patch
+        )
+    else()
+        message(FATAL_ERROR "Suitable patching command not found!")
+    endif()
+endmacro()
 
 
 function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
     find_program(GCOV gcov)
     if(NOT GCOV)
-        message(FATAL_ERROR "gcov not found.")
+        message(FATAL_ERROR "gcov needed for coverage!")
     endif()
     set(SRC "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
     set(TSRC "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
@@ -60,7 +82,9 @@ if(
 )
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -std=c11")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++14")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-string-literal-operator-template")
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -Wno-gnu-string-literal-operator-template"
+    )
     if(DEFINED ENV{COVERAGE})
         if(NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
             message(FATAL_ERROR "Code coverage in an optimized build.")
@@ -76,9 +100,11 @@ if(
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
     endif()
-elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+elseif(MSVC)
+    apply_patch(msvc)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14 /sdl")
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
+    apply_patch(icpc)
     if(WIN32)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O3 /std:c++14")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall")
@@ -89,8 +115,20 @@ elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
 endif()
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
-include_directories("${PROJECT_SOURCE_DIR}/extern/include")
 file(GLOB sources "${PROJECT_SOURCE_DIR}/source/*.cpp")
+if(WIN32)
+    set(RESOURCE_IN "${PROJECT_SOURCE_DIR}/resource/version.rc.in")
+    set(RESOURCE "${PROJECT_SOURCE_DIR}/resource/version.rc")
+    configure_file(${RESOURCE_IN} ${RESOURCE})
+    set(sources "${sources};${RESOURCE}")
+    if(NOT MSVC)
+        set(CMAKE_RC_COMPILER_INIT windres)
+        ENABLE_LANGUAGE(RC)
+        SET(CMAKE_RC_COMPILE_OBJECT
+            "<CMAKE_RC_COMPILER> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>"
+        )
+    endif()
+endif()
 
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -110,6 +148,7 @@ if(DEFINED ENV{TESTING} OR DEFINED ENV{COVERAGE})
     set(CATCH_GIT "https://raw.githubusercontent.com/philsquared/Catch/master")
     set(CATCH_URL "${CATCH_GIT}/single_include/catch.hpp")
     set(CATCH_PATH "${CMAKE_CURRENT_SOURCE_DIR}/extern/include/catch.hpp")
+    include_directories("${PROJECT_SOURCE_DIR}/extern/include")
     if(NOT EXISTS "${CATCH_PATH}")
         message("-- Downloading catch library...")
         file(DOWNLOAD "${CATCH_URL}" "${CATCH_PATH}")
