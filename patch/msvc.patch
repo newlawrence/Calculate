@@ -1,5 +1,5 @@
 diff --git a/include/calculate/meta.hpp b/include/calculate/meta.hpp
-index d22a5b1..ee14578 100644
+index d22a5b1..06511ff 100644
 --- a/include/calculate/meta.hpp
 +++ b/include/calculate/meta.hpp
 @@ -6,13 +6,16 @@
@@ -21,15 +21,6 @@ index d22a5b1..ee14578 100644
      template<typename Type>
      struct FunctionTraits : FunctionTraits<decltype(&Type::operator())> {
      };
-@@ -107,7 +110,7 @@ namespace calculate_meta {
-             "Return type of builtin function must be double"
-         );
-         static_assert(
--            lambdaArgs<FunctorType>()> 0,
-+            lambdaArgs<FunctorType>() > 0,
-             "At least one argument required for builtin function"
-         );
-         static_assert(
 @@ -125,17 +128,4 @@ namespace calculate_meta {
  
  }
