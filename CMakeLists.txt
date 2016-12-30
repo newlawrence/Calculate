@@ -4,11 +4,11 @@ project(calculate C CXX)
 
 set(MAJOR 1)
 set(MINOR 1)
-set(PATCH 2)
+set(PTH 2)
 set(DEV "dev0")
 set(BUILD 0)
-set(PACKAGE_VERSION "${MAJOR}.${MINOR}.${PATCH}${DEV}")
-set(WINDOWS_VERSION "${MAJOR},${MINOR},${PATCH},${BUILD}")
+set(PACKAGE_VERSION "${MAJOR}.${MINOR}.${PTH}${DEV}")
+set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
 string(TIMESTAMP COMPILE_DATE %Y/%m/%d)
 
 
