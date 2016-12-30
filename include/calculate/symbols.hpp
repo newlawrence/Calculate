@@ -35,6 +35,7 @@ namespace calculate_symbols {                                                 \
 namespace calculate_symbols {
 
     using namespace calculate_definitions;
+    using namespace calculate_meta;
 
     class Symbol;
     using pSymbol = std::shared_ptr<Symbol>;

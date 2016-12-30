@@ -88,7 +88,7 @@ namespace calculate_meta {
     template<typename Functor, SizeT n>
     struct FunctorWrapper {
         Functor functor;
-        constexpr const SizeT args() { return n; };
+        constexpr const SizeT args() const { return n; };
 
         Value operator()(const vValue &args) {
             return evalVector(
@@ -97,36 +97,33 @@ namespace calculate_meta {
         }
     };
 
+    template <typename Functor>
+    auto wrapFunctor(Functor&& functor) {
+        auto introspective_functor = functor;
+        using FunctorType = decltype(introspective_functor);
+
+        static_assert(
+            std::is_same<LambdaResult<FunctorType>, Value>::value,
+            "Return type of builtin function must be double"
+        );
+        static_assert(
+            lambdaArgs<FunctorType>() > 0,
+            "At least one argument required for builtin function"
+        );
+        static_assert(
+            std::is_same<
+                LambdaParams<FunctorType>,
+                DoubleTuple<lambdaArgs<FunctorType>()>
+            >::value,
+            "All type parameters of builtin function must be double"
+        );
+
+        return FunctorWrapper<Functor, lambdaArgs<FunctorType>()>{
+            std::forward<Functor>(functor)
+        };
+    }
+
 }
-
-template <typename Functor>
-auto wrapFunctor(Functor&& functor) {
-    using namespace calculate_meta;
-
-    auto introspective_functor = functor;
-    using FunctorType = decltype(introspective_functor);
-
-    static_assert(
-        std::is_same<LambdaResult<FunctorType>, Value>::value,
-        "Return type of builtin function must be double"
-    );
-    static_assert(
-        lambdaArgs<FunctorType>() > 0,
-        "At least one argument required for builtin function"
-    );
-    static_assert(
-        std::is_same<
-            LambdaParams<FunctorType>,
-            DoubleTuple<lambdaArgs<FunctorType>()>
-        >::value,
-        "All type parameters of builtin function must be double"
-    );
-
-    return FunctorWrapper<Functor, lambdaArgs<FunctorType>()>{
-        std::forward<Functor>(functor)
-    };
-}
-
 
 template <char ... chars>
 struct StringLiteral {
