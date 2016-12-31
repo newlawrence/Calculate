@@ -40,7 +40,7 @@ index d22a5b1..06511ff 100644
 -
  #endif
 diff --git a/include/calculate/symbols.hpp b/include/calculate/symbols.hpp
-index 66fa170..d4a330a 100755
+index addea30..e69cb59 100755
 --- a/include/calculate/symbols.hpp
 +++ b/include/calculate/symbols.hpp
 @@ -8,27 +8,36 @@
@@ -86,7 +86,7 @@ index 66fa170..d4a330a 100755
  }
  
  
-@@ -195,7 +204,7 @@ namespace calculate_symbols {
+@@ -188,7 +197,7 @@ namespace calculate_symbols {
          friend vString query<Constant>();
      };
  
@@ -95,8 +95,8 @@ index 66fa170..d4a330a 100755
      class BuiltinConstant final : public Constant {
          static const Recorder<Constant> _recorder;
  
-@@ -206,10 +215,6 @@ namespace calculate_symbols {
-                 ) {}
+@@ -196,10 +205,6 @@ namespace calculate_symbols {
+         BuiltinConstant() noexcept : Constant() {}
          virtual ~BuiltinConstant() noexcept {}
      };
 -    template <typename Token>
@@ -106,7 +106,7 @@ index 66fa170..d4a330a 100755
  
  
      class Operator : public Evaluable {
-@@ -239,7 +244,7 @@ namespace calculate_symbols {
+@@ -226,7 +231,7 @@ namespace calculate_symbols {
      };
  
  
@@ -115,8 +115,8 @@ index 66fa170..d4a330a 100755
      class BuiltinOperator final : public Operator {
          static const Recorder<Operator> _recorder;
  
-@@ -250,10 +255,6 @@ namespace calculate_symbols {
-                 ) {}
+@@ -234,10 +239,6 @@ namespace calculate_symbols {
+         BuiltinOperator() noexcept : Operator() {}
          virtual ~BuiltinOperator() noexcept {}
      };
 -    template <typename Token>
@@ -126,7 +126,7 @@ index 66fa170..d4a330a 100755
  
  
      class Function : public Evaluable {
-@@ -278,7 +279,7 @@ namespace calculate_symbols {
+@@ -261,7 +262,7 @@ namespace calculate_symbols {
      };
  
  
@@ -135,8 +135,8 @@ index 66fa170..d4a330a 100755
      class BuiltinFunction final : public Function {
          static const Recorder<Function> _recorder;
  
-@@ -289,10 +290,6 @@ namespace calculate_symbols {
-                 ) {}
+@@ -269,10 +270,6 @@ namespace calculate_symbols {
+         BuiltinFunction() noexcept : Function() {}
          virtual ~BuiltinFunction() noexcept {}
      };
 -    template <typename Token>

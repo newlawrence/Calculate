@@ -58,7 +58,7 @@ index d22a5b1..08232c6 100644
  
  #endif
 diff --git a/include/calculate/symbols.hpp b/include/calculate/symbols.hpp
-index 66fa170..3ee970b 100755
+index addea30..0c1cf0c 100755
 --- a/include/calculate/symbols.hpp
 +++ b/include/calculate/symbols.hpp
 @@ -6,6 +6,7 @@
@@ -85,7 +85,7 @@ index 66fa170..3ee970b 100755
  namespace calculate_symbols {                                                 \
      template <>                                                               \
      BuiltinFunction<TypeString(TOKEN)>::BuiltinFunction() noexcept :          \
-@@ -208,7 +211,7 @@ namespace calculate_symbols {
+@@ -198,7 +201,7 @@ namespace calculate_symbols {
      };
      template <typename Token>
      const Recorder<Constant> BuiltinConstant<Token>::_recorder(
@@ -94,7 +94,7 @@ index 66fa170..3ee970b 100755
      );
  
  
-@@ -252,7 +255,7 @@ namespace calculate_symbols {
+@@ -236,7 +239,7 @@ namespace calculate_symbols {
      };
      template <typename Token>
      const Recorder<Operator> BuiltinOperator<Token>::_recorder(
@@ -103,7 +103,7 @@ index 66fa170..3ee970b 100755
      );
  
  
-@@ -291,7 +294,7 @@ namespace calculate_symbols {
+@@ -271,7 +274,7 @@ namespace calculate_symbols {
      };
      template <typename Token>
      const Recorder<Function> BuiltinFunction<Token>::_recorder(
