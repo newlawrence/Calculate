@@ -8,9 +8,9 @@
 namespace calculate_exceptions {                                              \
     struct NAME : public BaseCalculateException {                             \
         NAME() :                                                              \
-               BaseCalculateException(String(MESSAGE)) {}                     \
+            BaseCalculateException(String(MESSAGE)) {}                        \
         NAME(const String &token) :                                           \
-               BaseCalculateException(String(MESSAGE) + " '" + token + "'") {}\
+            BaseCalculateException(String(MESSAGE) + " '" + token + "'") {}   \
     };                                                                        \
 }
 
@@ -21,7 +21,7 @@ namespace calculate_exceptions {
 
     struct BaseCalculateException : public std::runtime_error {
         BaseCalculateException(const String &what) :
-                runtime_error(what) {}
+            runtime_error(what) {}
     };
 
 }

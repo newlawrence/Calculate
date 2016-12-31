@@ -106,9 +106,7 @@ namespace calculate_symbols {
         Symbol& operator=(Symbol&&) = delete;
 
     protected:
-        Symbol(const String &t, Type y) noexcept :
-                token(t),
-                type(y) {}
+        Symbol(const String &t, Type y) noexcept : token(t), type(y) {}
 
     public:
         const String token;
@@ -127,8 +125,7 @@ namespace calculate_symbols {
         constexpr static const Byte _symbol[2] = {s, '\0'};
 
     public:
-        Parenthesis() noexcept :
-                Symbol(_symbol, _type) {}
+        Parenthesis() noexcept : Symbol(_symbol, _type) {}
         virtual ~Parenthesis() noexcept {}
     };
     template <Byte s> constexpr const Byte Parenthesis<s>::_symbol[2];
@@ -136,8 +133,7 @@ namespace calculate_symbols {
 
     class Separator final : public Symbol {
     public:
-        Separator() noexcept :
-                Symbol(",", Type::SEPARATOR) {}
+        Separator() noexcept : Symbol(",", Type::SEPARATOR) {}
         virtual ~Separator() noexcept {}
     };
 
@@ -148,10 +144,10 @@ namespace calculate_symbols {
         vEvaluable _operands;
 
         Evaluable(
-            const String &t,
-            Type y,
-            SizeT s = 0u,
-            fValue f = [](const vValue &){ return nan; }
+            const String &t = "",
+            Type y = Type::CONSTANT,
+            SizeT s = 0,
+            fValue f = [](const vValue &){ throw; return nan; }
         ) noexcept : Symbol(t, y), _function(f), args(s) {}
 
     public:
@@ -168,9 +164,7 @@ namespace calculate_symbols {
     class Variable final : public Evaluable {
     public:
         Variable(const String &t, Value *v) noexcept :
-                Evaluable(
-                    t, Type::CONSTANT, 0, [v](const vValue &){ return *v; }
-                ) {}
+            Evaluable(t, Type::CONSTANT, 0, [v](const vValue &){return *v;}) {}
         virtual ~Variable() noexcept {}
     };
 
@@ -183,10 +177,9 @@ namespace calculate_symbols {
         }
 
     public:
+        Constant() : Evaluable() {}
         Constant(const String &t, Value v) noexcept :
-                Evaluable(
-                    t, Type::CONSTANT, 0, [v](const vValue &){ return v; }
-                ) {}
+            Evaluable(t, Type::CONSTANT, 0, [v](const vValue &){return v;}) {}
         virtual ~Constant() noexcept {};
 
         friend struct Recorder<Constant>;
@@ -200,10 +193,7 @@ namespace calculate_symbols {
         static const Recorder<Constant> _recorder;
 
     public:
-        BuiltinConstant() noexcept :
-                Constant(
-                    "{constant}", nan
-                ) {}
+        BuiltinConstant() noexcept : Constant() {}
         virtual ~BuiltinConstant() noexcept {}
     };
     template <typename Token>
@@ -219,12 +209,9 @@ namespace calculate_symbols {
             return _symbols;
         }
 
+        Operator() : Evaluable(), precedence(0), left_assoc(true) {}
         Operator(const String &t, SizeT p, Bool l, fValue f) noexcept :
-                Evaluable(
-                    t, Type::OPERATOR, 2, f
-                ),
-                precedence(p),
-                left_assoc(l) {}
+            Evaluable(t, Type::OPERATOR, 2, f), precedence(p), left_assoc(l) {}
 
     public:
         const SizeT precedence;
@@ -244,10 +231,7 @@ namespace calculate_symbols {
         static const Recorder<Operator> _recorder;
 
     public:
-        BuiltinOperator() noexcept :
-                Operator(
-                    "{operator}", 0, true, 0, [](const vValue &){ return nan; }
-                ) {}
+        BuiltinOperator() noexcept : Operator() {}
         virtual ~BuiltinOperator() noexcept {}
     };
     template <typename Token>
@@ -263,10 +247,9 @@ namespace calculate_symbols {
             return _symbols;
         }
 
+        Function() : Evaluable() {}
         Function(const String &t, SizeT s, fValue f) noexcept :
-                Evaluable(
-                    t, Type::FUNCTION, s, f
-                ) {}
+            Evaluable(t, Type::FUNCTION, s, f) {}
 
     public:
         virtual ~Function() noexcept {}
@@ -283,10 +266,7 @@ namespace calculate_symbols {
         static const Recorder<Function> _recorder;
 
     public:
-        BuiltinFunction() noexcept :
-                Function(
-                    "{function}", 0, [](const vValue &){ return nan; }
-                ) {}
+        BuiltinFunction() noexcept : Function() {}
         virtual ~BuiltinFunction() noexcept {}
     };
     template <typename Token>
