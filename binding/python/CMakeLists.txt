@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.5)
 project(calculate_python_wrapper NONE)
-set(PYTHON_SUPPORTED_VERSIONS 2.7 3.3 3.4 3.5 3.6)
+set(PYTHON_SUPPORTED_VERSIONS 2.7 3.4 3.5 3.6)
+
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
 
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -8,7 +13,7 @@ add_library(calculate_python SHARED "${sources}")
 target_compile_definitions(calculate_python PUBLIC "_CRT_SECURE_NO_WARNINGS")
 set_target_properties(calculate_python PROPERTIES PREFIX "lib")
 
-if(DEFINED ENV{NORUNTIME})
+if(NORUNTIME)
     if(UNIX AND NOT APPLE)
         target_link_libraries(calculate_python PUBLIC
             -static-libgcc -static-libstdc++
@@ -39,8 +44,16 @@ add_custom_command(
 )
 
 
-find_program(PYTHON "python")
-find_program(CONDA "conda")
+if(DEFINED ENV{PY})
+    set(PYTHON "$ENV{PY}")
+else()
+    find_program(PYTHON "python")
+endif()
+if(DEFINED ENV{CONDA})
+    set(CONDA "$ENV{CONDA}")
+else()
+    find_program(CONDA "conda")
+endif()
 
 if(PYTHON)
     execute_process(
@@ -83,5 +96,9 @@ if(PYTHON)
                 COMMAND ${CONDA} build purge
             )
         endforeach()
+    else()
+        message("-- Conda distribution not found.")
     endif()
+else()
+    message(FATAL_ERROR "Non-existent Python interpreter!")
 endif()

@@ -19,7 +19,7 @@ With bindings for **C**, **Fortran** and **Python**.
 * **CMake** *3.5* (*3.7* in the case of **Fortran**), to generate the build scripts .
 * **C**/**C++** compiler, **C++14** compliant (**g++** *5.3*, **clang** *3.8*, **icpc** *17.0*, **MSVC** *19.0*).
 * **Fortran** compiler (*optional*), with **2008** standard support (**gfortran** *6.2*, **ifort** *16.3*).
-* **Python** *2.7* (*optional*), along with **setuptools** and **cffi** *1.0* libraries.
+* **Python** *2.7* and *3.4* (*optional*), along with **setuptools** and **cffi** *1.0* libraries.
 * **gcov** and **gcovr** tools (*optional*), to build the coverage reports.
 
 
@@ -28,7 +28,7 @@ With bindings for **C**, **Fortran** and **Python**.
 Just making the library and the bindings:
 
 ```
-$ BINDING=1 cmake .
+$ BINDING=True cmake .
 $ make calculate
 $ make calculate_fortran
 $ make calculate_python
@@ -37,14 +37,14 @@ $ make calculate_python
 Bulding and running the tests:
 
 ```
-$ TESTING=1 cmake .
+$ TESTING=True cmake .
 $ make unittests
 ```
 
 Generating the coverage reports (only **GNU** and **Clang**):
 
 ```
-$ COVERAGE=1 cmake . -DCMAKE_BUILD_TYPE=Debug
+$ COVERAGE=True cmake . -DCMAKE_BUILD_TYPE=Debug
 $ make unittests
 $ make coverage
 ```
@@ -52,7 +52,7 @@ $ make coverage
 Generating the **Python** binary distributions:
 
 ```
-$ BINDING=1 cmake . -DCMAKE_BUILD_TYPE=Release
+$ BINDING=True cmake . -DCMAKE_BUILD_TYPE=Release
 $ make python_wheel
 $ make conda_package-Py2.7
 

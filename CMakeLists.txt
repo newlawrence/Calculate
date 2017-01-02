@@ -72,6 +72,28 @@ function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
 endfunction()
 
 
+if(DEFINED ENV{NORUNTIME})
+    set(NORUNTIME "$ENV{NORUNTIME}")
+else()
+    set(NORUNTIME "False")
+endif()
+if(DEFINED ENV{BINDING})
+    set(BINDING "$ENV{BINDING}")
+else()
+    set(BINDING "False")
+endif()
+if(DEFINED ENV{TESTING})
+    set(TESTING "$ENV{TESTING}")
+else()
+    set(TESTING "False")
+endif()
+if(DEFINED ENV{COVERAGE})
+    set(COVERAGE "$ENV{COVERAGE}")
+else()
+    set(COVERAGE "False")
+endif()
+
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
@@ -85,7 +107,7 @@ if(
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Wno-gnu-string-literal-operator-template"
     )
-    if(DEFINED ENV{COVERAGE})
+    if(COVERAGE)
         if(NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
             message(FATAL_ERROR "Code coverage in an optimized build.")
         endif()
@@ -144,7 +166,7 @@ set_target_properties(calculate_static PROPERTIES OUTPUT_NAME
                       "calculate.${PACKAGE_VERSION}")
 
 
-if(DEFINED ENV{TESTING} OR DEFINED ENV{COVERAGE})
+if(TESTING OR COVERAGE)
     set(CATCH_GIT "https://raw.githubusercontent.com/philsquared/Catch/master")
     set(CATCH_URL "${CATCH_GIT}/single_include/catch.hpp")
     set(CATCH_PATH "${CMAKE_CURRENT_SOURCE_DIR}/extern/include/catch.hpp")
@@ -175,10 +197,10 @@ add_executable(calc_cpp "${PROJECT_SOURCE_DIR}/examples/calc.cpp")
 target_link_libraries(calc_cpp PRIVATE calculate)
 
 
-if(DEFINED ENV{BINDING} OR DEFINED ENV{FC})
+if(BINDING OR DEFINED ENV{FC})
     add_subdirectory(binding/fortran)
 endif()
 
-if(DEFINED ENV{BINDING} OR DEFINED ENV{PY})
+if(BINDING OR DEFINED ENV{PY})
     add_subdirectory(binding/python)
 endif()
