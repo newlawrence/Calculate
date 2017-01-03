@@ -8,7 +8,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
 
 
 if(${CMAKE_Fortran_COMPILER_ID} MATCHES "GNU")
-    apply_patch(gfortran)
     set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -O3 -std=f2008")
     set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall -Wno-surprising")
 elseif(${CMAKE_Fortran_COMPILER_ID} MATCHES "Intel")
