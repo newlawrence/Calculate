@@ -39,9 +39,9 @@ function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
         message(FATAL_ERROR "gcov needed for coverage!")
     endif()
     set(SRC "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
-    set(TSRC "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
+    set(TSRC "${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp")
     set(BIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${LIBRARYNAME}.dir/source")
-    set(TBIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${TESTSNAME}.dir/tests")
+    set(TBIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${TESTSNAME}.dir/test")
     set(COVERAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coverage")
 
 	find_program(GCOVR gcovr)
@@ -54,7 +54,7 @@ function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
                     ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
             COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
                     ${GCOVR} -r .. --object-directory . -o coverage.html
-                    "--gcov-filter=\".*#(usr|extern|tests)#.*\"" -g 
+                    "--gcov-filter=\".*#(usr|extern|test)#.*\"" -g 
             COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
                     ${GCOVR} -r .. --object-directory . -o coverage.html
                     -g -k -s --html --html-details
@@ -177,7 +177,7 @@ if(TESTING OR COVERAGE)
         message("-- Catch library successfully downloaded.")
     endif()
 
-    file(GLOB tests "${PROJECT_SOURCE_DIR}/tests/*.cpp")
+    file(GLOB tests "${PROJECT_SOURCE_DIR}/test/*.cpp")
     add_executable(unittests "${tests}")
     target_link_libraries(unittests LINK_PUBLIC calculate)
 
@@ -190,10 +190,10 @@ if(TESTING OR COVERAGE)
 endif()
 
 
-add_executable(calc_c "${PROJECT_SOURCE_DIR}/examples/calc.c")
+add_executable(calc_c "${PROJECT_SOURCE_DIR}/example/calc.c")
 target_link_libraries(calc_c PRIVATE calculate)
 
-add_executable(calc_cpp "${PROJECT_SOURCE_DIR}/examples/calc.cpp")
+add_executable(calc_cpp "${PROJECT_SOURCE_DIR}/example/calc.cpp")
 target_link_libraries(calc_cpp PRIVATE calculate)
 
 
