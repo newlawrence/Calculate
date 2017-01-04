@@ -4,16 +4,20 @@
 #include "calculate/definitions.hpp"
 
 #ifdef _MSC_VER
-#define EXPORT_GLOBAL __declspec(dllimport)
+    #ifdef __COMPILING_LIBRARY__
+        #define EXPORT_GLOBAL __declspec(dllexport)
+    #else
+        #define EXPORT_GLOBAL __declspec(dllimport)
+    #endif
 #else
-#define EXPORT_GLOBAL
+    #define EXPORT_GLOBAL
 #endif
 
 #ifdef __cplusplus
 extern "C" {
-#define STRUCT
+    #define STRUCT
 #else
-#define STRUCT struct
+    #define STRUCT struct
 #endif
 
 struct ExpressionClassHandler;

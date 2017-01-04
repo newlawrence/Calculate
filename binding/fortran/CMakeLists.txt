@@ -34,7 +34,7 @@ set_target_properties(calculate_fortran
 )
 
 add_library(calculate_fortran_static
-    STATIC $<TARGET_OBJECTS:calculate_objects> ${sources}
+    STATIC $<TARGET_OBJECTS:build> ${sources}
 )
 target_link_libraries(calculate_fortran_static
     PUBLIC calculate_static

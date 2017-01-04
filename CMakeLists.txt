@@ -117,7 +117,7 @@ if(
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -coverage")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-inline")
-        setup_target_for_coverage(coverage calculate_objects unittests)
+        setup_target_for_coverage(coverage build unittests)
     else()
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
@@ -154,18 +154,19 @@ if(WIN32)
 endif()
 
 
-add_library(calculate_objects
+add_library(build
     OBJECT ${sources}
 )
-set_target_properties(calculate_objects
+set_target_properties(build
     PROPERTIES POSITION_INDEPENDENT_CODE 1
 )
-target_compile_definitions(calculate_objects
+target_compile_definitions(build
     PUBLIC "_CRT_SECURE_NO_WARNINGS"
+    PUBLIC "__COMPILING_LIBRARY__"
 )
 
 add_library(calculate
-    SHARED $<TARGET_OBJECTS:calculate_objects>
+    SHARED $<TARGET_OBJECTS:build>
 )
 set_target_properties(calculate
     PROPERTIES PREFIX "lib"
@@ -174,7 +175,7 @@ set_target_properties(calculate
 )
 
 add_library(calculate_static
-    STATIC $<TARGET_OBJECTS:calculate_objects>
+    STATIC $<TARGET_OBJECTS:build>
 )
 set_target_properties(calculate_static
     PROPERTIES OUTPUT_NAME calculate.${PACKAGE_VERSION}
@@ -210,6 +211,9 @@ endif()
 add_executable(calc_c ${PROJECT_SOURCE_DIR}/example/calc.c)
 target_link_libraries(calc_c
     PRIVATE calculate
+)
+target_compile_definitions(calc_c
+    PUBLIC "_CRT_SECURE_NO_WARNINGS"
 )
 
 add_executable(calc_cpp ${PROJECT_SOURCE_DIR}/example/calc.cpp)
