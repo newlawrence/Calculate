@@ -12,9 +12,6 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 add_library(calculate_python
     SHARED $<TARGET_OBJECTS:calculate_objects>
 )
-target_compile_definitions(calculate_python
-    PUBLIC "_CRT_SECURE_NO_WARNINGS"
-)
 set_target_properties(calculate_python
     PROPERTIES PREFIX "lib"
 )
@@ -53,12 +50,12 @@ add_custom_command(
 if(DEFINED ENV{PY})
     set(PYTHON "$ENV{PY}")
 else()
-    find_program(PYTHON "python")
+    find_program(PYTHON python)
 endif()
 if(DEFINED ENV{CONDA})
     set(CONDA "$ENV{CONDA}")
 else()
-    find_program(CONDA "conda")
+    find_program(CONDA conda)
 endif()
 
 if(PYTHON)

@@ -14,8 +14,8 @@ string(TIMESTAMP COMPILE_DATE "%Y/%m/%d")
 
 set(PATCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patch")
 macro(apply_patch COMPILER)
-    find_program(PATCH "patch")
-    find_program(GIT "git")
+    find_program(PATCH patch)
+    find_program(GIT git)
     message("-- Applying ${COMPILER} patch...")
     if(PATCH)
         execute_process(
@@ -34,7 +34,7 @@ endmacro()
 
 
 function(setup_target_for_coverage TARGETNAME OBJFOLDER TESTSNAME)
-    find_program(GCOV "gcov")
+    find_program(GCOV gcov)
     if(NOT GCOV)
         message(FATAL_ERROR "gcov needed for coverage!")
     endif()
