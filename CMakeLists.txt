@@ -54,7 +54,7 @@ function(setup_target_for_coverage TARGETNAME OBJFOLDER TESTSNAME)
                     ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
             COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
                     ${GCOVR} -r .. --object-directory . -o coverage.html
-                    --gcov-filter=\".*#(usr|extern|test)#.*\" -g 
+                    "--gcov-filter=\".*#(usr|extern|test)#.*\"" -g 
             COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
                     ${GCOVR} -r .. --object-directory . -o coverage.html
                     -g -k -s --html --html-details
