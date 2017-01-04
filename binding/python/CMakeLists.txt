@@ -9,24 +9,30 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
 
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-add_library(calculate_python SHARED "${sources}")
-target_compile_definitions(calculate_python PUBLIC "_CRT_SECURE_NO_WARNINGS")
-set_target_properties(calculate_python PROPERTIES PREFIX "lib")
+add_library(calculate_python
+    SHARED $<TARGET_OBJECTS:calculate_objects>
+)
+target_compile_definitions(calculate_python
+    PUBLIC "_CRT_SECURE_NO_WARNINGS"
+)
+set_target_properties(calculate_python
+    PROPERTIES PREFIX "lib"
+)
 
 if(NORUNTIME)
     if(UNIX AND NOT APPLE)
-        target_link_libraries(calculate_python PUBLIC
-            -static-libgcc -static-libstdc++
+        target_link_libraries(calculate_python
+            PUBLIC -static-libgcc -static-libstdc++
         )
     elseif(WIN32)
         if(
             (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU") OR
             (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
         )
-            target_link_libraries(calculate_python PUBLIC
-                -static-libgcc -static-libstdc++
-                -Wl,-Bstatic -lstdc++ -lpthread
-                -Wl,-Bdynamic
+            target_link_libraries(calculate_python
+                PUBLIC -static-libgcc -static-libstdc++
+                       -Wl,-Bstatic -lstdc++ -lpthread
+                       -Wl,-Bdynamic
             )
         elseif(MSVC)
             set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
@@ -39,8 +45,8 @@ add_custom_command(
     TARGET calculate_python
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
-            "$<TARGET_FILE:calculate_python>"
-            "${CMAKE_CURRENT_SOURCE_DIR}/calculate"
+            $<TARGET_FILE:calculate_python>
+            ${CMAKE_CURRENT_SOURCE_DIR}/calculate
 )
 
 

@@ -2,20 +2,20 @@ cmake_minimum_required(VERSION 3.5)
 project(calculate C CXX)
 
 
-set(MAJOR 1)
-set(MINOR 1)
-set(PTH 3)
-set(DEV dev0)
-set(BUILD 1)
+set(MAJOR "1")
+set(MINOR "1")
+set(PTH "3")
+set(DEV "dev0")
+set(BUILD "1")
 set(PACKAGE_VERSION "${MAJOR}.${MINOR}.${PTH}${DEV}")
 set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
-string(TIMESTAMP COMPILE_DATE %Y/%m/%d)
+string(TIMESTAMP COMPILE_DATE "%Y/%m/%d")
 
 
 set(PATCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patch")
 macro(apply_patch COMPILER)
-    find_program(PATCH patch)
-    find_program(GIT git)
+    find_program(PATCH "patch")
+    find_program(GIT "git")
     message("-- Applying ${COMPILER} patch...")
     if(PATCH)
         execute_process(
@@ -33,14 +33,14 @@ macro(apply_patch COMPILER)
 endmacro()
 
 
-function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
-    find_program(GCOV gcov)
+function(setup_target_for_coverage TARGETNAME OBJFOLDER TESTSNAME)
+    find_program(GCOV "gcov")
     if(NOT GCOV)
         message(FATAL_ERROR "gcov needed for coverage!")
     endif()
     set(SRC "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
     set(TSRC "${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp")
-    set(BIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${LIBRARYNAME}.dir/source")
+    set(BIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${OBJFOLDER}.dir/source")
     set(TBIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${TESTSNAME}.dir/test")
     set(COVERAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coverage")
 
@@ -48,23 +48,23 @@ function(setup_target_for_coverage TARGETNAME LIBRARYNAME TESTSNAME)
     if(GCOVR)
         add_custom_target(${TARGETNAME}
             COMMAND ${CMAKE_COMMAND} -E make_directory coverage
-            COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
                     ${GCOV} ${SRC} -o ${BIN} -p > /dev/null
-            COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
                     ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
-            COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
                     ${GCOVR} -r .. --object-directory . -o coverage.html
-                    "--gcov-filter=\".*#(usr|extern|test)#.*\"" -g 
-            COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+                    --gcov-filter=\".*#(usr|extern|test)#.*\" -g 
+            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
                     ${GCOVR} -r .. --object-directory . -o coverage.html
                     -g -k -s --html --html-details
         )
     else()
         add_custom_target(${TARGETNAME}
             COMMAND ${CMAKE_COMMAND} -E make_directory coverage
-            COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
                     ${GCOV} ${SRC} -o ${BIN} -p > /dev/null
-            COMMAND ${CMAKE_COMMAND} -E chdir "${COVERAGE_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
                     ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
         )
     endif()
@@ -111,19 +111,20 @@ if(
         if(NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
             message(FATAL_ERROR "Code coverage in an optimized build.")
         endif()
-        set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
+        set(CMAKE_C_OUTPUT_EXTENSION_REPLACE "1")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -coverage")
-        set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
+        set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE "1")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -coverage")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-inline")
-        setup_target_for_coverage(coverage calculate unittests)
+        setup_target_for_coverage(coverage calculate_objects unittests)
     else()
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
     endif()
 elseif(MSVC)
     apply_patch(msvc)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS "ON")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14 /sdl")
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
     apply_patch(icpc)
@@ -136,15 +137,15 @@ elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
     endif()
 endif()
 
-include_directories("${PROJECT_SOURCE_DIR}/include")
-file(GLOB sources "${PROJECT_SOURCE_DIR}/source/*.cpp")
+include_directories(${PROJECT_SOURCE_DIR}/include)
+file(GLOB sources ${PROJECT_SOURCE_DIR}/source/*.cpp)
 if(WIN32)
     set(RESOURCE_IN "${PROJECT_SOURCE_DIR}/resource/version.rc.in")
     set(RESOURCE "${PROJECT_SOURCE_DIR}/resource/version.rc")
     configure_file(${RESOURCE_IN} ${RESOURCE})
     set(sources "${sources};${RESOURCE}")
     if(NOT MSVC)
-        set(CMAKE_RC_COMPILER_INIT windres)
+        set(CMAKE_RC_COMPILER_INIT "windres")
         ENABLE_LANGUAGE(RC)
         SET(CMAKE_RC_COMPILE_OBJECT
             "<CMAKE_RC_COMPILER> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>"
@@ -153,33 +154,49 @@ if(WIN32)
 endif()
 
 
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-add_library(calculate SHARED "${sources}")
-target_compile_definitions(calculate PUBLIC "_CRT_SECURE_NO_WARNINGS")
-set_property(TARGET calculate PROPERTY VERSION ${PACKAGE_VERSION})
-set_property(TARGET calculate PROPERTY SOVERSION ${MAJOR})
-set_target_properties(calculate PROPERTIES PREFIX "lib")
+add_library(calculate_objects
+    OBJECT ${sources}
+)
+set_target_properties(calculate_objects
+    PROPERTIES POSITION_INDEPENDENT_CODE 1
+)
+target_compile_definitions(calculate_objects
+    PUBLIC "_CRT_SECURE_NO_WARNINGS"
+)
 
-add_library(calculate_static STATIC "${sources}")
-target_compile_definitions(calculate_static PUBLIC "_CRT_SECURE_NO_WARNINGS")
-set_target_properties(calculate_static PROPERTIES OUTPUT_NAME
-                      "calculate.${PACKAGE_VERSION}")
+add_library(calculate
+    SHARED $<TARGET_OBJECTS:calculate_objects>
+)
+set_target_properties(calculate
+    PROPERTIES PREFIX "lib"
+    PROPERTIES VERSION ${PACKAGE_VERSION}
+    PROPERTIES SOVERSION ${MAJOR}
+)
+
+add_library(calculate_static
+    STATIC $<TARGET_OBJECTS:calculate_objects>
+)
+set_target_properties(calculate_static
+    PROPERTIES OUTPUT_NAME calculate.${PACKAGE_VERSION}
+)
 
 
 if(TESTING OR COVERAGE)
     set(CATCH_GIT "https://raw.githubusercontent.com/philsquared/Catch/master")
     set(CATCH_URL "${CATCH_GIT}/single_include/catch.hpp")
     set(CATCH_PATH "${CMAKE_CURRENT_SOURCE_DIR}/extern/include/catch.hpp")
-    include_directories("${PROJECT_SOURCE_DIR}/extern/include")
-    if(NOT EXISTS "${CATCH_PATH}")
+    include_directories(${PROJECT_SOURCE_DIR}/extern/include)
+    if(NOT EXISTS ${CATCH_PATH})
         message("-- Downloading catch library...")
-        file(DOWNLOAD "${CATCH_URL}" "${CATCH_PATH}")
+        file(DOWNLOAD ${CATCH_URL} ${CATCH_PATH})
         message("-- Catch library successfully downloaded.")
     endif()
 
-    file(GLOB tests "${PROJECT_SOURCE_DIR}/test/*.cpp")
-    add_executable(unittests "${tests}")
-    target_link_libraries(unittests LINK_PUBLIC calculate)
+    file(GLOB tests ${PROJECT_SOURCE_DIR}/test/*.cpp)
+    add_executable(unittests ${tests})
+    target_link_libraries(unittests
+        LINK_PUBLIC calculate
+    )
 
     add_custom_command(
         TARGET unittests
@@ -190,11 +207,15 @@ if(TESTING OR COVERAGE)
 endif()
 
 
-add_executable(calc_c "${PROJECT_SOURCE_DIR}/example/calc.c")
-target_link_libraries(calc_c PRIVATE calculate)
+add_executable(calc_c ${PROJECT_SOURCE_DIR}/example/calc.c)
+target_link_libraries(calc_c
+    PRIVATE calculate
+)
 
-add_executable(calc_cpp "${PROJECT_SOURCE_DIR}/example/calc.cpp")
-target_link_libraries(calc_cpp PRIVATE calculate)
+add_executable(calc_cpp ${PROJECT_SOURCE_DIR}/example/calc.cpp)
+target_link_libraries(calc_cpp
+    PRIVATE calculate
+)
 
 
 if(BINDING OR DEFINED ENV{FC})
