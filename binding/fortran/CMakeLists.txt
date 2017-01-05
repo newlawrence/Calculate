@@ -19,7 +19,6 @@ elseif(${CMAKE_Fortran_COMPILER_ID} MATCHES "Intel")
         set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -free -warn all")
     endif()
 endif()
-
 file(GLOB sources ${PROJECT_SOURCE_DIR}/source/*.f90)
 
 
@@ -29,18 +28,12 @@ add_library(calculate_fortran
 target_link_libraries(calculate_fortran
     PUBLIC calculate
 )
-set_target_properties(calculate_fortran
-    PROPERTIES OUTPUT_NAME calculate_fortran.${PACKAGE_VERSION}
-)
 
 add_library(calculate_fortran_static
     STATIC $<TARGET_OBJECTS:build> ${sources}
 )
 target_link_libraries(calculate_fortran_static
     PUBLIC calculate_static
-)
-set_target_properties(calculate_fortran_static
-    PROPERTIES OUTPUT_NAME calculate_fortran_static.${PACKAGE_VERSION}
 )
 
 

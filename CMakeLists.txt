@@ -7,7 +7,7 @@ set(MINOR "1")
 set(PTH "3")
 set(DEV "dev0")
 set(BUILD "1")
-set(PACKAGE_VERSION "${MAJOR}.${MINOR}.${PTH}${DEV}")
+set(PACKAGE_VERSION "${MAJOR}.${MINOR}.${PTH}.${DEV}")
 set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
 string(TIMESTAMP COMPILE_DATE "%Y/%m/%d")
 
@@ -40,31 +40,31 @@ function(setup_target_for_coverage TARGETNAME OBJFOLDER TESTSNAME)
     endif()
     set(SRC "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp")
     set(TSRC "${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp")
-    set(BIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${OBJFOLDER}.dir/source")
-    set(TBIN "${CMAKE_CURRENT_SOURCE_DIR}/CMakeFiles/${TESTSNAME}.dir/test")
-    set(COVERAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coverage")
+    set(BIN "${CMAKE_BINARY_DIR}/CMakeFiles/${OBJFOLDER}.dir/source")
+    set(TBIN "${CMAKE_BINARY_DIR}/CMakeFiles/${TESTSNAME}.dir/test")
+    set(COVERAGE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/coverage")
 
 	find_program(GCOVR gcovr)
     if(GCOVR)
         add_custom_target(${TARGETNAME}
-            COMMAND ${CMAKE_COMMAND} -E make_directory coverage
-            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${COVERAGE_DIRECTORY}
+            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIRECTORY}
                     ${GCOV} ${SRC} -o ${BIN} -p > /dev/null
-            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
+            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIRECTORY}
                     ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
-            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
+            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIRECTORY}
                     ${GCOVR} -r .. --object-directory . -o coverage.html
                     "--gcov-filter=\".*#(usr|extern|test)#.*\"" -g 
-            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
+            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIRECTORY}
                     ${GCOVR} -r .. --object-directory . -o coverage.html
                     -g -k -s --html --html-details
         )
     else()
         add_custom_target(${TARGETNAME}
-            COMMAND ${CMAKE_COMMAND} -E make_directory coverage
-            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${COVERAGE_DIRECTORY}
+            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIRECTORY}
                     ${GCOV} ${SRC} -o ${BIN} -p > /dev/null
-            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIR}
+            COMMAND ${CMAKE_COMMAND} -E chdir ${COVERAGE_DIRECTORY}
                     ${GCOV} ${TSRC} -o ${TBIN} -p > /dev/null
         )
     endif()
@@ -93,10 +93,6 @@ else()
     set(COVERAGE "False")
 endif()
 
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
 
 if(
     (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU") OR
@@ -176,9 +172,6 @@ set_target_properties(calculate
 
 add_library(calculate_static
     STATIC $<TARGET_OBJECTS:build>
-)
-set_target_properties(calculate_static
-    PROPERTIES OUTPUT_NAME calculate.${PACKAGE_VERSION}
 )
 
 
