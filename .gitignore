@@ -12,6 +12,7 @@ bin/
 lib/
 binding/fortran/module/
 binding/fortran/lib/
+binding/python/build.log
 binding/python/calculate.egg-info/
 binding/python/dist/
 binding/python/calculate/*.so

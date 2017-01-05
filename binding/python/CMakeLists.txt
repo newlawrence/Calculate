@@ -78,7 +78,10 @@ if(PYTHON)
 
     add_custom_target(python_wheel
         DEPENDS calculate_python
-        COMMAND ${PYTHON} ${SETUP} bdist_wheel --universal
+        COMMAND ${PYTHON} -W ignore::UserWarning:distutils.dist
+                          -W ignore::RuntimeWarning:wheel.pep425tags
+                ${SETUP} bdist_wheel
+                1> ${CMAKE_CURRENT_SOURCE_DIR}/build.log 2>&1
     )
 
     if(CONDA)
@@ -95,7 +98,9 @@ if(PYTHON)
                 DEPENDS calculate_python
                 COMMAND ${CONDA} build purge
                 COMMAND ${CONDA} build --python=${PYTHON_VERSION}
+                        --output-folder ${CMAKE_CURRENT_SOURCE_DIR}/dist
                         ${CMAKE_CURRENT_SOURCE_DIR}/recipe
+                        1> ${CMAKE_CURRENT_SOURCE_DIR}/build.log 2>&1
                 COMMAND ${CONDA} build purge
             )
         endforeach()

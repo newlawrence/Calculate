@@ -6,10 +6,20 @@ import os
 import os.path as path
 from platform import system
 from setuptools import setup
+from setuptools.dist import Distribution
 
 if sys.version_info < (2, 7):
     sys.exit('Only Python versions superior or equal than 2.7 supported')
 os.chdir(path.abspath(path.dirname(path.realpath(__file__))))
+
+
+class BinaryDistribution(Distribution):
+
+    def has_ext_modules(foo):
+        return True
+
+    def is_pure(self):
+        return False
 
 library = 'calculate'
 with open('{}/__init__.py'.format(library), 'r') as file:
@@ -27,6 +37,7 @@ if not path.lexists(library_path):
 
 setup(
     name=library,
+    distclass=BinaryDistribution,
     version=metadata['__version__'],
 	license=metadata['__license__'],
     author=metadata['__author__'],
