@@ -78,10 +78,70 @@ namespace calculate_meta {
     using DoubleTuple = typename Repeat<Value, n>::type;
 
 
+    class FunctionWrapper {
+
+        class FunctionConcept {
+        public:
+            virtual SizeT args() const = 0;
+            virtual Value evaluate(const vValue &args) const = 0;
+        };
+
+        template<typename Function, SizeT n>
+        class FunctionModel : public FunctionConcept {
+            Function _function;
+
+            template<SizeT... indices>
+            Value _evaluate(
+                const vValue &args,
+                std::index_sequence<indices...>
+            ) const { return _function(args[indices]...); }
+
+        public:
+            virtual SizeT args() const { return n; };
+            virtual Value evalute(const vValue &args) const {
+                return _evaluate(args, std::make_index_sequence<n>());
+            }
+        };
+
+        std::unique_ptr<FunctionConcept> _function;
+
+    public:
+        template <typename Function>
+        FunctionWrapper(Function&& function) {
+            static_assert(
+                std::is_same<LambdaResult<Function>, Value>::value,
+                "Return type of builtin function must be double"
+            );
+            static_assert(
+                lambdaArgs<Function>()> 0,
+                "At least one argument required for builtin function"
+            );
+            static_assert(
+                std::is_same<
+                    LambdaParams<Function>,
+                    DoubleTuple<lambdaArgs<Function>()>
+                >::value,
+                "All type parameters of builtin function must be double"
+            );
+
+            _function = std::make_unique<
+                FunctionModel<Function, lambdaArgs<Function>()>
+            >({ std::forward<Function>(function) });
+        }
+
+        SizeT args() const {
+            return _function->args();
+        }
+
+        Value operator()(const vValue &args) const {
+            return _function->evaluate(args);
+        }
+    };
+
     template<typename Functor, SizeT n>
     struct FunctorWrapper {
         Functor functor;
-        constexpr const SizeT args() const { return n; };
+        SizeT args() const { return n; };
 
         template<SizeT... indices>
         Value evalVector(
@@ -98,26 +158,23 @@ namespace calculate_meta {
 
     template <typename Functor>
     auto wrapFunctor(Functor&& functor) {
-        auto introspective_functor = functor;
-        using FunctorType = decltype(introspective_functor);
-
         static_assert(
-            std::is_same<LambdaResult<FunctorType>, Value>::value,
+            std::is_same<LambdaResult<Functor>, Value>::value,
             "Return type of builtin function must be double"
         );
         static_assert(
-            lambdaArgs<FunctorType>()> 0,
+            lambdaArgs<Functor>()> 0,
             "At least one argument required for builtin function"
         );
         static_assert(
             std::is_same<
-                LambdaParams<FunctorType>,
-                DoubleTuple<lambdaArgs<FunctorType>()>
+                LambdaParams<Functor>,
+                DoubleTuple<lambdaArgs<Functor>()>
             >::value,
             "All type parameters of builtin function must be double"
         );
 
-        return FunctorWrapper<Functor, lambdaArgs<FunctorType>()>{
+        return FunctorWrapper<Functor, lambdaArgs<Functor>()>{
             std::forward<Functor>(functor)
         };
     }
