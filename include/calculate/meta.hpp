@@ -59,30 +59,23 @@ namespace calculate_meta {
     }
 
 
-    template<typename Dependent, SizeT Index>
+    template<typename Dependent, SizeT index>
     using DependsOn = Dependent;
 
     template<
         typename Type,
         SizeT n,
-        typename Indices = std::make_index_sequence<n>
+        typename indices = std::make_index_sequence<n>
     >
     struct Repeat;
 
-    template<typename Type, SizeT n, SizeT... Indices>
-    struct Repeat<Type, n, std::index_sequence<Indices...>> {
-        using type = std::tuple<DependsOn<Type, Indices>...>;
+    template<typename Type, SizeT n, SizeT... indices>
+    struct Repeat<Type, n, std::index_sequence<indices...>> {
+        using type = std::tuple<DependsOn<Type, indices>...>;
     };
 
     template<SizeT n>
     using DoubleTuple = typename Repeat<Value, n>::type;
-
-
-    template<typename Type, SizeT... Indices>
-    Value evalVector(Type &function, const vValue &args,
-                     std::index_sequence<Indices...>) {
-        return function(args[Indices]...);
-    }
 
 
     template<typename Functor, SizeT n>
@@ -90,10 +83,16 @@ namespace calculate_meta {
         Functor functor;
         constexpr const SizeT args() const { return n; };
 
+        template<SizeT... indices>
+        Value evalVector(
+            const vValue &args,
+            std::index_sequence<indices...>
+        ) const {
+            return functor(args[indices]...);
+        }
+
         Value operator()(const vValue &args) const {
-            return evalVector(
-                functor, args, std::make_index_sequence<n>()
-            );
+            return evalVector(args, std::make_index_sequence<n>());
         }
     };
 
