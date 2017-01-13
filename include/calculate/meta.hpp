@@ -10,7 +10,7 @@
 #define TypeString(TOKEN) decltype(TOKEN##_tstr)
 
 
-namespace calculate_meta {
+namespace calculate_meta_utility {
 
     using namespace calculate_definitions;
 
@@ -49,14 +49,14 @@ namespace calculate_meta {
     };
 
     template<typename Type>
-    using LambdaResult = typename FunctionTraits<Type>::result_type;
+    using FunctionResult = typename FunctionTraits<Type>::result_type;
 
     template<typename Type>
-    using LambdaParams = typename FunctionTraits<Type>::argument_types;
+    using FunctionParams = typename FunctionTraits<Type>::argument_types;
 
     template<typename Type>
-    constexpr SizeT lambdaArgs() {
-        return std::tuple_size<LambdaParams<Type>>::value;
+    constexpr SizeT argCount() {
+        return std::tuple_size<FunctionParams<Type>>::value;
     }
 
 
@@ -76,17 +76,23 @@ namespace calculate_meta {
     };
 
     template<SizeT n>
-    using DoubleTuple = typename Repeat<Value, n>::type;
+    using FloatTuple = typename Repeat<Value, n>::type;
 
 
-    constexpr bool anyArgs(SizeT n) { return n > 0; }
+    constexpr bool anyArgs(SizeT a) { return a > 0; }
 
-    template<SizeT n>
-    using NonConstantFunction = typename std::enable_if<anyArgs(n), Value>::type;
+    template<SizeT a>
+    using NonEmptyArgs = typename std::enable_if<anyArgs(a), Value>::type;
 
-    template<SizeT n>
-    using ConstantFunction = typename std::enable_if<!anyArgs(n), Value>::type;
+    template<SizeT a>
+    using EmptyArgs = typename std::enable_if<!anyArgs(a), Value>::type;
 
+}
+
+
+namespace calculate_meta {
+
+    using namespace calculate_meta_utility;
 
     class FunctionWrapper {
 
@@ -104,14 +110,14 @@ namespace calculate_meta {
             Value _evaluate(
                 const vValue &args,
                 std::index_sequence<indices...>,
-                NonConstantFunction<sizeof...(indices)>
+                NonEmptyArgs<sizeof...(indices)>
             ) const noexcept { return _function(args[indices]...); }
 
             template<SizeT... indices>
             Value _evaluate(
                 const vValue &args,
                 std::index_sequence<indices...>,
-                ConstantFunction<sizeof...(indices)>
+                EmptyArgs<sizeof...(indices)>
             ) const noexcept { return _function(); }
 
         public:
@@ -135,20 +141,22 @@ namespace calculate_meta {
     public:
         template<typename Function>
         FunctionWrapper(Function&& function) {
+            using namespace calculate_meta;
+
             static_assert(
-                std::is_same<LambdaResult<Function>, Value>::value,
+                std::is_same<FunctionResult<Function>, Value>::value,
                 "Return type of builtin function must be double"
             );
             static_assert(
                 std::is_same<
-                    LambdaParams<Function>,
-                    DoubleTuple<lambdaArgs<Function>()>
+                    FunctionParams<Function>,
+                    FloatTuple<argCount<Function>()>
                 >::value,
                 "All type parameters of builtin function must be double"
             );
 
             _function = std::make_unique<
-                FunctionModel<Function, lambdaArgs<Function>()>
+                FunctionModel<Function, argCount<Function>()>
             >(std::forward<Function>(function));
         }
 
@@ -162,6 +170,7 @@ namespace calculate_meta {
     };
 
 }
+
 
 template <char ... chars>
 struct StringLiteral {
