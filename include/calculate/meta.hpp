@@ -88,22 +88,37 @@ namespace calculate_meta {
 
         template<typename Function, SizeT n>
         class FunctionModel : public FunctionConcept {
+            template<SizeT a>
+            using Non_Constant = typename std::enable_if<a, Value>::type;
+
+            template<SizeT a>
+            using Constant = typename std::enable_if<!a, Value>::type;
+
             Function _function;
 
             template<SizeT... indices>
             Value _evaluate(
                 const vValue &args,
-                std::index_sequence<indices...>
+                std::index_sequence<indices...>,
+                Non_Constant<sizeof...(indices)>
             ) const { return _function(args[indices]...); }
+
+            template<SizeT... indices>
+            Value _evaluate(
+                const vValue &args,
+                std::index_sequence<indices...>,
+                Constant<sizeof...(indices)>
+            ) const { return _function(); }
 
         public:
             virtual SizeT args() const { return n; };
+
             virtual Value evalute(const vValue &args) const {
-                return _evaluate(args, std::make_index_sequence<n>());
+                return _evaluate(args, std::make_index_sequence<n>(), 0.);
             }
         };
 
-        std::unique_ptr<FunctionConcept> _function;
+        std::shared_ptr<FunctionConcept> _function;
 
     public:
         template <typename Function>
@@ -113,10 +128,6 @@ namespace calculate_meta {
                 "Return type of builtin function must be double"
             );
             static_assert(
-                lambdaArgs<Function>()> 0,
-                "At least one argument required for builtin function"
-            );
-            static_assert(
                 std::is_same<
                     LambdaParams<Function>,
                     DoubleTuple<lambdaArgs<Function>()>
@@ -124,9 +135,7 @@ namespace calculate_meta {
                 "All type parameters of builtin function must be double"
             );
 
-            _function = std::make_unique<
-                FunctionModel<Function, lambdaArgs<Function>()>
-            >({ std::forward<Function>(function) });
+            _function = std::make_shared<FunctionModel<Function, lambdaArgs<Function>()>>({ std::forward<Function>(function) });
         }
 
         SizeT args() const {
@@ -137,47 +146,6 @@ namespace calculate_meta {
             return _function->evaluate(args);
         }
     };
-
-    template<typename Functor, SizeT n>
-    struct FunctorWrapper {
-        Functor functor;
-        SizeT args() const { return n; };
-
-        template<SizeT... indices>
-        Value evalVector(
-            const vValue &args,
-            std::index_sequence<indices...>
-        ) const {
-            return functor(args[indices]...);
-        }
-
-        Value operator()(const vValue &args) const {
-            return evalVector(args, std::make_index_sequence<n>());
-        }
-    };
-
-    template <typename Functor>
-    auto wrapFunctor(Functor&& functor) {
-        static_assert(
-            std::is_same<LambdaResult<Functor>, Value>::value,
-            "Return type of builtin function must be double"
-        );
-        static_assert(
-            lambdaArgs<Functor>()> 0,
-            "At least one argument required for builtin function"
-        );
-        static_assert(
-            std::is_same<
-                LambdaParams<Functor>,
-                DoubleTuple<lambdaArgs<Functor>()>
-            >::value,
-            "All type parameters of builtin function must be double"
-        );
-
-        return FunctorWrapper<Functor, lambdaArgs<Functor>()>{
-            std::forward<Functor>(functor)
-        };
-    }
 
 }
 

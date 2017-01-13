@@ -140,14 +140,14 @@ namespace calculate_symbols {
 
     class Evaluable : public Symbol {
     protected:
-        fValue _function;
+        const FunctionWrapper _function;
         vEvaluable _operands;
 
         Evaluable(
             const String &t = "",
             Type y = Type::CONSTANT,
             SizeT s = 0,
-            fValue f = [](const vValue &){ throw; return nan; }
+            FunctionWrapper f = FunctionWrapper([](){ throw; return nan; })
         ) noexcept : Symbol(t, y), _function(f), args(s) {}
 
     public:
@@ -164,7 +164,7 @@ namespace calculate_symbols {
     class Variable final : public Evaluable {
     public:
         Variable(const String &t, Value *v) noexcept :
-            Evaluable(t, Type::CONSTANT, 0, [v](const vValue &){return *v;}) {}
+            Evaluable(t, Type::CONSTANT, 0, FunctionWrapper([v](){ return *v; })) {}
         virtual ~Variable() noexcept {}
     };
 
@@ -179,7 +179,7 @@ namespace calculate_symbols {
     public:
         Constant() : Evaluable() {}
         Constant(const String &t, Value v) noexcept :
-            Evaluable(t, Type::CONSTANT, 0, [v](const vValue &){return v;}) {}
+            Evaluable(t, Type::CONSTANT, 0, FunctionWrapper([v](){ return v; })) {}
         virtual ~Constant() noexcept {};
 
         friend struct Recorder<Constant>;
@@ -210,7 +210,7 @@ namespace calculate_symbols {
         }
 
         Operator() : Evaluable(), precedence(0), left_assoc(true) {}
-        Operator(const String &t, SizeT p, Bool l, fValue f) noexcept :
+        Operator(const String &t, SizeT p, Bool l, FunctionWrapper f) noexcept :
             Evaluable(t, Type::OPERATOR, 2, f), precedence(p), left_assoc(l) {}
 
     public:
@@ -248,7 +248,7 @@ namespace calculate_symbols {
         }
 
         Function() : Evaluable() {}
-        Function(const String &t, SizeT s, fValue f) noexcept :
+        Function(const String &t, SizeT s, FunctionWrapper f) noexcept :
             Evaluable(t, Type::FUNCTION, s, f) {}
 
     public:
