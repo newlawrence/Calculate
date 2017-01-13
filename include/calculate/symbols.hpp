@@ -9,7 +9,7 @@
 namespace calculate_symbols {                                                 \
     template <>                                                               \
     BuiltinConstant<TypeString(TOKEN)>::BuiltinConstant() noexcept :          \
-      Constant(TOKEN, VALUE) {}                                               \
+        Constant(TOKEN, VALUE) {}                                             \
     template class BuiltinConstant<TypeString(TOKEN)>;                        \
 }
 
@@ -18,7 +18,7 @@ namespace calculate_symbols {                                                 \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
     BuiltinOperator<TypeString(TOKEN)>::BuiltinOperator() noexcept :          \
-      Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, wrapFunctor(FUNCTION)) {} \
+        Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION) {}            \
     template class BuiltinOperator<TypeString(TOKEN)>;                        \
 }
 
@@ -27,7 +27,7 @@ namespace calculate_symbols {                                                 \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
     BuiltinFunction<TypeString(TOKEN)>::BuiltinFunction() noexcept :          \
-      Function(TOKEN, wrapFunctor(FUNCTION).args(), wrapFunctor(FUNCTION)) {} \
+        Function(TOKEN, FUNCTION) {}                                          \
     template class BuiltinFunction<TypeString(TOKEN)>;                        \
 }
 
@@ -140,21 +140,22 @@ namespace calculate_symbols {
 
     class Evaluable : public Symbol {
     protected:
-        const FunctionWrapper _function;
+        FunctionWrapper _function;
         vEvaluable _operands;
 
-        Evaluable(
-            const String &t = "",
-            Type y = Type::CONSTANT,
-            SizeT s = 0,
-            FunctionWrapper f = FunctionWrapper([](){ throw; return nan; })
-        ) noexcept : Symbol(t, y), _function(f), args(s) {}
+        Evaluable() noexcept :
+            Symbol("", Type::CONSTANT),
+            _function([](){ throw; return nan; }) {}
+
+        template<typename Func>
+        Evaluable(const String &t, Type y, Func&& f) noexcept :
+            Symbol(t, y),
+            _function(std::forward<Func>(f)) {}
 
     public:
-        const SizeT args;
-
         virtual ~Evaluable() noexcept = 0;
         void addBranches(const vEvaluable &x) noexcept;
+        SizeT args() const noexcept { return _function.args(); }
         Value evaluate() const noexcept;
         void print(Stream &stream, String ind="") const noexcept;
     };
@@ -164,7 +165,7 @@ namespace calculate_symbols {
     class Variable final : public Evaluable {
     public:
         Variable(const String &t, Value *v) noexcept :
-            Evaluable(t, Type::CONSTANT, 0, FunctionWrapper([v](){ return *v; })) {}
+            Evaluable(t, Type::CONSTANT, [v](){ return *v; }) {}
         virtual ~Variable() noexcept {}
     };
 
@@ -179,7 +180,7 @@ namespace calculate_symbols {
     public:
         Constant() : Evaluable() {}
         Constant(const String &t, Value v) noexcept :
-            Evaluable(t, Type::CONSTANT, 0, FunctionWrapper([v](){ return v; })) {}
+            Evaluable(t, Type::CONSTANT, [v](){ return v; }) {}
         virtual ~Constant() noexcept {};
 
         friend struct Recorder<Constant>;
@@ -210,8 +211,12 @@ namespace calculate_symbols {
         }
 
         Operator() : Evaluable(), precedence(0), left_assoc(true) {}
-        Operator(const String &t, SizeT p, Bool l, FunctionWrapper f) noexcept :
-            Evaluable(t, Type::OPERATOR, 2, f), precedence(p), left_assoc(l) {}
+
+        template<typename Func>
+        Operator(const String &t, SizeT p, Bool l, Func&& f) noexcept :
+            Evaluable(t, Type::OPERATOR, std::forward<Func>(f)),
+            precedence(p),
+            left_assoc(l) {}
 
     public:
         const SizeT precedence;
@@ -248,8 +253,10 @@ namespace calculate_symbols {
         }
 
         Function() : Evaluable() {}
-        Function(const String &t, SizeT s, FunctionWrapper f) noexcept :
-            Evaluable(t, Type::FUNCTION, s, f) {}
+
+        template<typename Func>
+        Function(const String &t, Func&& f) noexcept :
+            Evaluable(t, Type::FUNCTION, std::forward<Func>(f)) {}
 
     public:
         virtual ~Function() noexcept {}

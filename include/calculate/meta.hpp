@@ -2,6 +2,7 @@
 #define __CALCULATE_META_HPP__
 
 #include <type_traits>
+#include <functional>
 #include <tuple>
 
 #include "calculate/definitions.hpp"
@@ -78,50 +79,61 @@ namespace calculate_meta {
     using DoubleTuple = typename Repeat<Value, n>::type;
 
 
+    constexpr bool anyArgs(SizeT n) { return n > 0; }
+
+    template<SizeT n>
+    using NonConstantFunction = typename std::enable_if<anyArgs(n), Value>::type;
+
+    template<SizeT n>
+    using ConstantFunction = typename std::enable_if<!anyArgs(n), Value>::type;
+
+
     class FunctionWrapper {
 
         class FunctionConcept {
         public:
-            virtual SizeT args() const = 0;
-            virtual Value evaluate(const vValue &args) const = 0;
+            virtual SizeT args() const noexcept = 0;
+            virtual Value evaluate(const vValue &args) const noexcept = 0;
         };
 
         template<typename Function, SizeT n>
         class FunctionModel : public FunctionConcept {
-            template<SizeT a>
-            using Non_Constant = typename std::enable_if<a, Value>::type;
-
-            template<SizeT a>
-            using Constant = typename std::enable_if<!a, Value>::type;
-
             Function _function;
 
             template<SizeT... indices>
             Value _evaluate(
                 const vValue &args,
                 std::index_sequence<indices...>,
-                Non_Constant<sizeof...(indices)>
-            ) const { return _function(args[indices]...); }
+                NonConstantFunction<sizeof...(indices)>
+            ) const noexcept { return _function(args[indices]...); }
 
             template<SizeT... indices>
             Value _evaluate(
                 const vValue &args,
                 std::index_sequence<indices...>,
-                Constant<sizeof...(indices)>
-            ) const { return _function(); }
+                ConstantFunction<sizeof...(indices)>
+            ) const noexcept { return _function(); }
 
         public:
-            virtual SizeT args() const { return n; };
+            FunctionModel(Function function) : _function(function) {}
 
-            virtual Value evalute(const vValue &args) const {
+            virtual SizeT args() const noexcept { return n; };
+
+            virtual Value evaluate(const vValue &args) const noexcept {
                 return _evaluate(args, std::make_index_sequence<n>(), 0.);
             }
         };
 
-        std::shared_ptr<FunctionConcept> _function;
+        std::unique_ptr<FunctionConcept> _function;
+
+        FunctionWrapper() = delete;
+        FunctionWrapper(const FunctionWrapper&) = delete;
+        FunctionWrapper(FunctionWrapper&&) = delete;
+        FunctionWrapper& operator=(const FunctionWrapper&) = delete;
+        FunctionWrapper& operator=(FunctionWrapper&&) = delete;
 
     public:
-        template <typename Function>
+        template<typename Function>
         FunctionWrapper(Function&& function) {
             static_assert(
                 std::is_same<LambdaResult<Function>, Value>::value,
@@ -135,14 +147,16 @@ namespace calculate_meta {
                 "All type parameters of builtin function must be double"
             );
 
-            _function = std::make_shared<FunctionModel<Function, lambdaArgs<Function>()>>({ std::forward<Function>(function) });
+            _function = std::make_unique<
+                FunctionModel<Function, lambdaArgs<Function>()>
+            >(std::forward<Function>(function));
         }
 
-        SizeT args() const {
+        SizeT args() const noexcept {
             return _function->args();
         }
 
-        Value operator()(const vValue &args) const {
+        Value operator()(const vValue &args) const noexcept {
             return _function->evaluate(args);
         }
     };
