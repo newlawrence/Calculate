@@ -294,8 +294,8 @@ namespace calculate {
             element = postfix.front();
             postfix.pop();
 
-            vEvaluable ops(element->args());
-            for (auto i = element->args(); i > 0; i--) {
+            vEvaluable ops(element->args);
+            for (auto i = element->args; i > 0; i--) {
                 if (operands.empty())
                     throw MissingArgumentsException(element->token);
                 ops[i - 1] = operands.top();

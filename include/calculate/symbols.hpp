@@ -145,17 +145,20 @@ namespace calculate_symbols {
 
         Evaluable() noexcept :
             Symbol("", Type::CONSTANT),
-            _function([](){ throw; return nan; }) {}
+            _function([](){ throw; return nan; }),
+            args(0) {}
 
         template<typename Func>
         Evaluable(const String &t, Type y, Func&& f) noexcept :
             Symbol(t, y),
-            _function(std::forward<Func>(f)) {}
+            _function(std::forward<Func>(f)),
+            args(FunctionWrapper(std::forward<Func>(f)).args()) {}
 
     public:
+        const SizeT args;
+
         virtual ~Evaluable() noexcept = 0;
         void addBranches(const vEvaluable &x) noexcept;
-        SizeT args() const noexcept { return _function.args(); }
         Value evaluate() const noexcept;
         void print(Stream &stream, String ind="") const noexcept;
     };
