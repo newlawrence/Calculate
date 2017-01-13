@@ -12,7 +12,6 @@ typedef double Value;
 #include <stdexcept>
 #include <memory>
 #include <limits>
-#include <functional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -35,7 +34,6 @@ namespace calculate_definitions {
     using pValue = std::unique_ptr<Value[]>;
     using vValue = std::vector<Value>;
     using mValue = std::unordered_map<String, Value>;
-    using fValue = std::function<Value(const vValue&)>;
 
     using Regex = std::regex;
     using Match = std::smatch;
