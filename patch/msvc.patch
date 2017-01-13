@@ -1,30 +1,33 @@
 diff --git a/include/calculate/meta.hpp b/include/calculate/meta.hpp
-index d22a5b1..06511ff 100644
+index 95dac93..950fda3 100644
 --- a/include/calculate/meta.hpp
 +++ b/include/calculate/meta.hpp
-@@ -6,13 +6,16 @@
+@@ -7,8 +7,6 @@
  
  #include "calculate/definitions.hpp"
  
 -#define TypeString(TOKEN) decltype(TOKEN##_tstr)
 -
  
- namespace calculate_meta {
+ namespace calculate_meta_utility {
  
-     using namespace calculate_definitions;
+@@ -94,6 +92,11 @@ namespace calculate_meta {
+ 
+     using namespace calculate_meta_utility;
  
 +    constexpr Hash djb2(const Byte *s, Hash h=5381) {
-+	    return !*s ? h : djb2(s + 1, 33 * h ^ static_cast<Hash>(*s));
++        return !*s ? h : djb2(s + 1, 33 * h ^ static_cast<Hash>(*s));
 +    }
 +
 +
-     template<typename Type>
-     struct FunctionTraits : FunctionTraits<decltype(&Type::operator())> {
-     };
-@@ -125,17 +128,4 @@ namespace calculate_meta {
+     class FunctionWrapper {
+ 
+         class FunctionConcept {
+@@ -171,18 +174,4 @@ namespace calculate_meta {
  
  }
  
+-
 -template <char ... chars>
 -struct StringLiteral {
 -    static constexpr const char str[sizeof...(chars) + 1] = {chars..., '\0'};
@@ -40,7 +43,7 @@ index d22a5b1..06511ff 100644
 -
  #endif
 diff --git a/include/calculate/symbols.hpp b/include/calculate/symbols.hpp
-index addea30..e69cb59 100755
+index 5de6d3c..4f9cd34 100755
 --- a/include/calculate/symbols.hpp
 +++ b/include/calculate/symbols.hpp
 @@ -8,27 +8,36 @@
@@ -49,7 +52,7 @@ index addea30..e69cb59 100755
      template <>                                                               \
 -    BuiltinConstant<TypeString(TOKEN)>::BuiltinConstant() noexcept :          \
 +    BuiltinConstant<djb2(TOKEN)>::BuiltinConstant() noexcept :                \
-       Constant(TOKEN, VALUE) {}                                               \
+         Constant(TOKEN, VALUE) {}                                             \
 -    template class BuiltinConstant<TypeString(TOKEN)>;                        \
 +    template <>                                                               \
 +    const Recorder<Constant> BuiltinConstant<djb2(TOKEN)>::_recorder(         \
@@ -63,7 +66,7 @@ index addea30..e69cb59 100755
      template <>                                                               \
 -    BuiltinOperator<TypeString(TOKEN)>::BuiltinOperator() noexcept :          \
 +    BuiltinOperator<djb2(TOKEN)>::BuiltinOperator() noexcept :                \
-       Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, wrapFunctor(FUNCTION)) {} \
+         Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION) {}            \
 -    template class BuiltinOperator<TypeString(TOKEN)>;                        \
 +    template <>                                                               \
 +    const Recorder<Operator> BuiltinOperator<djb2(TOKEN)>::_recorder(         \
@@ -77,7 +80,7 @@ index addea30..e69cb59 100755
      template <>                                                               \
 -    BuiltinFunction<TypeString(TOKEN)>::BuiltinFunction() noexcept :          \
 +    BuiltinFunction<djb2(TOKEN)>::BuiltinFunction() noexcept :                \
-       Function(TOKEN, wrapFunctor(FUNCTION).args(), wrapFunctor(FUNCTION)) {} \
+         Function(TOKEN, FUNCTION) {}                                          \
 -    template class BuiltinFunction<TypeString(TOKEN)>;                        \
 +    template <>                                                               \
 +    const Recorder<Function> BuiltinFunction<djb2(TOKEN)>::_recorder(         \
@@ -86,7 +89,7 @@ index addea30..e69cb59 100755
  }
  
  
-@@ -188,7 +197,7 @@ namespace calculate_symbols {
+@@ -192,7 +201,7 @@ namespace calculate_symbols {
          friend vString query<Constant>();
      };
  
@@ -95,7 +98,7 @@ index addea30..e69cb59 100755
      class BuiltinConstant final : public Constant {
          static const Recorder<Constant> _recorder;
  
-@@ -196,10 +205,6 @@ namespace calculate_symbols {
+@@ -200,10 +209,6 @@ namespace calculate_symbols {
          BuiltinConstant() noexcept : Constant() {}
          virtual ~BuiltinConstant() noexcept {}
      };
@@ -106,7 +109,7 @@ index addea30..e69cb59 100755
  
  
      class Operator : public Evaluable {
-@@ -226,7 +231,7 @@ namespace calculate_symbols {
+@@ -234,7 +239,7 @@ namespace calculate_symbols {
      };
  
  
@@ -115,7 +118,7 @@ index addea30..e69cb59 100755
      class BuiltinOperator final : public Operator {
          static const Recorder<Operator> _recorder;
  
-@@ -234,10 +239,6 @@ namespace calculate_symbols {
+@@ -242,10 +247,6 @@ namespace calculate_symbols {
          BuiltinOperator() noexcept : Operator() {}
          virtual ~BuiltinOperator() noexcept {}
      };
@@ -126,7 +129,7 @@ index addea30..e69cb59 100755
  
  
      class Function : public Evaluable {
-@@ -261,7 +262,7 @@ namespace calculate_symbols {
+@@ -271,7 +272,7 @@ namespace calculate_symbols {
      };
  
  
@@ -135,7 +138,7 @@ index addea30..e69cb59 100755
      class BuiltinFunction final : public Function {
          static const Recorder<Function> _recorder;
  
-@@ -269,10 +270,6 @@ namespace calculate_symbols {
+@@ -279,10 +280,6 @@ namespace calculate_symbols {
          BuiltinFunction() noexcept : Function() {}
          virtual ~BuiltinFunction() noexcept {}
      };

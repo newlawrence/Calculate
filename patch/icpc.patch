@@ -1,8 +1,8 @@
 diff --git a/include/calculate/meta.hpp b/include/calculate/meta.hpp
-index d22a5b1..08232c6 100644
+index 95dac93..8f391e9 100644
 --- a/include/calculate/meta.hpp
 +++ b/include/calculate/meta.hpp
-@@ -6,13 +6,23 @@
+@@ -7,7 +7,12 @@
  
  #include "calculate/definitions.hpp"
  
@@ -15,30 +15,22 @@ index d22a5b1..08232c6 100644
 +#define TypeString(TOKEN) StringLiteral<calculate_meta::hashDJB2(TOKEN)>
  
  
- namespace calculate_meta {
+ namespace calculate_meta_utility {
+@@ -94,6 +99,11 @@ namespace calculate_meta {
  
-     using namespace calculate_definitions;
+     using namespace calculate_meta_utility;
  
 +    constexpr Hash hashDJB2(const Byte *s, Hash h=5381) {
 +        return !*s ? h : hashDJB2(s + 1, 33 * h ^ static_cast<Hash>(*s));
 +    }
 +
 +
-     template<typename Type>
-     struct FunctionTraits : FunctionTraits<decltype(&Type::operator())> {
-     };
-@@ -88,7 +98,7 @@ namespace calculate_meta {
-     template<typename Functor, SizeT n>
-     struct FunctorWrapper {
-         Functor functor;
--        constexpr const SizeT args() const { return n; };
-+        constexpr SizeT args() { return n; };
+     class FunctionWrapper {
  
-         Value operator()(const vValue &args) const {
-             return evalVector(
-@@ -125,17 +135,11 @@ namespace calculate_meta {
- 
+         class FunctionConcept {
+@@ -172,17 +182,11 @@ namespace calculate_meta {
  }
+ 
  
 -template <char ... chars>
 +template <Hash hash>
@@ -58,7 +50,7 @@ index d22a5b1..08232c6 100644
  
  #endif
 diff --git a/include/calculate/symbols.hpp b/include/calculate/symbols.hpp
-index addea30..0c1cf0c 100755
+index 5de6d3c..1216d3d 100755
 --- a/include/calculate/symbols.hpp
 +++ b/include/calculate/symbols.hpp
 @@ -6,6 +6,7 @@
@@ -85,7 +77,7 @@ index addea30..0c1cf0c 100755
  namespace calculate_symbols {                                                 \
      template <>                                                               \
      BuiltinFunction<TypeString(TOKEN)>::BuiltinFunction() noexcept :          \
-@@ -198,7 +201,7 @@ namespace calculate_symbols {
+@@ -202,7 +205,7 @@ namespace calculate_symbols {
      };
      template <typename Token>
      const Recorder<Constant> BuiltinConstant<Token>::_recorder(
@@ -94,7 +86,7 @@ index addea30..0c1cf0c 100755
      );
  
  
-@@ -236,7 +239,7 @@ namespace calculate_symbols {
+@@ -244,7 +247,7 @@ namespace calculate_symbols {
      };
      template <typename Token>
      const Recorder<Operator> BuiltinOperator<Token>::_recorder(
@@ -103,7 +95,7 @@ index addea30..0c1cf0c 100755
      );
  
  
-@@ -271,7 +274,7 @@ namespace calculate_symbols {
+@@ -281,7 +284,7 @@ namespace calculate_symbols {
      };
      template <typename Token>
      const Recorder<Function> BuiltinFunction<Token>::_recorder(
