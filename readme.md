@@ -7,9 +7,13 @@
 [![codecov](https://codecov.io/gh/newlawrence/Calculate/branch/master/graph/badge.svg)](https://codecov.io/gh/newlawrence/Calculate)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/newlawrence/Calculate/blob/7f96b434dd77461f17a71f3fe3025c21b73ed0d0/copying)
 
-Written in modern **C++** for learning purposes.
+Written in modern **C++** for learning purposes, including bindings for **C**, **Fortran** and **Python**.
 
-With bindings for **C**, **Fortran** and **Python**.
+**Python** binary packages available using [**conda**](https://anaconda.org/newlawrence/calculate/files):
+
+```
+conda install calculate -c newlawrence
+```
 
 
 ### Requirements

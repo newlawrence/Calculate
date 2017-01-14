@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from calculate.calculate import Expression
-from calculate.calculate import queryConstants, queryOperators, queryFunctions
+import sys
+
+from calculate.calculate import Expression, Query
 
 __version__ = '${PACKAGE_VERSION}'
 __license__ = 'MIT'
@@ -11,3 +12,7 @@ __email__ = 'alorenzo.md@gmail.com'
 __site__ = 'https://github.com/newlawrence/Calculate'
 __description__ = 'Little math expression parser'
 __date__ = '${COMPILE_DATE}'
+
+
+for query in Query().queries.keys():
+    setattr(sys.modules[__name__], query, getattr(Query(), query))

@@ -7,30 +7,29 @@ from calculate.cffiwrap import ffi, calculate, decode, ERROR_CHARS, MAX_CHARS
 from calculate.exceptions import raise_if
 
 
-def _query(what):
+class Query(object):
 
-    _query_functions = {
-        'constants': calculate.queryConstants,
-        'operators': calculate.queryOperators,
-        'functions': calculate.queryFunctions
+    _queries = {
+        'queryConstants': calculate.queryConstants,
+        'queryOperators': calculate.queryOperators,
+        'queryFunctions': calculate.queryFunctions
     }
 
-    output = ffi.new('char[{}]'.format(MAX_CHARS))
-    _query_functions[what](output)
-    output = decode(output)
-    return output.split(',') if output else []
+    def __getattr__(self, item):
+        try:
+            output = ffi.new('char[{}]'.format(MAX_CHARS))
+            self._queries[item](output)
+            output = decode(output)
+            return lambda: output.split(',') if output else []
+        except KeyError:
+            raise AttributeError(
+                '{} object has no attribute {}'
+                .format(repr(self.__class__.__name__), repr(item))
+            )
 
-
-def queryConstants():
-    return _query('constants')
-
-
-def queryOperators():
-    return _query('operators')
-
-
-def queryFunctions():
-    return _query('functions')
+    @property
+    def queries(self):
+        return dict(self._queries)
 
 
 class Expression(object):
@@ -43,11 +42,13 @@ class Expression(object):
         'tree': calculate.getTree
     }
 
+    __slots__ = ['_handler']
+
     def __init__(self, expression, variables=''):
         if not isinstance(variables, str) and isinstance(variables, Iterable):
             variables = ','.join(variables) if len(variables) > 0 else ''
         error = ffi.new('char[{}]'.format(ERROR_CHARS))
-        self.__handler = calculate.createExpression(
+        self._handler = calculate.createExpression(
             expression.encode(),
             variables.encode(),
             error
@@ -57,7 +58,7 @@ class Expression(object):
     def __getattr__(self, item):
         try:
             output = ffi.new('char[{}]'.format(MAX_CHARS))
-            self._properties[item](self.__handler, output)
+            self._properties[item](self._handler, output)
             return decode(output)
         except KeyError:
             raise AttributeError(
@@ -75,7 +76,7 @@ class Expression(object):
 
         error = ffi.new('char[{}]'.format(ERROR_CHARS))
         size = len(args)
-        result = calculate.evaluateArray(self.__handler, values, size, error)
+        result = calculate.evaluateArray(self._handler, values, size, error)
         raise_if(decode(error))
 
         return result
@@ -89,8 +90,8 @@ class Expression(object):
 
     def __del__(self):
         try:
-            calculate.freeExpression(self.__handler)
+            calculate.freeExpression(self._handler)
         except Exception:
             pass
         finally:
-            self.handler = ffi.NULL
+            self._handler = ffi.NULL
