@@ -3,6 +3,8 @@ from __future__ import absolute_import
 
 import sys
 
+__all__ = []
+
 
 class BaseCalculateException(Exception):
     default_message = 'Unknown error'
@@ -38,6 +40,7 @@ for exception, message in __exceptions.items():
             {'__init__': __constructor, 'default_message': message}
         )
     )
+    __all__.append(exception)
 
 
 def raise_if(error):

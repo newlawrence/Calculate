@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-import sys
+from calculate.calculate import Expression
 
-from calculate.calculate import Expression, Query
+__all__ = ['Expression']
 
 __version__ = '${PACKAGE_VERSION}'
 __license__ = 'MIT'
@@ -14,5 +14,14 @@ __description__ = 'Little math expression parser'
 __date__ = '${COMPILE_DATE}'
 
 
-for query in Query().queries.keys():
-    setattr(sys.modules[__name__], query, getattr(Query(), query))
+def load():
+    import sys
+    from calculate.calculate import Query
+
+    for query in Query().queries.keys():
+        setattr(sys.modules[__name__], query, getattr(Query(), query))
+        __all__.append(query)
+
+load()
+del load
+del absolute_import

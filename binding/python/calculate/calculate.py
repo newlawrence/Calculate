@@ -3,8 +3,10 @@ from __future__ import absolute_import
 
 from collections import Iterable
 
-from calculate.cffiwrap import ffi, calculate, decode, ERROR_CHARS, MAX_CHARS
+from calculate.utility import ffi, calculate, decode, ERROR_CHARS, MAX_CHARS
 from calculate.exceptions import raise_if
+
+__all__ = ['Query', 'Expression']
 
 
 class Query(object):
