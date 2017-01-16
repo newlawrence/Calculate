@@ -22,7 +22,11 @@ string(TIMESTAMP PACKAGE_COPYRIGHT "Copyright (C) 2016 - %Y Alberto Lorenzo")
 
 set(TEMPLATES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/template")
 macro(apply_template FILENAME ROUTE)
-    configure_file(${TEMPLATES_DIR}/${FILENAME}.in ${ROUTE}/${FILENAME})
+    configure_file(
+        ${TEMPLATES_DIR}/${FILENAME}.in
+        ${ROUTE}/${FILENAME}
+        NEWLINE_STYLE UNIX
+    )
 endmacro()
 
 
