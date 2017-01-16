@@ -3,12 +3,13 @@ project(calculate C CXX)
 
 
 set(MAJOR "1")
-set(MINOR "1")
-set(PTH "4")
+set(MINOR "2")
+set(PTH "0")
 set(DEV ".dev0")
 set(BUILD "0")
 set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
 
+set(PACKAGE_NAME "Calculate")
 set(PACKAGE_VERSION "${MAJOR}.${MINOR}.${PTH}${DEV}")
 set(PACKAGE_LICENSE "MIT")
 set(PACKAGE_AUTHOR "Alberto Lorenzo")
@@ -16,6 +17,7 @@ set(PACKAGE_CONTACT "alorenzo.md@gmail.com")
 set(PACKAGE_SITE "https://github.com/newlawrence/Calculate")
 set(PACKAGE_DESCRIPTION "Little math expression parser")
 string(TIMESTAMP PACKAGE_DATE "%Y/%m/%d")
+string(TIMESTAMP PACKAGE_COPYRIGHT "Copyright (C) 2016 - %Y Alberto Lorenzo")
 
 
 set(PATCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patch")

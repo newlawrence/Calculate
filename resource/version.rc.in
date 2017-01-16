@@ -15,14 +15,14 @@ FILEFLAGSMASK 0x3fL
     {
         BLOCK "040004e4"
         {
-            VALUE "Comments", "Little Math Expression Parser"
+            VALUE "Comments", "${PACKAGE_DESCRIPTION}"
             VALUE "CompanyName", ""
-            VALUE "FileDescription", "Little Math Expression Parser"
+            VALUE "FileDescription", "${PACKAGE_DESCRIPTION}"
             VALUE "FileVersion", "${WINDOWS_VERSION}"
             VALUE "InternalName", ""
-            VALUE "LegalCopyright", "Copyright (C) 2016 Alberto Lorenzo"
+            VALUE "LegalCopyright", "${PACKAGE_COPYRIGHT}"
             VALUE "OriginalFilename", ""
-            VALUE "ProductName", "Calculate"
+            VALUE "ProductName", "${PACKAGE_NAME}"
             VALUE "ProductVersion", "${WINDOWS_VERSION}"
         }
     }
