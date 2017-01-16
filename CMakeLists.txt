@@ -20,7 +20,13 @@ string(TIMESTAMP PACKAGE_DATE "%Y/%m/%d")
 string(TIMESTAMP PACKAGE_COPYRIGHT "Copyright (C) 2016 - %Y Alberto Lorenzo")
 
 
-set(PATCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patch")
+set(TEMPLATES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/template")
+macro(apply_template FILENAME ROUTE)
+    configure_file(${TEMPLATES_DIR}/${FILENAME}.in ${ROUTE}/${FILENAME})
+endmacro()
+
+
+set(PATCHES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patch")
 macro(apply_patch COMPILER)
     find_program(PATCH patch)
     find_program(GIT git)
@@ -28,12 +34,12 @@ macro(apply_patch COMPILER)
     if(PATCH)
         execute_process(
             COMMAND ${PATCH} -p1 -i
-                    ${PATCH_DIR}/${COMPILER}.patch
+                    ${PATCHES_DIR}/${COMPILER}.patch
         )
     elseif(GIT)
         execute_process(
             COMMAND ${GIT} apply --whitespace=fix
-                    ${PATCH_DIR}/${COMPILER}.patch
+                    ${PATCHES_DIR}/${COMPILER}.patch
         )
     else()
         message(FATAL_ERROR "Suitable patching command not found!")
@@ -132,11 +138,11 @@ if(
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
     endif()
 elseif(MSVC)
-    apply_patch(msvc)
+    apply_patch("msvc")
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS "ON")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14 /sdl")
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
-    apply_patch(icpc)
+    apply_patch("icpc")
     if(WIN32)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O3 /std:c++14")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall")
@@ -146,15 +152,10 @@ elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
     endif()
 endif()
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
-set(INFO_IN "${PROJECT_SOURCE_DIR}/include/calculate/info.hpp.in")
-set(INFO "${PROJECT_SOURCE_DIR}/include/calculate/info.hpp")
-configure_file(${INFO_IN} ${INFO})
+apply_template("info.hpp" "${PROJECT_SOURCE_DIR}/include/calculate")
 file(GLOB sources ${PROJECT_SOURCE_DIR}/source/*.cpp)
 if(WIN32)
-    set(RESOURCE_IN "${PROJECT_SOURCE_DIR}/resource/version.rc.in")
-    set(RESOURCE "${PROJECT_SOURCE_DIR}/resource/version.rc")
-    configure_file(${RESOURCE_IN} ${RESOURCE})
+    apply_template("version.rc" "${PROJECT_SOURCE_DIR}/resource")
     set(sources "${sources};${RESOURCE}")
     if(NOT MSVC)
         set(CMAKE_RC_COMPILER_INIT "windres")

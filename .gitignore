@@ -32,7 +32,6 @@ Release/
 *.filters
 *.vcxproj
 *.sln
-*.rc
 *.opensdf
 *.sdf
 *.db
@@ -48,8 +47,3 @@ extern/
 
 # Coverage reports
 coverage/
-
-# Templated sources
-include/calculate/info.hpp
-binding/python/calculate/__init__.py
-binding/python/recipe/meta.yaml
