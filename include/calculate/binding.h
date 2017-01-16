@@ -28,19 +28,19 @@ struct calculate_c_library_template {
     void (*operators)(Byte*);
     void (*functions)(Byte*);
 
-    Expression (*createExpression)(const Byte*, const Byte*, Byte*);
-    Expression (*newExpression)(const Byte*, const Byte*);
-    void (*freeExpression)(Expression);
+    Expression (*create)(const Byte*, const Byte*, Byte*);
+    Expression (*build)(const Byte*, const Byte*);
+    void (*free)(Expression);
 
-    void (*getExpression)(Expression, Byte*);
-    void (*getVariables)(Expression, Byte*);
-    void (*getInfix)(Expression, Byte*);
-    void (*getPostfix)(Expression, Byte*);
-    void (*getTree)(Expression, Byte*);
+    void (*expression)(Expression, Byte*);
+    void (*variables)(Expression, Byte*);
+    void (*infix)(Expression, Byte*);
+    void (*postfix)(Expression, Byte*);
+    void (*tree)(Expression, Byte*);
 
-    Value (*evaluateArray)(Expression, Value*, Integer, Byte*);
-    Value (*evalArray)(Expression, Value*, Integer);
-    Value (*eval)(Expression, ...);
+    Value (*evaluate)(Expression, Value*, Integer, Byte*);
+    Value (*eval)(Expression, Value*, Integer);
+    Value (*value)(Expression, ...);
 };
 
 EXPORT_GLOBAL extern const STRUCT calculate_c_library_template Calculate;

@@ -37,11 +37,11 @@ class Query(object):
 class Expression(object):
 
     _properties = {
-        'expression': calculate.getExpression,
-        'variables': calculate.getVariables,
-        'infix': calculate.getInfix,
-        'postfix': calculate.getPostfix,
-        'tree': calculate.getTree
+        'expression': calculate.expression,
+        'variables': calculate.variables,
+        'infix': calculate.infix,
+        'postfix': calculate.postfix,
+        'tree': calculate.tree
     }
 
     __slots__ = ['_handler']
@@ -50,7 +50,7 @@ class Expression(object):
         if not isinstance(variables, str) and isinstance(variables, Iterable):
             variables = ','.join(variables) if len(variables) > 0 else ''
         error = ffi.new('char[{}]'.format(ERROR_CHARS))
-        self._handler = calculate.createExpression(
+        self._handler = calculate.create(
             expression.encode(),
             variables.encode(),
             error
@@ -78,7 +78,7 @@ class Expression(object):
 
         error = ffi.new('char[{}]'.format(ERROR_CHARS))
         size = len(args)
-        result = calculate.evaluateArray(self._handler, values, size, error)
+        result = calculate.evaluate(self._handler, values, size, error)
         raise_if(decode(error))
 
         return result
@@ -92,7 +92,7 @@ class Expression(object):
 
     def __del__(self):
         try:
-            calculate.freeExpression(self._handler)
+            calculate.free(self._handler)
         except Exception:
             pass
         finally:
