@@ -47,11 +47,13 @@ struct calculate_c_library_template {
     Value (*value)(Expression, ...);
 };
 
-EXPORT_GLOBAL extern const STRUCT calculate_c_library_template Calculate;
+EXPORT_GLOBAL extern const STRUCT calculate_c_library_template calculate_lib;
 const STRUCT calculate_c_library_template* get_calculate_reference();
 
 #ifdef __cplusplus
 }
+#else
+#define calculate calculate_lib
 #endif
 
 #endif

@@ -147,26 +147,15 @@ namespace {
 }
 
 
-const calculate_c_library_template Calculate = {
-    version,
-    author,
-    date,
-    constants,
-    operators,
-    functions,
-    create,
-    build,
-    free,
-    expression,
-    variables,
-    infix,
-    postfix,
-    tree,
-    evaluate,
-    eval,
-    value
+const calculate_c_library_template calculate_lib = {
+    version, author, date,
+    constants, operators, functions,
+    create, build, free,
+    expression, variables,
+    infix, postfix, tree,
+    evaluate, eval, value
 };
 
 const calculate_c_library_template* get_calculate_reference() {
-    return &Calculate;
+    return &calculate_lib;
 }

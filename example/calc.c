@@ -23,32 +23,32 @@ int main(int argc, char *argv[]) {
             strcat(variables, ",");
             strcat(variables, argv[i]);
         }
-        expression = Calculate.create(argv[1], variables, errors);
+        expression = calculate.create(argv[1], variables, errors);
 
         if (expression) {
             values = (double *) malloc((argc - 2) / 2 * sizeof(double));
             for (i = 3; i < argc; i += 2)
                 values[(i + 1) / 2 - 2] = strtod(argv[i], NULL);
 
-            result = Calculate.evaluate(
+            result = calculate.evaluate(
                 expression, values, (argc - 2) / 2, errors
             );
 
             if (!strcmp(errors, "")) {
                 printf("Expression:\n");
-                Calculate.expression(expression, output);
+                calculate.expression(expression, output);
                 printf("%s\n", output);
                 printf("Variables:\n");
-                Calculate.variables(expression, output);
+                calculate.variables(expression, output);
                 printf("%s\n", output);
                 printf("Infix notation:\n");
-                Calculate.infix(expression, output);
+                calculate.infix(expression, output);
                 printf("%s\n", output);
                 printf("Postfix notation:\n");
-                Calculate.postfix(expression, output);
+                calculate.postfix(expression, output);
                 printf("%s\n", output);
                 printf("Expression tree:\n");
-                Calculate.tree(expression, output);
+                calculate.tree(expression, output);
                 printf("%s\n", output);
                 printf("Result:\n");
                 printf("%f\n", result);
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
         else {
             printf("%s\n", errors);
         }
-        Calculate.free(expression);
+        calculate.free(expression);
 
     }
 

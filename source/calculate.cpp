@@ -1,7 +1,7 @@
 #include <unordered_set>
 
 #include "calculate.h"
-#include "calculate/info.hpp"
+#include "calculate/info.h"
 
 
 namespace {
