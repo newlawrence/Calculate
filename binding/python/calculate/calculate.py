@@ -11,18 +11,28 @@ __all__ = ['Query', 'Expression']
 
 class Query(object):
 
-    _queries = {
-        'constants': calculate.constants,
-        'operators': calculate.operators,
-        'functions': calculate.functions
-    }
+    _metadata = [
+        'version',
+        'author',
+        'date'
+    ]
+
+    _queries = [
+        'constants',
+        'operators',
+        'functions'
+    ]
 
     def __getattr__(self, item):
         try:
             output = ffi.new('char[{}]'.format(MAX_CHARS))
-            self._queries[item](output)
+            if item not in self._metadata and item not in self._queries:
+                raise KeyError
+            getattr(calculate, item)(output)
             output = decode(output)
-            return lambda: output.split(',') if output else []
+            if item in self._queries:
+                output = output.split(',') if output else []
+            return lambda: output
         except KeyError:
             raise AttributeError(
                 '{} object has no attribute {}'
@@ -30,19 +40,19 @@ class Query(object):
             )
 
     @property
-    def queries(self):
-        return dict(self._queries)
+    def methods(self):
+        return self._metadata + self._queries
 
 
 class Expression(object):
 
-    _properties = {
-        'expression': calculate.expression,
-        'variables': calculate.variables,
-        'infix': calculate.infix,
-        'postfix': calculate.postfix,
-        'tree': calculate.tree
-    }
+    _properties = [
+        'expression',
+        'variables',
+        'infix',
+        'postfix',
+        'tree'
+    ]
 
     __slots__ = ['_handler']
 
@@ -60,8 +70,13 @@ class Expression(object):
     def __getattr__(self, item):
         try:
             output = ffi.new('char[{}]'.format(MAX_CHARS))
-            self._properties[item](self._handler, output)
-            return decode(output)
+            if item not in self._properties:
+                raise KeyError
+            getattr(calculate, item)(self._handler, output)
+            output = decode(output)
+            if item == 'variables':
+                output = output.split(',') if output else []
+            return lambda: output
         except KeyError:
             raise AttributeError(
                 '{} object has no attribute {}'

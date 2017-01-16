@@ -18,9 +18,9 @@ def load():
     import sys
     from calculate.calculate import Query
 
-    for query in Query().queries.keys():
-        setattr(sys.modules[__name__], query, getattr(Query(), query))
-        __all__.append(query)
+    for method in Query().methods:
+        setattr(sys.modules[__name__], method, getattr(Query(), method))
+        __all__.append(method)
 
 load()
 del load
