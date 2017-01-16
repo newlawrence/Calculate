@@ -12,9 +12,9 @@ __all__ = ['Query', 'Expression']
 class Query(object):
 
     _queries = {
-        'queryConstants': calculate.queryConstants,
-        'queryOperators': calculate.queryOperators,
-        'queryFunctions': calculate.queryFunctions
+        'constants': calculate.constants,
+        'operators': calculate.operators,
+        'functions': calculate.functions
     }
 
     def __getattr__(self, item):

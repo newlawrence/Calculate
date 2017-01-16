@@ -30,16 +30,16 @@ namespace {
     }
 
 
-    void queryConstants(Byte *query) {
-        strcpy(query, extract(calculate::queryConstants()).c_str());
+    void constants(Byte *query) {
+        strcpy(query, extract(calculate::constants()).c_str());
     }
 
-    void queryOperators(Byte *query) {
-        strcpy(query, extract(calculate::queryOperators()).c_str());
+    void operators(Byte *query) {
+        strcpy(query, extract(calculate::operators()).c_str());
     }
 
-    void queryFunctions(Byte *query) {
-        strcpy(query, extract(calculate::queryFunctions()).c_str());
+    void functions(Byte *query) {
+        strcpy(query, extract(calculate::functions()).c_str());
     }
 
 
@@ -137,9 +137,9 @@ namespace {
 
 
 const calculate_c_library_template Calculate = {
-    queryConstants,
-    queryOperators,
-    queryFunctions,
+    constants,
+    operators,
+    functions,
     createExpression,
     newExpression,
     freeExpression,

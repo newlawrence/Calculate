@@ -29,15 +29,15 @@ namespace {
 
 namespace calculate {
 
-    vString queryConstants() {
+    vString constants() {
         return query<Constant>();
     };
 
-    vString queryOperators() {
+    vString operators() {
         return query<Operator>();
     };
 
-    vString queryFunctions() {
+    vString functions() {
         return query<Function>();
     };
 

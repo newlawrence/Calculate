@@ -14,9 +14,9 @@ namespace calculate {
     using namespace calculate_symbols;
     using namespace calculate_exceptions;
 
-    vString queryConstants();
-    vString queryOperators();
-    vString queryFunctions();
+    vString constants();
+    vString operators();
+    vString functions();
 
 
     class Expression final {

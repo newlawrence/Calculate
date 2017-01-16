@@ -4,7 +4,7 @@ module calculate
     implicit none
     private
 
-    public :: queryConstants, queryOperators, queryFunctions, Expression
+    public :: constants, operators, functions, Expression
 
     integer, parameter :: MAX_CHARS = 4096
     integer, parameter :: ERROR_CHARS = 64
@@ -33,15 +33,15 @@ module calculate
 
 
     interface
-        module function queryConstants() result (constants)
+        module function constants() result (constants)
             character(len=:), allocatable :: constants
         end function
 
-        module function queryOperators() result (operators)
+        module function operators() result (operators)
             character(len=:), allocatable :: operators
         end function
 
-        module function queryFunctions() result (functions)
+        module function functions() result (functions)
             character(len=:), allocatable :: functions
         end function
 

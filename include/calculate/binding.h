@@ -24,9 +24,9 @@ struct ExpressionClassHandler;
 typedef struct ExpressionClassHandler* Expression;
 
 struct calculate_c_library_template {
-    void (*queryConstants)(Byte*);
-    void (*queryOperators)(Byte*);
-    void (*queryFunctions)(Byte*);
+    void (*constants)(Byte*);
+    void (*operators)(Byte*);
+    void (*functions)(Byte*);
 
     Expression (*createExpression)(const Byte*, const Byte*, Byte*);
     Expression (*newExpression)(const Byte*, const Byte*);

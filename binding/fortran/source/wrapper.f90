@@ -6,9 +6,9 @@ submodule (calculate) calculate_wrapper
 
 
     type, bind(c) :: LibraryTemplate
-        type(c_funptr) :: queryConstants
-        type(c_funptr) :: queryOperators
-        type(c_funptr) :: queryFunctions
+        type(c_funptr) :: constants
+        type(c_funptr) :: operators
+        type(c_funptr) :: functions
         type(c_funptr) :: createExpression
         type(c_funptr) :: newExpression
         type(c_funptr) :: freeExpression
@@ -113,15 +113,13 @@ contains
         procedure(getWrapper), pointer :: get
         call c_f_pointer(getLibraryReference(), calculate)
 
-        call c_f_procpointer(calculate%queryConstants, query)
-        call c_f_procpointer(calculate%getExpression, get)
         select case (input)
             case ("constants")
-                call c_f_procpointer(calculate%queryConstants, query)
+                call c_f_procpointer(calculate%constants, query)
             case ("operators")
-                call c_f_procpointer(calculate%queryOperators, query)
+                call c_f_procpointer(calculate%operators, query)
             case ("functions")
-                call c_f_procpointer(calculate%queryFunctions, query)
+                call c_f_procpointer(calculate%functions, query)
             case ("expression")
                 call c_f_procpointer(calculate%getExpression, get)
             case ("variables")
@@ -144,15 +142,15 @@ contains
     end function
 
 
-    module procedure queryConstants
+    module procedure constants
         constants = queryString('constants')
     end procedure
 
-    module procedure queryOperators
+    module procedure operators
         operators = queryString('operators')
     end procedure
 
-    module procedure queryFunctions
+    module procedure functions
         functions = queryString('functions')
     end procedure
 
