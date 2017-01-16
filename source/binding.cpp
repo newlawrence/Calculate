@@ -30,6 +30,19 @@ namespace {
     }
 
 
+    void version(Byte *query) {
+        strcpy(query, calculate::version().c_str());
+    }
+
+    void author(Byte *query) {
+        strcpy(query, calculate::author().c_str());
+    }
+
+    void date(Byte *query) {
+        strcpy(query, calculate::date().c_str());
+    }
+
+
     void constants(Byte *query) {
         strcpy(query, extract(calculate::constants()).c_str());
     }
@@ -135,6 +148,9 @@ namespace {
 
 
 const calculate_c_library_template Calculate = {
+    version,
+    author,
+    date,
     constants,
     operators,
     functions,

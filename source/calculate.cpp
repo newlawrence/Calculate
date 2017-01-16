@@ -1,6 +1,7 @@
 #include <unordered_set>
 
 #include "calculate.h"
+#include "calculate/info.hpp"
 
 
 namespace {
@@ -29,17 +30,14 @@ namespace {
 
 namespace calculate {
 
-    vString constants() {
-        return query<Constant>();
-    };
+    String version() { return __CALCULATE_VERSION__; }
+    String author() { return __CALCULATE_AUTHOR__; }
+    String date() { return __CALCULATE_DATE__; }
 
-    vString operators() {
-        return query<Operator>();
-    };
 
-    vString functions() {
-        return query<Function>();
-    };
+    vString constants() { return query<Constant>(); }
+    vString operators() { return query<Operator>(); }
+    vString functions() { return query<Function>(); }
 
 
     vString Expression::_extract(const String &vars) {
