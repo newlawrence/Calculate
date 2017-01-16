@@ -7,9 +7,15 @@ set(MINOR "1")
 set(PTH "4")
 set(DEV ".dev0")
 set(BUILD "0")
-set(PACKAGE_VERSION "${MAJOR}.${MINOR}.${PTH}${DEV}")
 set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
-string(TIMESTAMP COMPILE_DATE "%Y/%m/%d")
+
+set(PACKAGE_VERSION "${MAJOR}.${MINOR}.${PTH}${DEV}")
+set(PACKAGE_LICENSE "MIT")
+set(PACKAGE_AUTHOR "Alberto Lorenzo")
+set(PACKAGE_CONTACT "alorenzo.md@gmail.com")
+set(PACKAGE_SITE "https://github.com/newlawrence/Calculate")
+set(PACKAGE_DESCRIPTION "Little math expression parser")
+string(TIMESTAMP PACKAGE_DATE "%Y/%m/%d")
 
 
 set(PATCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patch")

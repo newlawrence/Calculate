@@ -6,12 +6,12 @@ from calculate.calculate import Expression
 __all__ = ['Expression']
 
 __version__ = '${PACKAGE_VERSION}'
-__license__ = 'MIT'
-__author__ = 'Alberto Lorenzo'
-__email__ = 'alorenzo.md@gmail.com'
-__site__ = 'https://github.com/newlawrence/Calculate'
-__description__ = 'Little math expression parser'
-__date__ = '${COMPILE_DATE}'
+__license__ = '${PACKAGE_LICENSE}'
+__author__ = '${PACKAGE_AUTHOR}'
+__email__ = '${PACKAGE_CONTACT}'
+__site__ = '${PACKAGE_SITE}'
+__description__ = '${PACKAGE_DESCRIPTION}'
+__date__ = '${PACKAGE_DATE}'
 
 
 def load():
