@@ -50,5 +50,6 @@ extern/
 coverage/
 
 # Templated sources
+include/calculate/info.hpp
 binding/python/calculate/__init__.py
 binding/python/recipe/meta.yaml

@@ -1,5 +1,5 @@
-#ifndef __CALCULATE_C_INTERFACE_H__
-#define __CALCULATE_C_INTERFACE_H__
+#ifndef __CALCULATE_BINDING_H__
+#define __CALCULATE_BINDING_H__
 
 #include "calculate/definitions.hpp"
 
