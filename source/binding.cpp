@@ -147,7 +147,7 @@ namespace {
 }
 
 
-const calculate_c_library_template calculate_lib = {
+const calculate_c_library_template calculate_c = {
     version, author, date,
     constants, operators, functions,
     create, build, free,
@@ -157,5 +157,5 @@ const calculate_c_library_template calculate_lib = {
 };
 
 const calculate_c_library_template* get_calculate_reference() {
-    return &calculate_lib;
+    return &calculate_c;
 }
