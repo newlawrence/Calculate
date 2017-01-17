@@ -11,7 +11,7 @@ __author__ = 'Alberto Lorenzo'
 __email__ = 'alorenzo.md@gmail.com'
 __site__ = 'https://github.com/newlawrence/Calculate'
 __description__ = 'Little math expression parser'
-__date__ = '2017/01/16'
+__date__ = '2017/01/17'
 
 
 def load():
