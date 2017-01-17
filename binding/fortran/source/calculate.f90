@@ -35,7 +35,7 @@ module calculate_fortran
         procedure, non_overridable :: infix => infix
         procedure, non_overridable :: postfix => postfix
         procedure, non_overridable :: tree => tree
-        procedure, non_overridable :: eval => evaluate
+        procedure, non_overridable :: evaluate => evaluate
         procedure, non_overridable :: assign => assign
         generic :: assignment(=) => assign
     end type

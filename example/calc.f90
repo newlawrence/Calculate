@@ -32,7 +32,7 @@ program calc
                 read(arg, *) vals(i - (i + 1) / 2)
             end do
 
-            result = expr%eval(vals, error=error)
+            result = expr%evaluate(vals, error=error)
             if (len(trim(error)) == 0) then
                 print '(A)', 'Expression:'
                 print '(A)', trim(expr%expression())
