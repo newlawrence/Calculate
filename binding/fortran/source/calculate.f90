@@ -17,43 +17,56 @@ module calculate
         final :: free
         procedure, non_overridable :: clear => clear
         procedure, non_overridable :: check => check
-        procedure, non_overridable :: expression => expression
+        procedure, non_overridable :: expression => string
         procedure, non_overridable :: variables => variables
         procedure, non_overridable :: infix => infix
         procedure, non_overridable :: postfix => postfix
         procedure, non_overridable :: tree => tree
         procedure, non_overridable :: eval => evaluate
-        procedure, non_overridable :: assign => assign
+        procedure, non_overridable :: assign => transfer
         generic :: assignment(=) => assign
     end type
 
     interface Expression
-        module procedure createNewExpression
+        module procedure construct
     end interface
 
 
     interface
-        module function constants() result (constants)
+        module function version()
+            character(len=:), allocatable :: version
+        end function
+
+        module function author()
+            character(len=:), allocatable :: author
+        end function
+
+        module function date()
+            character(len=:), allocatable :: date
+        end function
+
+
+        module function constants()
             character(len=:), allocatable :: constants
         end function
 
-        module function operators() result (operators)
+        module function operators()
             character(len=:), allocatable :: operators
         end function
 
-        module function functions() result (functions)
+        module function functions()
             character(len=:), allocatable :: functions
         end function
 
 
-        module function createNewExpression(expr, vars, error) result (this)
+        module function construct(expr, vars, error) result (this)
             character(len=*), intent(in) :: expr
             character(len=*), intent(in), optional :: vars
             character(len=*), intent(out), optional :: error
             type(Expression) :: this
         end function
 
-        module subroutine assign(this, other)
+        module subroutine transfer(this, other)
             class(Expression), intent(inout) :: this
             type(Expression), intent(in) :: other
         end subroutine
@@ -66,32 +79,32 @@ module calculate
             class(Expression), intent(inout) :: this
         end subroutine
 
-        module function check(this) result (check)
+        module function check(this)
             class(Expression), intent(in) :: this
             logical :: check
         end function
 
-        module function expression(this) result (expr)
+        module function string(this)
             class(Expression), intent(in) :: this
-            character(len=:), allocatable :: expr
+            character(len=:), allocatable :: string
         end function
 
-        module function variables(this) result (vars)
+        module function variables(this)
             class(Expression), intent(in) :: this
-            character(len=:), allocatable :: vars
+            character(len=:), allocatable :: variables
         end function
 
-        module function infix(this) result (infix)
+        module function infix(this)
             class(Expression), intent(in) :: this
             character(len=:), allocatable :: infix
         end function
 
-        module function postfix(this) result (postfix)
+        module function postfix(this)
             class(Expression), intent(in) :: this
             character(len=:), allocatable :: postfix
         end function
 
-        module function tree(this) result (tree)
+        module function tree(this)
             class(Expression), intent(in) :: this
             character(len=:), allocatable :: tree
         end function

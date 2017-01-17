@@ -6,6 +6,9 @@ submodule (calculate) calculate_wrapper
 
 
     type, bind(c) :: LibraryTemplate
+        type(c_funptr) :: version
+        type(c_funptr) :: author
+        type(c_funptr) :: date
         type(c_funptr) :: constants
         type(c_funptr) :: operators
         type(c_funptr) :: functions
@@ -19,7 +22,7 @@ submodule (calculate) calculate_wrapper
         type(c_funptr) :: tree
         type(c_funptr) :: evaluate
         type(c_funptr) :: eval
-        type(c_funptr) :: value
+        type(c_funptr) :: variadic
     end type
 
     interface
@@ -113,7 +116,15 @@ contains
         procedure(getWrapper), pointer :: get
         call c_f_pointer(getLibraryReference(), calculate)
 
+        call c_f_procpointer(c_null_funptr, query)
+        call c_f_procpointer(c_null_funptr, get)
         select case (input)
+            case ("version")
+                call c_f_procpointer(calculate%version, query)
+            case ("author")
+                call c_f_procpointer(calculate%author, query)
+            case ("date")
+                call c_f_procpointer(calculate%date, query)
             case ("constants")
                 call c_f_procpointer(calculate%constants, query)
             case ("operators")
@@ -142,6 +153,19 @@ contains
     end function
 
 
+    module procedure version
+        version = queryString('version')
+    end procedure
+
+    module procedure author
+        author = queryString('author')
+    end procedure
+
+    module procedure date
+        date = queryString('date')
+    end procedure
+
+
     module procedure constants
         constants = queryString('constants')
     end procedure
@@ -155,7 +179,7 @@ contains
     end procedure
 
 
-    module procedure createNewExpression
+    module procedure construct
         type(LibraryTemplate), pointer :: calculate
         procedure(createWrapper), pointer :: create
         character(kind=c_char, len=1), dimension(ERROR_CHARS) :: cerror
@@ -181,7 +205,7 @@ contains
         end if
     end procedure
 
-    module procedure assign
+    module procedure transfer
         type(LibraryTemplate), pointer :: calculate
         procedure(buildWrapper), pointer :: build
 
@@ -212,15 +236,15 @@ contains
 
     module procedure check
         check = .false.
-        if (len(expression(this)) > 0) check = .true.
+        if (len(string(this)) > 0) check = .true.
     end procedure
 
-    module procedure expression
-        expr = queryString('expression', this)
+    module procedure string
+        string = queryString('expression', this)
     end procedure
 
     module procedure variables
-        vars = queryString('variables', this)
+        variables = queryString('variables', this)
     end procedure
 
     module procedure infix
