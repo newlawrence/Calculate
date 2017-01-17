@@ -30,21 +30,33 @@ namespace {
     }
 
 
-    void queryConstants(Byte *query) {
-        strcpy(query, extract(calculate::queryConstants()).c_str());
+    void version(Byte *query) {
+        strcpy(query, calculate::version().c_str());
     }
 
-    void queryOperators(Byte *query) {
-        strcpy(query, extract(calculate::queryOperators()).c_str());
+    void author(Byte *query) {
+        strcpy(query, calculate::author().c_str());
     }
 
-    void queryFunctions(Byte *query) {
-        strcpy(query, extract(calculate::queryFunctions()).c_str());
+    void date(Byte *query) {
+        strcpy(query, calculate::date().c_str());
     }
 
 
-    Expression createExpression(const Byte *expr, const Byte *vars,
-                                Byte *error) {
+    void constants(Byte *query) {
+        strcpy(query, extract(calculate::constants()).c_str());
+    }
+
+    void operators(Byte *query) {
+        strcpy(query, extract(calculate::operators()).c_str());
+    }
+
+    void functions(Byte *query) {
+        strcpy(query, extract(calculate::functions()).c_str());
+    }
+
+
+    Expression create(const Byte *expr, const Byte *vars, Byte *error) {
         try {
             auto expr_obj = cast(new calculate::Expression(expr, vars));
             strcpy(error, "");
@@ -57,22 +69,22 @@ namespace {
         return nullptr;
     }
 
-    Expression newExpression(const Byte *expr, const Byte *vars) {
+    Expression build(const Byte *expr, const Byte *vars) {
         Byte error[64];
 
-        return createExpression(expr, vars, error);
+        return create(expr, vars, error);
     }
 
-    void freeExpression(Expression expr) {
+    void free(Expression expr) {
         if (expr)
             delete uncast(expr);
     }
 
-    void getExpression(Expression expr, Byte *expression) {
+    void expression(Expression expr, Byte *expression) {
         strcpy(expression, expr ? uncast(expr)->expression().c_str() : "");
     }
 
-    void getVariables(Expression expr, Byte *variables) {
+    void variables(Expression expr, Byte *variables) {
         const auto &vars = uncast(expr)->variables();
         if (expr)
             strcpy(variables, extract(vars).c_str());
@@ -80,21 +92,20 @@ namespace {
             strcpy(variables, "");
     }
 
-    void getInfix(Expression expr, Byte *infix) {
+    void infix(Expression expr, Byte *infix) {
         strcpy(infix, expr ? uncast(expr)->infix().c_str() : "");
     }
 
-    void getPostfix(Expression expr, Byte *postfix) {
+    void postfix(Expression expr, Byte *postfix) {
         strcpy(postfix, expr ? uncast(expr)->postfix().c_str() : "");
     }
 
-    void getTree(Expression expr, Byte *tree) {
+    void tree(Expression expr, Byte *tree) {
         strcpy(tree, expr ? uncast(expr)->tree().c_str() : "");
     }
 
 
-    Value evaluateArray(Expression expr, Value *args, Integer size,
-                        Byte *error) {
+    Value evaluate(Expression expr, Value *args, Integer size, Byte *error) {
         if (!expr) {
             strcpy(error, "Not initialized");
             return std::numeric_limits<Value>::quiet_NaN();
@@ -112,13 +123,13 @@ namespace {
         return std::numeric_limits<Value>::quiet_NaN();
     }
 
-    Value evalArray(Expression expr, Value *args, Integer size) {
+    Value eval(Expression expr, Value *args, Integer size) {
         Byte error[64];
 
-        return evaluateArray(expr, args, size, error);
+        return evaluate(expr, args, size, error);
     }
 
-    Value eval(Expression expr, ...) {
+    Value value(Expression expr, ...) {
         if (!expr)
             return std::numeric_limits<Value>::quiet_NaN();
 
@@ -136,23 +147,15 @@ namespace {
 }
 
 
-const calculate_c_library_template Calculate = {
-    queryConstants,
-    queryOperators,
-    queryFunctions,
-    createExpression,
-    newExpression,
-    freeExpression,
-    getExpression,
-    getVariables,
-    getInfix,
-    getPostfix,
-    getTree,
-    evaluateArray,
-    evalArray,
-    eval
+const calculate_c_library_template calculate_c = {
+    version, author, date,
+    constants, operators, functions,
+    create, build, free,
+    expression, variables,
+    infix, postfix, tree,
+    evaluate, eval, value
 };
 
 const calculate_c_library_template* get_calculate_reference() {
-    return &Calculate;
+    return &calculate_c;
 }

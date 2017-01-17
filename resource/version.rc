@@ -1,6 +1,6 @@
 1 VERSIONINFO
-FILEVERSION ${WINDOWS_VERSION}
-PRODUCTVERSION ${WINDOWS_VERSION}
+FILEVERSION 1,2,0,0
+PRODUCTVERSION 1,2,0,0
 FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
     FILEFLAGS 0x1L
@@ -15,15 +15,15 @@ FILEFLAGSMASK 0x3fL
     {
         BLOCK "040004e4"
         {
-            VALUE "Comments", "Little Math Expression Parser"
+            VALUE "Comments", "Little math expression parser"
             VALUE "CompanyName", ""
-            VALUE "FileDescription", "Little Math Expression Parser"
-            VALUE "FileVersion", "${WINDOWS_VERSION}"
+            VALUE "FileDescription", "Little math expression parser"
+            VALUE "FileVersion", "1,2,0,0"
             VALUE "InternalName", ""
-            VALUE "LegalCopyright", "Copyright (C) 2016 Alberto Lorenzo"
+            VALUE "LegalCopyright", "Copyright (C) 2016 - 2017 Alberto Lorenzo"
             VALUE "OriginalFilename", ""
             VALUE "ProductName", "Calculate"
-            VALUE "ProductVersion", "${WINDOWS_VERSION}"
+            VALUE "ProductVersion", "1,2,0,0"
         }
     }
     BLOCK "VarFileInfo"

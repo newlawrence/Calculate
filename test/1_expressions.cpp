@@ -155,9 +155,9 @@ TEST_CASE("Queries test", "[Queries]") {
             "erf", "erfc", "tgamma", "lgamma"
         });
 
-        auto queried_constants = queryConstants();
-        auto queried_operators = queryOperators();
-        auto queried_functions = queryFunctions();
+        auto queried_constants = constants();
+        auto queried_operators = operators();
+        auto queried_functions = functions();
 
         std::sort(expected_constants.begin(), expected_constants.end());
         std::sort(queried_constants.begin(), queried_constants.end());

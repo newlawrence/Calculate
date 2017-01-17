@@ -24,23 +24,27 @@ struct ExpressionClassHandler;
 typedef struct ExpressionClassHandler* Expression;
 
 struct calculate_c_library_template {
-    void (*queryConstants)(char*);
-    void (*queryOperators)(char*);
-    void (*queryFunctions)(char*);
+    void (*version)(char*);
+    void (*author)(char*);
+    void (*date)(char*);
 
-    Expression (*createExpression)(const char*, const char*, char*);
-    Expression (*newExpression)(const char*, const char*);
-    void (*freeExpression)(Expression);
+    void (*constants)(char*);
+    void (*operators)(char*);
+    void (*functions)(char*);
 
-    void (*getExpression)(Expression, char*);
-    void (*getVariables)(Expression, char*);
-    void (*getInfix)(Expression, char*);
-    void (*getPostfix)(Expression, char*);
-    void (*getTree)(Expression, char*);
+    Expression (*create)(const char*, const char*, char*);
+    Expression (*build)(const char*, const char*);
+    void (*free)(Expression);
 
-    double (*evaluateArray)(Expression, double*, int, char*);
-    double (*evalArray)(Expression, double*, int);
-    double (*eval)(Expression, ...);
+    void (*expression)(Expression, char*);
+    void (*variables)(Expression, char*);
+    void (*infix)(Expression, char*);
+    void (*postfix)(Expression, char*);
+    void (*tree)(Expression, char*);
+
+    double (*evaluate)(Expression, double*, int, char*);
+    double (*eval)(Expression, double*, int);
+    double (*value)(Expression, ...);
 };
 
 const struct calculate_c_library_template* get_calculate_reference();

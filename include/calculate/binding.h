@@ -1,5 +1,5 @@
-#ifndef __CALCULATE_C_INTERFACE_H__
-#define __CALCULATE_C_INTERFACE_H__
+#ifndef __CALCULATE_BINDING_H__
+#define __CALCULATE_BINDING_H__
 
 #include "calculate/definitions.hpp"
 
@@ -24,30 +24,40 @@ struct ExpressionClassHandler;
 typedef struct ExpressionClassHandler* Expression;
 
 struct calculate_c_library_template {
-    void (*queryConstants)(Byte*);
-    void (*queryOperators)(Byte*);
-    void (*queryFunctions)(Byte*);
+    void (*version)(Byte*);
+    void (*author)(Byte*);
+    void (*date)(Byte*);
 
-    Expression (*createExpression)(const Byte*, const Byte*, Byte*);
-    Expression (*newExpression)(const Byte*, const Byte*);
-    void (*freeExpression)(Expression);
+    void (*constants)(Byte*);
+    void (*operators)(Byte*);
+    void (*functions)(Byte*);
 
-    void (*getExpression)(Expression, Byte*);
-    void (*getVariables)(Expression, Byte*);
-    void (*getInfix)(Expression, Byte*);
-    void (*getPostfix)(Expression, Byte*);
-    void (*getTree)(Expression, Byte*);
+#ifdef __cplusplus
+    Expression (*create)(const Byte*, const Byte*, Byte*);
+#else
+    Expression (*Expression)(const Byte*, const Byte*, Byte*);
+#endif
+    Expression (*build)(const Byte*, const Byte*);
+    void (*free)(Expression);
 
-    Value (*evaluateArray)(Expression, Value*, Integer, Byte*);
-    Value (*evalArray)(Expression, Value*, Integer);
-    Value (*eval)(Expression, ...);
+    void (*expression)(Expression, Byte*);
+    void (*variables)(Expression, Byte*);
+    void (*infix)(Expression, Byte*);
+    void (*postfix)(Expression, Byte*);
+    void (*tree)(Expression, Byte*);
+
+    Value (*evaluate)(Expression, Value*, Integer, Byte*);
+    Value (*eval)(Expression, Value*, Integer);
+    Value (*value)(Expression, ...);
 };
 
-EXPORT_GLOBAL extern const STRUCT calculate_c_library_template Calculate;
+EXPORT_GLOBAL extern const STRUCT calculate_c_library_template calculate_c;
 const STRUCT calculate_c_library_template* get_calculate_reference();
 
 #ifdef __cplusplus
 }
+#else
+#define calculate calculate_c
 #endif
 
 #endif

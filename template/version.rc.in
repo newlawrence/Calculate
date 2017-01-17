@@ -1,0 +1,33 @@
+1 VERSIONINFO
+FILEVERSION ${WINDOWS_VERSION}
+PRODUCTVERSION ${WINDOWS_VERSION}
+FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+    FILEFLAGS 0x1L
+#else
+    FILEFLAGS 0x0L
+#endif
+    FILEOS 0x4L
+    FILETYPE 0x1L
+    FILESUBTYPE 0x0L
+{
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040004e4"
+        {
+            VALUE "Comments", "${PACKAGE_DESCRIPTION}"
+            VALUE "CompanyName", ""
+            VALUE "FileDescription", "${PACKAGE_DESCRIPTION}"
+            VALUE "FileVersion", "${WINDOWS_VERSION}"
+            VALUE "InternalName", ""
+            VALUE "LegalCopyright", "${PACKAGE_COPYRIGHT}"
+            VALUE "OriginalFilename", ""
+            VALUE "ProductName", "${PACKAGE_NAME}"
+            VALUE "ProductVersion", "${WINDOWS_VERSION}"
+        }
+    }
+    BLOCK "VarFileInfo"
+    {
+        VALUE "Translation", 0x400, 1252
+    }
+}

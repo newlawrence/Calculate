@@ -3,16 +3,34 @@ project(calculate C CXX)
 
 
 set(MAJOR "1")
-set(MINOR "1")
-set(PTH "4")
+set(MINOR "2")
+set(PTH "0")
 set(DEV ".dev0")
 set(BUILD "0")
-set(PACKAGE_VERSION "${MAJOR}.${MINOR}.${PTH}${DEV}")
 set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
-string(TIMESTAMP COMPILE_DATE "%Y/%m/%d")
+
+set(PACKAGE_NAME "Calculate")
+set(PACKAGE_VERSION "${MAJOR}.${MINOR}.${PTH}${DEV}")
+set(PACKAGE_LICENSE "MIT")
+set(PACKAGE_AUTHOR "Alberto Lorenzo")
+set(PACKAGE_CONTACT "alorenzo.md@gmail.com")
+set(PACKAGE_SITE "https://github.com/newlawrence/Calculate")
+set(PACKAGE_DESCRIPTION "Little math expression parser")
+string(TIMESTAMP PACKAGE_DATE "%Y/%m/%d")
+string(TIMESTAMP PACKAGE_COPYRIGHT "Copyright (C) 2016 - %Y Alberto Lorenzo")
 
 
-set(PATCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patch")
+set(TEMPLATES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/template")
+macro(apply_template FILENAME ROUTE)
+    configure_file(
+        ${TEMPLATES_DIR}/${FILENAME}.in
+        ${ROUTE}/${FILENAME}
+        NEWLINE_STYLE UNIX
+    )
+endmacro()
+
+
+set(PATCHES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patch")
 macro(apply_patch COMPILER)
     find_program(PATCH patch)
     find_program(GIT git)
@@ -20,12 +38,12 @@ macro(apply_patch COMPILER)
     if(PATCH)
         execute_process(
             COMMAND ${PATCH} -p1 -i
-                    ${PATCH_DIR}/${COMPILER}.patch
+                    ${PATCHES_DIR}/${COMPILER}.patch
         )
     elseif(GIT)
         execute_process(
             COMMAND ${GIT} apply --whitespace=fix
-                    ${PATCH_DIR}/${COMPILER}.patch
+                    ${PATCHES_DIR}/${COMPILER}.patch
         )
     else()
         message(FATAL_ERROR "Suitable patching command not found!")
@@ -124,11 +142,11 @@ if(
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
     endif()
 elseif(MSVC)
-    apply_patch(msvc)
+    apply_patch("msvc")
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS "ON")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14 /sdl")
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
-    apply_patch(icpc)
+    apply_patch("icpc")
     if(WIN32)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O3 /std:c++14")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall")
@@ -139,12 +157,11 @@ elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
+apply_template("info.h" "${PROJECT_SOURCE_DIR}/include/calculate")
 file(GLOB sources ${PROJECT_SOURCE_DIR}/source/*.cpp)
 if(WIN32)
-    set(RESOURCE_IN "${PROJECT_SOURCE_DIR}/resource/version.rc.in")
-    set(RESOURCE "${PROJECT_SOURCE_DIR}/resource/version.rc")
-    configure_file(${RESOURCE_IN} ${RESOURCE})
-    set(sources "${sources};${RESOURCE}")
+    apply_template("version.rc" "${PROJECT_SOURCE_DIR}/resource")
+    set(sources "${sources};${PROJECT_SOURCE_DIR}/resource/version.rc")
     if(NOT MSVC)
         set(CMAKE_RC_COMPILER_INIT "windres")
         ENABLE_LANGUAGE(RC)
@@ -191,6 +208,7 @@ if(TESTING OR COVERAGE)
         message("-- Catch library successfully downloaded.")
     endif()
 
+    apply_template("0_catch.cpp" "${PROJECT_SOURCE_DIR}/test")
     file(GLOB tests ${PROJECT_SOURCE_DIR}/test/*.cpp)
     add_executable(unittests ${tests})
     target_link_libraries(unittests

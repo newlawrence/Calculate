@@ -21,6 +21,9 @@ TEST_CASE("Parser test", "[Parser]") {
         CHECK(Expression("1e-2")() == Approx(0.01).epsilon(1e-3));
         CHECK(Expression("+1e-2")() == Approx(0.01).epsilon(1e-3));
         CHECK(Expression("-1e-2")() == Approx(-0.01).epsilon(1e-3));
+        CHECK(Expression("1.e2")() == Approx(100.).epsilon(1e-3));
+        CHECK(Expression(".1e2")() == Approx(10.).epsilon(1e-3));
+        CHECK(Expression("1.1e2")() == Approx(110.).epsilon(1e-3));
         CHECK(Expression("pi")() == Approx(3.142).epsilon(1e-3));
         CHECK(Expression("+pi")() == Approx(3.142).epsilon(1e-3));
         CHECK(Expression("-pi")() == Approx(-3.142).epsilon(1e-3));

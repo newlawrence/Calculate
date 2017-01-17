@@ -1,0 +1,27 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
+from calculate.calculate import Expression
+
+__all__ = ['Expression']
+
+__version__ = '${PACKAGE_VERSION}'
+__license__ = '${PACKAGE_LICENSE}'
+__author__ = '${PACKAGE_AUTHOR}'
+__email__ = '${PACKAGE_CONTACT}'
+__site__ = '${PACKAGE_SITE}'
+__description__ = '${PACKAGE_DESCRIPTION}'
+__date__ = '${PACKAGE_DATE}'
+
+
+def load():
+    import sys
+    from calculate.calculate import Query
+
+    for method in Query().methods:
+        setattr(sys.modules[__name__], method, getattr(Query(), method))
+        __all__.append(method)
+
+load()
+del load
+del absolute_import

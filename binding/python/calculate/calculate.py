@@ -11,18 +11,28 @@ __all__ = ['Query', 'Expression']
 
 class Query(object):
 
-    _queries = {
-        'queryConstants': calculate.queryConstants,
-        'queryOperators': calculate.queryOperators,
-        'queryFunctions': calculate.queryFunctions
-    }
+    _metadata = [
+        'version',
+        'author',
+        'date'
+    ]
+
+    _queries = [
+        'constants',
+        'operators',
+        'functions'
+    ]
 
     def __getattr__(self, item):
         try:
             output = ffi.new('char[{}]'.format(MAX_CHARS))
-            self._queries[item](output)
+            if item not in self._metadata and item not in self._queries:
+                raise KeyError
+            getattr(calculate, item)(output)
             output = decode(output)
-            return lambda: output.split(',') if output else []
+            if item in self._queries:
+                output = output.split(',') if output else []
+            return lambda: output
         except KeyError:
             raise AttributeError(
                 '{} object has no attribute {}'
@@ -30,19 +40,19 @@ class Query(object):
             )
 
     @property
-    def queries(self):
-        return dict(self._queries)
+    def methods(self):
+        return self._metadata + self._queries
 
 
 class Expression(object):
 
-    _properties = {
-        'expression': calculate.getExpression,
-        'variables': calculate.getVariables,
-        'infix': calculate.getInfix,
-        'postfix': calculate.getPostfix,
-        'tree': calculate.getTree
-    }
+    _properties = [
+        'expression',
+        'variables',
+        'infix',
+        'postfix',
+        'tree'
+    ]
 
     __slots__ = ['_handler']
 
@@ -50,7 +60,7 @@ class Expression(object):
         if not isinstance(variables, str) and isinstance(variables, Iterable):
             variables = ','.join(variables) if len(variables) > 0 else ''
         error = ffi.new('char[{}]'.format(ERROR_CHARS))
-        self._handler = calculate.createExpression(
+        self._handler = calculate.create(
             expression.encode(),
             variables.encode(),
             error
@@ -60,8 +70,13 @@ class Expression(object):
     def __getattr__(self, item):
         try:
             output = ffi.new('char[{}]'.format(MAX_CHARS))
-            self._properties[item](self._handler, output)
-            return decode(output)
+            if item not in self._properties:
+                raise KeyError
+            getattr(calculate, item)(self._handler, output)
+            output = decode(output)
+            if item == 'variables':
+                output = output.split(',') if output else []
+            return lambda: output
         except KeyError:
             raise AttributeError(
                 '{} object has no attribute {}'
@@ -70,29 +85,33 @@ class Expression(object):
 
     def __call__(self, *args):
         if args:
-            args = args[0] if isinstance(args[0], Iterable) else args
-            args = list(map(lambda x: float(x), args))
+            if isinstance(args[0], Iterable):
+                if len(args) == 1:
+                    args = args[0]
+                else:
+                    raise TypeError(
+                        'expected at most 1 argument, got {}'.format(len(args))
+                    )
+            args = [float(x) for x in args]
             values = ffi.new('double[]', args)
         else:
             values = ffi.new('double *')
-
         error = ffi.new('char[{}]'.format(ERROR_CHARS))
         size = len(args)
-        result = calculate.evaluateArray(self._handler, values, size, error)
+        result = calculate.evaluate(self._handler, values, size, error)
         raise_if(decode(error))
-
         return result
 
     def __repr__(self):
-        return "{}('{}', '{}')".format(
+        return "{}('{}', {})".format(
             self.__class__.__name__,
-            self.expression,
-            self.variables
+            self.expression(),
+            self.variables()
         )
 
     def __del__(self):
         try:
-            calculate.freeExpression(self._handler)
+            calculate.free(self._handler)
         except Exception:
             pass
         finally:
