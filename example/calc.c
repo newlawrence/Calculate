@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
             strcat(variables, ",");
             strcat(variables, argv[i]);
         }
-        expression = calculate.create(argv[1], variables, errors);
+        expression = calculate.Expression(argv[1], variables, errors);
 
         if (expression) {
             values = (double *) malloc((argc - 2) / 2 * sizeof(double));

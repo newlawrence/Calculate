@@ -32,7 +32,11 @@ struct calculate_c_library_template {
     void (*operators)(Byte*);
     void (*functions)(Byte*);
 
+#ifdef __cplusplus
     Expression (*create)(const Byte*, const Byte*, Byte*);
+#else
+    Expression (*Expression)(const Byte*, const Byte*, Byte*);
+#endif
     Expression (*build)(const Byte*, const Byte*);
     void (*free)(Expression);
 
