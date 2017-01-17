@@ -5,7 +5,7 @@ project(calculate C CXX)
 set(MAJOR "1")
 set(MINOR "2")
 set(PTH "0")
-set(DEV ".dev0")
+set(DEV)
 set(BUILD "0")
 set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
 
@@ -90,26 +90,11 @@ function(setup_target_for_coverage TARGETNAME OBJFOLDER TESTSNAME)
 endfunction()
 
 
-if(DEFINED ENV{NORUNTIME})
-    set(NORUNTIME "$ENV{NORUNTIME}")
-else()
-    set(NORUNTIME "False")
-endif()
-if(DEFINED ENV{BINDING})
-    set(BINDING "$ENV{BINDING}")
-else()
-    set(BINDING "False")
-endif()
-if(DEFINED ENV{TESTING})
-    set(TESTING "$ENV{TESTING}")
-else()
-    set(TESTING "False")
-endif()
-if(DEFINED ENV{COVERAGE})
-    set(COVERAGE "$ENV{COVERAGE}")
-else()
-    set(COVERAGE "False")
-endif()
+set(STATIC_BUILD "$ENV{STATIC}")
+set(NORUNTIME "$ENV{NORUNTIME}")
+set(BINDING "$ENV{BINDING}")
+set(TESTING "$ENV{TESTING}")
+set(COVERAGE "$ENV{COVERAGE}")
 
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/")
@@ -172,29 +157,21 @@ if(WIN32)
 endif()
 
 
-add_library(build
-    OBJECT ${sources}
-)
-set_target_properties(build
-    PROPERTIES POSITION_INDEPENDENT_CODE 1
-)
+add_library(build OBJECT ${sources})
+set_target_properties(build PROPERTIES POSITION_INDEPENDENT_CODE 1)
 target_compile_definitions(build
     PUBLIC "_CRT_SECURE_NO_WARNINGS"
     PUBLIC "__COMPILING_LIBRARY__"
 )
 
-add_library(calculate
-    SHARED $<TARGET_OBJECTS:build>
-)
-set_target_properties(calculate
-    PROPERTIES PREFIX "lib"
-    PROPERTIES VERSION ${PACKAGE_VERSION}
-    PROPERTIES SOVERSION ${MAJOR}
-)
-
-add_library(calculate_static
-    STATIC $<TARGET_OBJECTS:build>
-)
+if(STATIC_BUILD)
+    add_library(calculate STATIC $<TARGET_OBJECTS:build>)
+else()
+    add_library(calculate SHARED $<TARGET_OBJECTS:build>)
+    set_target_properties(calculate PROPERTIES PREFIX "lib")
+    set_property(TARGET calculate PROPERTY VERSION ${PACKAGE_VERSION})
+    set_property(TARGET calculate PROPERTY SOVERSION ${MAJOR})
+endif()
 
 
 if(TESTING OR COVERAGE)
@@ -225,17 +202,11 @@ endif()
 
 
 add_executable(calc_c ${PROJECT_SOURCE_DIR}/example/calc.c)
-target_link_libraries(calc_c
-    PRIVATE calculate
-)
-target_compile_definitions(calc_c
-    PUBLIC "_CRT_SECURE_NO_WARNINGS"
-)
+target_link_libraries(calc_c PRIVATE calculate)
+target_compile_definitions(calc_c PUBLIC "_CRT_SECURE_NO_WARNINGS")
 
 add_executable(calc_cpp ${PROJECT_SOURCE_DIR}/example/calc.cpp)
-target_link_libraries(calc_cpp
-    PRIVATE calculate
-)
+target_link_libraries(calc_cpp PRIVATE calculate)
 
 
 if(BINDING OR DEFINED ENV{FC})

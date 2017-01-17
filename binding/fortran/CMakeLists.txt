@@ -21,27 +21,15 @@ elseif(${CMAKE_Fortran_COMPILER_ID} MATCHES "Intel")
 endif()
 file(GLOB sources ${PROJECT_SOURCE_DIR}/source/*.f90)
 
-
-add_library(calculate_fortran
-    STATIC ${sources}
-)
-target_link_libraries(calculate_fortran
-    PUBLIC calculate
-)
-
-add_library(calculate_fortran_static
-    STATIC $<TARGET_OBJECTS:build> ${sources}
-)
-target_link_libraries(calculate_fortran_static
-    PUBLIC calculate_static
-)
+if(STATIC_BUILD)
+    add_library(calculate_fortran STATIC $<TARGET_OBJECTS:build> ${sources})
+else()
+    add_library(calculate_fortran STATIC ${sources})
+endif()
+target_link_libraries(calculate_fortran PUBLIC calculate)
 
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/module)
 add_executable(calc_for ${CMAKE_CURRENT_SOURCE_DIR}/../../example/calc.f90)
-target_link_libraries(calc_for
-    PUBLIC calculate_fortran
-)
-set_target_properties(calc_for
-    PROPERTIES LINKER_LANGUAGE CXX
-)
+target_link_libraries(calc_for PUBLIC calculate_fortran)
+set_target_properties(calc_for PROPERTIES LINKER_LANGUAGE CXX)

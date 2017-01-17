@@ -5,7 +5,7 @@ from calculate.calculate import Expression
 
 __all__ = ['Expression']
 
-__version__ = '1.2.0.dev0'
+__version__ = '1.2.0'
 __license__ = 'MIT'
 __author__ = 'Alberto Lorenzo'
 __email__ = 'alorenzo.md@gmail.com'

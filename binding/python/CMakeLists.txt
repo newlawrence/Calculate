@@ -9,12 +9,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
 
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-add_library(calculate_python
-    SHARED $<TARGET_OBJECTS:build>
-)
-set_target_properties(calculate_python
-    PROPERTIES PREFIX "lib"
-)
+add_library(calculate_python SHARED $<TARGET_OBJECTS:build>)
+set_target_properties(calculate_python PROPERTIES PREFIX "lib")
 
 if(NORUNTIME)
     if(UNIX AND NOT APPLE)
