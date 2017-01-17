@@ -1,14 +1,27 @@
-module calculate
+module calculate_fortran
 
     use, intrinsic :: iso_c_binding, only: c_ptr, c_null_ptr
     implicit none
     private
 
-    public :: constants, operators, functions, Expression
+    public :: calculate, Expression
 
     integer, parameter :: MAX_CHARS = 4096
     integer, parameter :: ERROR_CHARS = 64
     character(len=7), parameter :: ERROR_FMT = '(4096A)'
+
+
+    type :: CalculateLibrary
+    contains
+        procedure, nopass :: version => version
+        procedure, nopass :: author => author
+        procedure, nopass :: date => date
+        procedure, nopass :: constants => constants
+        procedure, nopass :: operators => operators
+        procedure, nopass :: functions => functions
+        procedure, nopass :: Expression => construct
+    end type
+    type(CalculateLibrary) :: calculate
 
 
     type :: Expression
@@ -23,7 +36,7 @@ module calculate
         procedure, non_overridable :: postfix => postfix
         procedure, non_overridable :: tree => tree
         procedure, non_overridable :: eval => evaluate
-        procedure, non_overridable :: assign => transfer
+        procedure, non_overridable :: assign => assign
         generic :: assignment(=) => assign
     end type
 
@@ -66,7 +79,7 @@ module calculate
             type(Expression) :: this
         end function
 
-        module subroutine transfer(this, other)
+        module subroutine assign(this, other)
             class(Expression), intent(inout) :: this
             type(Expression), intent(in) :: other
         end subroutine

@@ -1,4 +1,4 @@
-submodule (calculate) calculate_wrapper
+submodule (calculate_fortran) calculate_wrapper
 
     use, intrinsic :: ieee_arithmetic, only: ieee_value, ieee_quiet_nan
     use, intrinsic :: iso_c_binding
@@ -119,27 +119,27 @@ contains
         call c_f_procpointer(c_null_funptr, query)
         call c_f_procpointer(c_null_funptr, get)
         select case (input)
-            case ("version")
+            case ('version')
                 call c_f_procpointer(calculate%version, query)
-            case ("author")
+            case ('author')
                 call c_f_procpointer(calculate%author, query)
-            case ("date")
+            case ('date')
                 call c_f_procpointer(calculate%date, query)
-            case ("constants")
+            case ('constants')
                 call c_f_procpointer(calculate%constants, query)
-            case ("operators")
+            case ('operators')
                 call c_f_procpointer(calculate%operators, query)
-            case ("functions")
+            case ('functions')
                 call c_f_procpointer(calculate%functions, query)
-            case ("expression")
+            case ('expression')
                 call c_f_procpointer(calculate%expression, get)
-            case ("variables")
+            case ('variables')
                 call c_f_procpointer(calculate%variables, get)
-            case ("infix")
+            case ('infix')
                 call c_f_procpointer(calculate%infix, get)
-            case ("postfix")
+            case ('postfix')
                 call c_f_procpointer(calculate%postfix, get)
-            case ("tree")
+            case ('tree')
                 call c_f_procpointer(calculate%tree, get)
         end select
 
@@ -205,7 +205,7 @@ contains
         end if
     end procedure
 
-    module procedure transfer
+    module procedure assign
         type(LibraryTemplate), pointer :: calculate
         procedure(buildWrapper), pointer :: build
 

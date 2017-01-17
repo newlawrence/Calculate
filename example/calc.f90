@@ -1,6 +1,6 @@
 program calc
 
-    use calculate
+    use calculate_fortran
     implicit none
 
     type(Expression) :: expr
@@ -23,7 +23,7 @@ program calc
         vars = vars(2 :)
         call get_command_argument(1, arg)
 
-        expr = Expression(arg, vars=vars, error=error)
+        expr = calculate%Expression(arg, vars=vars, error=error)
 
         if (expr%check()) then
             allocate (vals((count - 1) / 2))
