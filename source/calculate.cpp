@@ -101,9 +101,9 @@ namespace calculate {
             else if (is(Group::NAME) && defined<Function>(token))
                 infix_push(make<Function>(token));
             else if (is(Group::SYMBOL) && defined<Operator>(token)) {
-                auto op = make<Operator>(token);
-                if (!cast<Operator>(op)->unary)
-                    infix_push(op);
+                auto op = cast<Operator>(make<Operator>(token));
+                if (op->unary.size() == 0)
+                    infix_push(make<Operator>(token));
                 else {
                     switch (last->type) {
                     case (Type::RIGHT):
@@ -113,9 +113,8 @@ namespace calculate {
                     case (Type::LEFT):
                     case (Type::SEPARATOR):
                     case (Type::OPERATOR):
+                        infix_push(make<Function>(op->unary));
                         infix_push(make<Parenthesis<'('>>());
-                        infix_push(make<Constant>("0", std::stod("0")));
-                        infix_push(op);
                         counter.push(0);
                         break;
                     case (Type::FUNCTION):

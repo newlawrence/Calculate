@@ -92,7 +92,7 @@ TEST_CASE("Bindings", "[bindings]") {
         calculate_c.operators(output);
         CHECK(strlen(output) == 14);
         calculate_c.functions(output);
-        CHECK(strlen(output) == 249);
+        CHECK(strlen(output) == 256);
     }
 
 }

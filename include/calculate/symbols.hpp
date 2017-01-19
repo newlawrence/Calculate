@@ -217,10 +217,11 @@ namespace calculate_symbols {
             Evaluable(),
             precedence(0),
             left_assoc(true),
-            unary(false) {}
+            unary("") {}
 
         template<typename Func>
-        Operator(const String &t, SizeT p, Bool l, Bool u, Func&& f) noexcept :
+        Operator(const String &t, SizeT p, Bool l,
+                 const String &u, Func&& f) noexcept :
             Evaluable(t, Type::OPERATOR, std::forward<Func>(f)),
             precedence(p),
             left_assoc(l),
@@ -229,7 +230,7 @@ namespace calculate_symbols {
     public:
         const SizeT precedence;
         const Bool left_assoc;
-        const Bool unary;
+        const String unary;
 
         virtual ~Operator() noexcept {}
 

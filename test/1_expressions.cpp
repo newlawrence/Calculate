@@ -144,7 +144,7 @@ TEST_CASE("Queries test", "[Queries]") {
             "+", "-", "*", "/", "%", "^", "**"
         });
         auto expected_functions = vString({
-            "fabs", "abs", "fma", "copysign", "nextafter",
+            "id", "neg", "fabs", "abs", "fma", "copysign", "nextafter",
             "fdim", "fmax", "fmin",
             "ceil", "floor", "fmod", "trunc",
             "round", "rint", "nearbyint", "remainder",
