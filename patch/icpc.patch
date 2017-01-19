@@ -50,7 +50,7 @@ index 95dac93..8f391e9 100644
  
  #endif
 diff --git a/include/calculate/symbols.hpp b/include/calculate/symbols.hpp
-index 5de6d3c..1216d3d 100755
+index e4a3a4c..87cdf08 100755
 --- a/include/calculate/symbols.hpp
 +++ b/include/calculate/symbols.hpp
 @@ -6,6 +6,7 @@
@@ -64,7 +64,7 @@ index 5de6d3c..1216d3d 100755
 @@ -15,6 +16,7 @@ namespace calculate_symbols {                                                 \
  
  
- #define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION)        \
+ #define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, UNARY, FUNCTION) \
 +RECORD_TOKEN(TOKEN)                                                           \
  namespace calculate_symbols {                                                 \
      template <>                                                               \
@@ -86,7 +86,7 @@ index 5de6d3c..1216d3d 100755
      );
  
  
-@@ -244,7 +247,7 @@ namespace calculate_symbols {
+@@ -251,7 +254,7 @@ namespace calculate_symbols {
      };
      template <typename Token>
      const Recorder<Operator> BuiltinOperator<Token>::_recorder(
@@ -95,7 +95,7 @@ index 5de6d3c..1216d3d 100755
      );
  
  
-@@ -281,7 +284,7 @@ namespace calculate_symbols {
+@@ -288,7 +291,7 @@ namespace calculate_symbols {
      };
      template <typename Token>
      const Recorder<Function> BuiltinFunction<Token>::_recorder(
