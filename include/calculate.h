@@ -34,8 +34,7 @@ namespace calculate {
         static vString _extract(const String &vars);
         static vString _validate(const vString &vars);
 
-        qSymbol _tokenize();
-        qSymbol _check(qSymbol &&input);
+        qSymbol _tokenize(String expr);
         qEvaluable _shuntingYard(qSymbol &&infix);
         pEvaluable _buildTree(qEvaluable &&postfix);
 

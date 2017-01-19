@@ -66,26 +66,46 @@ namespace calculate {
         return vars;
     }
 
-    qSymbol Expression::_tokenize() {
+    qSymbol Expression::_tokenize(String expr) {
         qSymbol infix;
+        pSymbol current;
         Match match;
         Stream stream;
 
-        enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR};
-        auto last = make<Parenthesis<'('>>();
+        auto previous = make<Parenthesis<'('>>();
+        auto infix_push = [&](const pSymbol &symbol) {
+            infix.push(symbol);
+            stream << " " << symbol->token;
+            current = symbol;
+            switch (previous->type) {
+            case (Type::RIGHT):
+            case (Type::CONSTANT):
+                if (current->is(Type::RIGHT)) break;
+                else if (current->is(Type::SEPARATOR)) break;
+                else if (current->is(Type::OPERATOR)) break;
+                else throw SyntaxErrorException();
+            case (Type::LEFT):
+            case (Type::SEPARATOR):
+            case (Type::OPERATOR):
+                if (current->is(Type::CONSTANT)) break;
+                else if (current->is(Type::LEFT)) break;
+                else if (current->is(Type::FUNCTION)) break;
+                else throw SyntaxErrorException();
+            case (Type::FUNCTION):
+                if (current->is(Type::LEFT)) break;
+                else throw SyntaxErrorException();
+            }
+            previous = current;
+        };
         auto counter = std::stack<Integer>();
         auto encountered = std::unordered_set<String>();
 
+        enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR};
         auto is = [&match](Integer group) {
             return !match[group].str().empty();
         };
-        auto infix_push = [&infix, &stream](const pSymbol &symbol) {
-            infix.push(symbol);
-            stream << " " << symbol->token;
-        };
 
-        auto expression = _expression;
-        while (std::regex_search(expression, match, regex)) {
+        while (std::regex_search(expr, match, regex)) {
             auto token = match.str();
             auto it = std::find(_variables.begin(), _variables.end(), token);
 
@@ -105,7 +125,7 @@ namespace calculate {
                 if (op->unary.size() == 0)
                     infix_push(make<Operator>(token));
                 else {
-                    switch (last->type) {
+                    switch (previous->type) {
                     case (Type::RIGHT):
                     case (Type::CONSTANT):
                         infix_push(make<Operator>(token));
@@ -137,14 +157,16 @@ namespace calculate {
             else
                 throw UndefinedSymbolException(token);
 
-            expression = match.suffix().str();
-            last = infix.back();
-
-            if (last->type == Type::CONSTANT || last->type == Type::RIGHT)
+            if (
+                current->type == Type::CONSTANT ||
+                current->type == Type::RIGHT
+            )
                 if (!counter.empty() and counter.top() == 0) {
                     infix_push(make<Parenthesis<')'>>());
                     counter.pop();
                 }
+
+            expr = match.suffix().str();
         }
 
         while (!counter.empty()) {
@@ -161,59 +183,25 @@ namespace calculate {
                     throw WrongVariablesException(var);
         }
 
+        switch (infix.front()->type) {
+        case (Type::RIGHT):
+        case (Type::SEPARATOR):
+        case (Type::OPERATOR):
+            throw SyntaxErrorException();
+        default:
+            break;
+        }
+
+        switch (infix.back()->type) {
+        case (Type::CONSTANT):
+        case (Type::RIGHT):
+            break;
+        default:
+            throw SyntaxErrorException();
+        }
+
         _infix = stream.str().erase(0, 1);
         return infix;
-    }
-
-    qSymbol Expression::_check(qSymbol &&input) {
-        qSymbol output;
-        pSymbol current, next;
-
-        current = input.front();
-        input.pop();
-        output.push(current);
-
-        switch (current->type) {
-        case (Type::RIGHT): case (Type::SEPARATOR): case (Type::OPERATOR):
-            throw SyntaxErrorException();
-        default:
-            break;
-        }
-
-        while (!input.empty()) {
-            next = input.front();
-            input.pop();
-            output.push(next);
-
-            switch (current->type) {
-            case (Type::RIGHT):
-            case (Type::CONSTANT):
-                if (next->is(Type::RIGHT)) break;
-                else if (next->is(Type::SEPARATOR)) break;
-                else if (next->is(Type::OPERATOR)) break;
-                else throw SyntaxErrorException();
-            case (Type::LEFT):
-            case (Type::SEPARATOR):
-            case (Type::OPERATOR):
-                if (next->is(Type::CONSTANT)) break;
-                else if (next->is(Type::LEFT)) break;
-                else if (next->is(Type::FUNCTION)) break;
-                else throw SyntaxErrorException();
-            case (Type::FUNCTION):
-                if (next->is(Type::LEFT)) break;
-                else throw SyntaxErrorException();
-            }
-            current = next;
-        }
-
-        switch (current->type) {
-        case (Type::CONSTANT): case (Type::RIGHT):
-            break;
-        default:
-            throw SyntaxErrorException();
-        }
-
-        return output;
     }
 
     qEvaluable Expression::_shuntingYard(qSymbol &&infix) {
@@ -368,9 +356,7 @@ namespace calculate {
         for (auto i = 0u; i < vars.size(); i++)
             _values[i] = 0.;
 
-        auto infix = _check(_tokenize());
-        auto postfix = _shuntingYard(std::move(infix));
-        _tree = _buildTree(std::move(postfix));
+        _tree = _buildTree(_shuntingYard(_tokenize(_expression)));
     }
 
     Expression& Expression::operator=(const Expression &other) {
