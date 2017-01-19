@@ -72,6 +72,8 @@ namespace calculate {
         Match match;
         Stream stream;
 
+        auto encountered = std::unordered_set<String>();
+        auto counter = std::stack<Integer>();
         auto previous = make<Parenthesis<'('>>();
         auto infix_push = [&](const pSymbol &symbol) {
             infix.push(symbol);
@@ -97,8 +99,6 @@ namespace calculate {
             }
             previous = current;
         };
-        auto counter = std::stack<Integer>();
-        auto encountered = std::unordered_set<String>();
 
         enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR};
         auto is = [&match](Integer group) {
@@ -160,36 +160,24 @@ namespace calculate {
             if (
                 current->type == Type::CONSTANT ||
                 current->type == Type::RIGHT
-            )
-                if (!counter.empty() and counter.top() == 0) {
-                    infix_push(make<Parenthesis<')'>>());
-                    counter.pop();
+            ) {
+                while (!counter.empty()) {
+                    if (counter.top() == 0) {
+                        infix_push(make<Parenthesis<')'>>());
+                        counter.pop();
+                    }
+                    else
+                        break;
                 }
+            }
 
             expr = match.suffix().str();
-        }
-
-        while (!counter.empty()) {
-            while (counter.top() > 0) {
-                infix_push(make<Parenthesis<')'>>());
-                counter.top()--;
-            }
-            counter.pop();
         }
 
         if (encountered.size() < _variables.size()) {
             for (auto &var : _variables)
                 if (encountered.find(var) == encountered.end())
                     throw WrongVariablesException(var);
-        }
-
-        switch (infix.front()->type) {
-        case (Type::RIGHT):
-        case (Type::SEPARATOR):
-        case (Type::OPERATOR):
-            throw SyntaxErrorException();
-        default:
-            break;
         }
 
         switch (infix.back()->type) {
