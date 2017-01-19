@@ -27,7 +27,6 @@ TEST_CASE("Bindings", "[bindings]") {
         CHECK(strcmp(output, "1 + x") == 0);
         calculate_c.variables(expr2, output);
         CHECK(strcmp(output, "x") == 0);
-        CHECK(static_cast<int>(calculate_c.value(expr2)) == 1);
         CHECK(static_cast<int>(calculate_c.value(expr2, x)) == 3);
         CHECK(static_cast<int>(calculate_c.eval(expr2, xp, 1)) == 3);
 
@@ -91,7 +90,7 @@ TEST_CASE("Bindings", "[bindings]") {
         calculate_c.constants(output);
         CHECK(strlen(output) == 14);
         calculate_c.operators(output);
-        CHECK(strlen(output) == 16);
+        CHECK(strlen(output) == 14);
         calculate_c.functions(output);
         CHECK(strlen(output) == 249);
     }

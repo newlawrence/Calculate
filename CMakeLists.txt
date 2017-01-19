@@ -4,8 +4,8 @@ project(calculate C CXX)
 
 set(MAJOR "1")
 set(MINOR "2")
-set(PTH "0")
-set(DEV)
+set(PTH "1")
+set(DEV ".dev0")
 set(BUILD "0")
 set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
 
@@ -36,15 +36,11 @@ macro(apply_patch COMPILER)
     find_program(GIT git)
     message("-- Applying ${COMPILER} patch...")
     if(PATCH)
-        execute_process(
-            COMMAND ${PATCH} -p1 -i
-                    ${PATCHES_DIR}/${COMPILER}.patch
-        )
+        execute_process(COMMAND ${PATCH} -p1 -i
+                                ${PATCHES_DIR}/${COMPILER}.patch)
     elseif(GIT)
-        execute_process(
-            COMMAND ${GIT} apply --whitespace=fix
-                    ${PATCHES_DIR}/${COMPILER}.patch
-        )
+        execute_process(COMMAND ${GIT} apply --whitespace=fix
+                                ${PATCHES_DIR}/${COMPILER}.patch)
     else()
         message(FATAL_ERROR "Suitable patching command not found!")
     endif()
@@ -127,11 +123,11 @@ if(
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
     endif()
 elseif(MSVC)
-    apply_patch("msvc")
+    apply_patch(msvc)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS "ON")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14 /sdl")
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
-    apply_patch("icpc")
+    apply_patch(icpc)
     if(WIN32)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O3 /std:c++14")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall")
@@ -142,10 +138,10 @@ elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
-apply_template("info.h" "${PROJECT_SOURCE_DIR}/include/calculate")
+apply_template(info.h ${PROJECT_SOURCE_DIR}/include/calculate)
 file(GLOB sources ${PROJECT_SOURCE_DIR}/source/*.cpp)
 if(WIN32)
-    apply_template("version.rc" "${PROJECT_SOURCE_DIR}/resource")
+    apply_template(version.rc ${PROJECT_SOURCE_DIR}/resource)
     set(sources "${sources};${PROJECT_SOURCE_DIR}/resource/version.rc")
     if(NOT MSVC)
         set(CMAKE_RC_COMPILER_INIT "windres")
@@ -185,12 +181,10 @@ if(TESTING OR COVERAGE)
         message("-- Catch library successfully downloaded.")
     endif()
 
-    apply_template("0_catch.cpp" "${PROJECT_SOURCE_DIR}/test")
+    apply_template(0_catch.cpp ${PROJECT_SOURCE_DIR}/test)
     file(GLOB tests ${PROJECT_SOURCE_DIR}/test/*.cpp)
     add_executable(unittests ${tests})
-    target_link_libraries(unittests
-        LINK_PUBLIC calculate
-    )
+    target_link_libraries(unittests LINK_PUBLIC calculate)
 
     add_custom_command(
         TARGET unittests

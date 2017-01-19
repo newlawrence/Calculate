@@ -64,8 +64,8 @@ if(PYTHON)
     message("-- The Python interpreter specification is ${PYTHON_VER}")
     set(SETUP "${CMAKE_CURRENT_SOURCE_DIR}/setup.py")
 
-    apply_template("__init__.py" "${CMAKE_CURRENT_SOURCE_DIR}/calculate")
-    apply_template("meta.yaml" "${CMAKE_CURRENT_SOURCE_DIR}/recipe")
+    apply_template(__init__.py ${CMAKE_CURRENT_SOURCE_DIR}/calculate)
+    apply_template(meta.yaml ${CMAKE_CURRENT_SOURCE_DIR}/recipe)
 
     add_custom_target(python_wheel
         DEPENDS calculate_python

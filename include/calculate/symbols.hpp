@@ -14,11 +14,11 @@ namespace calculate_symbols {                                                 \
 }
 
 
-#define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION)        \
+#define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, UNARY, FUNCTION) \
 namespace calculate_symbols {                                                 \
     template <>                                                               \
     BuiltinOperator<TypeString(TOKEN)>::BuiltinOperator() noexcept :          \
-        Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION) {}            \
+        Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, UNARY, FUNCTION) {}     \
     template class BuiltinOperator<TypeString(TOKEN)>;                        \
 }
 
@@ -213,17 +213,23 @@ namespace calculate_symbols {
             return _symbols;
         }
 
-        Operator() : Evaluable(), precedence(0), left_assoc(true) {}
+        Operator() :
+            Evaluable(),
+            precedence(0),
+            left_assoc(true),
+            unary(false) {}
 
         template<typename Func>
-        Operator(const String &t, SizeT p, Bool l, Func&& f) noexcept :
+        Operator(const String &t, SizeT p, Bool l, Bool u, Func&& f) noexcept :
             Evaluable(t, Type::OPERATOR, std::forward<Func>(f)),
             precedence(p),
-            left_assoc(l) {}
+            left_assoc(l),
+            unary(u) {}
 
     public:
         const SizeT precedence;
         const Bool left_assoc;
+        const Bool unary;
 
         virtual ~Operator() noexcept {}
 

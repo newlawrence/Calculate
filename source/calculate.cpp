@@ -11,17 +11,10 @@ namespace {
     Regex ext_regex(R"_(([^\s,]+)|(,))_");
     Regex var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
 
-    Regex prg0(R"_(^(\s*[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
-    Regex prg1(R"_(([^A-Za-z\d)_\s]+)(\s+[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
-    Regex prg2(R"_(([(,])(\s*[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
-    Regex prg3(R"_(([+\-])(\()(1)(\)))_");
-    Regex prg4(R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_");
-    Regex prg5(R"_(((?:\d+\.?\d*|\.\d+)+[eE][+\-])(\s+)(\d+))_");
-
     Regex regex(
-        R"_(((?:[+\-])?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
+        R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
         R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-        R"_(([^A-Za-z\d(),_\s]+)|)_"
+        R"_(([^A-Za-z\d.(),_\s]+)|)_"
         R"_((\()|(\))|(,))_"
     );
 
@@ -79,49 +72,88 @@ namespace calculate {
         Stream stream;
 
         enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR};
+        auto last = make<Parenthesis<'('>>();
+        auto counter = std::stack<Integer>();
+        auto encountered = std::unordered_set<String>();
+
         auto is = [&match](Integer group) {
             return !match[group].str().empty();
         };
-        auto encountered = std::unordered_set<String>();
+        auto infix_push = [&infix, &stream](const pSymbol &symbol) {
+            infix.push(symbol);
+            stream << " " << symbol->token;
+        };
 
         auto expression = _expression;
-        expression = std::regex_replace(expression, prg0, "$1(1) # $2");
-        expression = std::regex_replace(expression, prg1, "$1 $2(1) # $3");
-        expression = std::regex_replace(expression, prg2, "$1 $2(1) # $3");
-        expression = std::regex_replace(expression, prg3, "$1$3");
-        expression = std::regex_replace(expression, prg4, "$1 ");
-        expression = std::regex_replace(expression, prg5, "$1$3");
-
         while (std::regex_search(expression, match, regex)) {
             auto token = match.str();
             auto it = std::find(_variables.begin(), _variables.end(), token);
 
             if (is(Group::NUMBER))
-                infix.push(make<Constant>(token, std::stod(token)));
+                infix_push(make<Constant>(token, std::stod(token)));
             else if (is(Group::NAME) && it != _variables.end()) {
                 auto position = it - _variables.begin();
-                infix.push(
-                    make<Variable>(token, _values.get() + position)
-                );
+                infix_push(make<Variable>(token, _values.get() + position));
                 encountered.emplace(token);
             }
             else if (is(Group::NAME) && defined<Constant>(token))
-                infix.push(make<Constant>(token));
+                infix_push(make<Constant>(token));
             else if (is(Group::NAME) && defined<Function>(token))
-                infix.push(make<Function>(token));
-            else if (is(Group::SYMBOL) && defined<Operator>(token))
-                infix.push(make<Operator>(token));
-            else if (is(Group::LEFT))
-                infix.push(make<Parenthesis<'('>>());
-            else if (is(Group::RIGHT))
-                infix.push(make<Parenthesis<')'>>());
+                infix_push(make<Function>(token));
+            else if (is(Group::SYMBOL) && defined<Operator>(token)) {
+                auto op = make<Operator>(token);
+                if (!cast<Operator>(op)->unary)
+                    infix_push(op);
+                else {
+                    switch (last->type) {
+                    case (Type::RIGHT):
+                    case (Type::CONSTANT):
+                        infix_push(make<Operator>(token));
+                        break;
+                    case (Type::LEFT):
+                    case (Type::SEPARATOR):
+                    case (Type::OPERATOR):
+                        infix_push(make<Parenthesis<'('>>());
+                        infix_push(make<Constant>("0", std::stod("0")));
+                        infix_push(op);
+                        counter.push(0);
+                        break;
+                    case (Type::FUNCTION):
+                        throw SyntaxErrorException();
+                    }
+                }
+            }
+            else if (is(Group::LEFT)) {
+                infix_push(make<Parenthesis<'('>>());
+                if (!counter.empty())
+                    counter.top()++;
+            }
+            else if (is(Group::RIGHT)) {
+                infix_push(make<Parenthesis<')'>>());
+                if (!counter.empty())
+                    counter.top()--;
+            }
             else if (is(Group::SEPARATOR))
-                infix.push(make<Separator>());
+                infix_push(make<Separator>());
             else
                 throw UndefinedSymbolException(token);
 
             expression = match.suffix().str();
-            stream << " " << token;
+            last = infix.back();
+
+            if (last->type == Type::CONSTANT || last->type == Type::RIGHT)
+                if (!counter.empty() and counter.top() == 0) {
+                    infix_push(make<Parenthesis<')'>>());
+                    counter.pop();
+                }
+        }
+
+        while (!counter.empty()) {
+            while (counter.top() > 0) {
+                infix_push(make<Parenthesis<')'>>());
+                counter.top()--;
+            }
+            counter.pop();
         }
 
         if (encountered.size() < _variables.size()) {
@@ -155,12 +187,15 @@ namespace calculate {
             output.push(next);
 
             switch (current->type) {
-            case (Type::CONSTANT): case (Type::RIGHT):
+            case (Type::RIGHT):
+            case (Type::CONSTANT):
                 if (next->is(Type::RIGHT)) break;
                 else if (next->is(Type::SEPARATOR)) break;
                 else if (next->is(Type::OPERATOR)) break;
                 else throw SyntaxErrorException();
-            case (Type::LEFT): case (Type::SEPARATOR): case (Type::OPERATOR):
+            case (Type::LEFT):
+            case (Type::SEPARATOR):
+            case (Type::OPERATOR):
                 if (next->is(Type::CONSTANT)) break;
                 else if (next->is(Type::LEFT)) break;
                 else if (next->is(Type::FUNCTION)) break;
@@ -188,14 +223,18 @@ namespace calculate {
         pSymbol element, another;
         Stream stream;
 
+        auto postfix_push = [&postfix, &stream](const pEvaluable &symbol) {
+            postfix.push(symbol);
+            stream << " " << symbol->token;
+        };
+
         while(!infix.empty()) {
             element = infix.front();
             infix.pop();
 
             switch (element->type) {
             case (Type::CONSTANT):
-                postfix.push(cast<Evaluable>(element));
-                stream << " " << element->token;
+                postfix_push(cast<Evaluable>(element));
                 break;
 
             case (Type::FUNCTION):
@@ -206,8 +245,7 @@ namespace calculate {
                 while (!operations.empty()) {
                     another = operations.top();
                     if (!another->is(Type::LEFT)) {
-                        postfix.push(cast<Evaluable>(another));
-                        stream << " " << another->token;
+                        postfix_push(cast<Evaluable>(another));
                         operations.pop();
                     }
                     else {
@@ -225,8 +263,7 @@ namespace calculate {
                         break;
                     }
                     else if (another->is(Type::FUNCTION)) {
-                        postfix.push(cast<Evaluable>(another));
-                        stream << " " << another->token;
+                        postfix_push(cast<Evaluable>(another));
                         operations.pop();
                         break;
                     }
@@ -236,8 +273,7 @@ namespace calculate {
                         auto p2 = cast<Operator>(another)->precedence;
                         if ((left && (p1 <= p2)) || (!left && (p1 < p2))) {
                             operations.pop();
-                            postfix.push(cast<Evaluable>(another));
-                            stream << " " << another->token;
+                            postfix_push(cast<Evaluable>(another));
                         }
                         else {
                             break;
@@ -256,8 +292,7 @@ namespace calculate {
                     another = operations.top();
                     if (!another->is(Type::LEFT)) {
                         operations.pop();
-                        postfix.push(cast<Evaluable>(another));
-                        stream << " " << another->token;
+                        postfix_push(cast<Evaluable>(another));
                     }
                     else {
                         break;
@@ -276,8 +311,7 @@ namespace calculate {
             if (element->is(Type::LEFT))
                 throw ParenthesisMismatchException();
             operations.pop();
-            postfix.push(cast<Evaluable>(element));
-            stream << " " << element->token;
+            postfix_push(cast<Evaluable>(element));
         }
 
         _postfix = stream.str().erase(0, 1);
