@@ -116,3 +116,11 @@ class Expression(object):
             pass
         finally:
             self._handler = ffi.NULL
+
+
+def parse(expression):
+    output = ffi.new('char[{}]'.format(MAX_CHARS))
+    error = ffi.new('char[{}]'.format(ERROR_CHARS))
+    handler = calculate.parse(expression.encode(), error)
+    calculate.variables(handler, output)
+    return Expression(expression, decode(output))

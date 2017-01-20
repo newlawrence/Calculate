@@ -10,7 +10,6 @@ namespace {
 
     Regex ext_regex(R"_(([^\s,]+)|(,))_");
     Regex var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
-    Regex exc_regex(R"_(.+'(.+)')_");
 
     Regex regex(
         R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
@@ -74,7 +73,7 @@ namespace calculate {
         Stream stream;
 
         auto encountered = std::unordered_set<String>();
-        auto counter = std::stack<Integer>();
+        auto counter = std::stack<Unsigned>();
         auto previous = make<Parenthesis<'('>>();
         auto infix_push = [&](const pSymbol &symbol) {
             infix.push(symbol);
@@ -349,9 +348,8 @@ namespace calculate {
     }
 
     Expression& Expression::operator=(const Expression &other) {
-        auto copy = Expression(other);
-        *this = std::move(copy);
-
+        *this = Expression(other);
+        
         return *this;
     }
 
@@ -384,16 +382,19 @@ namespace calculate {
 
 
     Expression parse(const String &expr) {
+        Regex regex(R"_(.*'(.+)'.*)_");
+        Match match;
         vString vars;
-        String var;
+        String error;
 
         while (true) {
             try {
                 return Expression(expr, vars);
             }
             catch (const UndefinedSymbolException &e) {
-                var = std::regex_replace(e.what(), exc_regex, "$1");
-                vars.emplace_back(var);
+                error = e.what();
+                std::regex_search(error, match, regex);
+                vars.emplace_back(match.str(1));
             }
         }
     }

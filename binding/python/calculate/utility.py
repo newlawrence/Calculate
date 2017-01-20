@@ -34,6 +34,7 @@ struct calculate_c_library_template {
 
     Expression (*create)(const char*, const char*, char*);
     Expression (*build)(const char*, const char*);
+    Expression (*parse)(const char*, char*);
     void (*free)(Expression);
 
     void (*expression)(Expression, char*);

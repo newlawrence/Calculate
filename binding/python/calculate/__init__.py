@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-from calculate.calculate import Expression
+from calculate.calculate import Expression, parse
 
-__all__ = ['Expression']
+__all__ = ['Expression', 'parse']
 
 __version__ = '1.2.1.dev0'
 __license__ = 'MIT'
