@@ -12,7 +12,7 @@ MAX_CHARS = 4096
 library = 'calculate'
 extensions = {'Linux': 'so', 'Darwin': 'dylib', 'Windows': 'dll'}
 extension = extensions.get(system(), '')
-library_name = 'lib' + library + '_python'
+library_name = 'lib' + library
 basedir = path.abspath(path.dirname(__file__))
 library_path = path.join(basedir, library_name + '.' + extension)
 if not path.lexists(library_path):

@@ -6,7 +6,7 @@ set(MAJOR "1")
 set(MINOR "2")
 set(PTH "1")
 set(DEV)
-set(BUILD "0")
+set(BUILD "1")
 set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
 
 set(PACKAGE_NAME "Calculate")

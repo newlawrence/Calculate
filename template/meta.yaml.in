@@ -3,7 +3,7 @@ package:
   version: "${PACKAGE_VERSION}"
 
 build:
-  number: ${BUILD_NUMBER}
+  number: ${BUILD}
   script: python setup.py install
 
 source:
