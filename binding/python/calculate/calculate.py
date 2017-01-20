@@ -122,5 +122,6 @@ def parse(expression):
     output = ffi.new('char[{}]'.format(MAX_CHARS))
     error = ffi.new('char[{}]'.format(ERROR_CHARS))
     handler = calculate.parse(expression.encode(), error)
+    raise_if(decode(error))
     calculate.variables(handler, output)
     return Expression(expression, decode(output))

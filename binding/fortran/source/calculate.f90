@@ -20,6 +20,7 @@ module calculate_fortran
         procedure, nopass :: operators => operators
         procedure, nopass :: functions => functions
         procedure, nopass :: Expression => construct
+        procedure, nopass :: parse => parse
     end type
     type(CalculateLibrary) :: calculate
 
@@ -75,6 +76,12 @@ module calculate_fortran
         module function construct(expr, vars, error) result (this)
             character(len=*), intent(in) :: expr
             character(len=*), intent(in), optional :: vars
+            character(len=*), intent(out), optional :: error
+            type(Expression) :: this
+        end function
+
+        module function parse(expr, error) result (this)
+            character(len=*), intent(in) :: expr
             character(len=*), intent(out), optional :: error
             type(Expression) :: this
         end function
