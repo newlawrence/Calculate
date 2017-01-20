@@ -11,17 +11,10 @@ namespace {
     Regex ext_regex(R"_(([^\s,]+)|(,))_");
     Regex var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
 
-    Regex prg0(R"_(^(\s*[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
-    Regex prg1(R"_(([^A-Za-z\d)_\s]+)(\s+[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
-    Regex prg2(R"_(([(,])(\s*[+\-])(\(|[A-Za-z_]+[A-Za-z_\d]*))_");
-    Regex prg3(R"_(([+\-])(\()(1)(\)))_");
-    Regex prg4(R"_(([A-Za-z_\d\.)]+\s*[+\-])(?=\d+\.?\d*|\.\d+))_");
-    Regex prg5(R"_(((?:\d+\.?\d*|\.\d+)+[eE][+\-])(\s+)(\d+))_");
-
     Regex regex(
-        R"_(((?:[+\-])?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
+        R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
         R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-        R"_(([^A-Za-z\d(),_\s]+)|)_"
+        R"_(([^A-Za-z\d.(),_\s]+)|)_"
         R"_((\()|(\))|(,))_"
     );
 
@@ -73,55 +66,112 @@ namespace calculate {
         return vars;
     }
 
-    qSymbol Expression::_tokenize() {
+    qSymbol Expression::_tokenize(String expr) {
         qSymbol infix;
+        pSymbol current;
         Match match;
         Stream stream;
+
+        auto encountered = std::unordered_set<String>();
+        auto counter = std::stack<Unsigned>();
+        auto previous = make<Parenthesis<'('>>();
+        auto infix_push = [&](const pSymbol &symbol) {
+            infix.push(symbol);
+            stream << " " << symbol->token;
+            current = symbol;
+            switch (previous->type) {
+            case (Type::RIGHT):
+            case (Type::CONSTANT):
+                if (current->is(Type::RIGHT)) break;
+                else if (current->is(Type::SEPARATOR)) break;
+                else if (current->is(Type::OPERATOR)) break;
+                else throw SyntaxErrorException();
+            case (Type::LEFT):
+            case (Type::SEPARATOR):
+            case (Type::OPERATOR):
+                if (current->is(Type::CONSTANT)) break;
+                else if (current->is(Type::LEFT)) break;
+                else if (current->is(Type::FUNCTION)) break;
+                else throw SyntaxErrorException();
+            case (Type::FUNCTION):
+                if (current->is(Type::LEFT)) break;
+                else throw SyntaxErrorException();
+            }
+            previous = current;
+        };
 
         enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR};
         auto is = [&match](Integer group) {
             return !match[group].str().empty();
         };
-        auto encountered = std::unordered_set<String>();
 
-        auto expression = _expression;
-        expression = std::regex_replace(expression, prg0, "$1(1) # $2");
-        expression = std::regex_replace(expression, prg1, "$1 $2(1) # $3");
-        expression = std::regex_replace(expression, prg2, "$1 $2(1) # $3");
-        expression = std::regex_replace(expression, prg3, "$1$3");
-        expression = std::regex_replace(expression, prg4, "$1 ");
-        expression = std::regex_replace(expression, prg5, "$1$3");
-
-        while (std::regex_search(expression, match, regex)) {
+        while (std::regex_search(expr, match, regex)) {
             auto token = match.str();
             auto it = std::find(_variables.begin(), _variables.end(), token);
 
             if (is(Group::NUMBER))
-                infix.push(make<Constant>(token, std::stod(token)));
+                infix_push(make<Constant>(token, std::stod(token)));
             else if (is(Group::NAME) && it != _variables.end()) {
                 auto position = it - _variables.begin();
-                infix.push(
-                    make<Variable>(token, _values.get() + position)
-                );
+                infix_push(make<Variable>(token, _values.get() + position));
                 encountered.emplace(token);
             }
             else if (is(Group::NAME) && defined<Constant>(token))
-                infix.push(make<Constant>(token));
+                infix_push(make<Constant>(token));
             else if (is(Group::NAME) && defined<Function>(token))
-                infix.push(make<Function>(token));
-            else if (is(Group::SYMBOL) && defined<Operator>(token))
-                infix.push(make<Operator>(token));
-            else if (is(Group::LEFT))
-                infix.push(make<Parenthesis<'('>>());
-            else if (is(Group::RIGHT))
-                infix.push(make<Parenthesis<')'>>());
+                infix_push(make<Function>(token));
+            else if (is(Group::SYMBOL) && defined<Operator>(token)) {
+                auto op = cast<Operator>(make<Operator>(token));
+                if (op->unary.size() == 0)
+                    infix_push(make<Operator>(token));
+                else {
+                    switch (previous->type) {
+                    case (Type::RIGHT):
+                    case (Type::CONSTANT):
+                        infix_push(make<Operator>(token));
+                        break;
+                    case (Type::LEFT):
+                    case (Type::SEPARATOR):
+                    case (Type::OPERATOR):
+                        infix_push(make<Function>(op->unary));
+                        infix_push(make<Parenthesis<'('>>());
+                        counter.push(0);
+                        break;
+                    case (Type::FUNCTION):
+                        throw SyntaxErrorException();
+                    }
+                }
+            }
+            else if (is(Group::LEFT)) {
+                infix_push(make<Parenthesis<'('>>());
+                if (!counter.empty())
+                    counter.top()++;
+            }
+            else if (is(Group::RIGHT)) {
+                infix_push(make<Parenthesis<')'>>());
+                if (!counter.empty())
+                    counter.top()--;
+            }
             else if (is(Group::SEPARATOR))
-                infix.push(make<Separator>());
+                infix_push(make<Separator>());
             else
                 throw UndefinedSymbolException(token);
 
-            expression = match.suffix().str();
-            stream << " " << token;
+            if (
+                current->type == Type::CONSTANT ||
+                current->type == Type::RIGHT
+            ) {
+                while (!counter.empty()) {
+                    if (counter.top() == 0) {
+                        infix_push(make<Parenthesis<')'>>());
+                        counter.pop();
+                    }
+                    else
+                        break;
+                }
+            }
+
+            expr = match.suffix().str();
         }
 
         if (encountered.size() < _variables.size()) {
@@ -130,56 +180,16 @@ namespace calculate {
                     throw WrongVariablesException(var);
         }
 
+        switch (infix.back()->type) {
+        case (Type::CONSTANT):
+        case (Type::RIGHT):
+            break;
+        default:
+            throw SyntaxErrorException();
+        }
+
         _infix = stream.str().erase(0, 1);
         return infix;
-    }
-
-    qSymbol Expression::_check(qSymbol &&input) {
-        qSymbol output;
-        pSymbol current, next;
-
-        current = input.front();
-        input.pop();
-        output.push(current);
-
-        switch (current->type) {
-        case (Type::RIGHT): case (Type::SEPARATOR): case (Type::OPERATOR):
-            throw SyntaxErrorException();
-        default:
-            break;
-        }
-
-        while (!input.empty()) {
-            next = input.front();
-            input.pop();
-            output.push(next);
-
-            switch (current->type) {
-            case (Type::CONSTANT): case (Type::RIGHT):
-                if (next->is(Type::RIGHT)) break;
-                else if (next->is(Type::SEPARATOR)) break;
-                else if (next->is(Type::OPERATOR)) break;
-                else throw SyntaxErrorException();
-            case (Type::LEFT): case (Type::SEPARATOR): case (Type::OPERATOR):
-                if (next->is(Type::CONSTANT)) break;
-                else if (next->is(Type::LEFT)) break;
-                else if (next->is(Type::FUNCTION)) break;
-                else throw SyntaxErrorException();
-            case (Type::FUNCTION):
-                if (next->is(Type::LEFT)) break;
-                else throw SyntaxErrorException();
-            }
-            current = next;
-        }
-
-        switch (current->type) {
-        case (Type::CONSTANT): case (Type::RIGHT):
-            break;
-        default:
-            throw SyntaxErrorException();
-        }
-
-        return output;
     }
 
     qEvaluable Expression::_shuntingYard(qSymbol &&infix) {
@@ -188,14 +198,18 @@ namespace calculate {
         pSymbol element, another;
         Stream stream;
 
+        auto postfix_push = [&postfix, &stream](const pEvaluable &symbol) {
+            postfix.push(symbol);
+            stream << " " << symbol->token;
+        };
+
         while(!infix.empty()) {
             element = infix.front();
             infix.pop();
 
             switch (element->type) {
             case (Type::CONSTANT):
-                postfix.push(cast<Evaluable>(element));
-                stream << " " << element->token;
+                postfix_push(cast<Evaluable>(element));
                 break;
 
             case (Type::FUNCTION):
@@ -206,8 +220,7 @@ namespace calculate {
                 while (!operations.empty()) {
                     another = operations.top();
                     if (!another->is(Type::LEFT)) {
-                        postfix.push(cast<Evaluable>(another));
-                        stream << " " << another->token;
+                        postfix_push(cast<Evaluable>(another));
                         operations.pop();
                     }
                     else {
@@ -225,8 +238,7 @@ namespace calculate {
                         break;
                     }
                     else if (another->is(Type::FUNCTION)) {
-                        postfix.push(cast<Evaluable>(another));
-                        stream << " " << another->token;
+                        postfix_push(cast<Evaluable>(another));
                         operations.pop();
                         break;
                     }
@@ -236,8 +248,7 @@ namespace calculate {
                         auto p2 = cast<Operator>(another)->precedence;
                         if ((left && (p1 <= p2)) || (!left && (p1 < p2))) {
                             operations.pop();
-                            postfix.push(cast<Evaluable>(another));
-                            stream << " " << another->token;
+                            postfix_push(cast<Evaluable>(another));
                         }
                         else {
                             break;
@@ -256,8 +267,7 @@ namespace calculate {
                     another = operations.top();
                     if (!another->is(Type::LEFT)) {
                         operations.pop();
-                        postfix.push(cast<Evaluable>(another));
-                        stream << " " << another->token;
+                        postfix_push(cast<Evaluable>(another));
                     }
                     else {
                         break;
@@ -276,8 +286,7 @@ namespace calculate {
             if (element->is(Type::LEFT))
                 throw ParenthesisMismatchException();
             operations.pop();
-            postfix.push(cast<Evaluable>(element));
-            stream << " " << element->token;
+            postfix_push(cast<Evaluable>(element));
         }
 
         _postfix = stream.str().erase(0, 1);
@@ -335,15 +344,12 @@ namespace calculate {
         for (auto i = 0u; i < vars.size(); i++)
             _values[i] = 0.;
 
-        auto infix = _check(_tokenize());
-        auto postfix = _shuntingYard(std::move(infix));
-        _tree = _buildTree(std::move(postfix));
+        _tree = _buildTree(_shuntingYard(_tokenize(_expression)));
     }
 
     Expression& Expression::operator=(const Expression &other) {
-        auto copy = Expression(other);
-        *this = std::move(copy);
-
+        *this = Expression(other);
+        
         return *this;
     }
 
@@ -372,6 +378,25 @@ namespace calculate {
 
         _tree->print(stream);
         return stream.str().erase(stream.str().size() - 1, 1);
+    }
+
+
+    Expression parse(const String &expr) {
+        Regex regex(R"_(.*'(.+)'.*)_");
+        Match match;
+        vString vars;
+        String error;
+
+        while (true) {
+            try {
+                return Expression(expr, vars);
+            }
+            catch (const UndefinedSymbolException &e) {
+                error = e.what();
+                std::regex_search(error, match, regex);
+                vars.emplace_back(match.str(1));
+            }
+        }
     }
 
 }

@@ -16,6 +16,21 @@ conda install calculate -c newlawrence
 ```
 
 
+### Example of usage
+
+Python version:
+
+```python
+>>> import calculate
+>>> expression = calculate.parse('hypot(x, y)')
+>>> expression
+Expression('hypot(x, y)', ['x', 'y'])
+>>> expression.variables()
+['x', 'y']
+>>> expression(3, 4)
+5.0
+```
+
 ### Requirements
 
 *Version numbers listed below are the lowest supported tested*

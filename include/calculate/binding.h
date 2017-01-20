@@ -38,6 +38,7 @@ struct calculate_c_library_template {
     Expression (*Expression)(const Byte*, const Byte*, Byte*);
 #endif
     Expression (*build)(const Byte*, const Byte*);
+    Expression (*parse)(const Byte*, Byte*);
     void (*free)(Expression);
 
     void (*expression)(Expression, Byte*);

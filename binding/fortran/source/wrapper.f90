@@ -14,6 +14,7 @@ submodule (calculate_fortran) calculate_wrapper
         type(c_funptr) :: functions
         type(c_funptr) :: create
         type(c_funptr) :: build
+        type(c_funptr) :: parse
         type(c_funptr) :: free
         type(c_funptr) :: expression
         type(c_funptr) :: variables
@@ -194,6 +195,28 @@ contains
         else
             this%handler = create(toChars(expr), toChars(''), cerror)
         end if
+        message = fromChars(cerror)
+
+        if (present(error)) then
+            if (len(message) > len(error)) then
+                write (error, ERROR_FMT) ('*', c=1, len(error))
+            else
+                error = message
+            end if
+        end if
+    end procedure
+
+    module procedure parse
+        type(LibraryTemplate), pointer :: calculate
+        procedure(buildWrapper), pointer :: create
+        character(kind=c_char, len=1), dimension(ERROR_CHARS) :: cerror
+        character(len=:), allocatable :: message
+        integer :: c
+
+        call c_f_pointer(getLibraryReference(), calculate)
+        call c_f_procpointer(calculate%parse, create)
+
+        this%handler = create(toChars(expr), cerror)
         message = fromChars(cerror)
 
         if (present(error)) then

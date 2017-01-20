@@ -60,11 +60,13 @@ TEST_CASE("Parser test", "[Parser]") {
         CHECK(Expression("((1))")() == Approx(1.).epsilon(1e-3));
         CHECK(Expression("((1)+(2))")() == Approx(3.).epsilon(1e-3));
         CHECK(Expression("(((1))-((2)))")() == Approx(-1.).epsilon(1e-3));
+        CHECK(Expression("-(1+2)")() == Approx(-3.).epsilon(1e-3));
+        CHECK(Expression("-(1-(2-3))")() == Approx(-2.).epsilon(1e-3));
+        CHECK(Expression("-((-1+2)-(3-4))")() == Approx(-2.).epsilon(1e-3));
         CHECK(Expression("1 + 2")() == Approx(3.).epsilon(1e-3));
         CHECK(Expression("1 + 2 * 3")() == Approx(7.).epsilon(1e-3));
         CHECK(Expression("1 + 2 * 3 ^ 4")() == Approx(163.).epsilon(1e-3));
-        CHECK(Expression("1 + 2 # 3 ^ 4")() == Approx(1297.).epsilon(1e-3));
-        CHECK(Expression("1 + 2 # 3 ** 4")() == Approx(1297.).epsilon(1e-3));
+        CHECK(Expression("1 + 2 * 3 ** 4")() == Approx(163.).epsilon(1e-3));
     }
 
 }

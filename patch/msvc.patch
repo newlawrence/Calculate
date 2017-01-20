@@ -43,7 +43,7 @@ index 95dac93..950fda3 100644
 -
  #endif
 diff --git a/include/calculate/symbols.hpp b/include/calculate/symbols.hpp
-index 5de6d3c..4f9cd34 100755
+index e4a3a4c..bbf3204 100755
 --- a/include/calculate/symbols.hpp
 +++ b/include/calculate/symbols.hpp
 @@ -8,27 +8,36 @@
@@ -61,12 +61,12 @@ index 5de6d3c..4f9cd34 100755
  }
  
  
- #define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION)        \
+ #define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, UNARY, FUNCTION) \
  namespace calculate_symbols {                                                 \
      template <>                                                               \
 -    BuiltinOperator<TypeString(TOKEN)>::BuiltinOperator() noexcept :          \
 +    BuiltinOperator<djb2(TOKEN)>::BuiltinOperator() noexcept :                \
-         Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, FUNCTION) {}            \
+         Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, UNARY, FUNCTION) {}     \
 -    template class BuiltinOperator<TypeString(TOKEN)>;                        \
 +    template <>                                                               \
 +    const Recorder<Operator> BuiltinOperator<djb2(TOKEN)>::_recorder(         \
@@ -109,7 +109,7 @@ index 5de6d3c..4f9cd34 100755
  
  
      class Operator : public Evaluable {
-@@ -234,7 +239,7 @@ namespace calculate_symbols {
+@@ -241,7 +246,7 @@ namespace calculate_symbols {
      };
  
  
@@ -118,7 +118,7 @@ index 5de6d3c..4f9cd34 100755
      class BuiltinOperator final : public Operator {
          static const Recorder<Operator> _recorder;
  
-@@ -242,10 +247,6 @@ namespace calculate_symbols {
+@@ -249,10 +254,6 @@ namespace calculate_symbols {
          BuiltinOperator() noexcept : Operator() {}
          virtual ~BuiltinOperator() noexcept {}
      };
@@ -129,7 +129,7 @@ index 5de6d3c..4f9cd34 100755
  
  
      class Function : public Evaluable {
-@@ -271,7 +272,7 @@ namespace calculate_symbols {
+@@ -278,7 +279,7 @@ namespace calculate_symbols {
      };
  
  
@@ -138,7 +138,7 @@ index 5de6d3c..4f9cd34 100755
      class BuiltinFunction final : public Function {
          static const Recorder<Function> _recorder;
  
-@@ -279,10 +280,6 @@ namespace calculate_symbols {
+@@ -286,10 +287,6 @@ namespace calculate_symbols {
          BuiltinFunction() noexcept : Function() {}
          virtual ~BuiltinFunction() noexcept {}
      };

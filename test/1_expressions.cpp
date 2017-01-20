@@ -60,7 +60,7 @@ TEST_CASE("Wrong expressions", "[Expressions]") {
         CHECK_NOTHROW(Expression("(1)"));
         CHECK_THROWS_AS(Expression(") + 1"), SyntaxErrorException);
         CHECK_THROWS_AS(Expression(", 1"), SyntaxErrorException);
-        CHECK_THROWS_AS(Expression("+ 1"), SyntaxErrorException);
+        CHECK_THROWS_AS(Expression("* 1"), SyntaxErrorException);
         CHECK_NOTHROW(Expression("log(1)"));
     }
 
@@ -78,7 +78,7 @@ TEST_CASE("Wrong expressions", "[Expressions]") {
         CHECK_NOTHROW(Expression("((1))"));
         CHECK_THROWS_AS(Expression("()"), SyntaxErrorException);
         CHECK_THROWS_AS(Expression("hypot(, 1)"), SyntaxErrorException);
-        CHECK_THROWS_AS(Expression("( + 1)"), SyntaxErrorException);
+        CHECK_THROWS_AS(Expression("( * 1)"), SyntaxErrorException);
         CHECK_NOTHROW(Expression("(log(1))"));
     }
 
@@ -105,7 +105,7 @@ TEST_CASE("Wrong expressions", "[Expressions]") {
         CHECK_NOTHROW(Expression("1 + (2)"));
         CHECK_THROWS_AS(Expression("1 + )"), SyntaxErrorException);
         CHECK_THROWS_AS(Expression("hypot(1 + , 2)"), SyntaxErrorException);
-        CHECK_THROWS_AS(Expression("1 + + 2"), SyntaxErrorException);
+        CHECK_THROWS_AS(Expression("1 + * 2"), SyntaxErrorException);
         CHECK_NOTHROW(Expression("1 + log(2)"));
     }
 
@@ -113,8 +113,8 @@ TEST_CASE("Wrong expressions", "[Expressions]") {
         CHECK_THROWS_AS(Expression("log 1"), SyntaxErrorException);
         CHECK_NOTHROW(Expression("log(1)"));
         CHECK_THROWS_AS(Expression("log )"), SyntaxErrorException);
-        CHECK_THROWS_AS(Expression("hypot(, 1)"), SyntaxErrorException);
-        CHECK_THROWS_AS(Expression("log(+ 1)"), SyntaxErrorException);
+        CHECK_THROWS_AS(Expression("(hypot , 1)"), SyntaxErrorException);
+        CHECK_THROWS_AS(Expression("(log * 1)"), SyntaxErrorException);
         CHECK_THROWS_AS(Expression("log log(1)"), SyntaxErrorException);
     }
 
@@ -141,10 +141,10 @@ TEST_CASE("Queries test", "[Queries]") {
     SECTION("Global queries") {
         auto expected_constants = vString({"pi", "e", "phi", "gamma"});
         auto expected_operators = vString({
-            "+", "-", "*", "/", "%", "^", "**", "#"
+            "+", "-", "*", "/", "%", "^", "**"
         });
         auto expected_functions = vString({
-            "fabs", "abs", "fma", "copysign", "nextafter",
+            "id", "neg", "fabs", "abs", "fma", "copysign", "nextafter",
             "fdim", "fmax", "fmin",
             "ceil", "floor", "fmod", "trunc",
             "round", "rint", "nearbyint", "remainder",
