@@ -82,6 +82,15 @@ TEST_CASE("Bindings", "[bindings]") {
 
         calculate_c.evaluate(expr, values, 2, error);
         CHECK(std::string(error) == std::string("Variables mismatch"));
+
+        calculate_c.parse("x", error);
+        CHECK(std::string(error) == std::string(""));
+
+        calculate_c.parse("hypot(x, y)", error);
+        CHECK(std::string(error) == std::string(""));
+
+        calculate_c.parse("+", error);
+        CHECK(std::string(error) == std::string("Syntax error"));
     }
 
     SECTION("Query functions") {
