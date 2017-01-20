@@ -62,6 +62,9 @@ namespace calculate {
         String tree() const noexcept;
     };
 
+
+    Expression parse(const String &expr);
+
 }
 
 #else

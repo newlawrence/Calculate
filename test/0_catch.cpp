@@ -17,7 +17,7 @@ TEST_CASE("Metadata", "[metadata]") {
         calculate_c.author(output);
         CHECK(output == std::string("Alberto Lorenzo"));
         calculate_c.date(output);
-        CHECK(output == std::string("2017/01/19"));
+        CHECK(output == std::string("2017/01/20"));
     }
 
 }

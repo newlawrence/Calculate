@@ -3,6 +3,6 @@
 
 #define __CALCULATE_VERSION__ "1.2.1.dev0"
 #define __CALCULATE_AUTHOR__ "Alberto Lorenzo"
-#define __CALCULATE_DATE__ "2017/01/19"
+#define __CALCULATE_DATE__ "2017/01/20"
 
 #endif

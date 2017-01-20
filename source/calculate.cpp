@@ -10,6 +10,7 @@ namespace {
 
     Regex ext_regex(R"_(([^\s,]+)|(,))_");
     Regex var_regex(R"_([A-Za-z_]+[A-Za-z_\d]*)_");
+    Regex exc_regex(R"_(.+'(.+)')_");
 
     Regex regex(
         R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
@@ -379,6 +380,22 @@ namespace calculate {
 
         _tree->print(stream);
         return stream.str().erase(stream.str().size() - 1, 1);
+    }
+
+
+    Expression parse(const String &expr) {
+        vString vars;
+        String var;
+
+        while (true) {
+            try {
+                return Expression(expr, vars);
+            }
+            catch (const UndefinedSymbolException &e) {
+                var = std::regex_replace(e.what(), exc_regex, "$1");
+                vars.emplace_back(var);
+            }
+        }
     }
 
 }

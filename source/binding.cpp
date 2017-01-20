@@ -69,6 +69,21 @@ namespace {
         return nullptr;
     }
 
+    Expression parse(const Byte *expr, Byte *error) {
+        try {
+            auto expr_obj = cast(
+                new calculate::Expression(calculate::parse(expr))
+            );
+            strcpy(error, "");
+            return expr_obj;
+        }
+        catch (const calculate::BaseCalculateException &e) {
+            strcpy(error, e.what());
+        }
+
+        return nullptr;
+    }
+
     Expression build(const Byte *expr, const Byte *vars) {
         Byte error[64];
 
@@ -150,7 +165,7 @@ namespace {
 const calculate_c_library_template calculate_c = {
     version, author, date,
     constants, operators, functions,
-    create, build, free,
+    create, build, parse, free,
     expression, variables,
     infix, postfix, tree,
     evaluate, eval, value
