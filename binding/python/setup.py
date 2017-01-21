@@ -28,7 +28,7 @@ with open('{}/__init__.py'.format(library), 'r') as file:
 
 extensions = {'Linux': 'so', 'Darwin': 'dylib', 'Windows': 'dll'}
 extension = extensions.get(system(), '')
-library_name = 'lib' + library + '_python'
+library_name = 'lib' + library
 basedir = path.realpath(__file__).replace(path.basename(__file__), '')
 basedir = path.join(basedir, library)
 library_path = path.join(basedir, library_name + '.' + extension)
