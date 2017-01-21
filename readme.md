@@ -22,13 +22,34 @@ Python version:
 
 ```python
 >>> import calculate
->>> expression = calculate.parse('hypot(x, y)')
->>> expression
-Expression('hypot(x, y)', ['x', 'y'])
->>> expression.variables()
+
+>>> sin = calculate.Expression('sin(x)', ['x'])
+>>> pi = calculate.Expression('pi')()
+>>> pi
+3.141592653589
+>>> sin(pi / 2)
+1.0
+>>> sin(pi)
+7.932657934721266e-13
+
+>>> nhypot = calculate.parse('-hypot(x, y)')
+>>> nhypot
+Expression('-hypot(x, y)', ['x', 'y'])
+>>> nhypot.expression()
+'-hypot(x, y)'
+>>> nhypot.variables()
 ['x', 'y']
->>> expression(3, 4)
-5.0
+>>> nhypot.infix()
+'neg ( hypot ( x , y ) )'
+>>> nhypot.postfix()
+'x y hypot neg'
+>>> print(nhypot.tree())
+[neg]
+ \_[hypot]
+    \_[x]
+    \_[y]
+>>> nhypot(3, 4)
+-5.0
 ```
 
 ### Requirements
