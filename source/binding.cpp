@@ -129,7 +129,7 @@ namespace {
         calculate::vValue values(args, args + size);
         try {
             strcpy(error, "");
-            return uncast(expr)->operator()(values);
+            return uncast(expr)->evaluate(values);
         }
         catch (const calculate::BaseCalculateException &e) {
             strcpy(error, e.what());
@@ -156,7 +156,7 @@ namespace {
             values.emplace_back(va_arg(list, Value));
         va_end(list);
 
-        return uncast(expr)->operator()(values);
+        return uncast(expr)->evaluate(values);
     }
 
 }

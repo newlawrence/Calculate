@@ -39,6 +39,7 @@ namespace calculate {
         pEvaluable _buildTree(qEvaluable &&postfix);
 
         Expression() = delete;
+        Value operator()(const vValue &values) const = delete;
 
     public:
         Expression(const Expression &other);
@@ -49,10 +50,10 @@ namespace calculate {
         Expression& operator=(const Expression &other);
         Expression& operator=(Expression &&other);
 
-        Value operator() (const vValue &values) const;
+        Value evaluate(const vValue &values) const;
         template <typename... Args>
-        Value operator() (Args... args) const {
-            return this->operator() ({static_cast<Value>(args)...});
+        Value operator()(Args... args) const {
+            return this->evaluate({static_cast<Value>(args)...});
         };
 
         const String& expression() const noexcept { return _expression; }

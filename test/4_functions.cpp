@@ -15,15 +15,15 @@ TEST_CASE("Builtin functions", "[functions]") {
     SECTION("Other functions") {
         CHECK(eval("fabs(3.1416)") == approx(3.1416));
         CHECK(eval("abs(-1)") == approx(1));
-        CHECK(eval("fma(10, 20, 30)") == approx(230));
-        CHECK(eval("copysign(10, -1)") == approx(-10));
-        CHECK(eval("nextafter(0.0, 1.0)") == approx(4.94065645841e-324));
+        CHECK(eval("fma(10,20,30)") == approx(230));
+        CHECK(eval("copysign(10,-1)") == approx(-10));
+        CHECK(eval("nextafter(0.0,1.0)") == approx(4.94065645841e-324));
     }
 
     SECTION("Minimum, maximum and difference functions") {
-        CHECK(eval("fdim(2, 1)") == approx(1));
-        CHECK(eval("fmax(-100, 1)") == approx(1));
-        CHECK(eval("fmin(-100, -1)") == approx(-100));
+        CHECK(eval("fdim(2,1)") == approx(1));
+        CHECK(eval("fmax(-100,1)") == approx(1));
+        CHECK(eval("fmin(-100,-1)") == approx(-100));
     }
 
     SECTION("Rounding and remainder functions") {
@@ -34,14 +34,14 @@ TEST_CASE("Builtin functions", "[functions]") {
         CHECK(eval("round(5.5)") == approx(6));
         CHECK(eval("rint(-3.8)") == approx(-4));
         CHECK(eval("nearbyint(-2.3)") == approx(-2));
-        CHECK(eval("remainder(18.5, 4.2)") == approx(1.7));
+        CHECK(eval("remainder(18.5,4.2)") == approx(1.7));
     }
 
     SECTION("Power functions") {
-        CHECK(eval("pow(32.01, 1.54)") == approx(208.036691405387));
+        CHECK(eval("pow(32.01,1.54)") == approx(208.036691405387));
         CHECK(eval("sqrt(1024)") == approx(32));
         CHECK(eval("cbrt(27)") == approx(3));
-        CHECK(eval("hypot(3, 4)") == approx(5));
+        CHECK(eval("hypot(3,4)") == approx(5));
     }
 
     SECTION("Exponential and logarithmic functions") {
@@ -56,13 +56,13 @@ TEST_CASE("Builtin functions", "[functions]") {
     }
 
     SECTION("Trigonometric functions") {
-        CHECK(eval("sin(pi / 6)") == approx(0.5));
-        CHECK(eval("cos(pi / 3)") == approx(0.5));
-        CHECK(eval("tan(pi / 4)") == approx(1));
+        CHECK(eval("sin(pi/6)") == approx(0.5));
+        CHECK(eval("cos(pi/3)") == approx(0.5));
+        CHECK(eval("tan(pi/4)") == approx(1));
         CHECK(eval("asin(0.5)") == approx(0.523598775598));
         CHECK(eval("acos(0.5)") == approx(1.047197551197));
         CHECK(eval("atan(1)") == approx(0.785398163397));
-        CHECK(eval("atan2(10, -10)") == approx(2.356194490192));
+        CHECK(eval("atan2(10,-10)") == approx(2.356194490192));
     }
 
     SECTION("Hyperbolic functions") {
@@ -82,7 +82,14 @@ TEST_CASE("Builtin functions", "[functions]") {
     }
 
     SECTION("Incorrect number of arguments") {
-        CHECK_THROWS_AS(Expression("hypot(1)"), MissingArgumentsException);
-        CHECK_THROWS_AS(Expression("hypot(1,2,3)"), ArgumentsExcessException);
+        CHECK_THROWS_AS(
+            Expression("hypot(1)"),
+            MissingArgumentsException
+        );
+        CHECK_THROWS_AS(
+            Expression("hypot(1,2,3)"),
+            ArgumentsExcessException
+        );
     }
+
 }

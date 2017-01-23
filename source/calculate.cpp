@@ -364,7 +364,7 @@ namespace calculate {
         return *this;
     }
 
-    Value Expression::operator() (const vValue &values) const {
+    Value Expression::evaluate(const vValue &values) const {
         if (values.size() != _variables.size())
             throw WrongVariablesException();
         for (auto i = 0u; i < values.size(); i++)

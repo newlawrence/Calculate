@@ -4,8 +4,8 @@ project(calculate C CXX)
 
 set(MAJOR "1")
 set(MINOR "2")
-set(PTH "1")
-set(DEV)
+set(PTH "2")
+set(DEV ".dev0")
 set(BUILD "1")
 set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
 

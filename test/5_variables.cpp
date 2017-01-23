@@ -13,11 +13,11 @@ TEST_CASE("Variable arguments", "[variables]") {
     SECTION("Well constructed expressions") {
         CHECK_NOTHROW(Expression("0")());
         CHECK_NOTHROW(Expression("x0", "x0")(0));
-        CHECK_NOTHROW(Expression("x0 + x1", "x0, x1")(0, 1));
-        CHECK_NOTHROW(Expression("x0 * x1 * x2", "x0, x1, x2")(0, 1, 2));
-        CHECK_NOTHROW(Expression("x0", "x0")(std::vector<double>({0})));
-        CHECK_NOTHROW(Expression("x0 + x1", "x0, x1")({0, 1}));
-        CHECK_NOTHROW(Expression("x0 * x1 * x2", "x0, x1, x2")({0, 1, 2}));
+        CHECK_NOTHROW(Expression("x0+x1", "x0,x1")(0, 1));
+        CHECK_NOTHROW(Expression("x0*x1*x2", "x0,x1,x2")(0, 1, 2));
+        CHECK_NOTHROW(Expression("x0", "x0").evaluate({0}));
+        CHECK_NOTHROW(Expression("x0+x1", "x0,x1").evaluate({0, 1}));
+        CHECK_NOTHROW(Expression("x0*x1*x2", "x0,x1,x2").evaluate({0, 1, 2}));
     }
 
     SECTION("Arguments mismatch") {
@@ -26,23 +26,23 @@ TEST_CASE("Variable arguments", "[variables]") {
             WrongVariablesException
         );
         CHECK_THROWS_AS(
-            Expression("x0", "x0")(0, 1),
+            Expression("x0","x0")(0, 1),
             WrongVariablesException
         );
         CHECK_THROWS_AS(
-            Expression("x0 + x1", "x0, x1")(0, 1, 2),
+            Expression("x0+x1", "x0,x1")(0, 1, 2),
             WrongVariablesException
         );
         CHECK_THROWS_AS(
-            Expression("x0 * x1 * x2", "x0, x1, x2")(0, 1, 2, 3),
+            Expression("x0*x1*x2", "x0,x1,x2")(0, 1, 2, 3),
             WrongVariablesException
         );
         CHECK_THROWS_AS(
-            Expression("x0 + x1", "x0, x1")(std::vector<double>({0})),
+            Expression("x0+x1", "x0,x1").evaluate({0}),
             WrongVariablesException
         );
         CHECK_THROWS_AS(
-            Expression("x0 + x1", "x0, x1")({0, 1, 2}),
+            Expression("x0+x1", "x0,x1").evaluate({0, 1, 2}),
             WrongVariablesException
         );
     }
