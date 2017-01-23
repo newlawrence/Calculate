@@ -83,24 +83,20 @@ class Expression(object):
                 .format(repr(self.__class__.__name__), repr(item))
             )
 
-    def __call__(self, *args):
-        if args:
-            if isinstance(args[0], Iterable):
-                if len(args) == 1:
-                    args = args[0]
-                else:
-                    raise TypeError(
-                        'expected at most 1 argument, got {}'.format(len(args))
-                    )
+    def evaluate(self, args):
+        size = len(args)
+        if size > 0:
             args = [float(x) for x in args]
             values = ffi.new('double[]', args)
         else:
             values = ffi.new('double *')
         error = ffi.new('char[{}]'.format(ERROR_CHARS))
-        size = len(args)
         result = calculate.evaluate(self._handler, values, size, error)
         raise_if(decode(error))
         return result
+
+    def __call__(self, *args):
+        return self.evaluate(args)
 
     def __repr__(self):
         return "{}('{}', {})".format(
