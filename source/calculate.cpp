@@ -80,6 +80,7 @@ namespace calculate {
             while (!counter.empty()) {
                 if (counter.top() == 0) {
                     infix.push(make<Parenthesis<')'>>());
+                    stream << " )";
                     counter.pop();
                 }
                 else
