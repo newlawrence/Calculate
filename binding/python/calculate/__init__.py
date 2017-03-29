@@ -5,13 +5,13 @@ from calculate.calculate import Expression, parse
 
 __all__ = ['Expression', 'parse']
 
-__version__ = '1.2.2'
+__version__ = '1.2.3'
 __license__ = 'MIT'
 __author__ = 'Alberto Lorenzo'
 __email__ = 'alorenzo.md@gmail.com'
 __site__ = 'https://github.com/newlawrence/Calculate'
 __description__ = 'Little math expression parser'
-__date__ = '2017/01/23'
+__date__ = '2017/03/29'
 
 
 def load():

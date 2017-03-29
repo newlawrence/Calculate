@@ -1,6 +1,6 @@
 1 VERSIONINFO
-FILEVERSION 1,2,3,0
-PRODUCTVERSION 1,2,3,0
+FILEVERSION 1,2,3,1
+PRODUCTVERSION 1,2,3,1
 FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
     FILEFLAGS 0x1L
@@ -18,12 +18,12 @@ FILEFLAGSMASK 0x3fL
             VALUE "Comments", "Little math expression parser"
             VALUE "CompanyName", ""
             VALUE "FileDescription", "Little math expression parser"
-            VALUE "FileVersion", "1,2,3,0"
+            VALUE "FileVersion", "1,2,3,1"
             VALUE "InternalName", ""
             VALUE "LegalCopyright", "Copyright (C) 2016 - 2017 Alberto Lorenzo"
             VALUE "OriginalFilename", ""
             VALUE "ProductName", "Calculate"
-            VALUE "ProductVersion", "1,2,3,0"
+            VALUE "ProductVersion", "1,2,3,1"
         }
     }
     BLOCK "VarFileInfo"

@@ -90,7 +90,6 @@ namespace calculate {
 
         auto infix_push = [&](const pSymbol &symbol) {
             auto current = symbol;
-            auto curr_op = cast<Operator>(current);
 
             switch (previous->type) {
             case (Type::RIGHT):
@@ -116,9 +115,8 @@ namespace calculate {
                 previous->type == Type::RIGHT
             )
                 if (
-                    curr_op == nullptr ||
-                    curr_op->left_assoc ||
-                    curr_op->precedence < cast<Operator>(current)->precedence
+                    current->type != Type::OPERATOR ||
+                    cast<Operator>(current)->left_assoc
                 )
                     fill_parens();
 
@@ -127,7 +125,7 @@ namespace calculate {
             previous = current;
         };
 
-        auto is = [&match](Integer group) {
+        auto is = [&](Integer group) {
             return !match[group].str().empty();
         };
 
@@ -415,3 +413,4 @@ namespace calculate {
     }
 
 }
+
