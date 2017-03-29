@@ -4,9 +4,9 @@ project(calculate C CXX)
 
 set(MAJOR "1")
 set(MINOR "2")
-set(PTH "2")
+set(PTH "3")
 set(DEV)
-set(BUILD "1")
+set(BUILD "0")
 set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
 
 set(PACKAGE_NAME "Calculate")

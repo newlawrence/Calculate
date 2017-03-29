@@ -13,9 +13,11 @@ requirements:
   build:
     - python
     - cffi >=1.0.0
+    - pycparser
   run:
     - python
     - cffi >=1.0.0
+    - pycparser
 
 about:
   license: MIT License

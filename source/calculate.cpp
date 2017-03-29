@@ -68,17 +68,30 @@ namespace calculate {
 
     qSymbol Expression::_tokenize(String expr) {
         qSymbol infix;
-        pSymbol current;
         Match match;
         Stream stream;
 
+        enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR};
         auto encountered = std::unordered_set<String>();
         auto counter = std::stack<Unsigned>();
         auto previous = make<Parenthesis<'('>>();
+
+        auto fill_parens = [&]() {
+            while (!counter.empty()) {
+                if (counter.top() == 0) {
+                    infix.push(make<Parenthesis<')'>>());
+                    stream << " )";
+                    counter.pop();
+                }
+                else
+                    break;
+            }
+        };
+
         auto infix_push = [&](const pSymbol &symbol) {
-            infix.push(symbol);
-            stream << " " << symbol->token;
-            current = symbol;
+            auto current = symbol;
+            auto curr_op = cast<Operator>(current);
+
             switch (previous->type) {
             case (Type::RIGHT):
             case (Type::CONSTANT):
@@ -97,10 +110,23 @@ namespace calculate {
                 if (current->is(Type::LEFT)) break;
                 else throw SyntaxErrorException();
             }
+
+            if (
+                previous->type == Type::CONSTANT ||
+                previous->type == Type::RIGHT
+            )
+                if (
+                    curr_op == nullptr ||
+                    curr_op->left_assoc ||
+                    curr_op->precedence < cast<Operator>(current)->precedence
+                )
+                    fill_parens();
+
+            infix.push(current);
+            stream << " " << symbol->token;
             previous = current;
         };
 
-        enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR};
         auto is = [&match](Integer group) {
             return !match[group].str().empty();
         };
@@ -157,22 +183,11 @@ namespace calculate {
             else
                 throw UndefinedSymbolException(token);
 
-            if (
-                current->type == Type::CONSTANT ||
-                current->type == Type::RIGHT
-            ) {
-                while (!counter.empty()) {
-                    if (counter.top() == 0) {
-                        infix_push(make<Parenthesis<')'>>());
-                        counter.pop();
-                    }
-                    else
-                        break;
-                }
-            }
-
             expr = match.suffix().str();
         }
+
+        if (previous->type == Type::CONSTANT || previous->type == Type::RIGHT)
+            fill_parens();
 
         if (encountered.size() < _variables.size()) {
             for (auto &var : _variables)
