@@ -15,7 +15,7 @@ namespace {
         R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
         R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
         R"_(([^A-Za-z\d.(),_\s]+)|)_"
-        R"_((\()|(\))|(,))_"
+        R"_((\()|(\))|(,)|(\.))_"
     );
 
 }
@@ -125,7 +125,7 @@ namespace calculate {
             previous = current;
         };
 
-        auto is = [&](Integer group) {
+        auto is = [&](Integer group) -> bool {
             return !match[group].str().empty();
         };
 

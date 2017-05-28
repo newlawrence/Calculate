@@ -128,6 +128,9 @@ TEST_CASE("Wrong expressions", "[Expressions]") {
     }
 
     SECTION("Miscellany") {
+        CHECK_THROWS_AS(Expression("."), UndefinedSymbolException);
+        CHECK_THROWS_AS(Expression(".+1"), UndefinedSymbolException);
+        CHECK_THROWS_AS(Expression("1+."), UndefinedSymbolException);
         CHECK_NOTHROW(Expression("hypot(4+cos(pi),4)"));
         CHECK_THROWS_AS(Expression("1,2)"), ParenthesisMismatchException);
         CHECK_NOTHROW(Expression("sin(pi/2)+1"));
@@ -208,8 +211,7 @@ TEST_CASE("Queries test", "[Queries]") {
             expr2.variables().end(),
             std::ostream_iterator<std::string>(stream, ",")
         );
-        auto vars = stream.str().erase(stream.str().size() - 1, 1);
-        CHECK(vars == "x,y,z");
+        CHECK(stream.str().substr(0, stream.str().size() - 1) == "x,y,z");
     }
 
 }

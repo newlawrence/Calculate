@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
 project(calculate C CXX)
-
+set (CMAKE_CXX_STANDARD 14)
 
 set(MAJOR "1")
 set(MINOR "2")
-set(PTH "3")
+set(PTH "4")
 set(DEV)
-set(BUILD "1")
+set(BUILD "0")
 set(WINDOWS_VERSION "${MAJOR},${MINOR},${PTH},${BUILD}")
 
 set(PACKAGE_NAME "Calculate")
