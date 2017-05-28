@@ -4,14 +4,14 @@
 #include "calculate/definitions.hpp"
 
 
-#define DEFINE_EXCEPTION(NAME, MESSAGE)                                        \
-namespace calculate_exceptions {                                               \
-    struct NAME : public BaseCalculateException {                              \
-        NAME() :                                                               \
-            BaseCalculateException(String(MESSAGE)) {}                         \
-        NAME(const String &token) :                                            \
-            BaseCalculateException(String(MESSAGE) + " '" + token + "'") {}    \
-    };                                                                         \
+#define DEFINE_EXCEPTION(NAME, MESSAGE)                                       \
+namespace calculate_exceptions {                                              \
+    struct NAME : public BaseCalculateException {                             \
+        NAME() :                                                              \
+            BaseCalculateException(String(MESSAGE)) {}                        \
+        NAME(const String &token) :                                           \
+            BaseCalculateException(String(MESSAGE) + " '" + token + "'") {}   \
+    };                                                                        \
 }
 
 

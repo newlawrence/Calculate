@@ -5,30 +5,30 @@
 #include "calculate/meta.hpp"
 
 
-#define RECORD_CONSTANT(TOKEN, VALUE)                                          \
-namespace calculate_symbols {                                                  \
-    template <>                                                                \
-    BuiltinConstant<TypeString(TOKEN)>::BuiltinConstant() noexcept :           \
-        Constant(TOKEN, VALUE) {}                                              \
-    template class BuiltinConstant<TypeString(TOKEN)>;                         \
+#define RECORD_CONSTANT(TOKEN, VALUE)                                         \
+namespace calculate_symbols {                                                 \
+    template <>                                                               \
+    BuiltinConstant<TypeString(TOKEN)>::BuiltinConstant() noexcept :          \
+        Constant(TOKEN, VALUE) {}                                             \
+    template class BuiltinConstant<TypeString(TOKEN)>;                        \
 }
 
 
-#define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, UNARY, FUNCTION)  \
-namespace calculate_symbols {                                                  \
-    template <>                                                                \
-    BuiltinOperator<TypeString(TOKEN)>::BuiltinOperator() noexcept :           \
-        Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, UNARY, FUNCTION) {}      \
-    template class BuiltinOperator<TypeString(TOKEN)>;                         \
+#define RECORD_OPERATOR(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, UNARY, FUNCTION) \
+namespace calculate_symbols {                                                 \
+    template <>                                                               \
+    BuiltinOperator<TypeString(TOKEN)>::BuiltinOperator() noexcept :          \
+        Operator(TOKEN, PRECEDENCE, LEFT_ASSOCIATION, UNARY, FUNCTION) {}     \
+    template class BuiltinOperator<TypeString(TOKEN)>;                        \
 }
 
 
-#define RECORD_FUNCTION(TOKEN, FUNCTION)                                       \
-namespace calculate_symbols {                                                  \
-    template <>                                                                \
-    BuiltinFunction<TypeString(TOKEN)>::BuiltinFunction() noexcept :           \
-        Function(TOKEN, FUNCTION) {}                                           \
-    template class BuiltinFunction<TypeString(TOKEN)>;                         \
+#define RECORD_FUNCTION(TOKEN, FUNCTION)                                      \
+namespace calculate_symbols {                                                 \
+    template <>                                                               \
+    BuiltinFunction<TypeString(TOKEN)>::BuiltinFunction() noexcept :          \
+        Function(TOKEN, FUNCTION) {}                                          \
+    template class BuiltinFunction<TypeString(TOKEN)>;                        \
 }
 
 
