@@ -1,9 +1,9 @@
 package:
   name: calculate
-  version: "1.2.3"
+  version: "1.2.4"
 
 build:
-  number: 1
+  number: 0
   script: python setup.py install
 
 source:
