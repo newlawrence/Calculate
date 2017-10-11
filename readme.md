@@ -23,7 +23,7 @@ Python version:
 ```python
 >>> import calculate
 
-# Automatic variables desduction
+# Automatic variables deduction
 >>> hypot = calculate.parse('hypot(x, y)')
 >>> hypot
 Expression('hypot(x, y)', ['x', 'y'])
