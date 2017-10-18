@@ -6,19 +6,6 @@
 .idea/
 Win32/
 
-# Binary content
-build/
-bin/
-lib/
-binding/fortran/module/
-binding/fortran/lib/
-binding/python/build.log
-binding/python/calculate.egg-info/
-binding/python/dist/
-binding/python/calculate/*.so
-binding/python/calculate/*.dylib
-binding/python/calculate/*.dll
-
 # CMake related
 cmake_install.cmake
 CMakeCache.txt
@@ -26,24 +13,3 @@ Makefile
 CMakeFiles/
 cmake-build-debug/
 cmake-build-release/
-Debug/
-Release/
-*.dir/
-*.filters
-*.vcxproj
-*.sln
-*.opensdf
-*.sdf
-*.db
-
-# Python related
-__pycache__/
-*.pyc
-*.pyo
-*ipynb_checkpoints
-
-# Extern libraries
-extern/
-
-# Coverage reports
-coverage/

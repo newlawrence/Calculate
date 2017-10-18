@@ -16,7 +16,3 @@ copying linguist-vendored
 *.in linguist-vendored
 *.diff linguist-vendored
 *.patch linguist-vendored
-
-# Exclude folders from language statistics
-examples/* linguist-vendored
-tests/* linguist-vendored
