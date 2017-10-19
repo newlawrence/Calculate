@@ -276,12 +276,6 @@ public:
             Wrapper{std::forward<Callable>(callable), [](const Source& x) { return Type{x}; }}
     {}
 
-    Wrapper copy() { return Wrapper{_callable->copy()}; }
-
-    std::size_t argc() const noexcept { return _callable->argc(); }
-
-    bool is_const() const noexcept { return _callable->is_const(); }
-
     Type operator()(const std::vector<Source>& args) const {
         return const_cast<const Concept*>(_callable.get())->evaluate(args);
     }
@@ -298,6 +292,16 @@ public:
     Type operator()(Args&&... args) {
         return _callable->evaluate(std::vector<Source>{std::forward<Args>(args)...});
     }
+
+    bool operator==(const Wrapper& other) const noexcept {
+        return this->_callable == other._callable;
+    }
+
+    Wrapper copy() { return Wrapper{_callable->copy()}; }
+
+    std::size_t argc() const noexcept { return _callable->argc(); }
+
+    bool is_const() const noexcept { return _callable->is_const(); }
 };
 
 }

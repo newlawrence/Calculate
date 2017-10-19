@@ -1,11 +1,11 @@
 #ifndef __CALCULATE_NODE_HPP__
 #define __CALCULATE_NODE_HPP__
 
-#include <iostream>
 #include <iterator>
 #include <memory>
 #include <mutex>
 #include <ostream>
+#include <stack>
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -195,6 +195,48 @@ private:
         return _function(_nodes);
     }
 
+    bool _compare(const Node& other) const noexcept {
+        std::stack<std::pair<const_iterator, const_iterator>> these{};
+        std::stack<const_iterator> those{};
+
+        auto equal = [&](auto alpha, auto omega) {
+            if (alpha->symbol() == Symbol::CONSTANT && !alpha->branches())
+                return alpha->_function() == omega->_function();
+            else if (alpha->symbol() == Symbol::FUNCTION)
+                return alpha->_function == omega->_function;
+            else if (alpha->symbol() == Symbol::OPERATOR)
+                return (
+                    alpha->_function == omega->_function &&
+                    alpha->_precedence == omega ->_precedence &&
+                    alpha->_associativity == omega->_associativity
+                );
+            return true;
+        };
+
+        if (this->branches() != other.branches() || !equal(this, &other))
+            return false;
+
+        these.push({this->begin(), this->end()});
+        those.push(other.begin());
+        while(!these.empty()) {
+            auto one = these.top();
+            auto another = those.top();
+            these.pop();
+            those.pop();
+
+            if (one.first != one.second) {
+                if (one.first->branches() != another->branches() || !equal(one.first, another))
+                    return false;
+                these.push({one.first->begin(), one.first->end()});
+                these.push({one.first + 1, one.second});
+                those.push(another->begin());
+                those.push(another + 1);
+            }
+        }
+        return true;
+    }
+
+
 public:
     using const_iterator = typename std::vector<Node>::const_iterator;
 
@@ -257,19 +299,22 @@ public:
     }
 
     bool operator==(const Node& other) const noexcept {
-        std::string left{postfix()};
-        std::string right{other.postfix()};
-
         if (_footprint != other._footprint)
             return false;
-        else if (variables().size() != other.variables().size())
+
+        if (variables().size() != other.variables().size())
             return false;
+
+        auto left = postfix();
+        auto right = other.postfix();
         for (std::size_t i = 0; i < variables().size(); i++) {
-            std::string variable{"var#" + std::to_string(i)};
+            auto variable = "var#" + std::to_string(i);
             left = detail::replace(left, variables()[i], variable);
             right = detail::replace(right, other.variables()[i], variable);
         }
-        return left == right;
+        if (left != right)
+            return false;
+        return _compare(other);
     }
 
     const Node& operator[](std::size_t index) const { return _nodes[index]; }

@@ -5,7 +5,6 @@
 #include <limits>
 #include <ostream>
 #include <queue>
-#include <stack>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
