@@ -8,4 +8,3 @@
 Written in modern **C++** aiming for flexibility and ease of use. Currently under heavy development, for stable releases please head up to [version 1.x](https://github.com/newlawrence/Calculate/tree/1.x).
 
 **License:** MIT (see `copying`).
-

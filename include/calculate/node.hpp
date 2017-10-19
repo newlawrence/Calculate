@@ -195,47 +195,6 @@ private:
         return _function(_nodes);
     }
 
-    bool _compare(const Node& other) const noexcept {
-        std::stack<std::pair<const_iterator, const_iterator>> these{};
-        std::stack<const_iterator> those{};
-
-        auto equal = [&](auto alpha, auto omega) {
-            if (alpha->symbol() == Symbol::CONSTANT && !alpha->branches())
-                return alpha->_function() == omega->_function();
-            else if (alpha->symbol() == Symbol::FUNCTION)
-                return alpha->_function == omega->_function;
-            else if (alpha->symbol() == Symbol::OPERATOR)
-                return (
-                    alpha->_function == omega->_function &&
-                    alpha->_precedence == omega ->_precedence &&
-                    alpha->_associativity == omega->_associativity
-                );
-            return true;
-        };
-
-        if (this->branches() != other.branches() || !equal(this, &other))
-            return false;
-
-        these.push({this->begin(), this->end()});
-        those.push(other.begin());
-        while(!these.empty()) {
-            auto one = these.top();
-            auto another = those.top();
-            these.pop();
-            those.pop();
-
-            if (one.first != one.second) {
-                if (one.first->branches() != another->branches() || !equal(one.first, another))
-                    return false;
-                these.push({one.first->begin(), one.first->end()});
-                these.push({one.first + 1, one.second});
-                those.push(another->begin());
-                those.push(another + 1);
-            }
-        }
-        return true;
-    }
-
 
 public:
     using const_iterator = typename std::vector<Node>::const_iterator;
@@ -299,22 +258,54 @@ public:
     }
 
     bool operator==(const Node& other) const noexcept {
-        if (_footprint != other._footprint)
+        std::stack<std::pair<const_iterator, const_iterator>> these{};
+        std::stack<const_iterator> those{};
+
+        auto equal = [&](auto left, auto right) {
+            if (
+                left->_token != right->_token ||
+                left->_symbol != right->_symbol ||
+                left->branches() != right->branches() ||
+                left->variables().size() != right->variables().size()
+            )
+                return false;
+
+            if (left->symbol() == Symbol::CONSTANT)
+                return left->_function() == right->_function();
+            else if (left->symbol() == Symbol::FUNCTION)
+                return left->_function == right->_function;
+            else if (left->symbol() == Symbol::OPERATOR)
+                return
+                    left->_function == right->_function &&
+                    left->_precedence == right ->_precedence &&
+                    left->_associativity == right->_associativity;
+            else
+                return left->_variables->index(left->_token) !=
+                     right->_variables->index(right->_token);
+            return true;
+        };
+
+        if (!equal(this, &other))
             return false;
 
-        if (variables().size() != other.variables().size())
-            return false;
+        these.push({this->begin(), this->end()});
+        those.push(other.begin());
+        while(!these.empty()) {
+            auto one = these.top();
+            auto another = those.top();
+            these.pop();
+            those.pop();
 
-        auto left = postfix();
-        auto right = other.postfix();
-        for (std::size_t i = 0; i < variables().size(); i++) {
-            auto variable = "var#" + std::to_string(i);
-            left = detail::replace(left, variables()[i], variable);
-            right = detail::replace(right, other.variables()[i], variable);
+            if (one.first != one.second) {
+                if (!equal(one.first, another))
+                    return false;
+                these.push({one.first->begin(), one.first->end()});
+                these.push({one.first + 1, one.second});
+                those.push(another->begin());
+                those.push(another + 1);
+            }
         }
-        if (left != right)
-            return false;
-        return _compare(other);
+        return true;
     }
 
     const Node& operator[](std::size_t index) const { return _nodes[index]; }

@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
         if (arguments.count("complex"))
             run<calculate::DefaultComplexParser>(string, variables, substitutions, arguments);
         else
-            run<calculate::DefaultRealParser>(string, variables, substitutions, arguments);
+            run<calculate::DefaultParser>(string, variables, substitutions, arguments);
     }
     catch (const po::error& error) {
         std::cerr << "Command line error: " << error.what() << std::endl;

@@ -8,11 +8,11 @@
 
 namespace calculate {
 
-class RealParser : public BaseParser<double> {};
+class Parser : public BaseParser<double> {};
 
-class DefaultRealParser : public RealParser {
+class DefaultParser : public Parser {
 public:
-    DefaultRealParser() {
+    DefaultParser() {
         set<Constant>("pi", 3.14159265358979323846);
         set<Constant>("e", 2.71828182845904523536);
         set<Constant>("phi", 1.61803398874989484820);
