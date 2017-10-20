@@ -394,7 +394,7 @@ protected:
         const std::pair<std::string, Symbol>& token,
         std::vector<Expression>&& nodes,
         const std::shared_ptr<Variables>& variables,
-        std::size_t footprint
+        std::pair<std::uintptr_t, std::size_t> footprint
     ) const {
         auto found_constant = _factory<Constant>().find(token.first);
         if (found_constant != _factory<Constant>().end()) {
@@ -459,7 +459,10 @@ protected:
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
         std::pair<std::string, Symbol> element{};
+
+        std::uintptr_t self{reinterpret_cast<std::uintptr_t>(this)};
         std::size_t hash{std::hash<decltype(this)>{}(this)};
+
         std::unique_ptr<Function> f{};
         std::size_t n{};
 
@@ -479,7 +482,7 @@ protected:
             else if (element.second == Symbol::CONSTANT) {
                 if (has<Constant>(element.first))
                     detail::hash_combine(hash, get<Constant>(element.first));
-                operands.emplace(_create_node(element, {}, variables, hash));
+                operands.emplace(_create_node(element, {}, variables, {self, hash}));
             }
 
             else {
@@ -503,7 +506,7 @@ protected:
                     extract.pop();
                 }
                 operands.emplace(
-                    _create_node(element, std::move(nodes), variables, hash)
+                    _create_node(element, std::move(nodes), variables, {self, hash})
                 );
             }
         }

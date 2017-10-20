@@ -1,6 +1,7 @@
 #ifndef __CALCULATE_NODE_HPP__
 #define __CALCULATE_NODE_HPP__
 
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <mutex>
@@ -110,7 +111,7 @@ private:
     std::shared_ptr<Variables> _variables;
     Function _function;
     std::vector<Node> _nodes;
-    std::size_t _footprint;
+    std::pair<std::uintptr_t, std::size_t> _footprint;
     mutable std::mutex _mutex;
     std::size_t _precedence;
     Associativity _associativity;
@@ -122,7 +123,7 @@ private:
         const std::shared_ptr<Variables>& variables,
         const Function& function,
         std::vector<Node>&& nodes,
-        std::size_t footprint,
+        std::pair<std::uintptr_t, std::size_t> footprint,
         std::size_t precedence=std::numeric_limits<std::size_t>::max(),
         Associativity associativity=Associativity::BOTH
     ) :
@@ -262,30 +263,24 @@ public:
         std::stack<const_iterator> those{};
 
         auto equal = [&](auto left, auto right) {
-            if (
-                left->_token != right->_token ||
-                left->_symbol != right->_symbol ||
-                left->branches() != right->branches() ||
-                left->variables().size() != right->variables().size()
-            )
-                return false;
-
-            if (left->symbol() == Symbol::CONSTANT)
-                return left->_function() == right->_function();
-            else if (left->symbol() == Symbol::FUNCTION)
-                return left->_function == right->_function;
-            else if (left->symbol() == Symbol::OPERATOR)
-                return
-                    left->_function == right->_function &&
-                    left->_precedence == right ->_precedence &&
-                    left->_associativity == right->_associativity;
-            else
-                return left->_variables->index(left->_token) !=
-                     right->_variables->index(right->_token);
-            return true;
+            if (left->_token == right->_token && left->_symbol == right->_symbol) {
+                if (left->symbol() == Symbol::CONSTANT)
+                    return left->_function() == right->_function();
+                else if (left->symbol() == Symbol::FUNCTION)
+                    return left->_function == right->_function;
+                else if (left->symbol() == Symbol::OPERATOR)
+                    return
+                        left->_function == right->_function &&
+                        left->_precedence == right ->_precedence &&
+                        left->_associativity == right->_associativity;
+                else
+                    return left->_variables->index(left->_token) !=
+                        right->_variables->index(right->_token);
+            }
+            return false;
         };
 
-        if (!equal(this, &other))
+        if (this->_footprint.first != other._footprint.first || !equal(this, &other))
             return false;
 
         these.push({this->begin(), this->end()});
@@ -378,7 +373,7 @@ namespace std {
 template<typename Parser>
 struct hash<calculate::Node<Parser>> {
     size_t operator()(const calculate::Node<Parser>& node) const {
-        size_t combined{node._footprint};
+        size_t combined{node._footprint.second};
         string postfix{node.postfix()};
         for (size_t i = 0; i < node.variables().size(); i++) {
             string variable{"var#" + to_string(i)};
