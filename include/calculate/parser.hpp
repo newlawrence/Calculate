@@ -67,6 +67,7 @@ protected:
     std::unordered_map<std::string, Constant> _constants;
     std::unordered_map<std::string, Function> _functions;
     std::unordered_map<std::string, Operator> _operators;
+    std::size_t _footprint;
 
     static void _validate(Constant*, const std::string& token) {
         if (!std::regex_match(token, Lexer::name_regex))
@@ -394,7 +395,7 @@ protected:
         const std::pair<std::string, Symbol>& token,
         std::vector<Expression>&& nodes,
         const std::shared_ptr<Variables>& variables,
-        std::pair<std::uintptr_t, std::size_t> footprint
+        std::pair<std::size_t, std::size_t> footprint
     ) const {
         auto found_constant = _factory<Constant>().find(token.first);
         if (found_constant != _factory<Constant>().end()) {
@@ -459,12 +460,12 @@ protected:
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
         std::pair<std::string, Symbol> element{};
-
-        std::uintptr_t self{reinterpret_cast<std::uintptr_t>(this)};
-        std::size_t hash{std::hash<decltype(this)>{}(this)};
-
         std::unique_ptr<Function> f{};
         std::size_t n{};
+
+        auto hash = std::hash<decltype(this)>{}(this);
+        auto footprint = _footprint;
+        detail::hash_combine(hash, footprint);
 
         while (!tokens.empty()) {
             element = tokens.front();
@@ -482,7 +483,11 @@ protected:
             else if (element.second == Symbol::CONSTANT) {
                 if (has<Constant>(element.first))
                     detail::hash_combine(hash, get<Constant>(element.first));
-                operands.emplace(_create_node(element, {}, variables, {self, hash}));
+                else if (variables->has(element.first))
+                    detail::hash_combine(hash, variables->index(element.first));
+                else
+                    detail::hash_combine(hash, Lexer::to_value(element.first));
+                operands.emplace(_create_node(element, {}, variables, {footprint, hash}));
             }
 
             else {
@@ -506,7 +511,7 @@ protected:
                     extract.pop();
                 }
                 operands.emplace(
-                    _create_node(element, std::move(nodes), variables, {self, hash})
+                    _create_node(element, std::move(nodes), variables, {footprint, hash})
                 );
             }
         }
@@ -525,6 +530,12 @@ protected:
 
 
 public:
+    BaseParser() {
+        static std::size_t footprint{0};
+        _footprint = footprint++;
+    }
+
+
     Type cast(const std::string& expression) const { return Type{from_infix(expression)}; }
 
     std::string to_string(Type value) const { return Lexer::to_string(value); }

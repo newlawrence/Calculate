@@ -1,7 +1,6 @@
 #ifndef __CALCULATE_NODE_HPP__
 #define __CALCULATE_NODE_HPP__
 
-#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <mutex>
@@ -66,7 +65,7 @@ public:
         }
 
     public:
-        Variables(const std::vector<std::string>& keys={}) :
+        explicit Variables(const std::vector<std::string>& keys={}) :
                 variables{keys},
                 _size{keys.size()},
                 _values{std::make_unique<Type[]>(_size)}
@@ -78,6 +77,11 @@ public:
                 else if (singles.erase(variable) == 0)
                     throw RepeatedSymbol{variable};
             }
+        }
+
+        bool has(const std::string& token) const {
+            auto found = std::find(variables.begin(), variables.end(), token);
+            return found != variables.end();
         }
 
         std::size_t index(const std::string& token) const {
@@ -111,19 +115,19 @@ private:
     std::shared_ptr<Variables> _variables;
     Function _function;
     std::vector<Node> _nodes;
-    std::pair<std::uintptr_t, std::size_t> _footprint;
+    std::pair<std::size_t, std::size_t> _footprint;
     mutable std::mutex _mutex;
     std::size_t _precedence;
     Associativity _associativity;
 
     Node() = delete;
 
-    Node(
+    explicit Node(
         const std::pair<std::string, Symbol>& token,
         const std::shared_ptr<Variables>& variables,
         const Function& function,
         std::vector<Node>&& nodes,
-        std::pair<std::uintptr_t, std::size_t> footprint,
+        std::pair<std::size_t, std::size_t> footprint,
         std::size_t precedence=std::numeric_limits<std::size_t>::max(),
         Associativity associativity=Associativity::BOTH
     ) :
@@ -263,7 +267,10 @@ public:
         std::stack<const_iterator> those{};
 
         auto equal = [&](auto left, auto right) {
-            if (left->_token == right->_token && left->_symbol == right->_symbol) {
+            if (left->_variables->has(left->_token) && right->_variables->has(right->_token))
+                return left->_variables->index(left->_token) ==
+                    right->_variables->index(right->_token);
+            if (left->_symbol == right->_symbol) {
                 if (left->symbol() == Symbol::CONSTANT)
                     return left->_function() == right->_function();
                 else if (left->symbol() == Symbol::FUNCTION)
@@ -273,9 +280,6 @@ public:
                         left->_function == right->_function &&
                         left->_precedence == right ->_precedence &&
                         left->_associativity == right->_associativity;
-                else
-                    return left->_variables->index(left->_token) !=
-                        right->_variables->index(right->_token);
             }
             return false;
         };
@@ -373,14 +377,7 @@ namespace std {
 template<typename Parser>
 struct hash<calculate::Node<Parser>> {
     size_t operator()(const calculate::Node<Parser>& node) const {
-        size_t combined{node._footprint.second};
-        string postfix{node.postfix()};
-        for (size_t i = 0; i < node.variables().size(); i++) {
-            string variable{"var#" + to_string(i)};
-            postfix = calculate::detail::replace(postfix, node.variables()[i], variable);
-        }
-        calculate::detail::hash_combine(combined, hash<string>{}(postfix));
-        return combined;
+        return node._footprint.second;
     }
 };
 
