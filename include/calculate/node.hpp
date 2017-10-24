@@ -55,6 +55,8 @@ public:
         std::size_t _size;
         std::unique_ptr<Type[]> _values;
 
+        void _update(std::size_t) const {}
+
         template<typename Last>
         void _update(std::size_t n, Last last) { _values[n] = last; }
 
