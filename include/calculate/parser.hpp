@@ -16,13 +16,12 @@
 
 namespace calculate {
 
-template<class BaseType, template<class> class BaseLexer = Lexer, bool base_thread_safe = false>
+template<typename BaseType, template<typename> class BaseLexer = Lexer>
 class BaseParser {
 public:
     using Base = BaseParser;
     using Type = BaseType;
     using Lexer = BaseLexer<Type>;
-    static constexpr bool thread_safe = base_thread_safe;
 
 
     using Constant = Type;

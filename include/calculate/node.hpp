@@ -3,7 +3,6 @@
 
 #include <iterator>
 #include <memory>
-#include <mutex>
 #include <ostream>
 #include <stack>
 #include <sstream>
@@ -118,7 +117,6 @@ private:
     Function _function;
     std::vector<Node> _nodes;
     std::pair<std::size_t, std::size_t> _footprint;
-    mutable std::mutex _mutex;
     std::size_t _precedence;
     Associativity _associativity;
 
@@ -139,7 +137,6 @@ private:
             _function{function},
             _nodes{std::move(nodes)},
             _footprint{footprint},
-            _mutex{},
             _precedence{precedence},
             _associativity{associativity}
     {
@@ -170,38 +167,6 @@ private:
             node._rebind(context);
     }
 
-    Type _eval(
-        std::integral_constant<bool, true>::type,
-        const std::vector<Type>& values
-    ) const {
-        std::lock_guard<std::mutex> guard{_mutex};
-
-        _variables->update(values);
-        return _function(_nodes);
-    }
-
-    Type _eval(
-        std::integral_constant<bool, false>::type,
-        const std::vector<Type>& values
-    ) const {
-        _variables->update(values);
-        return _function(_nodes);
-    }
-
-    template<typename... Args>
-    Type _eval(std::integral_constant<bool, true>::type, Args&&... args) const {
-        std::lock_guard<std::mutex> guard{_mutex};
-
-        _variables->update(std::forward<Args>(args)...);
-        return _function(_nodes);
-    }
-
-    template<typename... Args>
-    Type _eval(std::integral_constant<bool, false>::type, Args&&... args) const {
-        _variables->update(std::forward<Args>(args)...);
-        return _function(_nodes);
-    }
-
 
 public:
     using const_iterator = typename std::vector<Node>::const_iterator;
@@ -213,7 +178,6 @@ public:
             _function{other._function},
             _nodes{other._nodes},
             _footprint{other._footprint},
-            _mutex{},
             _precedence{other._precedence},
             _associativity{other._associativity}
     { _rebind(std::make_shared<Variables>(other._pruned())); }
@@ -225,7 +189,6 @@ public:
             _function{std::move(other._function)},
             _nodes{std::move(other._nodes)},
             _footprint{std::move(other._footprint)},
-            _mutex{},
             _precedence{std::move(other._precedence)},
             _associativity{std::move(other._associativity)}
     {}
@@ -253,15 +216,14 @@ public:
     }
 
     Type operator()(const std::vector<Type>& values) const {
-        return _eval(std::integral_constant<bool, Parser::thread_safe>{}, values);
+        _variables->update(values);
+        return _function(_nodes);
     }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
-        return _eval(
-            std::integral_constant<bool, Parser::thread_safe>{},
-            std::forward<Args>(args)...
-        );
+        _variables->update(std::forward<Args>(args)...);
+        return _function(_nodes);
     }
 
     bool operator==(const Node& other) const noexcept {
