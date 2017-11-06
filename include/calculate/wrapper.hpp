@@ -69,6 +69,26 @@ struct Traits<
     static constexpr bool const_method = true;
 };
 
+template<typename Result, typename... Args>
+struct Traits<
+    Result(*const)(Args...) noexcept,
+    std::enable_if_t<NoExcept<Result(*)(Args...) noexcept, Args...>::value>
+> {
+    using result = Result;
+    using arguments = std::tuple<std::decay_t<Args>...>;
+    static constexpr bool const_method = true;
+};
+
+template<typename Result, typename... Args>
+struct Traits<
+    Result(*const)(Args...),
+    std::enable_if_t<!NoExcept<Result(*)(Args...), Args...>::value>
+> {
+    using result = Result;
+    using arguments = std::tuple<std::decay_t<Args>...>;
+    static constexpr bool const_method = true;
+};
+
 template<typename Type, typename Result, typename... Args>
 struct Traits<
     Result(Type::*)(Args...) noexcept,

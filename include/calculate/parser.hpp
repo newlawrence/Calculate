@@ -440,7 +440,7 @@ protected:
                 footprint
             };
         }
-        catch (const BadCast& exception) {
+        catch (const BadCast&) {
             auto& variable = variables->at(token.first);
             return Expression{
                 token,
@@ -523,7 +523,7 @@ protected:
         auto pruned = operands.top()._pruned();
         for (const auto& variable : variables->variables)
             if (std::find(pruned.begin(), pruned.end(), variable) == pruned.end())
-                throw UnusedSymbol{variable};
+                throw UnusedSymbol(variable);
         return std::move(operands.top());
     }
 
