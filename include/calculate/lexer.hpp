@@ -64,19 +64,19 @@ template<typename Type> const std::string Lexer<Type>::decimal = ".";
 template<typename Type> const std::string Lexer<Type>::separator = ",";
 
 template<typename Type>
-const auto Lexer<Type>::number_regex = detail::Regex{
+const detail::Regex Lexer<Type>::number_regex = detail::Regex{
     R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_"
 };
 template<typename Type>
-const auto Lexer<Type>::name_regex = detail::Regex{
+const detail::Regex Lexer<Type>::name_regex = detail::Regex{
     R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"
 };
 template<typename Type>
-const auto Lexer<Type>::symbol_regex = detail::Regex{
+const detail::Regex Lexer<Type>::symbol_regex = detail::Regex{
     R"_(^[^A-Za-z\d.(),_\s]+$)_"
 };
 template<typename Type>
-const auto Lexer<Type>::tokenizer_regex = detail::Regex{
+const detail::Regex Lexer<Type>::tokenizer_regex = detail::Regex{
     R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
     R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
     R"_(([^A-Za-z\d\.(),_\s]+)|)_"
@@ -127,19 +127,19 @@ template<typename Type> const std::string Lexer<std::complex<Type>>::decimal = "
 template<typename Type> const std::string Lexer<std::complex<Type>>::separator = ",";
 
 template<typename Type>
-const auto Lexer<std::complex<Type>>::number_regex = detail::Regex{
+const detail::Regex Lexer<std::complex<Type>>::number_regex = detail::Regex{
     R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_"
 };
 template<typename Type>
-const auto Lexer<std::complex<Type>>::name_regex = detail::Regex{
+const detail::Regex Lexer<std::complex<Type>>::name_regex = detail::Regex{
     R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"
 };
 template<typename Type>
-const auto Lexer<std::complex<Type>>::symbol_regex = detail::Regex{
+const detail::Regex Lexer<std::complex<Type>>::symbol_regex = detail::Regex{
     R"_(^[^A-Za-z\d.(),_\s]+$)_"
 };
 template<typename Type>
-const auto Lexer<std::complex<Type>>::tokenizer_regex = detail::Regex{
+const detail::Regex Lexer<std::complex<Type>>::tokenizer_regex = detail::Regex{
     R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?)|)_"
     R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
     R"_(([^A-Za-z\d\.(),_\s]+)|)_"
