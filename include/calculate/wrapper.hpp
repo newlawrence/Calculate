@@ -71,7 +71,7 @@ struct Traits<
 
 template<typename Result, typename... Args>
 struct Traits<
-    Result(*const)(Args...) noexcept,
+    Result(* const)(Args...) noexcept,
     std::enable_if_t<NoExcept<Result(*)(Args...) noexcept, Args...>::value>
 > {
     using result = Result;
@@ -81,7 +81,7 @@ struct Traits<
 
 template<typename Result, typename... Args>
 struct Traits<
-    Result(*const)(Args...),
+    Result(* const)(Args...),
     std::enable_if_t<!NoExcept<Result(*)(Args...), Args...>::value>
 > {
     using result = Result;
