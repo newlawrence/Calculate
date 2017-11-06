@@ -13,11 +13,7 @@ namespace calculate {
 
 namespace detail {
 
-class Regex : public std::regex {
-    Regex& operator=(const Regex&) = delete;
-    Regex& operator=(Regex&&) = delete;
-
-public:
+struct Regex : public std::regex {
     const std::string pattern;
     Regex(const std::string& regex) : std::regex(regex), pattern(regex) {}
 };
@@ -68,17 +64,24 @@ template<typename Type> const std::string Lexer<Type>::decimal = ".";
 template<typename Type> const std::string Lexer<Type>::separator = ",";
 
 template<typename Type>
-const detail::Regex Lexer<Type>::number_regex = R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_";
+const auto Lexer<Type>::number_regex = detail::Regex{
+    R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_"
+};
 template<typename Type>
-const detail::Regex Lexer<Type>::name_regex = R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_";
+const auto Lexer<Type>::name_regex = detail::Regex{
+    R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"
+};
 template<typename Type>
-const detail::Regex Lexer<Type>::symbol_regex = R"_(^[^A-Za-z\d.(),_\s]+$)_";
+const auto Lexer<Type>::symbol_regex = detail::Regex{
+    R"_(^[^A-Za-z\d.(),_\s]+$)_"
+};
 template<typename Type>
-const detail::Regex Lexer<Type>::tokenizer_regex =
+const auto Lexer<Type>::tokenizer_regex = detail::Regex{
     R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
     R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
     R"_(([^A-Za-z\d\.(),_\s]+)|)_"
-    R"_((\()|(\))|(,)|(\.))_";
+    R"_((\()|(\))|(,)|(\.))_"
+};
 
 
 template<typename Type>
@@ -124,18 +127,24 @@ template<typename Type> const std::string Lexer<std::complex<Type>>::decimal = "
 template<typename Type> const std::string Lexer<std::complex<Type>>::separator = ",";
 
 template<typename Type>
-const detail::Regex Lexer<std::complex<Type>>::number_regex =
-    R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_";
+const auto Lexer<std::complex<Type>>::number_regex = detail::Regex{
+    R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_"
+};
 template<typename Type>
-const detail::Regex Lexer<std::complex<Type>>::name_regex = R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_";
+const auto Lexer<std::complex<Type>>::name_regex = detail::Regex{
+    R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"
+};
 template<typename Type>
-const detail::Regex Lexer<std::complex<Type>>::symbol_regex = R"_(^[^A-Za-z\d.(),_\s]+$)_";
+const auto Lexer<std::complex<Type>>::symbol_regex = detail::Regex{
+    R"_(^[^A-Za-z\d.(),_\s]+$)_"
+};
 template<typename Type>
-const detail::Regex Lexer<std::complex<Type>>::tokenizer_regex =
+const auto Lexer<std::complex<Type>>::tokenizer_regex = detail::Regex{
     R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?)|)_"
     R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
     R"_(([^A-Za-z\d\.(),_\s]+)|)_"
-    R"_((\()|(\))|(,)|(\.))_";
+    R"_((\()|(\))|(,)|(\.))_"
+};
 
 }
 
