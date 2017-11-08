@@ -47,7 +47,7 @@ public:
         return string;
     };
     static const std::string& separator() {
-        std::string string{","};
+        static std::string string{","};
         return string;
     };
 
@@ -106,7 +106,7 @@ public:
         return string;
     };
     static const std::string& separator() {
-        std::string string{","};
+        static std::string string{","};
         return string;
     };
 
