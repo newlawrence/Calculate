@@ -34,18 +34,47 @@ class Lexer {
     ) { return static_cast<Num>(std::stold(token)); }
 
 public:
-    static const std::string left;
-    static const std::string right;
-    static const std::string decimal;
-    static const std::string separator;
+    static const std::string& left() {
+        static std::string string{"("};
+        return string;
+    };
+    static const std::string& right() {
+        static std::string string{")"};
+        return string;
+    };
+    static const std::string& decimal() {
+        static std::string string{"."};
+        return string;
+    };
+    static const std::string& separator() {
+        std::string string{","};
+        return string;
+    };
 
-    static const detail::Regex number_regex;
-    static const detail::Regex name_regex;
-    static const detail::Regex symbol_regex;
-    static const detail::Regex tokenizer_regex;
+    static const detail::Regex& number_regex() {
+        static detail::Regex regex{R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_"};
+        return regex;
+    };
+    static const detail::Regex& name_regex() {
+        static detail::Regex regex{R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"};
+        return regex;
+    };
+    static const detail::Regex& symbol_regex() {
+        static detail::Regex regex{R"_(^[^A-Za-z\d.(),_\s]+$)_"};
+        return regex;
+    };
+    static const detail::Regex& tokenizer_regex() {
+        static detail::Regex regex{
+            R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
+            R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
+            R"_(([^A-Za-z\d\.(),_\s]+)|)_"
+            R"_((\()|(\))|(,)|(\.))_"
+        };
+        return regex;
+    };
 
     static Type to_value(const std::string& token) {
-        if (!std::regex_search(token, number_regex))
+        if (!std::regex_search(token, number_regex()))
             throw BadCast{token};
         return _cast<Type>(token);
     }
@@ -58,46 +87,50 @@ public:
     }
 };
 
-template<typename Type> const std::string Lexer<Type>::left = "(";
-template<typename Type> const std::string Lexer<Type>::right = ")";
-template<typename Type> const std::string Lexer<Type>::decimal = ".";
-template<typename Type> const std::string Lexer<Type>::separator = ",";
-
-template<typename Type>
-const detail::Regex Lexer<Type>::number_regex(
-    R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_"
-);
-template<typename Type>
-const detail::Regex Lexer<Type>::name_regex(
-    R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"
-);
-template<typename Type>
-const detail::Regex Lexer<Type>::symbol_regex(
-    R"_(^[^A-Za-z\d.(),_\s]+$)_"
-);
-template<typename Type>
-const detail::Regex Lexer<Type>::tokenizer_regex(
-    R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
-    R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-    R"_(([^A-Za-z\d\.(),_\s]+)|)_"
-    R"_((\()|(\))|(,)|(\.))_"
-);
-
 
 template<typename Type>
 class Lexer<std::complex<Type>> {
     static constexpr Type _zero = static_cast<Type>(0);
 
 public:
-    static const std::string left;
-    static const std::string right;
-    static const std::string decimal;
-    static const std::string separator;
+    static const std::string& left() {
+        static std::string string{"("};
+        return string;
+    };
+    static const std::string& right() {
+        static std::string string{")"};
+        return string;
+    };
+    static const std::string& decimal() {
+        static std::string string{"."};
+        return string;
+    };
+    static const std::string& separator() {
+        std::string string{","};
+        return string;
+    };
 
-    static const detail::Regex number_regex;
-    static const detail::Regex name_regex;
-    static const detail::Regex symbol_regex;
-    static const detail::Regex tokenizer_regex;
+    static const detail::Regex& number_regex() {
+        static detail::Regex regex{R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_"};
+        return regex;
+    };
+    static const detail::Regex& name_regex() {
+        static detail::Regex regex{R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"};
+        return regex;
+    };
+    static const detail::Regex& symbol_regex() {
+        static detail::Regex regex{R"_(^[^A-Za-z\d.(),_\s]+$)_"};
+        return regex;
+    };
+    static const detail::Regex& tokenizer_regex() {
+        static detail::Regex regex{
+            R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?)|)_"
+            R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
+            R"_(([^A-Za-z\d\.(),_\s]+)|)_"
+            R"_((\()|(\))|(,)|(\.))_"
+        };
+        return regex;
+    };
 
     static std::complex<Type> to_value(const std::string& token) {
         using namespace std::complex_literals;
@@ -120,31 +153,6 @@ public:
         return representation.str();
     }
 };
-
-template<typename Type> const std::string Lexer<std::complex<Type>>::left = "(";
-template<typename Type> const std::string Lexer<std::complex<Type>>::right = ")";
-template<typename Type> const std::string Lexer<std::complex<Type>>::decimal = ".";
-template<typename Type> const std::string Lexer<std::complex<Type>>::separator = ",";
-
-template<typename Type>
-const detail::Regex Lexer<std::complex<Type>>::number_regex(
-    R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_"
-);
-template<typename Type>
-const detail::Regex Lexer<std::complex<Type>>::name_regex(
-    R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"
-);
-template<typename Type>
-const detail::Regex Lexer<std::complex<Type>>::symbol_regex(
-    R"_(^[^A-Za-z\d.(),_\s]+$)_"
-);
-template<typename Type>
-const detail::Regex Lexer<std::complex<Type>>::tokenizer_regex(
-    R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?)|)_"
-    R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-    R"_(([^A-Za-z\d\.(),_\s]+)|)_"
-    R"_((\()|(\))|(,)|(\.))_"
-);
 
 }
 

@@ -69,17 +69,17 @@ protected:
     std::size_t _footprint;
 
     static void _validate(Constant*, const std::string& token) {
-        if (!std::regex_match(token, Lexer::name_regex))
+        if (!std::regex_match(token, Lexer::name_regex()))
             throw UnsuitableName{token};
     }
 
     static void _validate(Function*, const std::string& token) {
-        if (!std::regex_match(token, Lexer::name_regex))
+        if (!std::regex_match(token, Lexer::name_regex()))
             throw UnsuitableName{token};
     }
 
     static void _validate(Operator*, const std::string& token) {
-        if (!std::regex_match(token, Lexer::symbol_regex))
+        if (!std::regex_match(token, Lexer::symbol_regex()))
             throw UnsuitableName{token};
     }
 
@@ -109,7 +109,7 @@ protected:
         std::smatch match{};
 
         auto is = [&match](auto group) { return !match[group].str().empty(); };
-        while (std::regex_search(expression, match, Lexer::tokenizer_regex)) {
+        while (std::regex_search(expression, match, Lexer::tokenizer_regex())) {
             auto token = match.str();
             if (is(Group::DECIMAL))
                 throw SyntaxError{"orphan decimal mark '" + token + "'"};
@@ -139,8 +139,8 @@ protected:
     std::queue<std::pair<std::string, Symbol>> _parse_infix(
         std::queue<std::pair<std::string, Symbol>>&& tokens
     ) const {
-        const std::pair<std::string, Symbol> Left{Lexer::left, Symbol::LEFT};
-        const std::pair<std::string, Symbol> Right{Lexer::right, Symbol::RIGHT};
+        const std::pair<std::string, Symbol> Left{Lexer::left(), Symbol::LEFT};
+        const std::pair<std::string, Symbol> Right{Lexer::right(), Symbol::RIGHT};
 
         std::string parsed{};
         std::queue<std::pair<std::string, Symbol>> collected{};

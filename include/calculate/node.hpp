@@ -73,7 +73,7 @@ public:
         {
             std::unordered_set<std::string> singles{keys.begin(), keys.end()};
             for (const auto &variable : keys) {
-                if (!std::regex_match(variable, Lexer::name_regex))
+                if (!std::regex_match(variable, Lexer::name_regex()))
                     throw UnsuitableName{variable};
                 else if (singles.erase(variable) == 0)
                     throw RepeatedSymbol{variable};
@@ -302,17 +302,17 @@ public:
                     _associativity != Associativity::RIGHT :
                     _associativity != Associativity::LEFT;
                 if ((pa && cp < pp) || (!pa && cp <= pp))
-                    return Lexer::left + node.infix() + Lexer::right;
+                    return Lexer::left() + node.infix() + Lexer::right();
             }
             return node.infix();
         };
 
         switch (_symbol) {
         case (Symbol::FUNCTION):
-            infix += _token + Lexer::left;
+            infix += _token + Lexer::left();
             for (const auto& node : _nodes)
-                infix += node.infix() + Lexer::separator;
-            infix.back() = Lexer::right.front();
+                infix += node.infix() + Lexer::separator();
+            infix.back() = Lexer::right().front();
             return infix;
         case (Symbol::OPERATOR):
             infix += brace(0) + _token + brace(1);
