@@ -52,7 +52,9 @@ public:
     };
 
     static const detail::Regex& number_regex() {
-        static detail::Regex regex{R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_"};
+        static detail::Regex regex{
+            R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_"
+        };
         return regex;
     };
     static const detail::Regex& name_regex() {
@@ -80,10 +82,11 @@ public:
     }
 
     static std::string to_string(Type value) {
-        std::ostringstream representation{};
+        std::ostringstream string{};
 
-        representation << std::setprecision(std::numeric_limits<Type>::digits10) << value;
-        return representation.str();
+        string <<
+            std::setprecision(std::numeric_limits<Type>::digits10) << value;
+        return string.str();
     }
 };
 
@@ -111,7 +114,9 @@ public:
     };
 
     static const detail::Regex& number_regex() {
-        static detail::Regex regex{R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_"};
+        static detail::Regex regex{
+            R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_"
+        };
         return regex;
     };
     static const detail::Regex& name_regex() {
@@ -138,19 +143,21 @@ public:
         if (token.back() != 'i')
             return std::complex<Type>{Lexer<Type>::to_value(token)};
         else
-            return 1i * Lexer<Type>::to_value(token.substr(0, token.size() - 1));
+            return 1i * Lexer<Type>::to_value(
+                token.substr(0, token.size() - 1)
+            );
     }
 
     static std::string to_string(std::complex<Type> value) {
-        std::ostringstream representation{};
+        std::ostringstream string{};
         Type real{std::real(value)}, imag{std::imag(value)};
 
-        representation << std::setprecision(std::numeric_limits<Type>::digits10);
+        string << std::setprecision(std::numeric_limits<Type>::digits10);
         if (real != _zero)
-            representation << real << (imag > _zero ? "+" : "");
+            string << real << (imag > _zero ? "+" : "");
         if (real == _zero || imag != _zero)
-            representation << imag << (real != _zero || imag != _zero ? "i" : "");
-        return representation.str();
+            string << imag << (real != _zero || imag != _zero ? "i" : "");
+        return string.str();
     }
 };
 

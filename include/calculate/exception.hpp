@@ -21,18 +21,27 @@ void hash_combine(std::size_t& seed, const Type& object) {
 
 struct BaseError : public std::runtime_error {
     BaseError(const std::string& what) : runtime_error{what} {}
-    BaseError() : runtime_error{std::string{"Base error: unexpected error"}} {}
+    BaseError() :
+            runtime_error{std::string{"Base error: unexpected error"}}
+    {}
 };
 
 
 struct BadCast : BaseError {
     BadCast(const std::string& token) :
-            BaseError{"Bad cast: cannot perform numeric conversion: '" + token + "'"} {}
+            BaseError{
+                "Bad cast: cannot perform numeric conversion: '" + token + "'"
+            }
+    {}
 };
 
 struct AccessViolation : BaseError {
     AccessViolation() :
-            BaseError{"Access violation: call to a non const method from a const wrapper"} {}
+            BaseError{
+                "Access violation: call to a non const method from a const "
+                "wrapper"
+            }
+    {}
 };
 
 struct ArgumentsMismatch : BaseError {
@@ -40,18 +49,18 @@ struct ArgumentsMismatch : BaseError {
     const std::size_t provided;
     ArgumentsMismatch(std::size_t n, std::size_t p) :
             BaseError{
-                "Arguments mismatch: " +
-                std::to_string(n) + " needed argument" + (n == 1 ? "" : "s") + " vs " +
-                std::to_string(p) + " provided"
+                "Arguments mismatch: " + std::to_string(n) +
+                " needed argument" + (n == 1 ? "" : "s") +
+                " vs " + std::to_string(p) + " provided"
             },
             needed{n},
             provided{p}
     {}
     ArgumentsMismatch(const std::string& token, std::size_t n, std::size_t p) :
             BaseError{
-                "Arguments mismatch: '" + token + "' " +
-                std::to_string(n) + " needed argument" + (n == 1 ? "" : "s") + " vs " +
-                std::to_string(p) + " provided"
+                "Arguments mismatch: '" + token + "' " + std::to_string(n) +
+                " needed argument" + (n == 1 ? "" : "s") +
+                " vs " + std::to_string(p) + " provided"
             },
             needed{n},
             provided{p}
@@ -75,8 +84,8 @@ struct RepeatedSymbol : BaseError {
 };
 
 struct SyntaxError : BaseError {
-   SyntaxError() : BaseError{"Syntax error"} {}
-   SyntaxError(const std::string& what) : BaseError{"Syntax error: " + what} {}
+    SyntaxError() : BaseError{"Syntax error"} {}
+    SyntaxError(const std::string& what) : BaseError{"Syntax error: " + what} {}
 };
 
 struct UndefinedSymbol : BaseError {
@@ -97,7 +106,9 @@ struct UnsuitableName : BaseError {
 
 struct UnusedSymbol : BaseError {
     const std::string token;
-    UnusedSymbol(const std::string& t) : BaseError{"Unused symbol: '" + t + "'"}, token{t} {}
+    UnusedSymbol(const std::string& t) :
+            BaseError{"Unused symbol: '" + t + "'"}, token{t}
+    {}
 };
 
 }

@@ -16,7 +16,11 @@ namespace calculate {
 
 namespace detail {
 
-inline std::string replace(std::string where, const std::string& what, const std::string& by) {
+inline std::string replace(
+    std::string where,
+    const std::string& what,
+    const std::string& by
+) {
     std::size_t index = 0;
     while (true) {
         index = where.find(what, index);
@@ -92,7 +96,9 @@ public:
             throw UndefinedSymbol{token};
         }
 
-        Type& at(const std::string& token) const { return _values[index(token)]; }
+        Type& at(const std::string& token) const {
+            return _values[index(token)];
+        }
 
         void update(const std::vector<Type>& values) {
             if (_size != values.size())
@@ -141,7 +147,11 @@ private:
             _associativity{associativity}
     {
         if (_nodes.size() != _function.arguments())
-            throw ArgumentsMismatch{_token, _nodes.size(), _function.arguments()};
+            throw ArgumentsMismatch{
+                _token,
+                _nodes.size(),
+                _function.arguments()
+            };
     }
 
 
@@ -154,7 +164,13 @@ private:
         std::vector<std::string> pruned{};
 
         for (const auto& variable : variables())
-            if (std::find(tokens.begin(), tokens.end(), variable) != tokens.end())
+            if (
+                std::find(
+                    tokens.begin(),
+                    tokens.end(),
+                    variable
+                ) != tokens.end()
+            )
                 pruned.push_back(variable);
 
         pruned.erase(std::unique(pruned.begin(), pruned.end()), pruned.end());
@@ -231,9 +247,13 @@ public:
         std::stack<const_iterator> those{};
 
         auto equal = [&](auto left, auto right) {
-            if (left->_variables->has(left->_token) && right->_variables->has(right->_token))
+            if (
+                left->_variables->has(left->_token) &&
+                right->_variables->has(right->_token)
+            )
                 return left->_variables->index(left->_token) ==
                     right->_variables->index(right->_token);
+
             if (left->_symbol == right->_symbol) {
                 if (left->symbol() == Symbol::CONSTANT)
                     return left->_function() == right->_function();
@@ -245,10 +265,14 @@ public:
                         left->_precedence == right ->_precedence &&
                         left->_associativity == right->_associativity;
             }
+
             return false;
         };
 
-        if (this->_footprint.first != other._footprint.first || !equal(this, &other))
+        if (
+            this->_footprint.first != other._footprint.first ||
+            !equal(this, &other)
+        )
             return false;
 
         these.push({this->begin(), this->end()});
@@ -279,7 +303,10 @@ public:
 
     const const_iterator end() const noexcept { return _nodes.end(); }
 
-    friend std::ostream& operator<<(std::ostream& ostream, const Node& node) noexcept {
+    friend std::ostream& operator<<(
+        std::ostream& ostream,
+        const Node& node
+    ) noexcept {
         ostream << node.infix();
         return ostream;
     }
@@ -330,7 +357,9 @@ public:
         return postfix + _token;
     }
 
-    std::vector<std::string> variables() const noexcept { return _variables->variables; }
+    std::vector<std::string> variables() const noexcept {
+        return _variables->variables;
+    }
 };
 
 }

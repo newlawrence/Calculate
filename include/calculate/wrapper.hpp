@@ -16,7 +16,8 @@ namespace detail {
 
 template<typename Function, typename... Args>
 struct NoExcept {
-    static constexpr bool value = noexcept(std::declval<Function>()(std::declval<Args>()...));
+    static constexpr bool value =
+        noexcept(std::declval<Function>()(std::declval<Args>()...));
 };
 
 template<typename Type, typename = void>
@@ -26,7 +27,7 @@ template<typename Result, typename... Args>
 struct Traits<std::function<Result(Args...)>, void> {
     using result = Result;
     using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool const_method = true;
+    static constexpr bool constant = true;
 };
 
 template<typename Result, typename... Args>
@@ -36,7 +37,7 @@ struct Traits<
 > {
     using result = Result;
     using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool const_method = true;
+    static constexpr bool constant = true;
 };
 
 template<typename Result, typename... Args>
@@ -46,7 +47,7 @@ struct Traits<
 > {
     using result = Result;
     using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool const_method = true;
+    static constexpr bool constant = true;
 };
 
 template<typename Result, typename... Args>
@@ -56,7 +57,7 @@ struct Traits<
 > {
     using result = Result;
     using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool const_method = true;
+    static constexpr bool constant = true;
 };
 
 template<typename Result, typename... Args>
@@ -66,7 +67,7 @@ struct Traits<
 > {
     using result = Result;
     using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool const_method = true;
+    static constexpr bool constant = true;
 };
 
 template<typename Result, typename... Args>
@@ -76,7 +77,7 @@ struct Traits<
 > {
     using result = Result;
     using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool const_method = true;
+    static constexpr bool constant = true;
 };
 
 template<typename Result, typename... Args>
@@ -86,7 +87,7 @@ struct Traits<
 > {
     using result = Result;
     using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool const_method = true;
+    static constexpr bool constant = true;
 };
 
 template<typename Type, typename Result, typename... Args>
@@ -96,7 +97,7 @@ struct Traits<
 > {
     using result = Result;
     using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool const_method = false;
+    static constexpr bool constant = false;
 };
 
 template<typename Type, typename Result, typename... Args>
@@ -106,7 +107,7 @@ struct Traits<
 > {
     using result = Result;
     using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool const_method = false;
+    static constexpr bool constant = false;
 };
 
 template<typename Type, typename Result, typename... Args>
@@ -116,7 +117,7 @@ struct Traits<
 > {
     using result = Result;
     using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool const_method = true;
+    static constexpr bool constant = true;
 };
 
 template<typename Type, typename Result, typename... Args>
@@ -126,7 +127,7 @@ struct Traits<
 > {
     using result = Result;
     using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool const_method = true;
+    static constexpr bool constant = true;
 };
 
 
@@ -144,7 +145,7 @@ struct Argc {
 
 template<typename Function>
 struct IsConst {
-    static constexpr bool value = Traits<Function>::const_method;
+    static constexpr bool value = Traits<Function>::constant;
 };
 
 template<typename Type, typename Target>
@@ -185,7 +186,7 @@ class Wrapper {
         virtual ~Concept() {}
     };
 
-    template<typename Callable, typename Adapter, std::size_t n, bool const_method>
+    template<typename Callable, typename Adapter, std::size_t n, bool constant>
     class Model final : public Concept {
         Callable _callable;
         Adapter _adapter;
@@ -209,14 +210,20 @@ class Wrapper {
         ) const { throw AccessViolation{}; }
 
         template<std::size_t... indices>
-        Type _evaluate(const std::vector<Source>& args, std::index_sequence<indices...>) {
+        Type _evaluate(
+            const std::vector<Source>& args,
+            std::index_sequence<indices...>
+        ) {
             if (args.size() != n)
                 throw ArgumentsMismatch{n, args.size()};
             return _callable(_adapter(args[indices])...);
         }
 
     public:
-        Model(Callable callable, Adapter adapter) : _callable{callable}, _adapter{adapter} {}
+        Model(Callable callable, Adapter adapter) :
+                _callable{callable},
+                _adapter{adapter}
+        {}
 
         virtual std::shared_ptr<Concept> copy() const noexcept override {
             return std::make_shared<Model>(*this);
@@ -224,11 +231,11 @@ class Wrapper {
 
         virtual std::size_t argc() const noexcept override { return n; }
 
-        virtual bool is_const() const noexcept override { return const_method; }
+        virtual bool is_const() const noexcept override { return constant; }
 
         virtual Type evaluate(const std::vector<Source>& args) const override {
             return _evaluate(
-                std::integral_constant<bool, const_method>{},
+                std::integral_constant<bool, constant>{},
                 args,
                 std::make_index_sequence<n>{}
             );
@@ -241,18 +248,25 @@ class Wrapper {
 
     std::shared_ptr<Concept> _callable;
 
-    Wrapper(std::shared_ptr<Concept>&& callable) : _callable{std::move(callable)} {}
+    Wrapper(std::shared_ptr<Concept>&& callable) :
+            _callable{std::move(callable)}
+    {}
 
 public:
     template<typename Callable, typename Adapter>
     Wrapper(Callable&& callable, Adapter&& adapter) :
             _callable{
-                std::make_shared<Model<
-                    Callable,
-                    Adapter,
-                    detail::Argc<Callable>::value,
-                    detail::IsConst<Callable>::value
-                >>(std::forward<Callable>(callable), std::forward<Adapter>(adapter))
+                std::make_shared<
+                    Model<
+                        Callable,
+                        Adapter,
+                        detail::Argc<Callable>::value,
+                        detail::IsConst<Callable>::value
+                    >
+                >(
+                    std::forward<Callable>(callable),
+                    std::forward<Adapter>(adapter)
+                )
             }
     {
         static_assert(
@@ -275,7 +289,10 @@ public:
             "Wrong return type"
         );
         static_assert(
-            std::is_same<detail::Arguments<Adapter>, detail::Repeated<Source, 1>>::value,
+            std::is_same<
+                detail::Arguments<Adapter>,
+                detail::Repeated<Source, 1>
+            >::value,
             "Wrong adapter arguments types"
         );
         static_assert(
@@ -293,14 +310,19 @@ public:
         std::enable_if_t<detail::NotSame<Callable, Wrapper>::value>* = nullptr
     >
     Wrapper(Callable&& callable=[]() { return Type(); }) :
-            Wrapper{std::forward<Callable>(callable), [](const Source& x) { return Type{x}; }}
+            Wrapper{
+                std::forward<Callable>(callable),
+                [](const Source& x) { return Type{x}; }
+            }
     {}
 
     Type operator()(const std::vector<Source>& args) const {
         return const_cast<const Concept*>(_callable.get())->evaluate(args);
     }
 
-    Type operator()(const std::vector<Source>& args) { return _callable->evaluate(args); }
+    Type operator()(const std::vector<Source>& args) {
+        return _callable->evaluate(args);
+    }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
@@ -310,7 +332,9 @@ public:
 
     template<typename... Args>
     Type operator()(Args&&... args) {
-        return _callable->evaluate(std::vector<Source>{std::forward<Args>(args)...});
+        return _callable->evaluate(
+            std::vector<Source>{std::forward<Args>(args)...}
+        );
     }
 
     bool operator==(const Wrapper& other) const noexcept {
@@ -332,9 +356,11 @@ namespace std {
 template<typename Type, typename Source>
 struct hash<calculate::Wrapper<Type, Source>> {
     size_t operator()(const calculate::Wrapper<Type, Source>& wrapper) const {
-        return hash<std::shared_ptr<typename calculate::Wrapper<Type, Source>::Concept>>{}(
-            wrapper._callable
-        );
+        return hash<
+            std::shared_ptr<
+                typename calculate::Wrapper<Type, Source>::Concept
+            >
+        >{}(wrapper._callable);
     }
 };
 

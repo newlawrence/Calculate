@@ -27,7 +27,8 @@ public:
     using Constant = Type;
     struct Function;
     struct Operator;
-    enum class Symbol : int {LEFT=0, RIGHT, SEPARATOR, CONSTANT, FUNCTION, OPERATOR};
+    enum class Symbol :
+            int {LEFT=0, RIGHT, SEPARATOR, CONSTANT, FUNCTION, OPERATOR};
     enum class Associativity : int {LEFT=0, RIGHT, BOTH};
     using Expression = Node<BaseParser>;
     using Variables = typename Expression::Variables;
@@ -36,14 +37,23 @@ public:
     struct Function final : public Wrapper<Type, Expression> {
         template<
             typename Callable,
-            std::enable_if_t<detail::NotSame<Callable, Function>::value>* = nullptr
+            std::enable_if_t<
+                detail::NotSame<Callable, Function>::value
+            >* = nullptr
         >
         Function(Callable&& callable) :
                 Wrapper<Type, Expression>{
                     std::forward<Callable>(callable),
-                    [](const Expression& node) { return node._function(node._nodes); }
+                    [](const Expression& node) {
+                        return node._function(node._nodes);
+                    }
                 }
-        { static_assert(detail::IsConst<Callable>::value, "Non const method in parser"); }
+        {
+            static_assert(
+                detail::IsConst<Callable>::value,
+                "Non const method in parser"
+            );
+        }
 
         inline std::size_t arguments() const noexcept { return this->argc(); }
     };
@@ -53,12 +63,20 @@ public:
         std::size_t precedence;
         Associativity associativity;
         Function function;
-        Operator(const std::string& a, std::size_t pre, Associativity ass, const Function& f) :
-                alias(a),
-                precedence(pre),
-                associativity(ass),
-                function(f)
-        { if (a.size()) _validate(static_cast<Constant*>(nullptr), a); }
+        Operator(
+            const std::string& alias_,
+            std::size_t precedence_,
+            Associativity associativity_,
+            const Function& function_
+        ) :
+                alias(alias_),
+                precedence(precedence_),
+                associativity(associativity_),
+                function(function_)
+        {
+            if (alias.size())
+                _validate(static_cast<Constant*>(nullptr), alias);
+        }
     };
 
 
@@ -83,11 +101,17 @@ protected:
             throw UnsuitableName{token};
     }
 
-    std::unordered_map<std::string, Constant>& _get(Constant*) noexcept { return _constants; }
+    std::unordered_map<std::string, Constant>& _get(Constant*) noexcept {
+        return _constants;
+    }
 
-    std::unordered_map<std::string, Function>& _get(Function*) noexcept { return _functions; }
+    std::unordered_map<std::string, Function>& _get(Function*) noexcept {
+        return _functions;
+    }
 
-    std::unordered_map<std::string, Operator>& _get(Operator*) noexcept { return _operators; }
+    std::unordered_map<std::string, Operator>& _get(Operator*) noexcept {
+        return _operators;
+    }
 
     template<typename Kind>
     std::unordered_map<std::string, Kind>& _factory() noexcept {
@@ -139,8 +163,14 @@ protected:
     std::queue<std::pair<std::string, Symbol>> _parse_infix(
         std::queue<std::pair<std::string, Symbol>>&& tokens
     ) const {
-        const std::pair<std::string, Symbol> Left{Lexer::left(), Symbol::LEFT};
-        const std::pair<std::string, Symbol> Right{Lexer::right(), Symbol::RIGHT};
+        const std::pair<std::string, Symbol> Left{
+            Lexer::left(),
+            Symbol::LEFT
+        };
+        const std::pair<std::string, Symbol> Right{
+            Lexer::right(),
+            Symbol::RIGHT
+        };
 
         std::string parsed{};
         std::queue<std::pair<std::string, Symbol>> collected{};
@@ -196,7 +226,8 @@ protected:
             )
                 if (
                     current.second != Symbol::OPERATOR ||
-                    get<Operator>(current.first).associativity != Associativity::RIGHT
+                    get<Operator>(current.first).associativity !=
+                        Associativity::RIGHT
                 )
                     fill_parenthesis();
 
@@ -306,7 +337,10 @@ protected:
                     else
                         break;
                 }
-                if (!operations.empty() && operations.top().second == Symbol::LEFT)
+                if (
+                    !operations.empty() &&
+                    operations.top().second == Symbol::LEFT
+                )
                     operations.pop();
                 else
                     throw ParenthesisMismatch{};
@@ -334,7 +368,9 @@ protected:
                         break;
                 }
                 if (apply_function.empty() || !apply_function.top())
-                    throw SyntaxError{"separator '" + element.first + "' outside function"};
+                    throw SyntaxError{
+                        "separator '" + element.first + "' outside function"
+                    };
                 provided_counter.top()++;
                 if (operations.empty())
                     throw ParenthesisMismatch{};
@@ -459,7 +495,7 @@ protected:
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
         std::pair<std::string, Symbol> element{};
-        std::unique_ptr<Function> f{};
+        std::unique_ptr<Function> function{};
         std::size_t n{};
 
         auto hash = std::hash<decltype(this)>{}(this);
@@ -476,7 +512,8 @@ protected:
                 element.second == Symbol::SEPARATOR
             )
                 throw SyntaxError{
-                    "symbol '" + element.first + "' not allowed in postfix notation"
+                    "symbol '" + element.first + "' not allowed in "
+                    "postfix notation"
                 };
 
             else if (element.second == Symbol::CONSTANT) {
@@ -486,18 +523,27 @@ protected:
                     detail::hash_combine(hash, variables->index(element.first));
                 else
                     detail::hash_combine(hash, Lexer::to_value(element.first));
-                operands.emplace(_create_node(element, {}, variables, {footprint, hash}));
+                operands.emplace(
+                    _create_node(element, {}, variables, {footprint, hash})
+                );
             }
 
             else {
                 std::vector<Expression> nodes{};
                 if (element.second == Symbol::FUNCTION)
-                    f = std::make_unique<Function>(get<Function>(element.first));
+                    function = std::make_unique<Function>(
+                        get<Function>(element.first)
+                    );
                 else
-                    f = std::make_unique<Function>(get<Operator>(element.first).function);
-                n = f->arguments();
+                    function = std::make_unique<Function>(
+                        get<Operator>(element.first).function
+                    );
+                n = function->arguments();
                 nodes.reserve(n);
-                detail::hash_combine(hash, *static_cast<Wrapper<Type, Expression>*>(f.get()));
+                detail::hash_combine(
+                    hash,
+                    *static_cast<Wrapper<Type, Expression>*>(function.get())
+                );
 
                 for (std::size_t i = 0; i < n; i++) {
                     if (operands.empty())
@@ -510,7 +556,12 @@ protected:
                     extract.pop();
                 }
                 operands.emplace(
-                    _create_node(element, std::move(nodes), variables, {footprint, hash})
+                    _create_node(
+                        element,
+                        std::move(nodes),
+                        variables,
+                        {footprint, hash}
+                    )
                 );
             }
         }
@@ -522,7 +573,13 @@ protected:
 
         auto pruned = operands.top()._pruned();
         for (const auto& variable : variables->variables)
-            if (std::find(pruned.begin(), pruned.end(), variable) == pruned.end())
+            if (
+                std::find(
+                    pruned.begin(),
+                    pruned.end(),
+                    variable
+                ) == pruned.end()
+            )
                 throw UnusedSymbol(variable);
         return std::move(operands.top());
     }
@@ -535,11 +592,17 @@ public:
     }
 
 
-    Type cast(const std::string& expression) const { return Type{from_infix(expression)}; }
+    Type cast(const std::string& expression) const {
+        return Type{from_infix(expression)};
+    }
 
-    std::string to_string(Type value) const { return Lexer::to_string(value); }
+    std::string to_string(Type value) const {
+        return Lexer::to_string(value);
+    }
 
-    Expression create_node(Type value) const { return from_infix(to_string(value)); }
+    Expression create_node(Type value) const {
+        return from_infix(to_string(value));
+    }
 
     Expression create_node(
         const std::string& token,
@@ -635,9 +698,16 @@ public:
     ) const {
         std::vector<std::string> pruned{node.variables()};
 
-        pruned.erase(std::remove(pruned.begin(), pruned.end(), variable), pruned.end());
+        pruned.erase(
+            std::remove(pruned.begin(), pruned.end(), variable),
+            pruned.end()
+        );
         return from_postfix(
-            detail::replace(node.postfix(), variable, create_node(value).postfix()),
+            detail::replace(
+                node.postfix(),
+                variable,
+                create_node(value).postfix()
+            ),
             pruned
         );
     }
@@ -662,7 +732,9 @@ public:
         _validate(static_cast<Kind*>(nullptr), token);
         if (found != _factory<Kind>().end())
             _factory<Kind>().erase(found);
-        _factory<Kind>().emplace(std::make_pair(token, Kind{std::forward<Args>(args)...}));
+        _factory<Kind>().emplace(
+            std::make_pair(token, Kind{std::forward<Args>(args)...})
+        );
     }
 
     template<typename Kind>
