@@ -194,19 +194,16 @@ class Wrapper {
         template<std::size_t... indices>
         Type _evaluate(
             std::integral_constant<bool, true>::type,
-            const std::vector<Source>& args,
-            std::index_sequence<indices...>
+            const std::vector<Source>& args
         ) const {
-            if (args.size() != n)
-                throw ArgumentsMismatch{n, args.size()};
-            return _callable(_adapter(args[indices])...);
+            return const_cast<Model<Callable, Adapter, n, constant>*>(this)->
+                _evaluate(args, std::make_index_sequence<n>{});
         }
 
         template<std::size_t... indices>
         Type _evaluate(
             std::integral_constant<bool, false>::type,
-            const std::vector<Source>&,
-            std::index_sequence<indices...>
+            const std::vector<Source>&
         ) const { throw AccessViolation{}; }
 
         template<std::size_t... indices>
@@ -236,8 +233,7 @@ class Wrapper {
         virtual Type evaluate(const std::vector<Source>& args) const override {
             return _evaluate(
                 std::integral_constant<bool, constant>{},
-                args,
-                std::make_index_sequence<n>{}
+                args
             );
         }
 
