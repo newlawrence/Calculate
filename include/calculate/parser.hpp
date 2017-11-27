@@ -55,6 +55,10 @@ public:
             );
         }
 
+        Function(
+            const std::shared_ptr<WrapperConcept<Type, Expression>>& callable
+        ) : Wrapper<Type, Expression>{callable} {}
+
         inline std::size_t arguments() const noexcept { return this->argc(); }
     };
 

@@ -173,21 +173,23 @@ using Repeated = typename Repeat<Type, n>::type;
 }
 
 
+template<typename Type, typename Source>
+struct WrapperConcept {
+    virtual std::shared_ptr<WrapperConcept> copy() const noexcept = 0;
+    virtual std::size_t argc() const noexcept = 0;
+    virtual bool is_const() const noexcept = 0;
+    virtual Type evaluate(const std::vector<Source>&) const = 0;
+    virtual Type evaluate(const std::vector<Source>&) = 0;
+    virtual ~WrapperConcept() {}
+};
+
+
 template<typename Type, typename Source = Type>
 class Wrapper {
     friend struct std::hash<Wrapper>;
 
-    struct Concept {
-        virtual std::shared_ptr<Concept> copy() const noexcept = 0;
-        virtual std::size_t argc() const noexcept = 0;
-        virtual bool is_const() const noexcept = 0;
-        virtual Type evaluate(const std::vector<Source>&) const = 0;
-        virtual Type evaluate(const std::vector<Source>&) = 0;
-        virtual ~Concept() {}
-    };
-
     template<typename Callable, typename Adapter, std::size_t n, bool constant>
-    class Model final : public Concept {
+    class WrapperModel final : public WrapperConcept<Type, Source> {
         Callable _callable;
         Adapter _adapter;
 
@@ -196,8 +198,9 @@ class Wrapper {
             std::integral_constant<bool, true>::type,
             const std::vector<Source>& args
         ) const {
-            return const_cast<Model<Callable, Adapter, n, constant>*>(this)->
-                _evaluate(args, std::make_index_sequence<n>{});
+            return const_cast<
+                WrapperModel<Callable, Adapter, n, constant>*
+            >(this)->_evaluate(args, std::make_index_sequence<n>{});
         }
 
         template<std::size_t... indices>
@@ -217,13 +220,14 @@ class Wrapper {
         }
 
     public:
-        Model(Callable callable, Adapter adapter) :
+        WrapperModel(Callable callable, Adapter adapter) :
                 _callable{callable},
                 _adapter{adapter}
         {}
 
-        virtual std::shared_ptr<Concept> copy() const noexcept override {
-            return std::make_shared<Model>(*this);
+        virtual std::shared_ptr<WrapperConcept<Type, Source>>
+        copy() const noexcept override {
+            return std::make_shared<WrapperModel>(*this);
         }
 
         virtual std::size_t argc() const noexcept override { return n; }
@@ -242,9 +246,9 @@ class Wrapper {
         }
     };
 
-    std::shared_ptr<Concept> _callable;
+    std::shared_ptr<WrapperConcept<Type, Source>> _callable;
 
-    Wrapper(std::shared_ptr<Concept>&& callable) :
+    Wrapper(std::shared_ptr<WrapperConcept<Type, Source>>&& callable) :
             _callable{std::move(callable)}
     {}
 
@@ -253,7 +257,7 @@ public:
     Wrapper(Callable&& callable, Adapter&& adapter) :
             _callable{
                 std::make_shared<
-                    Model<
+                    WrapperModel<
                         Callable,
                         Adapter,
                         detail::Argc<Callable>::value,
@@ -312,8 +316,13 @@ public:
             }
     {}
 
+    Wrapper(const std::shared_ptr<WrapperConcept<Type, Source>>& callable) :
+            _callable{callable.copy()}
+    {}
+
     Type operator()(const std::vector<Source>& args) const {
-        return const_cast<const Concept*>(_callable.get())->evaluate(args);
+        return const_cast<const WrapperConcept<Type, Source>*>(_callable.get())
+            ->evaluate(args);
     }
 
     Type operator()(const std::vector<Source>& args) {
@@ -322,7 +331,7 @@ public:
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
-        return const_cast<const Concept*>(_callable.get())
+        return const_cast<const WrapperConcept<Type, Source>*>(_callable.get())
             ->evaluate(std::vector<Source>{std::forward<Args>(args)...});
     }
 
@@ -352,11 +361,9 @@ namespace std {
 template<typename Type, typename Source>
 struct hash<calculate::Wrapper<Type, Source>> {
     size_t operator()(const calculate::Wrapper<Type, Source>& wrapper) const {
-        return hash<
-            std::shared_ptr<
-                typename calculate::Wrapper<Type, Source>::Concept
-            >
-        >{}(wrapper._callable);
+        return hash<std::shared_ptr<calculate::WrapperConcept<Type, Source>>>{}(
+            wrapper._callable
+        );
     }
 };
 
