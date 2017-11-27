@@ -193,25 +193,23 @@ void run(
     }
 
     if (arguments.count("analysis")) {
-        std::cout << "Infix notation:    " << function.infix() << std::endl;
-        std::cout << "Postfix notation:  " << function.postfix() << std::endl;
+        std::cout << "Infix notation:    " << function.infix() << "\n";
+        std::cout << "Postfix notation:  " << function.postfix() << "\n";
         if (arguments.count("var")) {
             std::cout << "Variables:         ";
             for (const auto& var : variables)
                 std::cout << var << " ";
-            std::cout << std::endl;
+            std::cout << "\n";
             std::cout << "Values:            ";
             for (const auto& val : values)
                 std::cout << parser.to_string(val) << " ";
-            std::cout << std::endl;
+            std::cout << "\n";
         }
-        std::cout << "Result:            " <<
-            parser.to_string(result) << std::endl;
-        std::cout << "Iterations:        " << iterations << std::endl;
-        std::cout << "Building time:     " << build_time << " us" << std::endl;
+        std::cout << "Result:            " << parser.to_string(result) << "\n";
+        std::cout << "Iterations:        " << iterations << "\n";
+        std::cout << "Building time:     " << build_time << " us" << "\n";
         if (arguments.count("optimize"))
-            std::cout << "Optimization time: " <<
-            opt_time << " us" << std::endl;
+            std::cout << "Optimization time: " << opt_time << " us" << "\n";
         std::cout << "Evaluation time:   " << eval_time << " ns" << std::endl;
     }
     else
