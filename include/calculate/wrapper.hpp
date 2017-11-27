@@ -316,8 +316,18 @@ public:
             }
     {}
 
-    Wrapper(const std::shared_ptr<WrapperConcept<Type, Source>>& callable) :
-            _callable{callable.copy()}
+    template<
+        typename Callable,
+        std::enable_if_t<
+            std::is_base_of<WrapperConcept<Type, Source>, Callable>::value
+        >* = nullptr
+    >
+    Wrapper(Callable&& callable) :
+            _callable{
+                std::make_shared<Callable>(
+                    std::forward<Callable>(callable)
+                )
+            }
     {}
 
     Type operator()(const std::vector<Source>& args) const {
