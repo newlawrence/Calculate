@@ -71,17 +71,27 @@ int main(int argc, char *argv[]) {
         );
 
         if (arguments.count("help")) {
-            std::cout << "Usage: " << program.filename() << " [options] {-e [ --expression ]}"
-                " <expression>" << std::endl;
+            std::cout << "Usage: " << program.filename() <<
+                " [options] {-e [ --expression ]} <expression>" << std::endl;
             std::cout << named_args << std::endl;
             return 0;
         }
         po::notify(arguments);
 
         if (arguments.count("complex"))
-            run<calculate::DefaultComplexParser>(string, variables, substitutions, arguments);
+            run<calculate::DefaultComplexParser>(
+                string,
+                variables,
+                substitutions,
+                arguments
+            );
         else
-            run<calculate::DefaultParser>(string, variables, substitutions, arguments);
+            run<calculate::DefaultParser>(
+                string,
+                variables,
+                substitutions,
+                arguments
+            );
     }
     catch (const po::error& error) {
         std::cerr << "Command line error: " << error.what() << std::endl;
@@ -121,7 +131,9 @@ void run(
         }
     }
 
-    auto parse = arguments.count("postfix") ? &Parser::from_postfix : &Parser::from_infix;
+    auto parse = arguments.count("postfix") ?
+        &Parser::from_postfix :
+        &Parser::from_infix;
     auto whole_set = variables;
     if (arguments.count("sub")) {
         for (auto& sub : substitutions) {
@@ -129,7 +141,10 @@ void run(
             if (sep == 0 || sep > sub.size() - 2)
                 throw po::error("bad substitution input '" + sub + "'");
             auto var = sub.substr(0, sep);
-            if (std::find(variables.begin(), variables.end(), var) == variables.end())
+            if (
+                std::find(variables.begin(), variables.end(), var) ==
+                variables.end()
+            )
                 whole_set.push_back(var);
         }
     }
@@ -190,11 +205,13 @@ void run(
                 std::cout << parser.to_string(val) << " ";
             std::cout << std::endl;
         }
-        std::cout << "Result:            " << parser.to_string(result) << std::endl;
+        std::cout << "Result:            " <<
+            parser.to_string(result) << std::endl;
         std::cout << "Iterations:        " << iterations << std::endl;
         std::cout << "Building time:     " << build_time << " us" << std::endl;
         if (arguments.count("optimize"))
-            std::cout << "Optimization time: " << opt_time << " us" << std::endl;
+            std::cout << "Optimization time: " <<
+            opt_time << " us" << std::endl;
         std::cout << "Evaluation time:   " << eval_time << " ns" << std::endl;
     }
     else
