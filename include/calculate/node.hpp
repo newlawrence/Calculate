@@ -185,8 +185,6 @@ private:
 
 
 public:
-    using const_iterator = typename std::vector<Node>::const_iterator;
-
     Node(const Node& other) noexcept :
             _token{other._token},
             _symbol{other._symbol},
@@ -223,6 +221,10 @@ public:
         swap(one._nodes, another._nodes);
         swap(one._precedence, another._precedence);
         swap(one._associativity, another._associativity);
+    }
+
+    static Type evaluator(const Node& node) {
+        return node._function(node._nodes);
     }
 
     explicit operator Type() const {
@@ -298,6 +300,8 @@ public:
     const Node& operator[](std::size_t index) const { return _nodes[index]; }
 
     const Node& at(std::size_t index) const { return _nodes.at(index); }
+
+    using const_iterator = typename std::vector<Node>::const_iterator;
 
     const const_iterator begin() const noexcept { return _nodes.begin(); }
 

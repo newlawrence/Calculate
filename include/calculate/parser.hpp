@@ -44,9 +44,7 @@ public:
         Function(Callable&& callable) :
                 Wrapper<Type, Expression>{
                     std::forward<Callable>(callable),
-                    [](const Expression& node) {
-                        return node._function(node._nodes);
-                    }
+                    &Expression::evaluator
                 }
         {
             static_assert(
