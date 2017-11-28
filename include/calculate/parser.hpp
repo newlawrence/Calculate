@@ -35,11 +35,18 @@ public:
 
 
     struct Function final : public Wrapper<Type, Expression> {
+        template<typename Callable>
+        static constexpr bool not_me =
+            detail::NotSame<Callable, Function>::value;
+
+        template<typename Callable>
+        static constexpr bool is_model =
+            std::is_base_of<WrapperConcept<Type, Expression>, Callable>::value;
+
         template<
             typename Callable,
-            std::enable_if_t<
-                detail::NotSame<Callable, Function>::value
-            >* = nullptr
+            std::enable_if_t<not_me<Callable>>* = nullptr,
+            std::enable_if_t<!is_model<Callable>>* = nullptr
         >
         Function(Callable&& callable) :
                 Wrapper<Type, Expression>{
@@ -55,17 +62,10 @@ public:
 
         template<
             typename Callable,
-            std::enable_if_t<
-                std::is_base_of<
-                    WrapperConcept<Type, Expression>,
-                    Callable
-                >::value
-            >* = nullptr
+            std::enable_if_t<is_model<Callable>>* = nullptr
         >
         Function(Callable&& callable) :
-                Wrapper<Type, Expression>{
-                    std::forward<Callable>(callable)
-                }
+                Wrapper<Type, Expression>{std::forward<Callable>(callable)}
         {}
 
         inline std::size_t arguments() const noexcept { return this->argc(); }

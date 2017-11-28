@@ -188,6 +188,13 @@ template<typename Type, typename Source = Type>
 class Wrapper {
     friend struct std::hash<Wrapper>;
 
+    template<typename Callable>
+    static constexpr bool not_me = detail::NotSame<Callable, Wrapper>::value;
+
+    template<typename Callable>
+    static constexpr bool is_model =
+        std::is_base_of<WrapperConcept<Type, Source>, Callable>::value;
+
     template<typename Callable, typename Adapter, std::size_t n, bool constant>
     class WrapperModel final : public WrapperConcept<Type, Source> {
         Callable _callable;
@@ -235,10 +242,7 @@ class Wrapper {
         virtual bool is_const() const noexcept override { return constant; }
 
         virtual Type evaluate(const std::vector<Source>& args) const override {
-            return _evaluate(
-                std::integral_constant<bool, constant>{},
-                args
-            );
+            return _evaluate(std::integral_constant<bool, constant>{}, args);
         }
 
         virtual Type evaluate(const std::vector<Source>& args) override {
@@ -307,7 +311,8 @@ public:
 
     template<
         typename Callable,
-        std::enable_if_t<detail::NotSame<Callable, Wrapper>::value>* = nullptr
+        std::enable_if_t<not_me<Callable>>* = nullptr,
+        std::enable_if_t<!is_model<Callable>>* = nullptr
     >
     Wrapper(Callable&& callable=[]() { return Type(); }) :
             Wrapper{
@@ -316,12 +321,7 @@ public:
             }
     {}
 
-    template<
-        typename Callable,
-        std::enable_if_t<
-            std::is_base_of<WrapperConcept<Type, Source>, Callable>::value
-        >* = nullptr
-    >
+    template<typename Callable, std::enable_if_t<is_model<Callable>>* = nullptr>
     Wrapper(Callable&& callable) :
             _callable{
                 std::make_shared<Callable>(
