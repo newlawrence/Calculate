@@ -25,7 +25,7 @@ public:
 
 
     using Constant = Type;
-    struct Function;
+    class Function;
     class Operator;
     enum class Symbol :
             int {LEFT=0, RIGHT, SEPARATOR, CONSTANT, FUNCTION, OPERATOR};
@@ -34,19 +34,23 @@ public:
     using Variables = typename Expression::Variables;
 
 
-    struct Function : calculate::Wrapper<Type, Expression> {
+    class Function : public calculate::Wrapper<Type, Expression> {
         template<typename Callable>
-        static constexpr bool not_me =
-            detail::NotSame<Callable, Function>::value;
+        struct Inspect {
+            static constexpr bool not_me =
+                detail::NotSame<Callable, Function>::value;
+            static constexpr bool is_model =
+                std::is_base_of<
+                    WrapperConcept<Type, Expression>,
+                    Callable
+                >::value;
+        }; 
 
-        template<typename Callable>
-        static constexpr bool is_model =
-            std::is_base_of<WrapperConcept<Type, Expression>, Callable>::value;
-
+    public:
         template<
             typename Callable,
-            std::enable_if_t<not_me<Callable>>* = nullptr,
-            std::enable_if_t<!is_model<Callable>>* = nullptr
+            std::enable_if_t<Inspect<Callable>::not_me>* = nullptr,
+            std::enable_if_t<!Inspect<Callable>::is_model>* = nullptr
         >
         Function(Callable&& callable) :
                 Wrapper<Type, Expression>{
@@ -62,7 +66,7 @@ public:
 
         template<
             typename Callable,
-            std::enable_if_t<is_model<Callable>>* = nullptr
+            std::enable_if_t<Inspect<Callable>::is_model>* = nullptr
         >
         Function(Callable&& callable) :
                 Wrapper<Type, Expression>{std::forward<Callable>(callable)}

@@ -189,11 +189,12 @@ class Wrapper {
     friend struct std::hash<Wrapper>;
 
     template<typename Callable>
-    static constexpr bool not_me = detail::NotSame<Callable, Wrapper>::value;
-
-    template<typename Callable>
-    static constexpr bool is_model =
-        std::is_base_of<WrapperConcept<Type, Source>, Callable>::value;
+    struct Inspect {
+        static constexpr bool not_me =
+            detail::NotSame<Callable, Wrapper>::value;
+        static constexpr bool is_model =
+            std::is_base_of<WrapperConcept<Type, Source>, Callable>::value;
+    };
 
     template<typename Callable, typename Adapter, std::size_t n, bool constant>
     class WrapperModel final : public WrapperConcept<Type, Source> {
@@ -311,8 +312,8 @@ public:
 
     template<
         typename Callable,
-        std::enable_if_t<not_me<Callable>>* = nullptr,
-        std::enable_if_t<!is_model<Callable>>* = nullptr
+        std::enable_if_t<Inspect<Callable>::not_me>* = nullptr,
+        std::enable_if_t<!Inspect<Callable>::is_model>* = nullptr
     >
     Wrapper(Callable&& callable=[]() { return Type(); }) :
             Wrapper{
@@ -321,7 +322,10 @@ public:
             }
     {}
 
-    template<typename Callable, std::enable_if_t<is_model<Callable>>* = nullptr>
+    template<
+        typename Callable,
+        std::enable_if_t<Inspect<Callable>::is_model>* = nullptr
+    >
     Wrapper(Callable&& callable) :
             _callable{
                 std::make_shared<Callable>(
