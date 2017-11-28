@@ -122,7 +122,7 @@ private:
     std::shared_ptr<Variables> _variables;
     Function _function;
     std::vector<Node> _nodes;
-    std::pair<std::size_t, std::size_t> _footprint;
+    std::size_t _hash;
     std::size_t _precedence;
     Associativity _associativity;
 
@@ -133,7 +133,7 @@ private:
         const std::shared_ptr<Variables>& variables,
         const Function& function,
         std::vector<Node>&& nodes,
-        std::pair<std::size_t, std::size_t> footprint,
+        std::size_t hash,
         std::size_t precedence=std::numeric_limits<std::size_t>::max(),
         Associativity associativity=Associativity::BOTH
     ) :
@@ -142,7 +142,7 @@ private:
             _variables{variables},
             _function{function},
             _nodes{std::move(nodes)},
-            _footprint{footprint},
+            _hash{hash},
             _precedence{precedence},
             _associativity{associativity}
     {
@@ -191,7 +191,7 @@ public:
             _variables{},
             _function{other._function},
             _nodes{other._nodes},
-            _footprint{other._footprint},
+            _hash{other._hash},
             _precedence{other._precedence},
             _associativity{other._associativity}
     { _rebind(std::make_shared<Variables>(other._pruned())); }
@@ -202,7 +202,7 @@ public:
             _variables{std::move(other._variables)},
             _function{std::move(other._function)},
             _nodes{std::move(other._nodes)},
-            _footprint{std::move(other._footprint)},
+            _hash{std::move(other._hash)},
             _precedence{std::move(other._precedence)},
             _associativity{std::move(other._associativity)}
     {}
@@ -271,10 +271,7 @@ public:
             return false;
         };
 
-        if (
-            this->_footprint.first != other._footprint.first ||
-            !equal(this, &other)
-        )
+        if (!equal(this, &other))
             return false;
 
         these.push({this->begin(), this->end()});
@@ -374,7 +371,7 @@ namespace std {
 template<typename Parser>
 struct hash<calculate::Node<Parser>> {
     size_t operator()(const calculate::Node<Parser>& node) const {
-        return node._footprint.second;
+        return node._hash;
     }
 };
 

@@ -443,7 +443,7 @@ protected:
         const std::pair<std::string, Symbol>& token,
         std::vector<Expression>&& nodes,
         const std::shared_ptr<Variables>& variables,
-        std::pair<std::size_t, std::size_t> footprint
+        std::size_t hash
     ) const {
         auto found_constant = _factory<Constant>().find(token.first);
         if (found_constant != _factory<Constant>().end()) {
@@ -453,7 +453,7 @@ protected:
                 variables,
                 [value]() noexcept { return value; },
                 std::move(nodes),
-                footprint
+                hash
             };
         }
 
@@ -464,7 +464,7 @@ protected:
                 variables,
                 found_function->second,
                 std::move(nodes),
-                footprint
+                hash
             };
 
         auto found_operator = _factory<Operator>().find(token.first);
@@ -474,7 +474,7 @@ protected:
                 variables,
                 found_operator->second.function,
                 std::move(nodes),
-                footprint,
+                hash,
                 get<Operator>(token.first).precedence,
                 get<Operator>(token.first).associativity
             };
@@ -486,7 +486,7 @@ protected:
                 variables,
                 [value]() noexcept { return value; },
                 std::move(nodes),
-                footprint
+                hash
             };
         }
         catch (const BadCast&) {
@@ -496,7 +496,7 @@ protected:
                 variables,
                 [&variable]() noexcept { return variable; },
                 std::move(nodes),
-                footprint
+                hash
             };
         }
     }
@@ -512,9 +512,6 @@ protected:
         std::size_t n{};
 
         auto hash = std::hash<decltype(this)>{}(this);
-        auto footprint = _footprint;
-        detail::hash_combine(hash, footprint);
-
         while (!tokens.empty()) {
             element = tokens.front();
             tokens.pop();
@@ -537,7 +534,7 @@ protected:
                 else
                     detail::hash_combine(hash, Lexer::to_value(element.first));
                 operands.emplace(
-                    _create_node(element, {}, variables, {footprint, hash})
+                    _create_node(element, {}, variables, hash)
                 );
             }
 
@@ -569,12 +566,7 @@ protected:
                     extract.pop();
                 }
                 operands.emplace(
-                    _create_node(
-                        element,
-                        std::move(nodes),
-                        variables,
-                        {footprint, hash}
-                    )
+                    _create_node(element, std::move(nodes), variables, hash)
                 );
             }
         }
@@ -599,12 +591,6 @@ protected:
 
 
 public:
-    BaseParser() {
-        static std::size_t footprint{0};
-        _footprint = footprint++;
-    }
-
-
     Type cast(const std::string& expression) const {
         return Type{from_infix(expression)};
     }
