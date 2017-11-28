@@ -207,7 +207,7 @@ public:
             _associativity{std::move(other._associativity)}
     {}
 
-    Node& operator=(Node other) noexcept {
+    const Node& operator=(Node other) noexcept {
         swap(*this, other);
         return *this;
     }
