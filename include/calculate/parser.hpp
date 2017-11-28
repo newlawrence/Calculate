@@ -32,9 +32,10 @@ public:
     enum class Associativity : int {LEFT=0, RIGHT, BOTH};
     using Expression = Node<BaseParser>;
     using Variables = typename Expression::Variables;
+    using Wrapper = calculate::Wrapper<Type, Expression>;
 
 
-    struct Function : Wrapper<Type, Expression> {
+    struct Function : Wrapper {
         template<typename Callable>
         static constexpr bool not_me =
             detail::NotSame<Callable, Function>::value;
@@ -49,7 +50,7 @@ public:
             std::enable_if_t<!is_model<Callable>>* = nullptr
         >
         Function(Callable&& callable) :
-                Wrapper<Type, Expression>{
+                Wrapper{
                     std::forward<Callable>(callable),
                     &Expression::evaluator
                 }
@@ -64,8 +65,8 @@ public:
             typename Callable,
             std::enable_if_t<is_model<Callable>>* = nullptr
         >
-        Function(Callable&& callable) :
-                Wrapper<Type, Expression>{std::forward<Callable>(callable)}
+        Function(Callable&& callable) : 
+                Wrapper{std::forward<Callable>(callable)}
         {}
 
         inline std::size_t arguments() const noexcept { return this->argc(); }
@@ -519,7 +520,6 @@ protected:
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
         std::pair<std::string, Symbol> element{};
-        std::unique_ptr<Function> function{};
         std::size_t n{};
 
         auto hash = std::hash<decltype(this)>{}(this);
@@ -551,20 +551,17 @@ protected:
 
             else {
                 std::vector<Expression> nodes{};
-                if (element.second == Symbol::FUNCTION)
-                    function = std::make_unique<Function>(
-                        get<Function>(element.first)
-                    );
-                else
-                    function = std::make_unique<Function>(
-                        get<Operator>(element.first).function()
-                    );
-                n = function->arguments();
+                if (element.second == Symbol::FUNCTION) {
+                    auto function = get<Function>(element.first);
+                    n = function.arguments();
+                    detail::hash_combine(hash, static_cast<Wrapper>(function));
+                }
+                else {
+                    auto function = get<Operator>(element.first).function();
+                    n = function.arguments();
+                    detail::hash_combine(hash, static_cast<Wrapper>(function));
+                }
                 nodes.reserve(n);
-                detail::hash_combine(
-                    hash,
-                    *static_cast<Wrapper<Type, Expression>*>(function.get())
-                );
 
                 for (std::size_t i = 0; i < n; i++) {
                     if (operands.empty())
