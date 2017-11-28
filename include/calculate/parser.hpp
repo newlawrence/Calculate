@@ -26,16 +26,15 @@ public:
 
     using Constant = Type;
     struct Function;
-    struct Operator;
+    class Operator;
     enum class Symbol :
             int {LEFT=0, RIGHT, SEPARATOR, CONSTANT, FUNCTION, OPERATOR};
     enum class Associativity : int {LEFT=0, RIGHT, BOTH};
     using Expression = Node<BaseParser>;
     using Variables = typename Expression::Variables;
-    using Wrapper = calculate::Wrapper<Type, Expression>;
 
 
-    struct Function : Wrapper {
+    struct Function : calculate::Wrapper<Type, Expression> {
         template<typename Callable>
         static constexpr bool not_me =
             detail::NotSame<Callable, Function>::value;
@@ -50,7 +49,7 @@ public:
             std::enable_if_t<!is_model<Callable>>* = nullptr
         >
         Function(Callable&& callable) :
-                Wrapper{
+                Wrapper<Type, Expression>{
                     std::forward<Callable>(callable),
                     &Expression::evaluator
                 }
@@ -65,8 +64,8 @@ public:
             typename Callable,
             std::enable_if_t<is_model<Callable>>* = nullptr
         >
-        Function(Callable&& callable) : 
-                Wrapper{std::forward<Callable>(callable)}
+        Function(Callable&& callable) :
+                Wrapper<Type, Expression>{std::forward<Callable>(callable)}
         {}
 
         inline std::size_t arguments() const noexcept { return this->argc(); }
@@ -517,6 +516,7 @@ protected:
         std::queue<std::pair<std::string, Symbol>>&& tokens,
         const std::shared_ptr<Variables>& variables
     ) const {
+        using Wrapper = calculate::Wrapper<Type, Expression>;
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
         std::pair<std::string, Symbol> element{};
