@@ -34,7 +34,7 @@ public:
     using Variables = typename Expression::Variables;
 
 
-    struct Function final : public Wrapper<Type, Expression> {
+    struct Function : Wrapper<Type, Expression> {
         template<typename Callable>
         static constexpr bool not_me =
             detail::NotSame<Callable, Function>::value;
@@ -71,25 +71,35 @@ public:
         inline std::size_t arguments() const noexcept { return this->argc(); }
     };
 
-    struct Operator {
-        std::string alias;
-        std::size_t precedence;
-        Associativity associativity;
-        Function function;
+    class Operator {
+        std::string _alias;
+        std::size_t _precedence;
+        Associativity _associativity;
+        Function _function;
+
+    public:
         Operator(
-            const std::string& alias_,
-            std::size_t precedence_,
-            Associativity associativity_,
-            const Function& function_
+            const std::string& alias,
+            std::size_t precedence,
+            Associativity associativity,
+            const Function& function
         ) :
-                alias(alias_),
-                precedence(precedence_),
-                associativity(associativity_),
-                function(function_)
+                _alias{alias},
+                _precedence{precedence},
+                _associativity{associativity},
+                _function{function}
         {
-            if (alias.size())
-                _validate(static_cast<Constant*>(nullptr), alias);
+            if (_alias.size())
+                _validate(static_cast<Constant*>(nullptr), _alias);
         }
+
+        std::string alias() { return _alias; }
+
+        std::size_t precedence() { return _precedence; }
+
+        Associativity associativity() { return _associativity; }
+
+        Function function() { return _function; }
     };
 
 
@@ -239,7 +249,7 @@ protected:
             )
                 if (
                     current.second != Symbol::OPERATOR ||
-                    get<Operator>(current.first).associativity !=
+                    get<Operator>(current.first).associativity() !=
                         Associativity::RIGHT
                 )
                     fill_parenthesis();
@@ -261,7 +271,7 @@ protected:
                 if (current.second != Symbol::OPERATOR)
                     collect_symbol();
                 else {
-                    auto alias = get<Operator>(current.first).alias;
+                    auto alias = get<Operator>(current.first).alias();
                     if (alias.empty())
                         collect_symbol();
                     else if (tokens.empty())
@@ -411,10 +421,11 @@ protected:
                         break;
                     }
                     else {
-                        auto l1 = get<Operator>(element.first).associativity !=
+                        auto l1 =
+                            get<Operator>(element.first).associativity() !=
                             Associativity::RIGHT;
-                        auto p1 = get<Operator>(element.first).precedence;
-                        auto p2 = get<Operator>(another.first).precedence;
+                        auto p1 = get<Operator>(element.first).precedence();
+                        auto p2 = get<Operator>(another.first).precedence();
                         if ((l1 && (p1 <= p2)) || (!l1 && (p1 < p2))) {
                             operations.pop();
                             collected.push(another);
@@ -472,11 +483,11 @@ protected:
             return Expression{
                 token,
                 variables,
-                found_operator->second.function,
+                found_operator->second.function(),
                 std::move(nodes),
                 hash,
-                get<Operator>(token.first).precedence,
-                get<Operator>(token.first).associativity
+                get<Operator>(token.first).precedence(),
+                get<Operator>(token.first).associativity()
             };
 
         try {
@@ -546,7 +557,7 @@ protected:
                     );
                 else
                     function = std::make_unique<Function>(
-                        get<Operator>(element.first).function
+                        get<Operator>(element.first).function()
                     );
                 n = function->arguments();
                 nodes.reserve(n);
