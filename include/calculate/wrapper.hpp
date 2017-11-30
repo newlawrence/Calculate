@@ -233,20 +233,20 @@ class Wrapper {
                 _adapter{adapter}
         {}
 
-        virtual std::shared_ptr<WrapperConcept<Type, Source>>
+        std::shared_ptr<WrapperConcept<Type, Source>>
         copy() const noexcept override {
             return std::make_shared<WrapperModel>(*this);
         }
 
-        virtual std::size_t argc() const noexcept override { return n; }
+        std::size_t argc() const noexcept override { return n; }
 
-        virtual bool is_const() const noexcept override { return constant; }
+        bool is_const() const noexcept override { return constant; }
 
-        virtual Type evaluate(const std::vector<Source>& args) const override {
+        Type evaluate(const std::vector<Source>& args) const override {
             return _evaluate(std::integral_constant<bool, constant>{}, args);
         }
 
-        virtual Type evaluate(const std::vector<Source>& args) override {
+        Type evaluate(const std::vector<Source>& args) override {
             return _evaluate(args, std::make_index_sequence<n>{});
         }
     };
