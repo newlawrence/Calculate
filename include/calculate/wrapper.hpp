@@ -384,3 +384,4 @@ struct hash<calculate::Wrapper<Type, Source>> {
 }
 
 #endif
+

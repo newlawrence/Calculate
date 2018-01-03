@@ -27,24 +27,31 @@ public:
     using Constant = Type;
     class Function;
     class Operator;
-    enum class Symbol :
-            int {LEFT=0, RIGHT, SEPARATOR, CONSTANT, FUNCTION, OPERATOR};
+
+    enum class Symbol : int {
+        LEFT=0,
+        RIGHT,
+        SEPARATOR,
+        CONSTANT,
+        FUNCTION,
+        OPERATOR
+    };
     enum class Associativity : int {LEFT=0, RIGHT, BOTH};
+
     using Expression = Node<BaseParser>;
     using Variables = typename Expression::Variables;
 
+    using WrapperConcept = WrapperConcept<Type, Expression>;
+    using Wrapper = Wrapper<Type, Expression>;
 
-    class Function : public calculate::Wrapper<Type, Expression> {
+    class Function : public Wrapper {
         template<typename Callable>
         struct Inspect {
             static constexpr bool not_me =
                 detail::NotSame<Callable, Function>::value;
             static constexpr bool is_model =
-                std::is_base_of<
-                    WrapperConcept<Type, Expression>,
-                    Callable
-                >::value;
-        }; 
+                std::is_base_of<WrapperConcept, Callable>::value;
+        };
 
     public:
         template<
@@ -53,10 +60,7 @@ public:
             std::enable_if_t<!Inspect<Callable>::is_model>* = nullptr
         >
         Function(Callable&& callable) :
-                Wrapper<Type, Expression>{
-                    std::forward<Callable>(callable),
-                    &Expression::evaluator
-                }
+                Wrapper{std::forward<Callable>(callable), &Expression::eval}
         {
             static_assert(
                 detail::IsConst<Callable>::value,
@@ -69,7 +73,7 @@ public:
             std::enable_if_t<Inspect<Callable>::is_model>* = nullptr
         >
         Function(Callable&& callable) :
-                Wrapper<Type, Expression>{std::forward<Callable>(callable)}
+                Wrapper{std::forward<Callable>(callable)}
         {}
 
         inline std::size_t arguments() const noexcept { return this->argc(); }
@@ -93,17 +97,30 @@ public:
                 _associativity{associativity},
                 _function{function}
         {
-            if (_alias.size())
-                _validate(static_cast<Constant*>(nullptr), _alias);
+            if (_alias.size() && !std::regex_match(alias, Lexer::name().regex))
+                throw UnsuitableName{alias};
         }
 
-        std::string alias() { return _alias; }
+        const Operator& operator=(Operator other) noexcept {
+            swap(*this, other);
+            return *this;
+        }
 
-        std::size_t precedence() { return _precedence; }
+        friend void swap(Operator& one, Operator& another) noexcept {
+            using std::swap;
+            swap(one._alias, another._alias);
+            swap(one._precedence, another._precedence);
+            swap(one._associativity, another._associativity);
+            swap(one._function, another._function);
+        }
 
-        Associativity associativity() { return _associativity; }
+        std::string alias() const noexcept { return _alias; }
 
-        Function function() { return _function; }
+        std::size_t precedence() const noexcept { return _precedence; }
+
+        Associativity associativity() const noexcept { return _associativity; }
+
+        Function function() const noexcept { return _function; }
     };
 
 

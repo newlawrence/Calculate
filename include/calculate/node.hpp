@@ -223,7 +223,7 @@ public:
         swap(one._associativity, another._associativity);
     }
 
-    static Type evaluator(const Node& node) {
+    static Type eval(const Node& node) {
         return node._function(node._nodes);
     }
 
