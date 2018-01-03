@@ -77,7 +77,7 @@ public:
         {
             std::unordered_set<std::string> singles{keys.begin(), keys.end()};
             for (const auto &variable : keys) {
-                if (!std::regex_match(variable, Lexer::name_regex()))
+                if (!std::regex_match(variable, Lexer::name().regex))
                     throw UnsuitableName{variable};
                 else if (singles.erase(variable) == 0)
                     throw RepeatedSymbol{variable};
@@ -378,3 +378,4 @@ struct hash<calculate::Node<Parser>> {
 }
 
 #endif
+

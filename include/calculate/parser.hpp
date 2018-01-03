@@ -113,17 +113,17 @@ protected:
     std::unordered_map<std::string, Operator> _operators;
 
     static void _validate(Constant*, const std::string& token) {
-        if (!std::regex_match(token, Lexer::name_regex()))
+        if (!std::regex_match(token, Lexer::name().regex))
             throw UnsuitableName{token};
     }
 
     static void _validate(Function*, const std::string& token) {
-        if (!std::regex_match(token, Lexer::name_regex()))
+        if (!std::regex_match(token, Lexer::name().regex))
             throw UnsuitableName{token};
     }
 
     static void _validate(Operator*, const std::string& token) {
-        if (!std::regex_match(token, Lexer::symbol_regex()))
+        if (!std::regex_match(token, Lexer::symbol().regex))
             throw UnsuitableName{token};
     }
 
@@ -159,7 +159,7 @@ protected:
         std::smatch match{};
 
         auto is = [&match](auto group) { return !match[group].str().empty(); };
-        while (std::regex_search(expression, match, Lexer::tokenizer_regex())) {
+        while (std::regex_search(expression, match, Lexer::tokenizer().regex)) {
             auto token = match.str();
             if (is(Group::DECIMAL))
                 throw SyntaxError{"orphan decimal mark '" + token + "'"};
@@ -773,3 +773,4 @@ public:
 }
 
 #endif
+
