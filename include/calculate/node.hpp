@@ -378,4 +378,3 @@ struct hash<calculate::Node<Parser>> {
 }
 
 #endif
-

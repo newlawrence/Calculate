@@ -180,4 +180,3 @@ struct hash<std::complex<Type>> {
 }
 
 #endif
-
