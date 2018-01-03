@@ -111,7 +111,6 @@ protected:
     std::unordered_map<std::string, Constant> _constants;
     std::unordered_map<std::string, Function> _functions;
     std::unordered_map<std::string, Operator> _operators;
-    std::size_t _footprint;
 
     static void _validate(Constant*, const std::string& token) {
         if (!std::regex_match(token, Lexer::name_regex()))
