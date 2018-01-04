@@ -280,9 +280,13 @@ public:
 
     const Node& at(std::size_t index) const { return _nodes.at(index); }
 
-    const const_iterator begin() const noexcept { return _nodes.begin(); }
+    const_iterator begin() const noexcept { return _nodes.begin(); }
 
-    const const_iterator end() const noexcept { return _nodes.end(); }
+    const_iterator end() const noexcept { return _nodes.end(); }
+
+    const_iterator rbegin() const noexcept { return _nodes.rbegin(); }
+
+    const_iterator rend() const noexcept { return _nodes.rend(); }
 
     friend std::ostream& operator<<(
         std::ostream& ostream,
