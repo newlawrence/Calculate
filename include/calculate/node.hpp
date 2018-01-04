@@ -10,30 +10,10 @@
 #include <vector>
 
 #include "exception.hpp"
+#include "util.hpp"
 
 
 namespace calculate {
-
-namespace detail {
-
-inline std::string replace(
-    std::string where,
-    const std::string& what,
-    const std::string& by
-) {
-    std::size_t index = 0;
-    while (true) {
-        index = where.find(what, index);
-        if (index == std::string::npos)
-            break;
-        where.replace(index, what.size(), by);
-        index += what.size();
-    }
-    return where;
-}
-
-}
-
 
 template<typename Parser>
 class Node {
@@ -50,6 +30,8 @@ class Node {
 
 
 public:
+    using const_iterator = typename std::vector<Node>::const_iterator;
+
     class Variables {
     public:
         const std::vector<std::string> variables;
@@ -297,8 +279,6 @@ public:
     const Node& operator[](std::size_t index) const { return _nodes[index]; }
 
     const Node& at(std::size_t index) const { return _nodes.at(index); }
-
-    using const_iterator = typename std::vector<Node>::const_iterator;
 
     const const_iterator begin() const noexcept { return _nodes.begin(); }
 

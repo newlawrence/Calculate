@@ -352,13 +352,12 @@ public:
 
     template<typename... Args>
     Type operator()(Args&&... args) {
-        return _callable->evaluate(
-            std::vector<Source>{std::forward<Args>(args)...}
-        );
+        return _callable
+            ->evaluate(std::vector<Source>{std::forward<Args>(args)...});
     }
 
     bool operator==(const Wrapper& other) const noexcept {
-        return this->_callable == other._callable;
+        return _callable == other._callable;
     }
 
     Wrapper copy() const noexcept { return Wrapper{_callable->copy()}; }

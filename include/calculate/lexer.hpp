@@ -3,25 +3,13 @@
 
 #include <complex>
 #include <iomanip>
-#include <regex>
 #include <sstream>
 
 #include "exception.hpp"
+#include "util.hpp"
 
 
 namespace calculate {
-
-namespace detail {
-
-struct Regex {
-    std::string pattern;
-    std::regex regex;
-
-    Regex(const std::string& string) : pattern(string), regex(string) {}
-};
-
-}
-
 
 template<typename Type>
 class Lexer {
@@ -53,22 +41,22 @@ public:
         return string;
     };
 
-    static const detail::Regex& number() {
-        static detail::Regex regex{
-            R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_"
+    static const util::Regex& number() {
+        static util::Regex regex{
+R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_"
         };
         return regex;
     };
-    static const detail::Regex& name() {
-        static detail::Regex regex{R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"};
+    static const util::Regex& name() {
+        static util::Regex regex{R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"};
         return regex;
     };
-    static const detail::Regex& symbol() {
-        static detail::Regex regex{R"_(^[^A-Za-z\d.(),_\s]+$)_"};
+    static const util::Regex& symbol() {
+        static util::Regex regex{R"_(^[^A-Za-z\d.(),_\s]+$)_"};
         return regex;
     };
-    static const detail::Regex& tokenizer() {
-        static detail::Regex regex{
+    static const util::Regex& tokenizer() {
+        static util::Regex regex{
             R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
             R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
             R"_(([^A-Za-z\d\.(),_\s]+)|)_"
@@ -115,22 +103,22 @@ public:
         return string;
     };
 
-    static const detail::Regex& number() {
-        static detail::Regex regex{
+    static const util::Regex& number() {
+        static util::Regex regex{
             R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_"
         };
         return regex;
     };
-    static const detail::Regex& name() {
-        static detail::Regex regex{R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"};
+    static const util::Regex& name() {
+        static util::Regex regex{R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"};
         return regex;
     };
-    static const detail::Regex& symbol() {
-        static detail::Regex regex{R"_(^[^A-Za-z\d.(),_\s]+$)_"};
+    static const util::Regex& symbol() {
+        static util::Regex regex{R"_(^[^A-Za-z\d.(),_\s]+$)_"};
         return regex;
     };
-    static const detail::Regex& tokenizer() {
-        static detail::Regex regex{
+    static const util::Regex& tokenizer() {
+        static util::Regex regex{
             R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?)|)_"
             R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
             R"_(([^A-Za-z\d\.(),_\s]+)|)_"
@@ -172,7 +160,7 @@ template<typename Type>
 struct hash<std::complex<Type>> {
     size_t operator()(const std::complex<Type>& z) const {
         size_t combined{hash<Type>{}(real(z))};
-        calculate::detail::hash_combine(combined, imag(z));
+        calculate::util::hash_combine(combined, imag(z));
         return combined;
     }
 };

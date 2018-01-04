@@ -559,11 +559,11 @@ protected:
 
             else if (element.second == Symbol::CONSTANT) {
                 if (has<Constant>(element.first))
-                    detail::hash_combine(hash, get<Constant>(element.first));
+                    util::hash_combine(hash, get<Constant>(element.first));
                 else if (variables->has(element.first))
-                    detail::hash_combine(hash, variables->index(element.first));
+                    util::hash_combine(hash, variables->index(element.first));
                 else
-                    detail::hash_combine(hash, Lexer::to_value(element.first));
+                    util::hash_combine(hash, Lexer::to_value(element.first));
                 operands.emplace(
                     _create_node(element, {}, variables, hash)
                 );
@@ -574,12 +574,12 @@ protected:
                 if (element.second == Symbol::FUNCTION) {
                     auto function = get<Function>(element.first);
                     n = function.arguments();
-                    detail::hash_combine(hash, static_cast<Wrapper>(function));
+                    util::hash_combine(hash, static_cast<Wrapper>(function));
                 }
                 else {
                     auto function = get<Operator>(element.first).function();
                     n = function.arguments();
-                    detail::hash_combine(hash, static_cast<Wrapper>(function));
+                    util::hash_combine(hash, static_cast<Wrapper>(function));
                 }
                 nodes.reserve(n);
 
@@ -730,7 +730,7 @@ public:
             pruned.end()
         );
         return from_postfix(
-            detail::replace(
+            util::replace(
                 node.postfix(),
                 variable,
                 create_node(value).postfix()
