@@ -23,12 +23,7 @@ public:
     using Type = BaseType;
     using Lexer = BaseLexer<Type>;
 
-
-    using Constant = Type;
-    class Function;
-    class Operator;
-
-    enum class Symbol : int {
+    enum class SymbolType : int {
         LEFT=0,
         RIGHT,
         SEPARATOR,
@@ -37,6 +32,10 @@ public:
         OPERATOR
     };
     enum class Associativity : int {LEFT=0, RIGHT, BOTH};
+
+    using Constant = Type;
+    class Function;
+    class Operator;
 
     using Expression = Node<BaseParser>;
     using Variables = typename Expression::Variables;
@@ -167,12 +166,12 @@ protected:
     }
 
 
-    std::queue<std::pair<std::string, Symbol>> _tokenize(
+    std::queue<std::pair<std::string, SymbolType>> _tokenize(
         std::string expression,
         const std::shared_ptr<Variables>& variables
     ) const {
         enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR, DECIMAL};
-        std::queue<std::pair<std::string, Symbol>> tokens{};
+        std::queue<std::pair<std::string, SymbolType>> tokens{};
         std::smatch match{};
 
         auto is = [&match](auto group) { return !match[group].str().empty(); };
@@ -181,44 +180,44 @@ protected:
             if (is(Group::DECIMAL))
                 throw SyntaxError{"orphan decimal mark '" + token + "'"};
             else if (is(Group::LEFT))
-                tokens.push({token, Symbol::LEFT});
+                tokens.push({token, SymbolType::LEFT});
             else if (is(Group::RIGHT))
-                tokens.push({token, Symbol::RIGHT});
+                tokens.push({token, SymbolType::RIGHT});
             else if (is(Group::SEPARATOR))
-                tokens.push({token, Symbol::SEPARATOR});
+                tokens.push({token, SymbolType::SEPARATOR});
             else if (is(Group::NAME) && has<Constant>(match.str()))
-                tokens.push({token, Symbol::CONSTANT});
+                tokens.push({token, SymbolType::CONSTANT});
             else if (is(Group::NAME) && has<Function>(match.str()))
-                tokens.push({token, Symbol::FUNCTION});
+                tokens.push({token, SymbolType::FUNCTION});
             else if (is(Group::SYMBOL) && has<Operator>(match.str()))
-                tokens.push({token, Symbol::OPERATOR});
+                tokens.push({token, SymbolType::OPERATOR});
             else if (is(Group::NUMBER))
-                tokens.push({token, Symbol::CONSTANT});
+                tokens.push({token, SymbolType::CONSTANT});
             else {
                 variables->at(token);
-                tokens.push({token, Symbol::CONSTANT});
+                tokens.push({token, SymbolType::CONSTANT});
             }
             expression = match.suffix().str();
         }
         return tokens;
     }
 
-    std::queue<std::pair<std::string, Symbol>> _parse_infix(
-        std::queue<std::pair<std::string, Symbol>>&& tokens
+    std::queue<std::pair<std::string, SymbolType>> _parse_infix(
+        std::queue<std::pair<std::string, SymbolType>>&& tokens
     ) const {
-        const std::pair<std::string, Symbol> Left{
+        const std::pair<std::string, SymbolType> Left{
             Lexer::left(),
-            Symbol::LEFT
+            SymbolType::LEFT
         };
-        const std::pair<std::string, Symbol> Right{
+        const std::pair<std::string, SymbolType> Right{
             Lexer::right(),
-            Symbol::RIGHT
+            SymbolType::RIGHT
         };
 
         std::string parsed{};
-        std::queue<std::pair<std::string, Symbol>> collected{};
-        std::pair<std::string, Symbol> previous{Left};
-        std::pair<std::string, Symbol> current{};
+        std::queue<std::pair<std::string, SymbolType>> collected{};
+        std::pair<std::string, SymbolType> previous{Left};
+        std::pair<std::string, SymbolType> current{};
         std::stack<std::size_t> parenthesis_counter{};
 
         auto fill_parenthesis = [&]() {
@@ -235,40 +234,40 @@ protected:
 
         auto collect_symbol = [&](bool original=true) {
             switch (previous.second) {
-            case (Symbol::RIGHT):
-            case (Symbol::CONSTANT):
+            case (SymbolType::RIGHT):
+            case (SymbolType::CONSTANT):
                 if (
-                    current.second == Symbol::RIGHT ||
-                    current.second == Symbol::SEPARATOR ||
-                    current.second == Symbol::OPERATOR
+                    current.second == SymbolType::RIGHT ||
+                    current.second == SymbolType::SEPARATOR ||
+                    current.second == SymbolType::OPERATOR
                 )
                     break;
                 else
                     throw SyntaxError{};
-            case (Symbol::LEFT):
-            case (Symbol::SEPARATOR):
-            case (Symbol::OPERATOR):
+            case (SymbolType::LEFT):
+            case (SymbolType::SEPARATOR):
+            case (SymbolType::OPERATOR):
                 if (
-                    current.second == Symbol::CONSTANT ||
-                    current.second == Symbol::LEFT ||
-                    current.second == Symbol::FUNCTION
+                    current.second == SymbolType::CONSTANT ||
+                    current.second == SymbolType::LEFT ||
+                    current.second == SymbolType::FUNCTION
                 )
                     break;
                 else
                     throw SyntaxError{};
-            case (Symbol::FUNCTION):
-                if (current.second == Symbol::LEFT)
+            case (SymbolType::FUNCTION):
+                if (current.second == SymbolType::LEFT)
                     break;
                 else
                     throw SyntaxError{};
             }
 
             if (
-                previous.second == Symbol::CONSTANT ||
-                previous.second == Symbol::RIGHT
+                previous.second == SymbolType::CONSTANT ||
+                previous.second == SymbolType::RIGHT
             )
                 if (
-                    current.second != Symbol::OPERATOR ||
+                    current.second != SymbolType::OPERATOR ||
                     get<Operator>(current.first).associativity() !=
                         Associativity::RIGHT
                 )
@@ -288,7 +287,7 @@ protected:
                 current = tokens.front();
                 tokens.pop();
 
-                if (current.second != Symbol::OPERATOR)
+                if (current.second != SymbolType::OPERATOR)
                     collect_symbol();
                 else {
                     auto alias = get<Operator>(current.first).alias();
@@ -298,11 +297,11 @@ protected:
                         throw SyntaxError{};
                     else {
                         switch (previous.second) {
-                        case (Symbol::LEFT):
-                        case (Symbol::SEPARATOR):
-                        case (Symbol::OPERATOR):
+                        case (SymbolType::LEFT):
+                        case (SymbolType::SEPARATOR):
+                        case (SymbolType::OPERATOR):
                             parsed += current.first;
-                            current = {alias, Symbol::FUNCTION};
+                            current = {alias, SymbolType::FUNCTION};
                             collect_symbol(false);
                             current = Left;
                             collect_symbol(false);
@@ -316,15 +315,15 @@ protected:
             }
 
             if (!parenthesis_counter.empty()) {
-                if (current.second == Symbol::LEFT)
+                if (current.second == SymbolType::LEFT)
                     parenthesis_counter.top()++;
-                else if (current.second == Symbol::RIGHT)
+                else if (current.second == SymbolType::RIGHT)
                     parenthesis_counter.top()--;
             }
 
             if (
-                previous.second == Symbol::CONSTANT ||
-                previous.second == Symbol::RIGHT
+                previous.second == SymbolType::CONSTANT ||
+                previous.second == SymbolType::RIGHT
             )
                 fill_parenthesis();
             else
@@ -342,13 +341,13 @@ protected:
         return collected;
     }
 
-    std::queue<std::pair<std::string, Symbol>> _shunting_yard(
-        std::queue<std::pair<std::string, Symbol>>&& tokens
+    std::queue<std::pair<std::string, SymbolType>> _shunting_yard(
+        std::queue<std::pair<std::string, SymbolType>>&& tokens
     ) const {
-        std::queue<std::pair<std::string, Symbol>> collected{};
-        std::stack<std::pair<std::string, Symbol>> operations{};
-        std::pair<std::string, Symbol> element{};
-        std::pair<std::string, Symbol> another{};
+        std::queue<std::pair<std::string, SymbolType>> collected{};
+        std::stack<std::pair<std::string, SymbolType>> operations{};
+        std::pair<std::string, SymbolType> element{};
+        std::pair<std::string, SymbolType> another{};
 
         std::stack<std::size_t> expected_counter{};
         std::stack<std::size_t> provided_counter{};
@@ -364,16 +363,16 @@ protected:
 
             switch (element.second) {
 
-            case (Symbol::LEFT):
+            case (SymbolType::LEFT):
                 operations.push(element);
                 apply_function.push(was_function);
                 was_function = false;
                 break;
 
-            case (Symbol::RIGHT):
+            case (SymbolType::RIGHT):
                 while (!operations.empty()) {
                     another = operations.top();
-                    if (another.second != Symbol::LEFT) {
+                    if (another.second != SymbolType::LEFT) {
                         operations.pop();
                         collected.push(another);
                     }
@@ -382,7 +381,7 @@ protected:
                 }
                 if (
                     !operations.empty() &&
-                    operations.top().second == Symbol::LEFT
+                    operations.top().second == SymbolType::LEFT
                 )
                     operations.pop();
                 else
@@ -400,10 +399,10 @@ protected:
                 apply_function.pop();
                 break;
 
-            case (Symbol::SEPARATOR):
+            case (SymbolType::SEPARATOR):
                 while (!operations.empty()) {
                     another = operations.top();
-                    if (another.second != Symbol::LEFT) {
+                    if (another.second != SymbolType::LEFT) {
                         collected.push(another);
                         operations.pop();
                     }
@@ -419,23 +418,23 @@ protected:
                     throw ParenthesisMismatch{};
                 break;
 
-            case (Symbol::CONSTANT):
+            case (SymbolType::CONSTANT):
                 collected.push(element);
                 break;
 
-            case (Symbol::FUNCTION):
+            case (SymbolType::FUNCTION):
                 operations.push(element);
                 expected_counter.push(get<Function>(element.first).arguments());
                 provided_counter.push(1);
                 was_function = true;
                 break;
 
-            case (Symbol::OPERATOR):
+            case (SymbolType::OPERATOR):
                 while (!operations.empty()) {
                     another = operations.top();
-                    if (another.second == Symbol::LEFT)
+                    if (another.second == SymbolType::LEFT)
                         break;
-                    else if (another.second == Symbol::FUNCTION) {
+                    else if (another.second == SymbolType::FUNCTION) {
                         collected.push(another);
                         operations.pop();
                         break;
@@ -461,7 +460,7 @@ protected:
 
         while (!operations.empty()) {
             element = operations.top();
-            if (element.second == Symbol::LEFT)
+            if (element.second == SymbolType::LEFT)
                 throw ParenthesisMismatch{};
             operations.pop();
             collected.push(element);
@@ -471,7 +470,7 @@ protected:
     }
 
     Expression _create_node(
-        const std::pair<std::string, Symbol>& token,
+        const std::pair<std::string, SymbolType>& token,
         std::vector<Expression>&& nodes,
         const std::shared_ptr<Variables>& variables,
         std::size_t hash
@@ -533,13 +532,13 @@ protected:
     }
 
     Expression _build_tree(
-        std::queue<std::pair<std::string, Symbol>>&& tokens,
+        std::queue<std::pair<std::string, SymbolType>>&& tokens,
         const std::shared_ptr<Variables>& variables
     ) const {
         using Wrapper = calculate::Wrapper<Type, Expression>;
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
-        std::pair<std::string, Symbol> element{};
+        std::pair<std::string, SymbolType> element{};
         std::size_t n{};
 
         auto hash = std::hash<decltype(this)>{}(this);
@@ -548,16 +547,16 @@ protected:
             tokens.pop();
 
             if (
-                element.second == Symbol::LEFT ||
-                element.second == Symbol::RIGHT ||
-                element.second == Symbol::SEPARATOR
+                element.second == SymbolType::LEFT ||
+                element.second == SymbolType::RIGHT ||
+                element.second == SymbolType::SEPARATOR
             )
                 throw SyntaxError{
                     "symbol '" + element.first + "' not allowed in "
                     "postfix notation"
                 };
 
-            else if (element.second == Symbol::CONSTANT) {
+            else if (element.second == SymbolType::CONSTANT) {
                 if (has<Constant>(element.first))
                     util::hash_combine(hash, get<Constant>(element.first));
                 else if (variables->has(element.first))
@@ -571,7 +570,7 @@ protected:
 
             else {
                 std::vector<Expression> nodes{};
-                if (element.second == Symbol::FUNCTION) {
+                if (element.second == SymbolType::FUNCTION) {
                     auto function = get<Function>(element.first);
                     n = function.arguments();
                     util::hash_combine(hash, static_cast<Wrapper>(function));

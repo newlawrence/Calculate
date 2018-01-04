@@ -19,7 +19,7 @@ template<typename Parser>
 class Node {
     using Type = typename Parser::Type;
     using Lexer = typename Parser::Lexer;
-    using Symbol = typename Parser::Symbol;
+    using SymbolType = typename Parser::SymbolType;
     using Associativity = typename Parser::Associativity;
     using Constant = typename Parser::Constant;
     using Function = typename Parser::Function;
@@ -100,7 +100,7 @@ public:
 
 private:
     std::string _token;
-    Symbol _symbol;
+    SymbolType _symbol;
     std::shared_ptr<Variables> _variables;
     Function _function;
     std::vector<Node> _nodes;
@@ -111,7 +111,7 @@ private:
     Node() = delete;
 
     explicit Node(
-        const std::pair<std::string, Symbol>& token,
+        const std::pair<std::string, SymbolType>& token,
         const std::shared_ptr<Variables>& variables,
         const Function& function,
         std::vector<Node>&& nodes,
@@ -239,11 +239,11 @@ public:
                     right->_variables->index(right->_token);
 
             if (left->_symbol == right->_symbol) {
-                if (left->symbol() == Symbol::CONSTANT)
+                if (left->symbol() == SymbolType::CONSTANT)
                     return left->_function() == right->_function();
-                else if (left->symbol() == Symbol::FUNCTION)
+                else if (left->symbol() == SymbolType::FUNCTION)
                     return left->_function == right->_function;
-                else if (left->symbol() == Symbol::OPERATOR)
+                else if (left->symbol() == SymbolType::OPERATOR)
                     return
                         left->_function == right->_function &&
                         left->_precedence == right ->_precedence &&
@@ -298,7 +298,7 @@ public:
 
     std::string token() const noexcept { return _token; }
 
-    Symbol symbol() const noexcept { return _symbol; }
+    SymbolType symbol() const noexcept { return _symbol; }
 
     std::size_t branches() const noexcept { return _nodes.size(); }
 
@@ -307,7 +307,7 @@ public:
 
         auto brace = [&](std::size_t i) {
             const auto& node = _nodes[i];
-            if (node._symbol == Symbol::OPERATOR) {
+            if (node._symbol == SymbolType::OPERATOR) {
                 auto pp = _precedence;
                 auto cp = node._precedence;
                 auto pa = !i ?
@@ -320,13 +320,13 @@ public:
         };
 
         switch (_symbol) {
-        case (Symbol::FUNCTION):
+        case (SymbolType::FUNCTION):
             infix += _token + Lexer::left();
             for (const auto& node : _nodes)
                 infix += node.infix() + Lexer::separator();
             infix.back() = Lexer::right().front();
             return infix;
-        case (Symbol::OPERATOR):
+        case (SymbolType::OPERATOR):
             infix += brace(0) + _token + brace(1);
             return infix;
         default:
