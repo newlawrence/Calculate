@@ -188,7 +188,7 @@ template<typename Type, typename Source = Type>
 class Wrapper {
     friend struct std::hash<Wrapper>;
 
-	using WrapperConcept = WrapperConcept<Type, Source>;
+	using WrapperConcept = calculate::WrapperConcept<Type, Source>;
 
     template<typename Callable>
     struct Inspect {

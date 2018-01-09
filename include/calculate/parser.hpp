@@ -40,10 +40,10 @@ public:
     using Expression = Node<BaseParser>;
     using Variables = typename Expression::Variables;
 
-    using WrapperConcept = WrapperConcept<Type, Expression>;
-    using Wrapper = Wrapper<Type, Expression>;
+    using WrapperConcept = calculate::WrapperConcept<Type, Expression>;
+    using Wrapper = calculate::Wrapper<Type, Expression>;
 
-    class Function : public Wrapper {
+    class Function : public calculate::Wrapper<Type, Expression> {
         template<typename Callable>
         struct Inspect {
             static constexpr bool not_me =
@@ -535,7 +535,6 @@ protected:
         std::queue<std::pair<std::string, SymbolType>>&& tokens,
         const std::shared_ptr<Variables>& variables
     ) const {
-        using Wrapper = calculate::Wrapper<Type, Expression>;
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
         std::pair<std::string, SymbolType> element{};
