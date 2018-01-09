@@ -15,12 +15,14 @@
 
 namespace calculate {
 
-template<typename BaseType, template<typename> class BaseLexer = Lexer>
+template<typename MainType, template<typename> class MainLexer = Lexer>
 class BaseParser {
 public:
     using Base = BaseParser;
-    using Type = BaseType;
-    using Lexer = BaseLexer<Type>;
+    using Type = MainType;
+
+    using BaseLexer = BaseLexer<Type>;
+    using Lexer = MainLexer<Type>;
 
     using Symbol = Symbol<Type, Node<BaseParser>>;
     using Constant = Constant<Type, Node<BaseParser>>;

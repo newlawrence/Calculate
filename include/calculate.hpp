@@ -170,23 +170,29 @@ public:
             static_cast<Type(*)(Type)>(std::lgamma)
         );
 
-        set<Operator>("+", "id", std::size_t{3333}, Associativity::BOTH,
-            [](Type x1, Type x2) noexcept { return x1 + x2; }
+        set<Operator>("+",
+            [](Type x1, Type x2) noexcept { return x1 + x2; },
+            "id", std::size_t{3333}, Operator::Associativity::BOTH
         );
-        set<Operator>("-", "neg", std::size_t{3333}, Associativity::LEFT,
-            [](Type x1, Type x2) noexcept { return x1 - x2; }
+        set<Operator>("-",
+            [](Type x1, Type x2) noexcept { return x1 - x2; },
+            "neg", std::size_t{3333}, Operator::Associativity::LEFT
         );
-        set<Operator>("*", "", std::size_t{6666}, Associativity::BOTH,
-            [](Type x1, Type x2) noexcept { return x1 * x2; }
+        set<Operator>("*",
+            [](Type x1, Type x2) noexcept { return x1 * x2; },
+            "", std::size_t{6666}, Operator::Associativity::BOTH
         );
-        set<Operator>("/", "", std::size_t{6666}, Associativity::LEFT,
-            [](Type x1, Type x2) noexcept { return x1 / x2; }
+        set<Operator>("/",
+            [](Type x1, Type x2) noexcept { return x1 / x2; },
+            "", std::size_t{6666}, Operator::Associativity::LEFT
         );
-        set<Operator>("%", "", std::size_t{6666}, Associativity::LEFT,
-            static_cast<Type(*)(Type, Type)>(std::fmod)
+        set<Operator>("%",
+            static_cast<Type(*)(Type, Type)>(std::fmod),
+            "", std::size_t{6666}, Operator::Associativity::LEFT
         );
-        set<Operator>("^", "", std::size_t{9999}, Associativity::RIGHT,
-            static_cast<Type(*)(Type, Type)>(std::pow)
+        set<Operator>("^",
+            static_cast<Type(*)(Type, Type)>(std::pow),
+            "", std::size_t{9999}, Operator::Associativity::RIGHT
         );
     }
 };
@@ -304,20 +310,25 @@ public:
             static_cast<Type(*)(const Type&)>(std::atanh)
         );
 
-        set<Operator>("+", "id", std::size_t{3333}, Associativity::BOTH,
-            [](const Type& z1, const Type& z2) noexcept { return z1 + z2; }
+        set<Operator>("+",
+            [](const Type& z1, const Type& z2) noexcept { return z1 + z2; },
+            "id", std::size_t{3333}, Operator::Associativity::BOTH
         );
-        set<Operator>("-", "neg", std::size_t{3333}, Associativity::LEFT,
-            [](const Type& z1, const Type& z2) noexcept { return z1 - z2; }
+        set<Operator>("-",
+            [](const Type& z1, const Type& z2) noexcept { return z1 - z2; },
+            "neg", std::size_t{3333}, Operator::Associativity::LEFT
         );
-        set<Operator>("*", "", std::size_t{6666}, Associativity::BOTH,
-            [](const Type& z1, const Type& z2) noexcept { return z1 * z2; }
+        set<Operator>("*",
+            [](const Type& z1, const Type& z2) noexcept { return z1 * z2; },
+            "", std::size_t{6666}, Operator::Associativity::BOTH
         );
-        set<Operator>("/", "", std::size_t{6666}, Associativity::LEFT,
-            [](const Type& z1, const Type& z2) noexcept { return z1 / z2; }
+        set<Operator>("/",
+            [](const Type& z1, const Type& z2) noexcept { return z1 / z2; },
+            "", std::size_t{6666}, Operator::Associativity::LEFT
         );
-        set<Operator>("^", "", std::size_t{9999}, Associativity::RIGHT,
-            [](const Type& z1, const Type& z2) { return std::pow(z1, z2); }
+        set<Operator>("^",
+            [](const Type& z1, const Type& z2) { return std::pow(z1, z2); },
+            "", std::size_t{9999}, Operator::Associativity::RIGHT
         );
     }
 };

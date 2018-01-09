@@ -32,14 +32,6 @@ inline std::string replace(
     return where;
 }
 
-
-struct Regex {
-    std::string pattern;
-    std::regex regex;
-
-    Regex(const std::string& string) : pattern(string), regex(string) {}
-};
-
 }
 
 }

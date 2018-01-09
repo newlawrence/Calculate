@@ -12,7 +12,44 @@
 namespace calculate {
 
 template<typename Type>
-class Lexer {
+struct BaseLexer {
+    const std::string left;
+    const std::string right;
+    const std::string decimal;
+    const std::string separator;
+    const std::string number;
+    const std::string name;
+    const std::string symbol;
+    const std::string tokenizer;
+
+    const std::regex number_regex;
+    const std::regex name_regex;
+    const std::regex symbol_regex;
+    const std::regex tokenizer_regex;
+
+    BaseLexer(
+        const std::string& s1, const std::string& s2,
+        const std::string& s3, const std::string& s4,
+        const std::string& r1, const std::string& r2,
+        const std::string& r3, const std::string& r4
+    ) :
+            left{s1}, right{s2}, decimal{s3}, separator{s4},
+            number{s1}, name{s2}, symbol{s3}, tokenizer{s4},
+            number_regex{r1},
+            name_regex{r2},
+            symbol_regex{r3},
+            tokenizer_regex{r4}
+    {}
+
+    virtual Type to_value(const std::string&) const = 0;
+    virtual std::string to_string(Type) const noexcept = 0;
+};
+
+
+template<typename Type>
+class Lexer final : public BaseLexer<Type> {
+    using BaseLexer = BaseLexer<Type>;
+
     template<typename Num>
     static std::enable_if_t<std::is_integral<Num>::value, Num> _cast(
         const std::string& token
@@ -24,54 +61,28 @@ class Lexer {
     ) { return static_cast<Num>(std::stold(token)); }
 
 public:
-    static const std::string& left() {
-        static std::string string{"("};
-        return string;
-    };
-    static const std::string& right() {
-        static std::string string{")"};
-        return string;
-    };
-    static const std::string& decimal() {
-        static std::string string{"."};
-        return string;
-    };
-    static const std::string& separator() {
-        static std::string string{","};
-        return string;
-    };
-
-    static const util::Regex& number() {
-        static util::Regex regex{
-R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_"
-        };
-        return regex;
-    };
-    static const util::Regex& name() {
-        static util::Regex regex{R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"};
-        return regex;
-    };
-    static const util::Regex& symbol() {
-        static util::Regex regex{R"_(^[^A-Za-z\d.(),_\s]+$)_"};
-        return regex;
-    };
-    static const util::Regex& tokenizer() {
-        static util::Regex regex{
+    Lexer(
+        const std::string& s1="(",
+        const std::string& s2=")",
+        const std::string& s3=".",
+        const std::string& s4=",",
+        const std::string& r1=R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_",
+        const std::string& r2=R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
+        const std::string& r3=R"_(^[^A-Za-z\d.(),_\s]+$)_",
+        const std::string& r4=
             R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
             R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
             R"_(([^A-Za-z\d\.(),_\s]+)|)_"
             R"_((\()|(\))|(,)|(\.))_"
-        };
-        return regex;
-    };
+    ) : BaseLexer{s1, s2, s3, s4, r1, r2, r3, r4} {}
 
-    static Type to_value(const std::string& token) {
-        if (!std::regex_search(token, number().regex))
+    Type to_value(const std::string& token) const override {
+        if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
         return _cast<Type>(token);
     }
 
-    static std::string to_string(Type value) {
+    std::string to_string(Type value) const noexcept override {
         std::ostringstream string{};
 
         string << std::setprecision(std::numeric_limits<Type>::digits10);
@@ -82,63 +93,49 @@ R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_"
 
 
 template<typename Type>
-class Lexer<std::complex<Type>> {
+class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
+    using BaseLexer = BaseLexer<std::complex<Type>>;
+
+    template<typename Num>
+    static std::enable_if_t<std::is_integral<Num>::value, Num> _cast(
+        const std::string& token
+    ) { return static_cast<Num>(std::stoll(token)); }
+
+    template<typename Num>
+    static std::enable_if_t<std::is_floating_point<Num>::value, Num> _cast(
+        const std::string& token
+    ) { return static_cast<Num>(std::stold(token)); }
+
     static constexpr Type _zero = static_cast<Type>(0);
 
 public:
-    static const std::string& left() {
-        static std::string string{"("};
-        return string;
-    };
-    static const std::string& right() {
-        static std::string string{")"};
-        return string;
-    };
-    static const std::string& decimal() {
-        static std::string string{"."};
-        return string;
-    };
-    static const std::string& separator() {
-        static std::string string{","};
-        return string;
-    };
-
-    static const util::Regex& number() {
-        static util::Regex regex{
-            R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_"
-        };
-        return regex;
-    };
-    static const util::Regex& name() {
-        static util::Regex regex{R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"};
-        return regex;
-    };
-    static const util::Regex& symbol() {
-        static util::Regex regex{R"_(^[^A-Za-z\d.(),_\s]+$)_"};
-        return regex;
-    };
-    static const util::Regex& tokenizer() {
-        static util::Regex regex{
+    Lexer(
+        const std::string& s1="(",
+        const std::string& s2=")",
+        const std::string& s3=".",
+        const std::string& s4=",",
+        const std::string& r1=R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_",
+        const std::string& r2=R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
+        const std::string& r3=R"_(^[^A-Za-z\d.(),_\s]+$)_",
+        const std::string& r4=
             R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?)|)_"
             R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
             R"_(([^A-Za-z\d\.(),_\s]+)|)_"
             R"_((\()|(\))|(,)|(\.))_"
-        };
-        return regex;
-    };
+    ) : BaseLexer{s1, s2, s3, s4, r1, r2, r3, r4} {}
 
-    static std::complex<Type> to_value(const std::string& token) {
+    std::complex<Type> to_value(const std::string& token) const override {
         using namespace std::complex_literals;
 
+        if (!std::regex_search(token, this->number_regex))
+            throw BadCast{token};
+
         if (token.back() != 'i')
-            return std::complex<Type>{Lexer<Type>::to_value(token)};
-        else
-            return 1i * Lexer<Type>::to_value(
-                token.substr(0, token.size() - 1)
-            );
+            return _cast<Type>(token);
+        return 1i * _cast<Type>(token);
     }
 
-    static std::string to_string(std::complex<Type> value) {
+    std::string to_string(std::complex<Type> value) const noexcept override {
         std::ostringstream string{};
         Type real{std::real(value)}, imag{std::imag(value)};
 
