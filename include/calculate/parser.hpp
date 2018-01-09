@@ -10,7 +10,6 @@
 #include <unordered_set>
 
 #include "lexer.hpp"
-#include "wrapper.hpp"
 #include "node.hpp"
 
 
@@ -23,107 +22,16 @@ public:
     using Type = BaseType;
     using Lexer = BaseLexer<Type>;
 
-    enum class SymbolType : int {
-        LEFT=0,
-        RIGHT,
-        SEPARATOR,
-        CONSTANT,
-        FUNCTION,
-        OPERATOR
-    };
-    enum class Associativity : int {LEFT=0, RIGHT, BOTH};
-
-    using Constant = Type;
-    class Function;
-    class Operator;
+    using Symbol = Symbol<Type, Node<BaseParser>>;
+    using Constant = Constant<Type, Node<BaseParser>>;
+    using Variable = Variable<Type, Node<BaseParser>>;
+    using Function = Function<Type, Node<BaseParser>>;
+    using Operator = Operator<Type, Node<BaseParser>>;
 
     using Expression = Node<BaseParser>;
     using Variables = typename Expression::Variables;
 
-    using WrapperConcept = WrapperConcept<Type, Expression>;
-    using Wrapper = Wrapper<Type, Expression>;
-
-    class Function : public Wrapper {
-        template<typename Callable>
-        struct Inspect {
-            static constexpr bool not_me =
-                detail::NotSame<Callable, Function>::value;
-            static constexpr bool is_model =
-                std::is_base_of<WrapperConcept, Callable>::value;
-        };
-
-    public:
-        template<
-            typename Callable,
-            std::enable_if_t<Inspect<Callable>::not_me>* = nullptr,
-            std::enable_if_t<!Inspect<Callable>::is_model>* = nullptr
-        >
-        Function(Callable&& callable) :
-                Wrapper{std::forward<Callable>(callable), &Expression::eval}
-        {
-            static_assert(
-                detail::IsConst<Callable>::value,
-                "Non const method in parser"
-            );
-        }
-
-        template<
-            typename Callable,
-            std::enable_if_t<Inspect<Callable>::is_model>* = nullptr
-        >
-        Function(Callable&& callable) :
-                Wrapper{std::forward<Callable>(callable)}
-        {}
-
-        inline std::size_t arguments() const noexcept { return this->argc(); }
-    };
-
-    class Operator {
-        std::string _alias;
-        std::size_t _precedence;
-        Associativity _associativity;
-        Function _function;
-
-    public:
-        Operator(
-            const std::string& alias,
-            std::size_t precedence,
-            Associativity associativity,
-            const Function& function
-        ) :
-                _alias{alias},
-                _precedence{precedence},
-                _associativity{associativity},
-                _function{function}
-        {
-            if (_alias.size() && !std::regex_match(alias, Lexer::name().regex))
-                throw UnsuitableName{alias};
-        }
-
-        const Operator& operator=(Operator other) noexcept {
-            swap(*this, other);
-            return *this;
-        }
-
-        friend void swap(Operator& one, Operator& another) noexcept {
-            using std::swap;
-            swap(one._alias, another._alias);
-            swap(one._precedence, another._precedence);
-            swap(one._associativity, another._associativity);
-            swap(one._function, another._function);
-        }
-
-        std::string alias() const noexcept { return _alias; }
-
-        std::size_t precedence() const noexcept { return _precedence; }
-
-        Associativity associativity() const noexcept { return _associativity; }
-
-        Function function() const noexcept { return _function; }
-    };
-
-
-protected:
+/*protected:
     std::unordered_map<std::string, Constant> _constants;
     std::unordered_map<std::string, Function> _functions;
     std::unordered_map<std::string, Operator> _operators;
@@ -205,6 +113,8 @@ protected:
     std::queue<std::pair<std::string, SymbolType>> _parse_infix(
         std::queue<std::pair<std::string, SymbolType>>&& tokens
     ) const {
+        using Associativity = typename Operator::Associativity;
+
         const std::pair<std::string, SymbolType> Left{
             Lexer::left(),
             SymbolType::LEFT
@@ -344,6 +254,8 @@ protected:
     std::queue<std::pair<std::string, SymbolType>> _shunting_yard(
         std::queue<std::pair<std::string, SymbolType>>&& tokens
     ) const {
+        using Associativity = typename Operator::Associativity;
+
         std::queue<std::pair<std::string, SymbolType>> collected{};
         std::stack<std::pair<std::string, SymbolType>> operations{};
         std::pair<std::string, SymbolType> element{};
@@ -477,11 +389,10 @@ protected:
     ) const {
         auto found_constant = _factory<Constant>().find(token.first);
         if (found_constant != _factory<Constant>().end()) {
-            auto value = found_constant->second;
             return Expression{
-                token,
+                token.first,
                 variables,
-                [value]() noexcept { return value; },
+                std::make_shared<Symbol>(*found_constant),
                 std::move(nodes),
                 hash
             };
@@ -490,9 +401,9 @@ protected:
         auto found_function = _factory<Function>().find(token.first);
         if (found_function != _factory<Function>().end())
             return Expression{
-                token,
+                token.first,
                 variables,
-                found_function->second,
+                std::make_shared<Symbol>(*found_function),
                 std::move(nodes),
                 hash
             };
@@ -500,21 +411,19 @@ protected:
         auto found_operator = _factory<Operator>().find(token.first);
         if (found_operator != _factory<Operator>().end())
             return Expression{
-                token,
+                token.first,
                 variables,
-                found_operator->second.function(),
+                std::make_shared<Symbol>(*found_operator),
                 std::move(nodes),
-                hash,
-                get<Operator>(token.first).precedence(),
-                get<Operator>(token.first).associativity()
+                hash
             };
 
         try {
             auto value = Lexer::to_value(token.first);
             return Expression{
-                token,
+                token.first,
                 variables,
-                [value]() noexcept { return value; },
+                std::make_shared<Symbol>(Constant{value}),
                 std::move(nodes),
                 hash
             };
@@ -522,9 +431,9 @@ protected:
         catch (const BadCast&) {
             auto& variable = variables->at(token.first);
             return Expression{
-                token,
+                token.first,
                 variables,
-                [&variable]() noexcept { return variable; },
+                std::make_shared<Symbol>(Variable{variable}),
                 std::move(nodes),
                 hash
             };
@@ -535,7 +444,6 @@ protected:
         std::queue<std::pair<std::string, SymbolType>>&& tokens,
         const std::shared_ptr<Variables>& variables
     ) const {
-        using Wrapper = calculate::Wrapper<Type, Expression>;
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
         std::pair<std::string, SymbolType> element{};
@@ -686,9 +594,9 @@ public:
 
     Expression optimize(const Expression& node) const noexcept {
         if (node.variables().empty())
-            return create_node(node._function(node._nodes));
+            return create_node(node._symbol->evaluate(node._nodes));
         auto nodes = std::vector<Expression>{};
-        nodes.reserve(node._function.arguments());
+        nodes.reserve(node._symbol->arguments());
         for (auto another : node._nodes)
             nodes.emplace_back(optimize(another));
         return create_node(node._token, std::move(nodes), node.variables());
@@ -784,7 +692,7 @@ public:
         std::sort(keys.begin(), keys.end());
         return keys;
     }
-};
+*/};
 
 }
 
