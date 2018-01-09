@@ -1,23 +1,11 @@
 #ifndef __CALCULATE_EXCEPTION_HPP__
 #define __CALCULATE_EXCEPTION_HPP__
 
-#include <functional>
 #include <stdexcept>
 #include <string>
 
 
 namespace calculate {
-
-namespace detail {
-
-template<class Type>
-void hash_combine(std::size_t& seed, const Type& object) {
-    std::hash<Type> hasher;
-    seed ^= hasher(object) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-}
-
-}
-
 
 struct BaseError : public std::runtime_error {
     BaseError(const std::string& what) : runtime_error{what} {}

@@ -16,3 +16,4 @@ copying linguist-vendored
 *.in linguist-vendored
 *.diff linguist-vendored
 *.patch linguist-vendored
+

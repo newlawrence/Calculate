@@ -10,36 +10,16 @@
 #include <vector>
 
 #include "exception.hpp"
+#include "util.hpp"
 
 
 namespace calculate {
-
-namespace detail {
-
-inline std::string replace(
-    std::string where,
-    const std::string& what,
-    const std::string& by
-) {
-    std::size_t index = 0;
-    while (true) {
-        index = where.find(what, index);
-        if (index == std::string::npos)
-            break;
-        where.replace(index, what.size(), by);
-        index += what.size();
-    }
-    return where;
-}
-
-}
-
 
 template<typename Parser>
 class Node {
     using Type = typename Parser::Type;
     using Lexer = typename Parser::Lexer;
-    using Symbol = typename Parser::Symbol;
+    using SymbolType = typename Parser::SymbolType;
     using Associativity = typename Parser::Associativity;
     using Constant = typename Parser::Constant;
     using Function = typename Parser::Function;
@@ -50,6 +30,8 @@ class Node {
 
 
 public:
+    using const_iterator = typename std::vector<Node>::const_iterator;
+
     class Variables {
     public:
         const std::vector<std::string> variables;
@@ -77,7 +59,7 @@ public:
         {
             std::unordered_set<std::string> singles{keys.begin(), keys.end()};
             for (const auto &variable : keys) {
-                if (!std::regex_match(variable, Lexer::name_regex()))
+                if (!std::regex_match(variable, Lexer::name().regex))
                     throw UnsuitableName{variable};
                 else if (singles.erase(variable) == 0)
                     throw RepeatedSymbol{variable};
@@ -118,22 +100,22 @@ public:
 
 private:
     std::string _token;
-    Symbol _symbol;
+    SymbolType _symbol;
     std::shared_ptr<Variables> _variables;
     Function _function;
     std::vector<Node> _nodes;
-    std::pair<std::size_t, std::size_t> _footprint;
+    std::size_t _hash;
     std::size_t _precedence;
     Associativity _associativity;
 
     Node() = delete;
 
     explicit Node(
-        const std::pair<std::string, Symbol>& token,
+        const std::pair<std::string, SymbolType>& token,
         const std::shared_ptr<Variables>& variables,
         const Function& function,
         std::vector<Node>&& nodes,
-        std::pair<std::size_t, std::size_t> footprint,
+        std::size_t hash,
         std::size_t precedence=std::numeric_limits<std::size_t>::max(),
         Associativity associativity=Associativity::BOTH
     ) :
@@ -142,7 +124,7 @@ private:
             _variables{variables},
             _function{function},
             _nodes{std::move(nodes)},
-            _footprint{footprint},
+            _hash{hash},
             _precedence{precedence},
             _associativity{associativity}
     {
@@ -185,15 +167,13 @@ private:
 
 
 public:
-    using const_iterator = typename std::vector<Node>::const_iterator;
-
     Node(const Node& other) noexcept :
             _token{other._token},
             _symbol{other._symbol},
             _variables{},
             _function{other._function},
             _nodes{other._nodes},
-            _footprint{other._footprint},
+            _hash{other._hash},
             _precedence{other._precedence},
             _associativity{other._associativity}
     { _rebind(std::make_shared<Variables>(other._pruned())); }
@@ -204,12 +184,12 @@ public:
             _variables{std::move(other._variables)},
             _function{std::move(other._function)},
             _nodes{std::move(other._nodes)},
-            _footprint{std::move(other._footprint)},
+            _hash{std::move(other._hash)},
             _precedence{std::move(other._precedence)},
             _associativity{std::move(other._associativity)}
     {}
 
-    Node& operator=(Node other) noexcept {
+    const Node& operator=(Node other) noexcept {
         swap(*this, other);
         return *this;
     }
@@ -223,6 +203,10 @@ public:
         swap(one._nodes, another._nodes);
         swap(one._precedence, another._precedence);
         swap(one._associativity, another._associativity);
+    }
+
+    static Type eval(const Node& node) {
+        return node._function(node._nodes);
     }
 
     explicit operator Type() const {
@@ -255,11 +239,11 @@ public:
                     right->_variables->index(right->_token);
 
             if (left->_symbol == right->_symbol) {
-                if (left->symbol() == Symbol::CONSTANT)
+                if (left->symbol() == SymbolType::CONSTANT)
                     return left->_function() == right->_function();
-                else if (left->symbol() == Symbol::FUNCTION)
+                else if (left->symbol() == SymbolType::FUNCTION)
                     return left->_function == right->_function;
-                else if (left->symbol() == Symbol::OPERATOR)
+                else if (left->symbol() == SymbolType::OPERATOR)
                     return
                         left->_function == right->_function &&
                         left->_precedence == right ->_precedence &&
@@ -269,10 +253,7 @@ public:
             return false;
         };
 
-        if (
-            this->_footprint.first != other._footprint.first ||
-            !equal(this, &other)
-        )
+        if (!equal(this, &other))
             return false;
 
         these.push({this->begin(), this->end()});
@@ -299,9 +280,13 @@ public:
 
     const Node& at(std::size_t index) const { return _nodes.at(index); }
 
-    const const_iterator begin() const noexcept { return _nodes.begin(); }
+    const_iterator begin() const noexcept { return _nodes.begin(); }
 
-    const const_iterator end() const noexcept { return _nodes.end(); }
+    const_iterator end() const noexcept { return _nodes.end(); }
+
+    const_iterator rbegin() const noexcept { return _nodes.rbegin(); }
+
+    const_iterator rend() const noexcept { return _nodes.rend(); }
 
     friend std::ostream& operator<<(
         std::ostream& ostream,
@@ -313,7 +298,7 @@ public:
 
     std::string token() const noexcept { return _token; }
 
-    Symbol symbol() const noexcept { return _symbol; }
+    SymbolType symbol() const noexcept { return _symbol; }
 
     std::size_t branches() const noexcept { return _nodes.size(); }
 
@@ -322,7 +307,7 @@ public:
 
         auto brace = [&](std::size_t i) {
             const auto& node = _nodes[i];
-            if (node._symbol == Symbol::OPERATOR) {
+            if (node._symbol == SymbolType::OPERATOR) {
                 auto pp = _precedence;
                 auto cp = node._precedence;
                 auto pa = !i ?
@@ -335,13 +320,13 @@ public:
         };
 
         switch (_symbol) {
-        case (Symbol::FUNCTION):
+        case (SymbolType::FUNCTION):
             infix += _token + Lexer::left();
             for (const auto& node : _nodes)
                 infix += node.infix() + Lexer::separator();
             infix.back() = Lexer::right().front();
             return infix;
-        case (Symbol::OPERATOR):
+        case (SymbolType::OPERATOR):
             infix += brace(0) + _token + brace(1);
             return infix;
         default:
@@ -370,7 +355,7 @@ namespace std {
 template<typename Parser>
 struct hash<calculate::Node<Parser>> {
     size_t operator()(const calculate::Node<Parser>& node) const {
-        return node._footprint.second;
+        return node._hash;
     }
 };
 
