@@ -15,23 +15,22 @@
 
 namespace calculate {
 
-template<typename MainType, template<typename> class MainLexer = Lexer>
+template<typename BaseType, template<typename> class DefaultLexer = Lexer>
 class BaseParser {
 public:
     using Base = BaseParser;
-    using Type = MainType;
+    using Type = BaseType;
+    using Lexer = BaseLexer<Type>;
 
-    using BaseLexer = BaseLexer<Type>;
-    using Lexer = MainLexer<Type>;
-
-    using Symbol = Symbol<Type, Node<BaseParser>>;
-    using Constant = Constant<Type, Node<BaseParser>>;
-    using Variable = Variable<Type, Node<BaseParser>>;
-    using Function = Function<Type, Node<BaseParser>>;
-    using Operator = Operator<Type, Node<BaseParser>>;
+    using Symbol = Symbol<Node<BaseParser>>;
+    using Constant = Constant<Node<BaseParser>>;
+    using Variable = Variable<Node<BaseParser>>;
+    using Function = Function<Node<BaseParser>>;
+    using Operator = Operator<Node<BaseParser>>;
 
     using Expression = Node<BaseParser>;
     using Variables = typename Expression::Variables;
+
 
 /*protected:
     std::unordered_map<std::string, Constant> _constants;

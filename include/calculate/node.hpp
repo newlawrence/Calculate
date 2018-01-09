@@ -15,10 +15,11 @@ namespace calculate {
 
 template<typename Parser>
 class Node {
+public:
     using Type = typename Parser::Type;
-    using BaseLexer = typename Parser::BaseLexer;
+    using Lexer = typename Parser::Lexer;
 
-    using Symbol = Symbol<Type, Node>;
+    using Symbol = Symbol<Node>;
     using SymbolType = typename Symbol::SymbolType;
 
     friend typename Parser::Base;
@@ -49,7 +50,7 @@ public:
 
     public:
         explicit Variables(
-            const std::shared_ptr<BaseLexer>& lexer,
+            const std::shared_ptr<Lexer>& lexer,
             const std::vector<std::string>& keys={}
         ) :
                 variables{keys},
@@ -93,7 +94,7 @@ public:
 
 
 private:
-    std::shared_ptr<BaseLexer> _lexer;
+    std::shared_ptr<Lexer> _lexer;
     std::string _token;
     std::shared_ptr<Variables> _variables;
     std::shared_ptr<Symbol> _symbol;
@@ -103,7 +104,7 @@ private:
     Node() = delete;
 
     explicit Node(
-        const std::shared_ptr<BaseLexer>& _lexer,
+        const std::shared_ptr<Lexer>& _lexer,
         const std::string& token,
         const std::shared_ptr<Variables>& variables,
         const std::shared_ptr<Symbol>& symbol,
@@ -185,7 +186,7 @@ public:
         swap(one._nodes, another._nodes);
     }
 
-    std::shared_ptr<BaseLexer> lexer() const noexcept { return _lexer; }
+    std::shared_ptr<Lexer> lexer() const noexcept { return _lexer; }
 
     static Type evaluate(const Node& node) {
         return node._symbol->evaluate(node._nodes);
@@ -273,7 +274,7 @@ public:
     std::size_t branches() const noexcept { return _nodes.size(); }
 
     std::string infix() const noexcept {
-        using Operator = Operator<Type, Node>;
+        using Operator = Operator<Node>;
         using Associativity = typename Operator::Associativity;
 
         std::string infix{};

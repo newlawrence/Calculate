@@ -6,14 +6,13 @@
 
 namespace calculate {
 
-template<typename Type, typename Expression>
+template<typename Expression>
 class Symbol {
-    using WrapperConcept = WrapperConcept<Type, Expression>;
-    using Wrapper = Wrapper<Type, Expression>;
-
     friend struct std::hash<Symbol>;
 
 public:
+    using Type = typename Expression::Type;
+
     enum class SymbolType : int {
         LEFT=0,
         RIGHT,
@@ -24,6 +23,9 @@ public:
     };
 
 private:
+    using WrapperConcept = WrapperConcept<Type, Expression>;
+    using Wrapper = Wrapper<Type, Expression>;
+
     template<typename Callable>
     struct Inspect {
         static constexpr bool not_me =
@@ -61,7 +63,8 @@ public:
             _wrapper{std::forward<Callable>(callable)}
     {}
 
-    bool operator==(const Symbol& other) const noexcept {
+    template<typename Class>
+    bool operator==(const Class& other) const noexcept {
         if (symbol() != other.symbol())
             return false;
 
@@ -86,25 +89,31 @@ public:
 };
 
 
-template<typename Type, typename Expression>
-class Constant final : public Symbol<Type, Expression> {
-    using Symbol = Symbol<Type, Expression>;
+template<typename Expression>
+class Constant final : public Symbol<Expression> {
+    using Symbol = Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
 public:
+    using Type = typename Expression::Type;
+
     Constant(Type value) :
             Symbol{[value]() noexcept { return value; }}
     {}
 
     SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
+
+    operator Type() const { return Symbol::evaluate({}); }
 };
 
-template<typename Type, typename Expression>
-class Variable final : public Symbol<Type, Expression> {
-    using Symbol = Symbol<Type, Expression>;
+template<typename Expression>
+class Variable final : public Symbol<Expression> {
+    using Symbol = Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
 public:
+    using Type = typename Expression::Type;
+
     Variable(Type& variable) :
             Symbol{[&variable]() noexcept { return variable; }}
     {}
@@ -112,12 +121,14 @@ public:
     SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
 };
 
-template<typename Type, typename Expression>
-class Function final : public Symbol<Type, Expression> {
-    using Symbol = Symbol<Type, Expression>;
+template<typename Expression>
+class Function final : public Symbol<Expression> {
+    using Symbol = Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
 public:
+    using Type = typename Expression::Type;
+
     template<typename Callable>
     Function(Callable&& callable) :
             Symbol{std::forward<Callable>(callable)}
@@ -126,12 +137,14 @@ public:
     SymbolType symbol() const noexcept override { return SymbolType::FUNCTION; }
 };
 
-template<typename Type, typename Expression>
-class Operator final : public Symbol<Type, Expression> {
-    using Symbol = Symbol<Type, Expression>;
+template<typename Expression>
+class Operator final : public Symbol<Expression> {
+    using Symbol = Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
 public:
+    using Type = typename Expression::Type;
+
     enum class Associativity : int {LEFT=0, RIGHT, BOTH};
 
 private:
@@ -174,9 +187,9 @@ public:
 
 namespace std {
 
-template<typename Type, typename Expression>
-struct hash<calculate::Symbol<Type, Expression>> {
-    size_t operator()(const calculate::Symbol<Type, Expression>& symbol) const {
+template<typename Expression>
+struct hash<calculate::Symbol<Expression>> {
+    size_t operator()(const calculate::Symbol<Expression>& symbol) const {
         return symbol._hash();
     }
 };
