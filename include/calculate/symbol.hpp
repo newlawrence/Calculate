@@ -73,8 +73,19 @@ public:
         return _wrapper == other._wrapper && this->_equal(other);
     }
 
+    template<typename... Args>
+    Type call(Args&&... args) const {
+        return const_cast<const Wrapper&>(_wrapper)
+            .call(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    Type call(Args&&... args) {
+        return _wrapper.call(std::forward<Args>(args)...);
+    }
+
     Type evaluate(const std::vector<Expression>& nodes) const {
-        return const_cast<const Wrapper*>(&_wrapper)->operator()(nodes);
+        return const_cast<const Wrapper&>(_wrapper)(nodes);
     }
 
     Type evaluate(const std::vector<Expression>& nodes) {
@@ -103,7 +114,9 @@ public:
 
     SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
 
-    operator Type() const { return Symbol::evaluate({}); }
+    operator Type() const { return this->call(); }
+
+    operator Type() { return this->call(); }
 };
 
 template<typename Expression>
@@ -135,6 +148,17 @@ public:
     {}
 
     SymbolType symbol() const noexcept override { return SymbolType::FUNCTION; }
+
+    template<typename... Args>
+    Type operator()(Args&&... args) const {
+        return const_cast<const Symbol*>(this)
+            ->call(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    Type operator()(Args&&... args) {
+        return this->call(std::forward<Args>(args)...);
+    }
 };
 
 template<typename Expression>
@@ -174,6 +198,17 @@ public:
     {}
 
     SymbolType symbol() const noexcept override { return SymbolType::OPERATOR; }
+
+    template<typename... Args>
+    Type operator()(Args&&... args) const {
+        return const_cast<const Symbol*>(this)
+            ->call(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    Type operator()(Args&&... args) {
+        return this->call(std::forward<Args>(args)...);
+    }
 
     const std::string& alias() const noexcept { return _alias; }
 
