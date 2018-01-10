@@ -357,24 +357,24 @@ public:
             }
     {}
 
-    Type call(const std::vector<Source>& args) const {
+    Type call(const std::vector<Type>& args) const {
         return const_cast<const WrapperConcept*>(_callable.get())->call(args);
     }
 
-    Type call(const std::vector<Source>& args) {
+    Type call(const std::vector<Type>& args) {
         return _callable->call(args);
     }
 
     template<typename... Args>
     Type call(Args&&... args) const {
         return const_cast<const WrapperConcept*>(_callable.get())
-            ->call(std::vector<Source>{std::forward<Args>(args)...});
+            ->call(std::vector<Type>{std::forward<Args>(args)...});
     }
 
     template<typename... Args>
     Type call(Args&&... args) {
         return _callable
-            ->call(std::vector<Source>{std::forward<Args>(args)...});
+            ->call(std::vector<Type>{std::forward<Args>(args)...});
     }
 
     Type operator()(const std::vector<Source>& args) const {
