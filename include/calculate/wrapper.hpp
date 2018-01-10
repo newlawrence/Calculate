@@ -178,8 +178,10 @@ struct WrapperConcept {
     virtual std::shared_ptr<WrapperConcept> copy() const noexcept = 0;
     virtual std::size_t argc() const noexcept = 0;
     virtual bool is_const() const noexcept = 0;
-    virtual Type evaluate(const std::vector<Source>&) const = 0;
-    virtual Type evaluate(const std::vector<Source>&) = 0;
+    virtual Type call(const std::vector<Type>&) const = 0;
+    virtual Type call(const std::vector<Type>&) = 0;
+    virtual Type eval(const std::vector<Source>&) const = 0;
+    virtual Type eval(const std::vector<Source>&) = 0;
     virtual ~WrapperConcept() {}
 };
 
@@ -200,27 +202,39 @@ class Wrapper {
 
     template<typename Callable, typename Adapter, std::size_t n, bool constant>
     class WrapperModel final : public WrapperConcept {
+        template<bool c> using Constant = std::integral_constant<bool, c>;
+        using False = std::integral_constant<bool, false>::type;
+        using True = std::integral_constant<bool, true>::type;
+
         Callable _callable;
         Adapter _adapter;
 
-        template<std::size_t... indices>
-        Type _evaluate(
-            std::integral_constant<bool, true>::type,
-            const std::vector<Source>& args
-        ) const {
+        template<typename Vector, typename Adapt, std::size_t... indices>
+        Type _invoke(const Vector&, const Adapt&, False) const {
+            throw AccessViolation{};
+        }
+
+        template<typename Vector, typename Adapt, std::size_t... indices>
+        Type _invoke(const Vector& args, const Adapt& adapt, True) const {
             return const_cast<WrapperModel*>(this)
-                ->_evaluate(args, std::make_index_sequence<n>{});
+                ->_invoke(args, adapt, std::make_index_sequence<n>{});
         }
 
         template<std::size_t... indices>
-        Type _evaluate(
-            std::integral_constant<bool, false>::type,
-            const std::vector<Source>&
-        ) const { throw AccessViolation{}; }
+        Type _invoke(
+            const std::vector<Type>& args,
+            False,
+            std::index_sequence<indices...>
+        ) {
+            if (args.size() != n)
+                throw ArgumentsMismatch{n, args.size()};
+            return _callable(args[indices]...);
+        }
 
         template<std::size_t... indices>
-        Type _evaluate(
+        Type _invoke(
             const std::vector<Source>& args,
+            True,
             std::index_sequence<indices...>
         ) {
             if (args.size() != n)
@@ -242,12 +256,20 @@ class Wrapper {
 
         bool is_const() const noexcept override { return constant; }
 
-        Type evaluate(const std::vector<Source>& args) const override {
-            return _evaluate(std::integral_constant<bool, constant>{}, args);
+        Type call(const std::vector<Type>& args) const override {
+            return _invoke(args, False{}, Constant<constant>{});
         }
 
-        Type evaluate(const std::vector<Source>& args) override {
-            return _evaluate(args, std::make_index_sequence<n>{});
+        Type call(const std::vector<Type>& args) override {
+            return _invoke(args, False{}, std::make_index_sequence<n>{});
+        }
+
+        Type eval(const std::vector<Source>& args) const override {
+            return _invoke(args, True{}, Constant<constant>{});
+        }
+
+        Type eval(const std::vector<Source>& args) override {
+            return _invoke(args, True{}, std::make_index_sequence<n>{});
         }
     };
 
@@ -335,25 +357,44 @@ public:
             }
     {}
 
-    Type operator()(const std::vector<Source>& args) const {
+    Type call(const std::vector<Type>& args) const {
+        return const_cast<const WrapperConcept*>(_callable.get())->call(args);
+    }
+
+    Type call(const std::vector<Type>& args) {
+        return _callable->call(args);
+    }
+
+    template<typename... Args>
+    Type call(Args&&... args) const {
         return const_cast<const WrapperConcept*>(_callable.get())
-            ->evaluate(args);
+            ->call(std::vector<Type>{std::forward<Args>(args)...});
+    }
+
+    template<typename... Args>
+    Type call(Args&&... args) {
+        return _callable
+            ->call(std::vector<Type>{std::forward<Args>(args)...});
+    }
+
+    Type operator()(const std::vector<Source>& args) const {
+        return const_cast<const WrapperConcept*>(_callable.get())->eval(args);
     }
 
     Type operator()(const std::vector<Source>& args) {
-        return _callable->evaluate(args);
+        return _callable->eval(args);
     }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
         return const_cast<const WrapperConcept*>(_callable.get())
-            ->evaluate(std::vector<Source>{std::forward<Args>(args)...});
+            ->eval(std::vector<Source>{std::forward<Args>(args)...});
     }
 
     template<typename... Args>
     Type operator()(Args&&... args) {
         return _callable
-            ->evaluate(std::vector<Source>{std::forward<Args>(args)...});
+            ->eval(std::vector<Source>{std::forward<Args>(args)...});
     }
 
     bool operator==(const Wrapper& other) const noexcept {
