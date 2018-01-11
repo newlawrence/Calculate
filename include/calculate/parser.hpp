@@ -15,10 +15,9 @@
 
 namespace calculate {
 
-template<typename BaseType, template<typename> class DefaultLexer = Lexer>
+template<typename BaseType>
 class BaseParser {
 public:
-    using Base = BaseParser;
     using Type = BaseType;
     using Lexer = BaseLexer<Type>;
 

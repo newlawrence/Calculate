@@ -22,7 +22,7 @@ public:
     using Symbol = Symbol<Node>;
     using SymbolType = typename Symbol::SymbolType;
 
-    friend typename Parser::Base;
+    template<typename BaseType> friend class BaseParser;
     friend struct std::hash<Node>;
 
 
