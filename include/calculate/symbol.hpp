@@ -63,6 +63,8 @@ public:
             _wrapper{std::forward<Callable>(callable)}
     {}
 
+    virtual ~Symbol() = default;
+
     template<typename Class>
     bool operator==(const Class& other) const noexcept {
         if (symbol() != other.symbol())
@@ -95,8 +97,6 @@ public:
     std::size_t arguments() const noexcept { return _wrapper.argc(); }
 
     virtual SymbolType symbol() const noexcept = 0;
-
-    virtual ~Symbol() {}
 };
 
 
