@@ -76,22 +76,12 @@ public:
     }
 
     template<typename... Args>
-    Type call(Args&&... args) const {
-        return const_cast<const Wrapper&>(_wrapper)
-            .call(std::forward<Args>(args)...);
-    }
-
-    template<typename... Args>
-    Type call(Args&&... args) {
-        return _wrapper.call(std::forward<Args>(args)...);
+    Type operator()(Args&&... args) const {
+        return _wrapper(std::forward<Args>(args)...);
     }
 
     Type evaluate(const std::vector<Expression>& nodes) const {
-        return const_cast<const Wrapper&>(_wrapper)(nodes);
-    }
-
-    Type evaluate(const std::vector<Expression>& nodes) {
-        return _wrapper(nodes);
+        return _wrapper.eval(nodes);
     }
 
     std::size_t arguments() const noexcept { return _wrapper.argc(); }
@@ -114,9 +104,9 @@ public:
 
     SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
 
-    operator Type() const { return this->call(); }
+    operator Type() const { return Symbol::operator()(); }
 
-    operator Type() { return this->call(); }
+    operator Type() { return Symbol::operator()(); }
 };
 
 template<typename Expression>
@@ -151,13 +141,7 @@ public:
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
-        return const_cast<const Symbol*>(this)
-            ->call(std::forward<Args>(args)...);
-    }
-
-    template<typename... Args>
-    Type operator()(Args&&... args) {
-        return this->call(std::forward<Args>(args)...);
+        return Symbol::operator()(std::forward<Args>(args)...);
     }
 };
 
@@ -201,13 +185,7 @@ public:
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
-        return const_cast<const Symbol*>(this)
-            ->call(std::forward<Args>(args)...);
-    }
-
-    template<typename... Args>
-    Type operator()(Args&&... args) {
-        return this->call(std::forward<Args>(args)...);
+        return Symbol::operator()(std::forward<Args>(args)...);
     }
 
     const std::string& alias() const noexcept { return _alias; }
