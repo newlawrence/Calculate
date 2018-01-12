@@ -11,6 +11,41 @@
 
 namespace calculate {
 
+namespace detail {
+
+struct Strings { std::string s1, s2, s3, s4; };
+
+static inline Strings DefaultPunctuation() {
+    return {"(", ")", ".", ","};
+}
+
+static inline Strings DefaultRegexes() {
+    return {
+        R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_",
+        R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
+        R"_(^[^A-Za-z\d.(),_\s]+$)_",
+        R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
+        R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
+        R"_(([^A-Za-z\d\.(),_\s]+)|)_"
+        R"_((\()|(\))|(,)|(\.))_"
+    };
+}
+
+static inline Strings DefaultComplexRegexes() {
+    return {
+        R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_",
+        R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
+        R"_(^[^A-Za-z\d.(),_\s]+$)_",
+        R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?)|)_"
+        R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
+        R"_(([^A-Za-z\d\.(),_\s]+)|)_"
+        R"_((\()|(\))|(,)|(\.))_"
+    };
+}
+
+}
+
+
 template<typename Type>
 struct BaseLexer {
     const std::string left;
@@ -27,18 +62,19 @@ struct BaseLexer {
     const std::regex symbol_regex;
     const std::regex tokenizer_regex;
 
-    BaseLexer(
-        const std::string& s1, const std::string& s2,
-        const std::string& s3, const std::string& s4,
-        const std::string& r1, const std::string& r2,
-        const std::string& r3, const std::string& r4
-    ) :
-            left{s1}, right{s2}, decimal{s3}, separator{s4},
-            number{s1}, name{s2}, symbol{s3}, tokenizer{s4},
-            number_regex{r1},
-            name_regex{r2},
-            symbol_regex{r3},
-            tokenizer_regex{r4}
+    BaseLexer(const detail::Strings& strings, const detail::Strings& regexes) :
+            left{strings.s1},
+            right{strings.s2},
+            decimal{strings.s3},
+            separator{strings.s4},
+            number{regexes.s1},
+            name{regexes.s2},
+            symbol{regexes.s3},
+            tokenizer{regexes.s4},
+            number_regex{regexes.s1},
+            name_regex{regexes.s2},
+            symbol_regex{regexes.s3},
+            tokenizer_regex{regexes.s4}
     {}
 
     virtual Type to_value(const std::string&) const = 0;
@@ -63,19 +99,9 @@ class Lexer final : public BaseLexer<Type> {
 
 public:
     Lexer(
-        const std::string& s1="(",
-        const std::string& s2=")",
-        const std::string& s3=".",
-        const std::string& s4=",",
-        const std::string& r1=R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_",
-        const std::string& r2=R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
-        const std::string& r3=R"_(^[^A-Za-z\d.(),_\s]+$)_",
-        const std::string& r4=
-            R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
-            R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-            R"_(([^A-Za-z\d\.(),_\s]+)|)_"
-            R"_((\()|(\))|(,)|(\.))_"
-    ) : BaseLexer{s1, s2, s3, s4, r1, r2, r3, r4} {}
+        const detail::Strings& strings=detail::DefaultPunctuation(),
+        const detail::Strings& regexes=detail::DefaultRegexes()
+    ) : BaseLexer{strings, regexes} {}
 
     Type to_value(const std::string& token) const override {
         if (!std::regex_search(token, this->number_regex))
@@ -111,19 +137,9 @@ class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
 
 public:
     Lexer(
-        const std::string& s1="(",
-        const std::string& s2=")",
-        const std::string& s3=".",
-        const std::string& s4=",",
-        const std::string& r1=R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_",
-        const std::string& r2=R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
-        const std::string& r3=R"_(^[^A-Za-z\d.(),_\s]+$)_",
-        const std::string& r4=
-            R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?)|)_"
-            R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-            R"_(([^A-Za-z\d\.(),_\s]+)|)_"
-            R"_((\()|(\))|(,)|(\.))_"
-    ) : BaseLexer{s1, s2, s3, s4, r1, r2, r3, r4} {}
+        const detail::Strings& strings=detail::DefaultPunctuation(),
+        const detail::Strings& regexes=detail::DefaultComplexRegexes()
+    ) : BaseLexer{strings, regexes} {}
 
     std::complex<Type> to_value(const std::string& token) const override {
         using namespace std::complex_literals;
