@@ -15,9 +15,7 @@ namespace detail {
 
 struct Strings { std::string s1, s2, s3, s4; };
 
-static inline Strings DefaultPunctuation() {
-    return {"(", ")", ".", ","};
-}
+static inline Strings DefaultPunctuation() { return {"(", ")", ",", "."}; }
 
 static inline Strings DefaultRegexes() {
     return {
@@ -50,8 +48,8 @@ template<typename Type>
 struct BaseLexer {
     const std::string left;
     const std::string right;
-    const std::string decimal;
     const std::string separator;
+    const std::string decimal;
     const std::string number;
     const std::string name;
     const std::string symbol;
@@ -65,8 +63,8 @@ struct BaseLexer {
     BaseLexer(const detail::Strings& strings, const detail::Strings& regexes) :
             left{strings.s1},
             right{strings.s2},
-            decimal{strings.s3},
-            separator{strings.s4},
+            separator{strings.s3},
+            decimal{strings.s4},
             number{regexes.s1},
             name{regexes.s2},
             symbol{regexes.s3},
@@ -101,7 +99,10 @@ public:
     Lexer(
         const detail::Strings& strings=detail::DefaultPunctuation(),
         const detail::Strings& regexes=detail::DefaultRegexes()
-    ) : BaseLexer{strings, regexes} {}
+    ) : BaseLexer{strings, regexes} {
+        if (this->decimal != ".")
+            throw UnsuitableName{this->decimal};
+    }
 
     Type to_value(const std::string& token) const override {
         if (!std::regex_search(token, this->number_regex))
@@ -139,7 +140,10 @@ public:
     Lexer(
         const detail::Strings& strings=detail::DefaultPunctuation(),
         const detail::Strings& regexes=detail::DefaultComplexRegexes()
-    ) : BaseLexer{strings, regexes} {}
+    ) : BaseLexer{strings, regexes} {
+        if (this->decimal != ".")
+            throw UnsuitableName{this->decimal};
+    }
 
     std::complex<Type> to_value(const std::string& token) const override {
         using namespace std::complex_literals;
