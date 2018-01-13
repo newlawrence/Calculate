@@ -359,6 +359,10 @@ public:
     bool operator==(const Wrapper& other) const noexcept {
         return _callable == other._callable;
     }
+
+    bool operator!=(const Wrapper& other) const noexcept {
+        return !operator==(other);
+    }
 };
 
 }

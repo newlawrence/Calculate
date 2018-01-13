@@ -42,7 +42,7 @@ private:
         return std::hash<Wrapper>()(_wrapper);
     }
 
-    virtual bool _equal(const Symbol&) const noexcept { return true; }
+    virtual bool _equal(const Symbol&) const noexcept = 0;
 
 public:
     template<
@@ -68,10 +68,14 @@ public:
     bool operator==(const Class& other) const noexcept {
         if (symbol() != other.symbol())
             return false;
+        if (symbol() != SymbolType::CONSTANT && _wrapper != other._wrapper)
+            return false;
+        return this->_equal(other);
+    }
 
-        if (symbol() == SymbolType::CONSTANT)
-            return _wrapper() == other._wrapper();
-        return _wrapper == other._wrapper && this->_equal(other);
+    template<typename Class>
+    bool operator!=(const Class& other) const noexcept {
+        return !operator==(other);
     }
 
     template<typename... Args>
@@ -94,6 +98,10 @@ class Constant final : public Symbol<Expression> {
     using Symbol = Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
+    bool _equal(const Symbol& other) const noexcept override {
+        return (*this)() == other();
+    }
+
 public:
     using Type = typename Expression::Type;
 
@@ -113,6 +121,8 @@ class Variable final : public Symbol<Expression> {
     using Symbol = Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
+    bool _equal(const Symbol&) const noexcept override { return false; }
+
 public:
     using Type = typename Expression::Type;
 
@@ -127,6 +137,8 @@ template<typename Expression>
 class Function final : public Symbol<Expression> {
     using Symbol = Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
+
+    bool _equal(const Symbol&) const noexcept override { return true; }
 
 public:
     using Type = typename Expression::Type;
@@ -159,11 +171,12 @@ private:
     std::size_t _precedence;
     Associativity _associativity;
 
-    bool _equal(const Symbol& other) const noexcept {
+    bool _equal(const Symbol& other) const noexcept override {
+        auto op = static_cast<const Operator&>(other);
         return
-            _alias == static_cast<Operator&>(other)._alias &&
-            _precedence == static_cast<Operator&>(other)._precedence &&
-            _associativity == static_cast<Operator&>(other)._associativity;
+            _alias == op._alias &&
+            _precedence == op._precedence &&
+            _associativity == op._associativity;
     }
 
 public:

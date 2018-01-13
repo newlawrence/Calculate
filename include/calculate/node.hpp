@@ -249,6 +249,10 @@ public:
         return true;
     }
 
+    bool operator!=(const Node& other) const noexcept {
+        return !operator==(other);
+    }
+
     const Node& operator[](std::size_t index) const { return _nodes[index]; }
 
     const Node& at(std::size_t index) const { return _nodes.at(index); }
