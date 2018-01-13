@@ -36,14 +36,13 @@ private:
 
     Wrapper _wrapper;
 
-protected:
-    virtual bool _equal(const Symbol&) const noexcept { return true; }
-
     std::size_t _hash() const noexcept {
         if (symbol() == SymbolType::CONSTANT)
             return std::hash<Type>()(_wrapper());
         return std::hash<Wrapper>()(_wrapper);
     }
+
+    virtual bool _equal(const Symbol&) const noexcept { return true; }
 
 public:
     template<

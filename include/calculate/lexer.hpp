@@ -15,9 +15,9 @@ namespace detail {
 
 struct Strings { std::string s1, s2, s3, s4; };
 
-static inline Strings DefaultPunctuation() { return {"(", ")", ",", "."}; }
+inline Strings DefaultPunctuation() { return {"(", ")", ",", "."}; }
 
-static inline Strings DefaultRegexes() {
+inline Strings DefaultRegexes() {
     return {
         R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_",
         R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
@@ -29,7 +29,7 @@ static inline Strings DefaultRegexes() {
     };
 }
 
-static inline Strings DefaultComplexRegexes() {
+inline Strings DefaultComplexRegexes() {
     return {
         R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_",
         R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
