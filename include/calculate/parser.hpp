@@ -6,7 +6,6 @@
 #include <ostream>
 #include <queue>
 #include <string>
-#include <unordered_map>
 #include <unordered_set>
 
 #include "lexer.hpp"
@@ -22,15 +21,18 @@ public:
     using Lexer = BaseLexer<Type>;
 
     using Symbol = Symbol<Node<BaseParser>>;
-    using Constant = Constant<Node<BaseParser>>;
     using Variable = Variable<Node<BaseParser>>;
+    using Constant = Constant<Node<BaseParser>>;
     using Function = Function<Node<BaseParser>>;
     using Operator = Operator<Node<BaseParser>>;
 
     using Expression = Node<BaseParser>;
-    using Variables = typename Expression::Variables;
+    private: using Variables = typename Expression::Variables;
+    public: using SymbolType = typename Symbol::SymbolType;
+    public: using Associativity = typename Operator::Associativity;
 
 
+private:
 /*protected:
     std::unordered_map<std::string, Constant> _constants;
     std::unordered_map<std::string, Function> _functions;

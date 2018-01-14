@@ -92,6 +92,22 @@ public:
     virtual SymbolType symbol() const noexcept = 0;
 };
 
+template<typename Expression>
+class Variable final : public Symbol<Expression> {
+    using Symbol = Symbol<Expression>;
+    using SymbolType = typename Symbol::SymbolType;
+
+    bool _equal(const Symbol&) const noexcept override { return false; }
+
+public:
+    using Type = typename Expression::Type;
+
+    Variable(Type& variable) :
+            Symbol{[&variable]() noexcept { return variable; }}
+    {}
+
+    SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
+};
 
 template<typename Expression>
 class Constant final : public Symbol<Expression> {
@@ -114,23 +130,6 @@ public:
     operator Type() const { return Symbol::operator()(); }
 
     operator Type() { return Symbol::operator()(); }
-};
-
-template<typename Expression>
-class Variable final : public Symbol<Expression> {
-    using Symbol = Symbol<Expression>;
-    using SymbolType = typename Symbol::SymbolType;
-
-    bool _equal(const Symbol&) const noexcept override { return false; }
-
-public:
-    using Type = typename Expression::Type;
-
-    Variable(Type& variable) :
-            Symbol{[&variable]() noexcept { return variable; }}
-    {}
-
-    SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
 };
 
 template<typename Expression>

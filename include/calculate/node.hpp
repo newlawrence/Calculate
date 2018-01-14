@@ -2,7 +2,6 @@
 #define __CALCULATE_NODE_HPP__
 
 #include <iterator>
-#include <memory>
 #include <ostream>
 #include <stack>
 #include <sstream>
@@ -270,6 +269,8 @@ public:
     }
 
     const std::string& token() const noexcept { return _token; }
+
+    SymbolType symbol() const noexcept { return _symbol->symbol(); }
 
     std::size_t branches() const noexcept { return _nodes.size(); }
 
