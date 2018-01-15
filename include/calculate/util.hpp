@@ -36,21 +36,49 @@ inline std::string replace(
 
 
 template<typename Kind, typename Type, typename Lexer>
-class SymbolMap final : std::unordered_map<std::string, Kind> {
+class SymbolContainer final : std::unordered_map<std::string, Kind> {
 public:
     using Base = std::unordered_map<std::string, Kind>;
 
-    using Base::key_type;
-    using Base::mapped_type;
-    using Base::value_type;
-    using Base::iterator;
-    using Base::const_iterator;
+    using typename Base::key_type;
+    using typename Base::mapped_type;
+    using typename Base::value_type;
+    using typename Base::iterator;
+    using typename Base::const_iterator;
 
 private:
     std::shared_ptr<Lexer> _lexer;
 
 public:
-    SymbolMap(const std::shared_ptr<Lexer>& lexer) : _lexer{lexer} {}
+    template<
+         typename LexerType,
+         std::enable_if_t<std::is_base_of<Lexer, LexerType>::value>* = nullptr
+    >
+    SymbolContainer(
+        const LexerType& lexer,
+        std::initializer_list<value_type> list={}
+    ) : SymbolContainer{std::make_shared<LexerType>(lexer), list} {}
+
+    SymbolContainer(
+        const std::shared_ptr<Lexer>& lexer,
+        std::initializer_list<value_type> list={}
+    ) : Base{list}, _lexer{lexer} {}
+
+    template<
+         typename LexerType,
+         std::enable_if_t<std::is_base_of<Lexer, LexerType>::value>* = nullptr
+    >
+    SymbolContainer(
+        const LexerType& lexer,
+        iterator begin,
+        iterator end
+    ) : SymbolContainer{std::make_shared<LexerType>(lexer), begin, end} {}
+
+    SymbolContainer(
+        const std::shared_ptr<Lexer>& lexer,
+        iterator begin,
+        iterator end
+    ) : Base{begin, end}, _lexer{lexer} {}
 
     using Base::begin;
     using Base::end;

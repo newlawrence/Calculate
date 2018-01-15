@@ -26,8 +26,13 @@ public:
     using Function = Function<Node<BaseParser>>;
     using Operator = Operator<Node<BaseParser>>;
 
+    using ConstantContainer = util::SymbolContainer<Constant, Type, Lexer>;
+    using FunctionContainer = util::SymbolContainer<Constant, Type, Lexer>;
+    using OperatorContainer = util::SymbolContainer<Constant, Type, Lexer>;
+
     using Expression = Node<BaseParser>;
-    private: using Variables = typename Expression::Variables;
+    private: using VariableHandler = typename Expression::VariableHandler;
+
     public: using SymbolType = typename Symbol::SymbolType;
     public: using Associativity = typename Operator::Associativity;
 
@@ -37,13 +42,20 @@ private:
 
 
 public:
-    util::SymbolMap<Constant, Type, Lexer> constants;
-    util::SymbolMap<Function, Type, Lexer> functions;
-    util::SymbolMap<Operator, Type, Lexer> operators;
+    ConstantContainer constants;
+    FunctionContainer functions;
+    OperatorContainer operators;
 
-    template<typename LexerType>
+    template<
+        typename LexerType,
+        std::enable_if_t<std::is_base_of<Lexer, LexerType>::value>* = nullptr
+    >
     BaseParser(const LexerType& lexer) :
-        _lexer{std::make_shared<LexerType>(lexer)},
+        BaseParser{std::make_shared<LexerType>(lexer)}
+    {}
+
+    BaseParser(const std::shared_ptr<Lexer>& lexer) :
+        _lexer{lexer},
         constants{_lexer},
         functions{_lexer},
         operators{_lexer}

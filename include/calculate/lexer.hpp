@@ -13,11 +13,11 @@ namespace calculate {
 
 namespace detail {
 
-struct Strings { std::string s1, s2, s3, s4; };
+struct StringInitializer { std::string s1, s2, s3, s4; };
 
-inline Strings DefaultPunctuation() { return {"(", ")", ",", "."}; }
+inline StringInitializer DefaultPunctuation() { return {"(", ")", ",", "."}; }
 
-inline Strings DefaultRegexes() {
+inline StringInitializer DefaultRegexes() {
     return {
         R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_",
         R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
@@ -29,7 +29,7 @@ inline Strings DefaultRegexes() {
     };
 }
 
-inline Strings DefaultComplexRegexes() {
+inline StringInitializer DefaultComplexRegexes() {
     return {
         R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_",
         R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
@@ -60,7 +60,10 @@ struct BaseLexer {
     const std::regex symbol_regex;
     const std::regex tokenizer_regex;
 
-    BaseLexer(const detail::Strings& strings, const detail::Strings& regexes) :
+    BaseLexer(
+        const detail::StringInitializer& strings,
+        const detail::StringInitializer& regexes
+    ) :
             left{strings.s1},
             right{strings.s2},
             separator{strings.s3},
@@ -97,8 +100,8 @@ class Lexer final : public BaseLexer<Type> {
 
 public:
     Lexer(
-        const detail::Strings& strings=detail::DefaultPunctuation(),
-        const detail::Strings& regexes=detail::DefaultRegexes()
+        const detail::StringInitializer& strings=detail::DefaultPunctuation(),
+        const detail::StringInitializer& regexes=detail::DefaultRegexes()
     ) : BaseLexer{strings, regexes} {
         if (this->decimal != ".")
             throw UnsuitableName{this->decimal};
@@ -138,8 +141,8 @@ class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
 
 public:
     Lexer(
-        const detail::Strings& strings=detail::DefaultPunctuation(),
-        const detail::Strings& regexes=detail::DefaultComplexRegexes()
+        const detail::StringInitializer& strings=detail::DefaultPunctuation(),
+        const detail::StringInitializer& regexes=detail::DefaultComplexRegexes()
     ) : BaseLexer{strings, regexes} {
         if (this->decimal != ".")
             throw UnsuitableName{this->decimal};

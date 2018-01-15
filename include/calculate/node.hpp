@@ -28,7 +28,7 @@ public:
 public:
     using const_iterator = typename std::vector<Node>::const_iterator;
 
-    class Variables {
+    class VariableHandler {
     public:
         const std::vector<std::string> variables;
 
@@ -48,7 +48,7 @@ public:
         }
 
     public:
-        explicit Variables(
+        explicit VariableHandler(
             const std::shared_ptr<Lexer>& lexer,
             const std::vector<std::string>& keys={}
         ) :
@@ -95,7 +95,7 @@ public:
 private:
     std::shared_ptr<Lexer> _lexer;
     std::string _token;
-    std::shared_ptr<Variables> _variables;
+    std::shared_ptr<VariableHandler> _variables;
     std::shared_ptr<Symbol> _symbol;
     std::vector<Node> _nodes;
     std::size_t _hash;
@@ -105,7 +105,7 @@ private:
     explicit Node(
         const std::shared_ptr<Lexer>& _lexer,
         const std::string& token,
-        const std::shared_ptr<Variables>& variables,
+        const std::shared_ptr<VariableHandler>& variables,
         const std::shared_ptr<Symbol>& symbol,
         std::vector<Node>&& nodes,
         std::size_t hash
@@ -145,7 +145,7 @@ private:
         return pruned;
     }
 
-    void _rebind(const std::shared_ptr<Variables>& context) noexcept {
+    void _rebind(const std::shared_ptr<VariableHandler>& context) noexcept {
         _variables = context;
         for (auto& node : _nodes)
             node._rebind(context);
@@ -160,7 +160,7 @@ public:
             _symbol{other._symbol},
             _nodes{other._nodes},
             _hash{other._hash}
-    { _rebind(std::make_shared<Variables>(_lexer, other._pruned())); }
+    { _rebind(std::make_shared<VariableHandler>(_lexer, other._pruned())); }
 
     Node(Node&& other) noexcept :
             _lexer{std::move(other._lexer)},
