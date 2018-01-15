@@ -33,6 +33,27 @@ public:
 
 
 private:
+    std::shared_ptr<Lexer> _lexer;
+
+
+public:
+    util::SymbolMap<Constant, Type, Lexer> constants;
+    util::SymbolMap<Function, Type, Lexer> functions;
+    util::SymbolMap<Operator, Type, Lexer> operators;
+
+    template<typename LexerType>
+    BaseParser(const LexerType& lexer) :
+        _lexer{std::make_shared<LexerType>(lexer)},
+        constants{_lexer},
+        functions{_lexer},
+        operators{_lexer}
+    {}
+
+    BaseParser() : BaseParser{calculate::Lexer<Type>{}} {}
+
+    virtual ~BaseParser() = default;
+
+
 /*protected:
     std::unordered_map<std::string, Constant> _constants;
     std::unordered_map<std::string, Function> _functions;
