@@ -37,6 +37,8 @@ inline std::string replace(
 
 template<typename Kind, typename Type, typename Lexer>
 class SymbolContainer final : std::unordered_map<std::string, Kind> {
+    template<typename BaseType> friend class BaseParser;
+
 public:
     using Base = std::unordered_map<std::string, Kind>;
 
@@ -49,37 +51,17 @@ public:
 private:
     std::shared_ptr<Lexer> _lexer;
 
+    SymbolContainer(const std::shared_ptr<Lexer>& lexer) :
+        _lexer{lexer}
+    {}
+
+    SymbolContainer(const SymbolContainer&) = default;
+    SymbolContainer(SymbolContainer&&) = default;
+    ~SymbolContainer() = default;
+    SymbolContainer& operator=(const SymbolContainer&) = default;
+    SymbolContainer& operator=(SymbolContainer&&) = default;
+
 public:
-    template<
-         typename LexerType,
-         std::enable_if_t<std::is_base_of<Lexer, LexerType>::value>* = nullptr
-    >
-    SymbolContainer(
-        const LexerType& lexer,
-        std::initializer_list<value_type> list={}
-    ) : SymbolContainer{std::make_shared<LexerType>(lexer), list} {}
-
-    SymbolContainer(
-        const std::shared_ptr<Lexer>& lexer,
-        std::initializer_list<value_type> list={}
-    ) : Base{list}, _lexer{lexer} {}
-
-    template<
-         typename LexerType,
-         std::enable_if_t<std::is_base_of<Lexer, LexerType>::value>* = nullptr
-    >
-    SymbolContainer(
-        const LexerType& lexer,
-        iterator begin,
-        iterator end
-    ) : SymbolContainer{std::make_shared<LexerType>(lexer), begin, end} {}
-
-    SymbolContainer(
-        const std::shared_ptr<Lexer>& lexer,
-        iterator begin,
-        iterator end
-    ) : Base{begin, end}, _lexer{lexer} {}
-
     using Base::begin;
     using Base::end;
     using Base::cbegin;
