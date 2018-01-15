@@ -35,9 +35,11 @@ inline std::string replace(
 }
 
 
-template<typename Kind, typename Type, typename Lexer>
+template<typename Kind, typename Parser>
 class SymbolContainer final : std::unordered_map<std::string, Kind> {
-    template<typename BaseType> friend class BaseParser;
+    friend Parser;
+    using Type = typename Parser::Type;
+    using Lexer = typename Parser::Lexer;
 
 public:
     using Base = std::unordered_map<std::string, Kind>;

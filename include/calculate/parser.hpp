@@ -38,9 +38,9 @@ private:
 
 
 public:
-    util::SymbolContainer<Constant, Type, Lexer> constants;
-    util::SymbolContainer<Function, Type, Lexer> functions;
-    util::SymbolContainer<Operator, Type, Lexer> operators;
+    util::SymbolContainer<Constant, BaseParser> constants;
+    util::SymbolContainer<Function, BaseParser> functions;
+    util::SymbolContainer<Operator, BaseParser> operators;
 
     template<typename LexerType>
     BaseParser(const LexerType& lexer) :

@@ -14,8 +14,8 @@ namespace calculate {
 
 template<typename Parser>
 class Node {
-    template<typename BaseType> friend class BaseParser;
     friend struct std::hash<Node>;
+    friend Parser;
 
 public:
     using Type = typename Parser::Type;
