@@ -90,6 +90,8 @@ public:
     std::size_t arguments() const noexcept { return _wrapper.argc(); }
 
     virtual SymbolType symbol() const noexcept = 0;
+
+    virtual std::unique_ptr<Symbol> clone() const noexcept = 0;
 };
 
 template<typename Expression>
@@ -107,6 +109,10 @@ public:
     {}
 
     SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
+
+    std::unique_ptr<Symbol> clone() const noexcept override {
+        return std::make_unique<Variable>(*this);
+    }
 };
 
 template<typename Expression>
@@ -128,6 +134,10 @@ public:
     Constant() : Symbol{[]() noexcept { return Type{}; }} {}
 
     SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
+
+    std::unique_ptr<Symbol> clone() const noexcept override {
+        return std::make_unique<Constant>(*this);
+    }
 
     operator Type() const { return Symbol::operator()(); }
 
@@ -152,6 +162,10 @@ public:
     Function() : Symbol{[](const Type& x) noexcept { return x; }} {}
 
     SymbolType symbol() const noexcept override { return SymbolType::FUNCTION; }
+
+    std::unique_ptr<Symbol> clone() const noexcept override {
+        return std::make_unique<Function>(*this);
+    }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
@@ -204,6 +218,10 @@ public:
     {}
 
     SymbolType symbol() const noexcept override { return SymbolType::OPERATOR; }
+
+    std::unique_ptr<Symbol> clone() const noexcept override {
+        return std::make_unique<Operator>(*this);
+    }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {

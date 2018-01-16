@@ -55,11 +55,9 @@ public:
     using typename Base::const_iterator;
 
 private:
-    std::shared_ptr<Lexer> _lexer;
+    Lexer* _lexer;
 
-    SymbolContainer(const std::shared_ptr<Lexer>& lexer) :
-        _lexer{lexer}
-    {}
+    SymbolContainer(Lexer* lexer) : _lexer{lexer} {}
 
     SymbolContainer(const SymbolContainer&) = default;
     SymbolContainer(SymbolContainer&&) = default;

@@ -46,16 +46,16 @@ public:
     template<typename LexerType>
     BaseParser(const LexerType& lexer) :
         _lexer{std::make_shared<LexerType>(lexer)},
-        constants{_lexer},
-        functions{_lexer},
-        operators{_lexer}
+        constants{_lexer.get()},
+        functions{_lexer.get()},
+        operators{_lexer.get()}
     {}
 
     BaseParser() : BaseParser{calculate::Lexer<Type>{}} {}
 
     virtual ~BaseParser() = default;
 
-    std::shared_ptr<Lexer> lexer() const noexcept { return _lexer; }
+    const Lexer& lexer() const noexcept { return *_lexer; }
 
 /*
     std::queue<std::pair<std::string, SymbolType>> _tokenize(

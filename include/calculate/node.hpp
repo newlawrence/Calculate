@@ -49,8 +49,8 @@ public:
 
     public:
         explicit VariableHandler(
-            const std::shared_ptr<Lexer>& lexer,
-            const std::vector<std::string>& keys={}
+            const std::vector<std::string>& keys,
+            Lexer& lexer
         ) :
                 variables{keys},
                 _size{keys.size()},
@@ -58,12 +58,17 @@ public:
         {
             std::unordered_set<std::string> singles{keys.begin(), keys.end()};
             for (const auto &variable : keys) {
-                if (!std::regex_match(variable, lexer->name_regex))
+                if (!std::regex_match(variable, lexer.name_regex))
                     throw UnsuitableName{variable};
                 else if (singles.erase(variable) == 0)
                     throw RepeatedSymbol{variable};
             }
         }
+
+        static std::shared_ptr<VariableHandler> make(
+            const std::vector<std::string>& keys,
+            Lexer& lexer
+        ) { return std::make_shared<VariableHandler>(keys, lexer); }
 
         std::size_t index(const std::string& token) const {
             auto found = std::find(variables.begin(), variables.end(), token);
@@ -94,9 +99,9 @@ public:
 
 private:
     std::shared_ptr<Lexer> _lexer;
-    std::string _token;
     std::shared_ptr<VariableHandler> _variables;
-    std::shared_ptr<Symbol> _symbol;
+    std::unique_ptr<Symbol> _symbol;
+    std::string _token;
     std::vector<Node> _nodes;
     std::size_t _hash;
 
@@ -104,16 +109,16 @@ private:
 
     explicit Node(
         const std::shared_ptr<Lexer>& _lexer,
-        const std::string& token,
         const std::shared_ptr<VariableHandler>& variables,
-        const std::shared_ptr<Symbol>& symbol,
+        const Symbol& symbol,
+        const std::string& token,
         std::vector<Node>&& nodes,
         std::size_t hash
     ) :
             _lexer{_lexer},
-            _token{token},
             _variables{variables},
-            _symbol{symbol},
+            _symbol{symbol.clone()},
+            _token{token},
             _nodes{std::move(nodes)},
             _hash{hash}
     {
@@ -155,18 +160,18 @@ private:
 public:
     Node(const Node& other) noexcept :
             _lexer{other._lexer},
-            _token{other._token},
             _variables{},
-            _symbol{other._symbol},
+            _symbol{other._symbol->clone()},
+            _token{other._token},
             _nodes{other._nodes},
             _hash{other._hash}
-    { _rebind(std::make_shared<VariableHandler>(_lexer, other._pruned())); }
+    { _rebind(std::make_shared<VariableHandler>(other._pruned(), *_lexer)); }
 
     Node(Node&& other) noexcept :
             _lexer{std::move(other._lexer)},
-            _token{std::move(other._token)},
             _variables{std::move(other._variables)},
             _symbol{std::move(other._symbol)},
+            _token{std::move(other._token)},
             _nodes{std::move(other._nodes)},
             _hash{std::move(other._hash)}
     {}
@@ -179,16 +184,10 @@ public:
     friend void swap(Node& one, Node& another) noexcept {
         using std::swap;
         swap(one._lexer, another._lexer);
-        swap(one._token, another._token);
         swap(one._variables, another._variables);
         swap(one._symbol, another._symbol);
+        swap(one._token, another._token);
         swap(one._nodes, another._nodes);
-    }
-
-    std::shared_ptr<Lexer> lexer() const noexcept { return _lexer; }
-
-    static Type evaluate(const Node& node) {
-        return node._symbol->evaluate(node._nodes);
     }
 
     explicit operator Type() const {
@@ -268,9 +267,15 @@ public:
         return ostream;
     }
 
-    const std::string& token() const noexcept { return _token; }
+    static Type evaluate(const Node& node) {
+        return node._symbol->evaluate(node._nodes);
+    }
+
+    const Lexer& lexer() const noexcept { return *_lexer; }
 
     SymbolType symbol() const noexcept { return _symbol->symbol(); }
+
+    const std::string& token() const noexcept { return _token; }
 
     std::size_t branches() const noexcept { return _nodes.size(); }
 
