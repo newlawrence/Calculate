@@ -78,9 +78,10 @@ struct BaseLexer {
             tokenizer_regex{regexes.s4}
     {}
 
+    virtual ~BaseLexer() = default;
+
     virtual Type to_value(const std::string&) const = 0;
     virtual std::string to_string(Type) const noexcept = 0;
-    virtual ~BaseLexer() = default;
 };
 
 

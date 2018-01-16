@@ -18,8 +18,8 @@ class Node {
     friend Parser;
 
 public:
-    using Type = typename Parser::Type;
     using Lexer = typename Parser::Lexer;
+    using Type = typename Parser::Type;
 
     using Symbol = Symbol<Node>;
     using SymbolType = typename Symbol::SymbolType;

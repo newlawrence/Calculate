@@ -38,12 +38,15 @@ inline std::string replace(
 template<typename Kind, typename Parser>
 class SymbolContainer final : std::unordered_map<std::string, Kind> {
     friend Parser;
-    using Type = typename Parser::Type;
+    using Base = std::unordered_map<std::string, Kind>;
     using Lexer = typename Parser::Lexer;
+    using Type = typename Parser::Type;
+
+    using Constant = typename Parser::Constant;
+    using Function = typename Parser::Function;
+    using Operator = typename Parser::Operator;
 
 public:
-    using Base = std::unordered_map<std::string, Kind>;
-
     using typename Base::key_type;
     using typename Base::mapped_type;
     using typename Base::value_type;
@@ -73,6 +76,7 @@ public:
     using Base::size;
     using Base::find;
     using Base::count;
+    using Base::at;
 
     using Base::erase;
     using Base::clear;
