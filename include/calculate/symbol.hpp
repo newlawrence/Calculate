@@ -199,7 +199,7 @@ public:
     Operator() :
         Symbol{[](const Type& x, const Type&) noexcept { return x; }},
         _alias{""},
-        _precedence{0},
+        _precedence{0u},
         _associativity{Associativity::BOTH}
     {}
 

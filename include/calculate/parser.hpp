@@ -55,6 +55,7 @@ public:
 
     virtual ~BaseParser() = default;
 
+    std::shared_ptr<Lexer> lexer() const noexcept { return _lexer; }
 
 /*
     std::queue<std::pair<std::string, SymbolType>> _tokenize(
