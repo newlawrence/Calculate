@@ -4,8 +4,9 @@
 #include <functional>
 #include <memory>
 #include <regex>
-#include <string>
 #include <unordered_map>
+
+#include "exception.hpp"
 
 
 namespace calculate {
@@ -66,6 +67,21 @@ private:
     SymbolContainer& operator=(const SymbolContainer&) = default;
     SymbolContainer& operator=(SymbolContainer&&) = default;
 
+    void _validate(const std::string& key, Constant*) {
+        if (!std::regex_match(key, _lexer->name_regex))
+            throw UnsuitableName{key};
+    }
+
+    void _validate(const std::string& key, Function*) {
+        if (!std::regex_match(key, _lexer->name_regex))
+            throw UnsuitableName{key};
+    }
+
+    void _validate(const std::string& key, Operator*) {
+        if (!std::regex_match(key, _lexer->symbol_regex))
+            throw UnsuitableName{key};
+    }
+
 public:
     using Base::begin;
     using Base::end;
@@ -82,6 +98,23 @@ public:
     using Base::clear;
     using Base::swap;
     using Base::reserve;
+
+    mapped_type& operator[](const key_type& key) {
+        _validate(key, static_cast<mapped_type*>(nullptr));
+        return Base::operator[](key);
+    }
+
+    mapped_type& operator[](key_type&& key) {
+        _validate(key, static_cast<mapped_type*>(nullptr));
+        return Base::operator[](key);
+    }
+
+    template<typename... Args>
+    std::pair<iterator, bool> emplace(const std::string& key, Args&&... args) {
+        _validate(key, static_cast<mapped_type*>(nullptr));
+        return Base::emplace(key, std::forward<Args>(args)...);
+    }
+
 };
 
 }

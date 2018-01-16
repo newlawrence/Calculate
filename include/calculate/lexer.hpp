@@ -5,7 +5,6 @@
 #include <iomanip>
 #include <sstream>
 
-#include "exception.hpp"
 #include "util.hpp"
 
 
