@@ -13,6 +13,15 @@ class Parser : public BaseParser<double> {};
 class DefaultParser : public Parser {
 public:
     DefaultParser() {
+        using Associativity = Operator::Associativity;
+
+        auto add = [](Type x1, Type x2) noexcept { return x1 + x2; };
+        auto subtract = [](Type x1, Type x2) noexcept { return x1 - x2; };
+        auto multiply = [](Type x1, Type x2) noexcept { return x1 * x2; };
+        auto divide = [](Type x1, Type x2) noexcept { return x1 / x2; };
+        auto truncate = static_cast<Type(*)(Type, Type)>(std::fmod);
+        auto raise = static_cast<Type(*)(Type, Type)>(std::pow);
+
         constants.insert({
             {"pi", 3.14159265358979323846},
             {"e", 2.71828182845904523536},
@@ -75,199 +84,108 @@ public:
         });
 
         operators.insert({
-            {
-                "+",
-                {
-                    [](Type x1, Type x2) noexcept { return x1 + x2; },
-                    "id",
-                    std::size_t{3333},
-                    Operator::Associativity::BOTH
-                }
-            },
-            {
-                "-",
-                {
-                    [](Type x1, Type x2) noexcept { return x1 - x2; },
-                    "neg",
-                    std::size_t{3333},
-                    Operator::Associativity::LEFT
-                }
-            },
-            {
-                "*",
-                {
-                    [](Type x1, Type x2) noexcept { return x1 * x2; },
-                    "",
-                    std::size_t{6666},
-                    Operator::Associativity::BOTH
-                }
-            },
-            {
-                "/",
-                {
-                    [](Type x1, Type x2) noexcept { return x1 / x2; },
-                    "",
-                    std::size_t{6666},
-                    Operator::Associativity::LEFT
-                }
-            },
-            {
-                "%",
-                {
-                    static_cast<Type(*)(Type, Type)>(std::fmod),
-                    "",
-                    std::size_t{6666},
-                    Operator::Associativity::LEFT
-                }
-            },
-            {
-                "^",
-                {
-                    static_cast<Type(*)(Type, Type)>(std::pow),
-                    "",
-                    std::size_t{9999},
-                    Operator::Associativity::RIGHT
-                }
-            }
+            {"+", {std::move(add), "id", 3333u, Associativity::BOTH}},
+            {"-", {std::move(subtract), "neg", 3333u, Associativity::LEFT}},
+            {"*", {std::move(multiply), "", 6666u, Associativity::BOTH}},
+            {"/", {std::move(divide), "", 6666u, Associativity::LEFT}},
+            {"%", {std::move(truncate), "", 6666u, Associativity::LEFT}},
+            {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
         });
     }
 };
 
 
-/*class ComplexParser : public BaseParser<std::complex<double>> {};
+class ComplexParser : public BaseParser<std::complex<double>> {};
 
 class DefaultComplexParser : public ComplexParser {
 public:
     DefaultComplexParser() {
         using namespace std::complex_literals;
+        using Associativity = Operator::Associativity;
 
-        set<Constant>("i", Type{0., 1.});
-        set<Constant>("pi", Type{3.14159265358979323846, 0.});
-        set<Constant>("e", Type{2.71828182845904523536, 0.});
-        set<Constant>("phi", Type{1.61803398874989484820, 0.});
-        set<Constant>("gamma", Type{0.57721566490153286060, 0.});
+        auto real = [](const Type& z) noexcept {
+            return static_cast<Type>(std::real(z));
+        };
+        auto imag = [](const Type& z) noexcept {
+            return static_cast<Type>(std::imag(z));
+        };
+        auto abs = [](const Type& z) noexcept {
+            return static_cast<Type>(std::abs(z));
+        };
+        auto arg = [](const Type& z) noexcept {
+            return static_cast<Type>(std::arg(z));
+        };
+        auto norm = [](const Type& z) noexcept {
+            return static_cast<Type>(std::norm(z));
+        };
+        auto polar = [](const Type& z1, const Type& z2) noexcept {
+            return z1 * std::exp(1i * z2);
+        };
 
-        set<Function>("id",
-            [](const Type& z) noexcept { return z; }
-        );
-        set<Function>("neg",
-            [](const Type& z) noexcept { return -z; }
-        );
-        set<Function>("inv",
-            [](const Type& z) noexcept { return Type{1} / z; }
-        );
+        auto add = [](const Type& z1, const Type& z2) noexcept {
+            return z1 + z2;
+        };
+        auto subtract = [](const Type& z1, const Type& z2) noexcept {
+            return z1 - z2;
+        };
+        auto multiply = [](const Type& z1, const Type& z2) noexcept {
+            return z1 * z2;
+        };
+        auto divide = [](const Type& z1, const Type& z2) noexcept {
+            return z1 / z2;
+        };
+        auto raise = [](const Type& z1, const Type& z2) {
+            return std::pow(z1, z2);
+        };
 
-        set<Function>("real",
-            [](const Type& z) noexcept {
-                return static_cast<Type>(std::real(z));
-            }
-        );
-        set<Function>("imag",
-            [](const Type& z) noexcept {
-                return static_cast<Type>(std::imag(z));
-            }
-        );
-        set<Function>("abs",
-            [](const Type& z) noexcept {
-                return static_cast<Type>(std::abs(z));
-            }
-        );
-        set<Function>("arg",
-            [](const Type& z) noexcept {
-                return static_cast<Type>(std::arg(z));
-            }
-        );
-        set<Function>("norm",
-            [](const Type& z) noexcept {
-                return static_cast<Type>(std::norm(z));
-            }
-        );
-        set<Function>("polar",
-            [](const Type& z1, const Type& z2) noexcept {
-                return z1 * std::exp(1i * z2);
-            }
-        );
-        set<Function>("conj",
-            static_cast<Type(*)(const Type&)>(std::conj)
-        );
-        set<Function>("proj",
-            static_cast<Type(*)(const Type&)>(std::proj)
-        );
+        constants.insert({
+            {"i", Type{0., 1.}},
+            {"pi", Type{3.14159265358979323846, 0.}},
+            {"e", Type{2.71828182845904523536, 0.}},
+            {"phi", Type{1.61803398874989484820, 0.}},
+            {"gamma", Type{0.57721566490153286060, 0.}}
+        });
 
-        set<Function>("exp",
-            static_cast<Type(*)(const Type&)>(std::exp)
-        );
-        set<Function>("log",
-            static_cast<Type(*)(const Type&)>(std::log)
-        );
-        set<Function>("log10",
-            static_cast<Type(*)(const Type&)>(std::log10)
-        );
-        set<Function>("pow",
-            static_cast<Type(*)(const Type&, const Type&)>(std::pow)
-        );
-        set<Function>("sqrt",
-            static_cast<Type(*)(const Type&)>(std::sqrt)
-        );
-        set<Function>("sin",
-            static_cast<Type(*)(const Type&)>(std::sin)
-        );
-        set<Function>("sinh",
-            static_cast<Type(*)(const Type&)>(std::sinh)
-        );
-        set<Function>("cos",
-            static_cast<Type(*)(const Type&)>(std::cos)
-        );
-        set<Function>("cosh",
-            static_cast<Type(*)(const Type&)>(std::cosh)
-        );
-        set<Function>("tan",
-            static_cast<Type(*)(const Type&)>(std::tan)
-        );
-        set<Function>("tanh",
-            static_cast<Type(*)(const Type&)>(std::tanh)
-        );
-        set<Function>("asin",
-            static_cast<Type(*)(const Type&)>(std::asin)
-        );
-        set<Function>("asinh",
-            static_cast<Type(*)(const Type&)>(std::asinh)
-        );
-        set<Function>("acos",
-            static_cast<Type(*)(const Type&)>(std::acos)
-        );
-        set<Function>("acosh",
-            static_cast<Type(*)(const Type&)>(std::acosh)
-        );
-        set<Function>("atan",
-            static_cast<Type(*)(const Type&)>(std::atan)
-        );
-        set<Function>("atanh",
-            static_cast<Type(*)(const Type&)>(std::atanh)
-        );
+        functions.insert({
+            {"id", [](const Type& z) noexcept { return z; }},
+            {"neg", [](const Type& z) noexcept { return -z; }},
+            {"inv", [](const Type& z) noexcept { return Type{1} / z; }},
+            {"real", std::move(real)},
+            {"imag", std::move(imag)},
+            {"abs", std::move(abs)},
+            {"arg", std::move(arg)},
+            {"norm", std::move(norm)},
+            {"polar", std::move(polar)},
+            {"conj", static_cast<Type(*)(const Type&)>(std::conj)},
+            {"proj", static_cast<Type(*)(const Type&)>(std::exp)},
+            {"exp", static_cast<Type(*)(const Type&)>(std::exp)},
+            {"log", static_cast<Type(*)(const Type&)>(std::log)},
+            {"log10", static_cast<Type(*)(const Type&)>(std::log10)},
+            {"pow", static_cast<Type(*)(const Type&, const Type&)>(std::pow)},
+            {"sqrt", static_cast<Type(*)(const Type&)>(std::sqrt)},
+            {"sin", static_cast<Type(*)(const Type&)>(std::sin)},
+            {"sinh", static_cast<Type(*)(const Type&)>(std::sinh)},
+            {"cos", static_cast<Type(*)(const Type&)>(std::cos)},
+            {"cosh", static_cast<Type(*)(const Type&)>(std::cosh)},
+            {"tan", static_cast<Type(*)(const Type&)>(std::tan)},
+            {"tanh", static_cast<Type(*)(const Type&)>(std::tanh)},
+            {"asin", static_cast<Type(*)(const Type&)>(std::asin)},
+            {"asinh", static_cast<Type(*)(const Type&)>(std::asinh)},
+            {"acos", static_cast<Type(*)(const Type&)>(std::acos)},
+            {"acosh", static_cast<Type(*)(const Type&)>(std::acosh)},
+            {"atan", static_cast<Type(*)(const Type&)>(std::atan)},
+            {"atanh", static_cast<Type(*)(const Type&)>(std::atanh)}
+        });
 
-        set<Operator>("+",
-            [](const Type& z1, const Type& z2) noexcept { return z1 + z2; },
-            "id", std::size_t{3333}, Operator::Associativity::BOTH
-        );
-        set<Operator>("-",
-            [](const Type& z1, const Type& z2) noexcept { return z1 - z2; },
-            "neg", std::size_t{3333}, Operator::Associativity::LEFT
-        );
-        set<Operator>("*",
-            [](const Type& z1, const Type& z2) noexcept { return z1 * z2; },
-            "", std::size_t{6666}, Operator::Associativity::BOTH
-        );
-        set<Operator>("/",
-            [](const Type& z1, const Type& z2) noexcept { return z1 / z2; },
-            "", std::size_t{6666}, Operator::Associativity::LEFT
-        );
-        set<Operator>("^",
-            [](const Type& z1, const Type& z2) { return std::pow(z1, z2); },
-            "", std::size_t{9999}, Operator::Associativity::RIGHT
-        );
+        operators.insert({
+            {"+", {std::move(add), "id", 3333u, Associativity::BOTH}},
+            {"-", {std::move(subtract), "neg", 3333u, Associativity::LEFT}},
+            {"*", {std::move(multiply), "", 6666u, Associativity::BOTH}},
+            {"/", {std::move(divide), "", 6666u, Associativity::LEFT}},
+            {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
+        });
     }
-};*/
+};
 
 }
 
