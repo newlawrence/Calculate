@@ -82,6 +82,10 @@ private:
             throw UnsuitableName{key};
     }
 
+    void _validate(const std::string& key) {
+        _validate(key, static_cast<mapped_type*>(nullptr));
+    }
+
 public:
     using Base::begin;
     using Base::end;
@@ -92,7 +96,6 @@ public:
     using Base::size;
     using Base::find;
     using Base::count;
-    using Base::at;
 
     using Base::erase;
     using Base::clear;
@@ -100,21 +103,54 @@ public:
     using Base::reserve;
 
     mapped_type& operator[](const key_type& key) {
-        _validate(key, static_cast<mapped_type*>(nullptr));
+        _validate(key);
         return Base::operator[](key);
     }
 
     mapped_type& operator[](key_type&& key) {
-        _validate(key, static_cast<mapped_type*>(nullptr));
-        return Base::operator[](key);
+        _validate(key);
+        return Base::operator[](std::forward<key_type>(key));
+    }
+
+    mapped_type& at(const key_type& key) {
+        _validate(key);
+        return Base::at(key);
+    }
+
+    mapped_type& at(key_type&& key) {
+        _validate(key);
+        return Base::at(std::forward<key_type>(key));
     }
 
     template<typename... Args>
     std::pair<iterator, bool> emplace(const std::string& key, Args&&... args) {
-        _validate(key, static_cast<mapped_type*>(nullptr));
+        _validate(key);
         return Base::emplace(key, std::forward<Args>(args)...);
     }
 
+    std::pair<iterator, bool> insert(const value_type& value) {
+        _validate(value.first);
+        return Base::insert(value);
+    }
+
+    template<class Value>
+    std::pair<iterator, bool> insert(Value&& value) {
+        _validate(value.first);
+        return Base::insert(std::forward<Value>(value));
+    }
+
+    template<class Iterator>
+    void insert(Iterator first, Iterator last) {
+        for (auto element = first; element != last; ++element)
+            _validate(element->first);
+        Base::insert(first, last);
+    }
+
+    void insert(std::initializer_list<value_type> list) {
+        for (const auto& element : list)
+            _validate(element.first);
+        Base::insert(list);
+    }
 };
 
 }

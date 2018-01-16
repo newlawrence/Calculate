@@ -56,49 +56,7 @@ public:
     virtual ~BaseParser() = default;
 
 
-/*protected:
-    std::unordered_map<std::string, Constant> _constants;
-    std::unordered_map<std::string, Function> _functions;
-    std::unordered_map<std::string, Operator> _operators;
-
-    static void _validate(Constant*, const std::string& token) {
-        if (!std::regex_match(token, Lexer::name().regex))
-            throw UnsuitableName{token};
-    }
-
-    static void _validate(Function*, const std::string& token) {
-        if (!std::regex_match(token, Lexer::name().regex))
-            throw UnsuitableName{token};
-    }
-
-    static void _validate(Operator*, const std::string& token) {
-        if (!std::regex_match(token, Lexer::symbol().regex))
-            throw UnsuitableName{token};
-    }
-
-    std::unordered_map<std::string, Constant>& _get(Constant*) noexcept {
-        return _constants;
-    }
-
-    std::unordered_map<std::string, Function>& _get(Function*) noexcept {
-        return _functions;
-    }
-
-    std::unordered_map<std::string, Operator>& _get(Operator*) noexcept {
-        return _operators;
-    }
-
-    template<typename Kind>
-    std::unordered_map<std::string, Kind>& _factory() noexcept {
-        return _get(static_cast<Kind*>(nullptr));
-    }
-
-    template<typename Kind>
-    std::unordered_map<std::string, Kind>& _factory() const noexcept {
-        return const_cast<BaseParser*>(this)->_get(static_cast<Kind*>(nullptr));
-    }
-
-
+/*
     std::queue<std::pair<std::string, SymbolType>> _tokenize(
         std::string expression,
         const std::shared_ptr<Variables>& variables
@@ -670,54 +628,8 @@ public:
             pruned
         );
     }
-
-
-    template<typename Kind>
-    bool has(const std::string& token) const noexcept {
-        return _factory<Kind>().find(token) != _factory<Kind>().end();
-    }
-
-    template<typename Kind>
-    Kind get(const std::string& token) const {
-        auto found = _factory<Kind>().find(token);
-        if (found == _factory<Kind>().end())
-            throw UndefinedSymbol{token};
-        return found->second;
-    }
-
-    template<typename Kind, typename... Args>
-    void set(const std::string& token, Args&&... args) {
-        auto found = _factory<Kind>().find(token);
-        _validate(static_cast<Kind*>(nullptr), token);
-        if (found != _factory<Kind>().end())
-            _factory<Kind>().erase(found);
-        _factory<Kind>().emplace(
-            std::make_pair(token, Kind{std::forward<Args>(args)...})
-        );
-    }
-
-    template<typename Kind>
-    void remove(const std::string& token) {
-        auto found = _factory<Kind>().find(token);
-        if (found == _factory<Kind>().end())
-            throw UndefinedSymbol{token};
-        _factory<Kind>().erase(found);
-    }
-
-    template<typename Kind>
-    std::vector<std::string> list() const noexcept {
-        std::vector<std::string> keys(_factory<Kind>().size());
-
-        std::transform(
-            _factory<Kind>().begin(),
-            _factory<Kind>().end(),
-            keys.begin(),
-            [](const auto& pair) { return pair.first; }
-        );
-        std::sort(keys.begin(), keys.end());
-        return keys;
-    }
-*/};
+*/
+};
 
 }
 
