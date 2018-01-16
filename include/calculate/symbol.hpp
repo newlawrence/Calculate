@@ -197,12 +197,10 @@ public:
     {}
 
     Operator() :
-        Symbol{
-            [](const Type& x, const Type&) noexcept { return x; },
-            "",
-            0,
-            Associativity::BOTH
-        }
+        Symbol{[](const Type& x, const Type&) noexcept { return x; }},
+        _alias{""},
+        _precedence{0},
+        _associativity{Associativity::BOTH}
     {}
 
     SymbolType symbol() const noexcept override { return SymbolType::OPERATOR; }
