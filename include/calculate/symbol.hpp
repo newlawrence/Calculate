@@ -125,6 +125,8 @@ public:
             Symbol{[value]() noexcept { return value; }}
     {}
 
+    Constant() : Symbol{[]() noexcept { return Type{}; }} {}
+
     SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
 
     operator Type() const { return Symbol::operator()(); }
@@ -146,6 +148,8 @@ public:
     Function(Callable&& callable) :
             Symbol{std::forward<Callable>(callable)}
     {}
+
+    Function() : Symbol{[](const Type& x) noexcept { return x; }} {}
 
     SymbolType symbol() const noexcept override { return SymbolType::FUNCTION; }
 
@@ -190,6 +194,15 @@ public:
             _alias{alias},
             _precedence{precedence},
             _associativity{associativity}
+    {}
+
+    Operator() :
+        Symbol{
+            [](const Type& x, const Type&) noexcept { return x; },
+            "",
+            0,
+            Associativity::BOTH
+        }
     {}
 
     SymbolType symbol() const noexcept override { return SymbolType::OPERATOR; }
