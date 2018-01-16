@@ -157,7 +157,12 @@ public:
     template<typename Callable>
     Function(Callable&& callable) :
             Symbol{std::forward<Callable>(callable)}
-    {}
+    {
+        static_assert(
+            detail::Argc<Callable>::value > 0,
+            "Functions must have at least one argument"
+        );
+    }
 
     Function() : Symbol{[](const Type& x) noexcept { return x; }} {}
 
@@ -208,7 +213,12 @@ public:
             _alias{alias},
             _precedence{precedence},
             _associativity{associativity}
-    {}
+    {
+        static_assert(
+            detail::Argc<Callable>::value == 2,
+            "Operators must have two arguments"
+        );
+    }
 
     Operator() :
         Symbol{[](const Type& x, const Type&) noexcept { return x; }},

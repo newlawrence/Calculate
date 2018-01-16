@@ -57,6 +57,13 @@ public:
 
     const Lexer& lexer() const noexcept { return *_lexer; }
 
+
+private:
+    using SymbolHandler = std::tuple<
+        std::string,
+        SymbolType,
+        std::unique_ptr<Symbol>
+    >;
 /*
     std::queue<std::pair<std::string, SymbolType>> _tokenize(
         std::string expression,
@@ -364,7 +371,8 @@ public:
 
         return collected;
     }
-
+*/
+/*
     Expression _create_node(
         const std::pair<std::string, SymbolType>& token,
         std::vector<Expression>&& nodes,
