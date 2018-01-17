@@ -65,22 +65,22 @@ private:
     SymbolContainer& operator=(const SymbolContainer&) = default;
     SymbolContainer& operator=(SymbolContainer&&) = default;
 
-    void _validate(const std::string& key, Constant*) {
+    void _validate(const std::string& key, Constant*) const {
         if (!std::regex_match(key, _lexer->name_regex))
             throw UnsuitableName{key};
     }
 
-    void _validate(const std::string& key, Function*) {
+    void _validate(const std::string& key, Function*) const {
         if (!std::regex_match(key, _lexer->name_regex))
             throw UnsuitableName{key};
     }
 
-    void _validate(const std::string& key, Operator*) {
+    void _validate(const std::string& key, Operator*) const {
         if (!std::regex_match(key, _lexer->symbol_regex))
             throw UnsuitableName{key};
     }
 
-    void _validate(const std::string& key) {
+    void _validate(const std::string& key) const {
         _validate(key, static_cast<mapped_type*>(nullptr));
     }
 
@@ -115,9 +115,9 @@ public:
         return Base::at(key);
     }
 
-    mapped_type& at(key_type&& key) {
+    const mapped_type& at(const key_type& key) const {
         _validate(key);
-        return Base::at(std::forward<key_type>(key));
+        return Base::at(key);
     }
 
     template<typename... Args>

@@ -95,8 +95,8 @@ public:
 private:
     std::shared_ptr<Lexer> _lexer;
     std::shared_ptr<VariableHandler> _variables;
-    std::unique_ptr<Symbol> _symbol;
     std::string _token;
+    std::unique_ptr<Symbol> _symbol;
     std::vector<Node> _nodes;
     std::size_t _hash;
 
@@ -105,15 +105,15 @@ private:
     explicit Node(
         const std::shared_ptr<Lexer>& _lexer,
         const std::shared_ptr<VariableHandler>& variables,
-        const Symbol& symbol,
         const std::string& token,
+        std::unique_ptr<Symbol>&& symbol,
         std::vector<Node>&& nodes,
         std::size_t hash
     ) :
             _lexer{_lexer},
             _variables{variables},
-            _symbol{symbol.clone()},
             _token{token},
+            _symbol{std::move(symbol)},
             _nodes{std::move(nodes)},
             _hash{hash}
     {
@@ -156,8 +156,8 @@ public:
     Node(const Node& other) noexcept :
             _lexer{other._lexer},
             _variables{},
-            _symbol{other._symbol->clone()},
             _token{other._token},
+            _symbol{other._symbol->clone()},
             _nodes{other._nodes},
             _hash{other._hash}
     { _rebind(std::make_shared<VariableHandler>(other._pruned(), *_lexer)); }
@@ -165,8 +165,8 @@ public:
     Node(Node&& other) noexcept :
             _lexer{std::move(other._lexer)},
             _variables{std::move(other._variables)},
-            _symbol{std::move(other._symbol)},
             _token{std::move(other._token)},
+            _symbol{std::move(other._symbol)},
             _nodes{std::move(other._nodes)},
             _hash{std::move(other._hash)}
     {}
@@ -180,8 +180,8 @@ public:
         using std::swap;
         swap(one._lexer, another._lexer);
         swap(one._variables, another._variables);
-        swap(one._symbol, another._symbol);
         swap(one._token, another._token);
+        swap(one._symbol, another._symbol);
         swap(one._nodes, another._nodes);
     }
 
@@ -268,9 +268,9 @@ public:
 
     const Lexer& lexer() const noexcept { return *_lexer; }
 
-    SymbolType symbol() const noexcept { return _symbol->symbol(); }
-
     const std::string& token() const noexcept { return _token; }
+
+    SymbolType symbol() const noexcept { return _symbol->symbol(); }
 
     std::size_t branches() const noexcept { return _nodes.size(); }
 

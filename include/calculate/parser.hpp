@@ -65,15 +65,15 @@ private:
         std::unique_ptr<Symbol> symbol;
     };
 
-    SymbolHandler Left() {
+    SymbolHandler Left() const noexcept {
         return {_lexer->left, SymbolType::LEFT, nullptr};
     }
 
-    SymbolHandler Right() {
+    SymbolHandler Right() const noexcept {
         return {_lexer->right, SymbolType::RIGHT, nullptr};
     }
 
-    SymbolHandler Separator() {
+    SymbolHandler Separator() const noexcept {
         return {_lexer->separator, SymbolType::SEPARATOR, nullptr};
     }
 
@@ -83,7 +83,7 @@ private:
         const std::shared_ptr<VariableHandler>& variables
     ) const {
         enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR, DECIMAL};
-        std::queue<SymbolHandler> tokens{};
+        std::queue<SymbolHandler> symbols{};
         std::smatch match{};
 
         auto is = [&match](auto group) { return !match[group].str().empty(); };
@@ -100,37 +100,37 @@ private:
             if (is(Group::DECIMAL))
                 throw SyntaxError{"orphan decimal mark '" + token + "'"};
             else if (is(Group::LEFT))
-                tokens.push(Left());
+                symbols.push(Left());
             else if (is(Group::RIGHT))
-                tokens.push(Right());
+                symbols.push(Right());
             else if (is(Group::SEPARATOR))
-                tokens.push(Separator());
+                symbols.push(Separator());
             else if (is(Group::NAME) && has(constants, found_constant))
-                tokens.push({
+                symbols.push({
                     token,
                     SymbolType::CONSTANT,
                     found_constant->second.clone()
                 });
             else if (is(Group::NAME) && has(functions, found_function))
-                tokens.push({
+                symbols.push({
                     token,
                     SymbolType::FUNCTION,
                     found_function->second.clone()
                 });
             else if (is(Group::SYMBOL) && has(operators, found_operator))
-                tokens.push({
+                symbols.push({
                     token,
                     SymbolType::OPERATOR,
                     found_operator->second.clone()
                 });
             else if (is(Group::NUMBER))
-                tokens.push({
+                symbols.push({
                     token,
                     SymbolType::CONSTANT,
                     Constant{_lexer->to_value(token)}.clone()
                 });
             else {
-                tokens.push({
+                symbols.push({
                     token,
                     SymbolType::CONSTANT,
                     Variable{variables->at(token)}.clone()
@@ -138,11 +138,11 @@ private:
             }
             expression = match.suffix().str();
         }
-        return tokens;
+        return symbols;
     }
 
     std::queue<SymbolHandler> _parse_infix(
-        std::queue<SymbolHandler>&& tokens
+        std::queue<SymbolHandler>&& symbols
     ) const {
         using Associativity = typename Operator::Associativity;
 
@@ -212,13 +212,13 @@ private:
             previous = std::move(current);
         };
 
-        if (tokens.size() == 0)
+        if (symbols.size() == 0)
             throw EmptyExpression{};
 
         try {
-            while (!tokens.empty()) {
-                current = std::move(tokens.front());
-                tokens.pop();
+            while (!symbols.empty()) {
+                current = std::move(symbols.front());
+                symbols.pop();
 
                 if (current.type != SymbolType::OPERATOR)
                     collect_symbol();
@@ -226,7 +226,7 @@ private:
                     auto cop = static_cast<Operator*>(current.symbol.get());
                     if (cop->alias().empty())
                         collect_symbol();
-                    else if (tokens.empty())
+                    else if (symbols.empty())
                         throw SyntaxError{};
                     else {
                         switch (previous.type) {
@@ -268,9 +268,9 @@ private:
         }
         catch (const SyntaxError&) {
             parsed += " '" + current.token + "' ";
-            while (!tokens.empty()) {
-                current = std::move(tokens.front());
-                tokens.pop();
+            while (!symbols.empty()) {
+                current = std::move(symbols.front());
+                symbols.pop();
                 parsed += current.token;
             }
             throw SyntaxError{parsed};
@@ -279,7 +279,7 @@ private:
     }
 
     std::queue<SymbolHandler> _shunting_yard(
-        std::queue<SymbolHandler>&& tokens
+        std::queue<SymbolHandler>&& symbols
     ) const {
         using Associativity = typename Operator::Associativity;
 
@@ -292,12 +292,12 @@ private:
         std::stack<bool> apply_function{};
         bool was_function{false};
 
-        if (tokens.size() == 0)
+        if (symbols.size() == 0)
             throw EmptyExpression{};
 
-        while (!tokens.empty()) {
-            element = std::move(tokens.front());
-            tokens.pop();
+        while (!symbols.empty()) {
+            element = std::move(symbols.front());
+            symbols.pop();
 
             auto& another = operations.top();
             switch (element.type) {
@@ -359,11 +359,10 @@ private:
                 break;
 
             case (SymbolType::FUNCTION):
-                auto cfn = static_cast<Function*>(element.symbol.get());
-                operations.push(std::move(element));
-                expected_counter.push(cfn->arguments());
+                expected_counter.push(element.symbol->arguments());
                 provided_counter.push(1);
                 was_function = true;
+                operations.push(std::move(element));
                 break;
 
             case (SymbolType::OPERATOR):
@@ -408,119 +407,68 @@ private:
         return collected;
     }
 
-/*
+
     Expression _create_node(
-        const std::pair<std::string, SymbolType>& token,
+        const std::shared_ptr<VariableHandler>& variables,
+        SymbolHandler&& symbol,
         std::vector<Expression>&& nodes,
-        const std::shared_ptr<Variables>& variables,
         std::size_t hash
     ) const {
-        auto found_constant = _factory<Constant>().find(token.first);
-        if (found_constant != _factory<Constant>().end()) {
-            return Expression{
-                token.first,
-                variables,
-                std::make_shared<Symbol>(*found_constant),
-                std::move(nodes),
-                hash
-            };
-        }
-
-        auto found_function = _factory<Function>().find(token.first);
-        if (found_function != _factory<Function>().end())
-            return Expression{
-                token.first,
-                variables,
-                std::make_shared<Symbol>(*found_function),
-                std::move(nodes),
-                hash
-            };
-
-        auto found_operator = _factory<Operator>().find(token.first);
-        if (found_operator != _factory<Operator>().end())
-            return Expression{
-                token.first,
-                variables,
-                std::make_shared<Symbol>(*found_operator),
-                std::move(nodes),
-                hash
-            };
-
-        try {
-            auto value = Lexer::to_value(token.first);
-            return Expression{
-                token.first,
-                variables,
-                std::make_shared<Symbol>(Constant{value}),
-                std::move(nodes),
-                hash
-            };
-        }
-        catch (const BadCast&) {
-            auto& variable = variables->at(token.first);
-            return Expression{
-                token.first,
-                variables,
-                std::make_shared<Symbol>(Variable{variable}),
-                std::move(nodes),
-                hash
-            };
-        }
+        return Expression{
+            _lexer,
+            variables,
+            symbol.token,
+            std::move(symbol.symbol),
+            std::move(nodes),
+            hash
+        };
     }
 
     Expression _build_tree(
-        std::queue<std::pair<std::string, SymbolType>>&& tokens,
-        const std::shared_ptr<Variables>& variables
+        std::queue<SymbolHandler>&& symbols,
+        const std::shared_ptr<VariableHandler>& variables
     ) const {
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
-        std::pair<std::string, SymbolType> element{};
-        std::size_t n{};
+        SymbolHandler element{};
+        std::size_t hash{};
 
-        auto hash = std::hash<decltype(this)>{}(this);
-        while (!tokens.empty()) {
-            element = tokens.front();
-            tokens.pop();
+        while (!symbols.empty()) {
+            element = std::move(symbols.front());
+            symbols.pop();
 
             if (
-                element.second == SymbolType::LEFT ||
-                element.second == SymbolType::RIGHT ||
-                element.second == SymbolType::SEPARATOR
+                element.type == SymbolType::LEFT ||
+                element.type == SymbolType::RIGHT ||
+                element.type == SymbolType::SEPARATOR
             )
                 throw SyntaxError{
-                    "symbol '" + element.first + "' not allowed in "
+                    "symbol '" + element.token + "' not allowed in "
                     "postfix notation"
                 };
 
-            else if (element.second == SymbolType::CONSTANT) {
-                if (has<Constant>(element.first))
-                    util::hash_combine(hash, get<Constant>(element.first));
-                else if (variables->has(element.first))
-                    util::hash_combine(hash, variables->index(element.first));
-                else
-                    util::hash_combine(hash, Lexer::to_value(element.first));
+            else if (element.type == SymbolType::CONSTANT) {
+                auto& symbol = *(element.symbol);
+                util::hash_combine(hash, symbol);
                 operands.emplace(
-                    _create_node(element, {}, variables, hash)
+                    _create_node(variables, std::move(element), {}, hash)
                 );
             }
 
             else {
                 std::vector<Expression> nodes{};
-                if (element.second == SymbolType::FUNCTION) {
-                    auto function = get<Function>(element.first);
-                    n = function.arguments();
-                    util::hash_combine(hash, static_cast<Wrapper>(function));
-                }
-                else {
-                    auto function = get<Operator>(element.first).function();
-                    n = function.arguments();
-                    util::hash_combine(hash, static_cast<Wrapper>(function));
-                }
-                nodes.reserve(n);
+                auto& symbol = *(element.symbol);
 
-                for (std::size_t i = 0; i < n; i++) {
+                util::hash_combine(hash, symbol);
+                nodes.reserve(symbol.arguments());
+
+                for (std::size_t i = 0; i <  symbol.arguments(); i++) {
                     if (operands.empty())
-                        throw ArgumentsMismatch{element.first, n, i};
+                        throw ArgumentsMismatch{
+                            element.token,
+                            symbol.arguments(),
+                            i
+                        };
                     extract.emplace(std::move(operands.top()));
                     operands.pop();
                 }
@@ -529,7 +477,12 @@ private:
                     extract.pop();
                 }
                 operands.emplace(
-                    _create_node(element, std::move(nodes), variables, hash)
+                    _create_node(
+                        variables,
+                        std::move(element),
+                        std::move(nodes),
+                        hash
+                    )
                 );
             }
         }
@@ -554,12 +507,12 @@ private:
 
 
 public:
-    Type cast(const std::string& expression) const {
+    Type to_value(const std::string& expression) const {
         return Type{from_infix(expression)};
     }
 
     std::string to_string(Type value) const {
-        return Lexer::to_string(value);
+        return _lexer->to_string(value);
     }
 
     Expression create_node(Type value) const {
@@ -573,7 +526,7 @@ public:
     ) const {
         std::string postfix{};
 
-        auto context = std::make_shared<Variables>(variables);
+        auto context = std::make_shared<VariableHandler>(variables, *_lexer);
         for (const auto& node : nodes)
             postfix += node.postfix() + " ";
         return _build_tree(_tokenize(postfix + token, context), context);
@@ -583,7 +536,7 @@ public:
         const std::string& expression,
         const std::vector<std::string>& variables={}
     ) const {
-        auto context = std::make_shared<Variables>(variables);
+        auto context = std::make_shared<VariableHandler>(variables, *_lexer);
         return _build_tree(
             _shunting_yard(_parse_infix(_tokenize(expression, context))),
             context
@@ -594,7 +547,7 @@ public:
         const std::string& expression,
         const std::vector<std::string>& variables={}
     ) const {
-        auto context = std::make_shared<Variables>(variables);
+        auto context = std::make_shared<VariableHandler>(variables, *_lexer);
         return _build_tree(_tokenize(expression, context), context);
     }
 
@@ -613,7 +566,7 @@ public:
             }
         }
     }
-
+/*
     Expression optimize(const Expression& node) const noexcept {
         if (node.variables().empty())
             return create_node(node._symbol->evaluate(node._nodes));
