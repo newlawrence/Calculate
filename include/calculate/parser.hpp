@@ -286,6 +286,7 @@ private:
         std::queue<SymbolHandler> collected{};
         std::stack<SymbolHandler> operations{};
         SymbolHandler element{};
+        SymbolHandler another{};
 
         std::stack<std::size_t> expected_counter{};
         std::stack<std::size_t> provided_counter{};
@@ -299,7 +300,6 @@ private:
             element = std::move(symbols.front());
             symbols.pop();
 
-            auto& another = operations.top();
             switch (element.type) {
             case (SymbolType::LEFT):
                 operations.push(std::move(element));
@@ -309,9 +309,9 @@ private:
 
             case (SymbolType::RIGHT):
                 while (!operations.empty()) {
-                    if (another.type != SymbolType::LEFT) {
+                    if (operations.top().type != SymbolType::LEFT) {
+                        collected.push(std::move(operations.top()));
                         operations.pop();
-                        collected.push(std::move(another));
                     }
                     else
                         break;
@@ -338,8 +338,8 @@ private:
 
             case (SymbolType::SEPARATOR):
                 while (!operations.empty()) {
-                    if (another.type != SymbolType::LEFT) {
-                        collected.push(std::move(another));
+                    if (operations.top().type != SymbolType::LEFT) {
+                        collected.push(std::move(operations.top()));
                         operations.pop();
                     }
                     else
@@ -384,8 +384,8 @@ private:
                         auto p1 = eop->precedence();
                         auto p2 = aop->precedence();
                         if ((l1 && (p1 <= p2)) || (!l1 && (p1 < p2))) {
-                            operations.pop();
                             collected.push(std::move(another));
+                            operations.pop();
                         }
                         else
                             break;
@@ -431,8 +431,7 @@ private:
                 };
 
             else if (element.type == SymbolType::CONSTANT) {
-                auto& symbol = *(element.symbol);
-                util::hash_combine(hash, symbol);
+                util::hash_combine(hash, *(element.symbol));
                 operands.emplace(
                     Expression(
                         _lexer,
@@ -447,16 +446,14 @@ private:
 
             else {
                 std::vector<Expression> nodes{};
-                auto& symbol = *(element.symbol);
+                util::hash_combine(hash, *(element.symbol));
+                nodes.reserve(element.symbol->arguments());
 
-                util::hash_combine(hash, symbol);
-                nodes.reserve(symbol.arguments());
-
-                for (std::size_t i = 0; i <  symbol.arguments(); i++) {
+                for (std::size_t i = 0; i < element.symbol->arguments(); i++) {
                     if (operands.empty())
                         throw ArgumentsMismatch{
                             element.token,
-                            symbol.arguments(),
+                            element.symbol->arguments(),
                             i
                         };
                     extract.emplace(std::move(operands.top()));
