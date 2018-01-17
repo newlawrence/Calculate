@@ -65,6 +65,19 @@ private:
         std::unique_ptr<Symbol> symbol;
     };
 
+    SymbolHandler Left() {
+        return {_lexer->left, SymbolType::LEFT, nullptr};
+    }
+
+    SymbolHandler Right() {
+        return {_lexer->right, SymbolType::RIGHT, nullptr};
+    }
+
+    SymbolHandler Separator() {
+        return {_lexer->separator, SymbolType::SEPARATOR, nullptr};
+    }
+
+
     std::queue<SymbolHandler> _tokenize(
         std::string expression,
         const std::shared_ptr<VariableHandler>& variables
@@ -87,11 +100,11 @@ private:
             if (is(Group::DECIMAL))
                 throw SyntaxError{"orphan decimal mark '" + token + "'"};
             else if (is(Group::LEFT))
-                tokens.push({token, SymbolType::LEFT, nullptr});
+                tokens.push(Left());
             else if (is(Group::RIGHT))
-                tokens.push({token, SymbolType::RIGHT, nullptr});
+                tokens.push(Right());
             else if (is(Group::SEPARATOR))
-                tokens.push({token, SymbolType::SEPARATOR, nullptr});
+                tokens.push(Separator());
             else if (is(Group::NAME) && has(constants, found_constant))
                 tokens.push({
                     token,
@@ -127,32 +140,23 @@ private:
         }
         return tokens;
     }
-/*
-    std::queue<std::pair<std::string, SymbolType>> _parse_infix(
-        std::queue<std::pair<std::string, SymbolType>>&& tokens
+
+    std::queue<SymbolHandler> _parse_infix(
+        std::queue<SymbolHandler>&& tokens
     ) const {
         using Associativity = typename Operator::Associativity;
 
-        const std::pair<std::string, SymbolType> Left{
-            Lexer::left(),
-            SymbolType::LEFT
-        };
-        const std::pair<std::string, SymbolType> Right{
-            Lexer::right(),
-            SymbolType::RIGHT
-        };
-
         std::string parsed{};
-        std::queue<std::pair<std::string, SymbolType>> collected{};
-        std::pair<std::string, SymbolType> previous{Left};
-        std::pair<std::string, SymbolType> current{};
+        std::queue<SymbolHandler> collected{};
+        SymbolHandler previous{Left()};
+        SymbolHandler current{};
         std::stack<std::size_t> parenthesis_counter{};
 
         auto fill_parenthesis = [&]() {
             while (!parenthesis_counter.empty()) {
                 if (parenthesis_counter.top() == 0) {
-                    collected.push(Right);
-                    previous = Right;
+                    collected.push(Right());
+                    previous = Right();
                     parenthesis_counter.pop();
                 }
                 else
@@ -161,13 +165,13 @@ private:
         };
 
         auto collect_symbol = [&](bool original=true) {
-            switch (previous.second) {
+            switch (previous.type) {
             case (SymbolType::RIGHT):
             case (SymbolType::CONSTANT):
                 if (
-                    current.second == SymbolType::RIGHT ||
-                    current.second == SymbolType::SEPARATOR ||
-                    current.second == SymbolType::OPERATOR
+                    current.type == SymbolType::RIGHT ||
+                    current.type == SymbolType::SEPARATOR ||
+                    current.type == SymbolType::OPERATOR
                 )
                     break;
                 else
@@ -176,35 +180,37 @@ private:
             case (SymbolType::SEPARATOR):
             case (SymbolType::OPERATOR):
                 if (
-                    current.second == SymbolType::CONSTANT ||
-                    current.second == SymbolType::LEFT ||
-                    current.second == SymbolType::FUNCTION
+                    current.type == SymbolType::CONSTANT ||
+                    current.type == SymbolType::LEFT ||
+                    current.type == SymbolType::FUNCTION
                 )
                     break;
                 else
                     throw SyntaxError{};
             case (SymbolType::FUNCTION):
-                if (current.second == SymbolType::LEFT)
+                if (current.type == SymbolType::LEFT)
                     break;
                 else
                     throw SyntaxError{};
             }
 
             if (
-                previous.second == SymbolType::CONSTANT ||
-                previous.second == SymbolType::RIGHT
-            )
+                previous.type == SymbolType::CONSTANT ||
+                previous.type == SymbolType::RIGHT
+            ) {
+                auto& current_operator =
+                    static_cast<std::unique_ptr<Operator>>(current.symbol);
                 if (
-                    current.second != SymbolType::OPERATOR ||
-                    get<Operator>(current.first).associativity() !=
-                        Associativity::RIGHT
+                    current.type != SymbolType::OPERATOR ||
+                    current_operator->associativity() != Associativity::RIGHT
                 )
                     fill_parenthesis();
+            }
 
             collected.push(current);
             if (original)
-                parsed += current.first;
-            previous = current;
+                parsed += current.token;
+            previous = std::move(current);
         };
 
         if (tokens.size() == 0)
@@ -212,26 +218,31 @@ private:
 
         try {
             while (!tokens.empty()) {
-                current = tokens.front();
+                current = std::move(tokens.front());
                 tokens.pop();
 
-                if (current.second != SymbolType::OPERATOR)
+                if (current.type != SymbolType::OPERATOR)
                     collect_symbol();
                 else {
-                    auto alias = get<Operator>(current.first).alias();
-                    if (alias.empty())
+                    auto& current_operator =
+                        static_cast<std::unique_ptr<Operator>>(current.symbol);
+                    if (current_operator->alias().empty())
                         collect_symbol();
                     else if (tokens.empty())
                         throw SyntaxError{};
                     else {
-                        switch (previous.second) {
+                        switch (previous.type) {
                         case (SymbolType::LEFT):
                         case (SymbolType::SEPARATOR):
                         case (SymbolType::OPERATOR):
-                            parsed += current.first;
-                            current = {alias, SymbolType::FUNCTION};
+                            parsed += current.token;
+                            current = {
+                                current_operator->alias(),
+                                SymbolType::FUNCTION,
+                                functions.at(alias).clone()
+                            };
                             collect_symbol(false);
-                            current = Left;
+                            current = Left();
                             collect_symbol(false);
                             parenthesis_counter.push(0);
                             break;
@@ -243,32 +254,32 @@ private:
             }
 
             if (!parenthesis_counter.empty()) {
-                if (current.second == SymbolType::LEFT)
+                if (current.type == SymbolType::LEFT)
                     parenthesis_counter.top()++;
-                else if (current.second == SymbolType::RIGHT)
+                else if (current.type == SymbolType::RIGHT)
                     parenthesis_counter.top()--;
             }
 
             if (
-                previous.second == SymbolType::CONSTANT ||
-                previous.second == SymbolType::RIGHT
+                previous.type == SymbolType::CONSTANT ||
+                previous.type == SymbolType::RIGHT
             )
                 fill_parenthesis();
             else
                 throw SyntaxError{};
         }
         catch (const SyntaxError&) {
-            parsed += " '" + current.first + "' ";
+            parsed += " '" + current.token + "' ";
             while (!tokens.empty()) {
-                current = tokens.front();
+                current = std::move(tokens.front());
                 tokens.pop();
-                parsed += current.first;
+                parsed += current.token;
             }
             throw SyntaxError{parsed};
         }
         return collected;
     }
-
+/*
     std::queue<std::pair<std::string, SymbolType>> _shunting_yard(
         std::queue<std::pair<std::string, SymbolType>>&& tokens
     ) const {
