@@ -35,6 +35,7 @@ public:
     private:
         std::size_t _size;
         std::unique_ptr<Type[]> _values;
+        std::pair<std::size_t, std::shared_ptr<VariableHandler>> _temp;
 
         void _update(std::size_t) const {}
 
@@ -54,7 +55,8 @@ public:
         ) :
                 variables{keys},
                 _size{keys.size()},
-                _values{std::make_unique<Type[]>(_size)}
+                _values{std::make_unique<Type[]>(_size)},
+                _temp{0u, nullptr}
         {
             std::unordered_set<std::string> singles{keys.begin(), keys.end()};
             for (const auto &variable : keys) {
@@ -63,6 +65,26 @@ public:
                 else if (singles.erase(variable) == 0)
                     throw RepeatedSymbol{variable};
             }
+        }
+
+        explicit VariableHandler(const std::vector<std::string>& keys) :
+                variables{keys},
+                _size{keys.size()},
+                _values{std::make_unique<Type[]>(_size)},
+                _temp{0u, nullptr}
+        {}
+
+        std::shared_ptr<VariableHandler> clone() noexcept {
+            ++_temp.first;
+            if (bool{_temp.second})
+                return _temp.second;
+            _temp.second = std::make_shared<VariableHandler>(variables);
+            return _temp.second;
+        }
+
+        void reset() noexcept {
+            if (!--_temp.first)
+                _temp.second = nullptr;
         }
 
         std::size_t index(const std::string& token) const {
@@ -145,22 +167,26 @@ private:
         return pruned;
     }
 
-    void _rebind(const std::shared_ptr<VariableHandler>& context) noexcept {
-        _variables = context;
-        for (auto& node : _nodes)
-            node._rebind(context);
-    }
-
 
 public:
     Node(const Node& other) noexcept :
             _lexer{other._lexer},
-            _variables{},
+            _variables{other._variables->clone()},
             _token{other._token},
-            _symbol{other._symbol->clone()},
+            _symbol{nullptr},
             _nodes{other._nodes},
             _hash{other._hash}
-    { _rebind(std::make_shared<VariableHandler>(other._pruned(), *_lexer)); }
+    {
+        using Variable = Variable<Node>;
+
+        other._variables->reset();
+        try {
+            _symbol = Variable{_variables->at(_token)}.clone();
+        }
+        catch (const UndefinedSymbol&) {
+            _symbol = other._symbol->clone();
+        }
+    }
 
     Node(Node&& other) noexcept :
             _lexer{std::move(other._lexer)},
