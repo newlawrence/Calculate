@@ -45,7 +45,7 @@ public:
 
     template<typename LexerType>
     BaseParser(const LexerType& lexer) :
-        _lexer{std::make_shared<LexerType>(lexer)},
+        _lexer{lexer.clone()},
         constants{_lexer.get()},
         functions{_lexer.get()},
         operators{_lexer.get()}
@@ -560,6 +560,7 @@ public:
     Expression optimize(const Expression& node) const noexcept {
         if (node.variables().empty())
             return create_node(node._symbol->evaluate(node._nodes));
+
         auto nodes = std::vector<Expression>{};
         nodes.reserve(node._symbol->arguments());
         for (auto another : node._nodes)

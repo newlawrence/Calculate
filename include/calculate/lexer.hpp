@@ -79,6 +79,7 @@ struct BaseLexer {
 
     virtual ~BaseLexer() = default;
 
+    virtual std::shared_ptr<BaseLexer> clone() const noexcept = 0;
     virtual Type to_value(const std::string&) const = 0;
     virtual std::string to_string(Type) const noexcept = 0;
 };
@@ -105,6 +106,10 @@ public:
     ) : BaseLexer{strings, regexes} {
         if (this->decimal != ".")
             throw UnsuitableName{this->decimal};
+    }
+
+    std::shared_ptr<BaseLexer> clone() const noexcept override {
+        return std::make_shared<Lexer>(*this);
     }
 
     Type to_value(const std::string& token) const override {
@@ -146,6 +151,10 @@ public:
     ) : BaseLexer{strings, regexes} {
         if (this->decimal != ".")
             throw UnsuitableName{this->decimal};
+    }
+
+    std::shared_ptr<BaseLexer> clone() const noexcept override {
+        return std::make_shared<Lexer>(*this);
     }
 
     std::complex<Type> to_value(const std::string& token) const override {
