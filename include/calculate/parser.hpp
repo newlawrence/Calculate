@@ -407,23 +407,6 @@ private:
         return collected;
     }
 
-
-    Expression _create_node(
-        const std::shared_ptr<VariableHandler>& variables,
-        SymbolHandler&& symbol,
-        std::vector<Expression>&& nodes,
-        std::size_t hash
-    ) const {
-        return Expression{
-            _lexer,
-            variables,
-            symbol.token,
-            std::move(symbol.symbol),
-            std::move(nodes),
-            hash
-        };
-    }
-
     Expression _build_tree(
         std::queue<SymbolHandler>&& symbols,
         const std::shared_ptr<VariableHandler>& variables
@@ -451,7 +434,14 @@ private:
                 auto& symbol = *(element.symbol);
                 util::hash_combine(hash, symbol);
                 operands.emplace(
-                    _create_node(variables, std::move(element), {}, hash)
+                    Expression(
+                        _lexer,
+                        variables,
+                        element.token,
+                        std::move(element.symbol),
+                        {},
+                        hash
+                    )
                 );
             }
 
@@ -477,9 +467,11 @@ private:
                     extract.pop();
                 }
                 operands.emplace(
-                    _create_node(
+                    Expression(
+                        _lexer,
                         variables,
-                        std::move(element),
+                        element.token,
+                        std::move(element.symbol),
                         std::move(nodes),
                         hash
                     )
