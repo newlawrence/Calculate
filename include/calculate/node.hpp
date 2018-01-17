@@ -65,11 +65,6 @@ public:
             }
         }
 
-        static std::shared_ptr<VariableHandler> make(
-            const std::vector<std::string>& keys,
-            Lexer& lexer
-        ) { return std::make_shared<VariableHandler>(keys, lexer); }
-
         std::size_t index(const std::string& token) const {
             auto found = std::find(variables.begin(), variables.end(), token);
             if (found != variables.end())

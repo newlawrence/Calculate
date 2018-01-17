@@ -59,48 +59,75 @@ public:
 
 
 private:
-    using SymbolHandler = std::tuple<
-        std::string,
-        SymbolType,
-        std::unique_ptr<Symbol>
-    >;
-/*
-    std::queue<std::pair<std::string, SymbolType>> _tokenize(
+    struct SymbolHandler {
+        std::string token;
+        SymbolType type;
+        std::unique_ptr<Symbol> symbol;
+    };
+
+    std::queue<SymbolHandler> _tokenize(
         std::string expression,
-        const std::shared_ptr<Variables>& variables
+        const std::shared_ptr<VariableHandler>& variables
     ) const {
         enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR, DECIMAL};
-        std::queue<std::pair<std::string, SymbolType>> tokens{};
+        std::queue<SymbolHandler> tokens{};
         std::smatch match{};
 
         auto is = [&match](auto group) { return !match[group].str().empty(); };
-        while (std::regex_search(expression, match, Lexer::tokenizer().regex)) {
+        auto has = [&match](const auto& container, auto& founded) {
+            return (founded = container.find(match.str())) != container.end();
+        };
+
+        decltype(constants.begin()) found_constant;
+        decltype(functions.begin()) found_function;
+        decltype(operators.begin()) found_operator;
+
+        while (std::regex_search(expression, match, _lexer->tokenizer_regex)) {
             auto token = match.str();
             if (is(Group::DECIMAL))
                 throw SyntaxError{"orphan decimal mark '" + token + "'"};
             else if (is(Group::LEFT))
-                tokens.push({token, SymbolType::LEFT});
+                tokens.push({token, SymbolType::LEFT, nullptr});
             else if (is(Group::RIGHT))
-                tokens.push({token, SymbolType::RIGHT});
+                tokens.push({token, SymbolType::RIGHT, nullptr});
             else if (is(Group::SEPARATOR))
-                tokens.push({token, SymbolType::SEPARATOR});
-            else if (is(Group::NAME) && has<Constant>(match.str()))
-                tokens.push({token, SymbolType::CONSTANT});
-            else if (is(Group::NAME) && has<Function>(match.str()))
-                tokens.push({token, SymbolType::FUNCTION});
-            else if (is(Group::SYMBOL) && has<Operator>(match.str()))
-                tokens.push({token, SymbolType::OPERATOR});
+                tokens.push({token, SymbolType::SEPARATOR, nullptr});
+            else if (is(Group::NAME) && has(constants, found_constant))
+                tokens.push({
+                    token,
+                    SymbolType::CONSTANT,
+                    found_constant->second.clone()
+                });
+            else if (is(Group::NAME) && has(functions, found_function))
+                tokens.push({
+                    token,
+                    SymbolType::FUNCTION,
+                    found_function->second.clone()
+                });
+            else if (is(Group::SYMBOL) && has(operators, found_operator))
+                tokens.push({
+                    token,
+                    SymbolType::OPERATOR,
+                    found_operator->second.clone()
+                });
             else if (is(Group::NUMBER))
-                tokens.push({token, SymbolType::CONSTANT});
+                tokens.push({
+                    token,
+                    SymbolType::CONSTANT,
+                    Constant{_lexer->to_value(token)}.clone()
+                });
             else {
-                variables->at(token);
-                tokens.push({token, SymbolType::CONSTANT});
+                tokens.push({
+                    token,
+                    SymbolType::CONSTANT,
+                    Variable{variables->at(token)}.clone()
+                });
             }
             expression = match.suffix().str();
         }
         return tokens;
     }
-
+/*
     std::queue<std::pair<std::string, SymbolType>> _parse_infix(
         std::queue<std::pair<std::string, SymbolType>>&& tokens
     ) const {
