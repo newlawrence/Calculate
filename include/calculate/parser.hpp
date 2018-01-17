@@ -51,7 +51,7 @@ public:
         operators{_lexer.get()}
     {}
 
-    BaseParser() : BaseParser{calculate::Lexer<Type>{}} {}
+    BaseParser() : BaseParser{DefaultLexer{}} {}
 
     virtual ~BaseParser() = default;
 
