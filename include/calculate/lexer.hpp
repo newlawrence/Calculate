@@ -87,7 +87,7 @@ struct BaseLexer {
 
 template<typename Type>
 class Lexer final : public BaseLexer<Type> {
-    using BaseLexer = BaseLexer<Type>;
+    using BaseLexer = calculate::BaseLexer<Type>;
 
     template<typename Num>
     static std::enable_if_t<std::is_integral<Num>::value, Num> _cast(
@@ -130,7 +130,7 @@ public:
 
 template<typename Type>
 class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
-    using BaseLexer = BaseLexer<std::complex<Type>>;
+    using BaseLexer = calculate::BaseLexer<std::complex<Type>>;
 
     template<typename Num>
     static std::enable_if_t<std::is_integral<Num>::value, Num> _cast(

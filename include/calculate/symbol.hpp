@@ -23,8 +23,8 @@ public:
     };
 
 private:
-    using WrapperConcept = WrapperConcept<Type, Expression>;
-    using Wrapper = Wrapper<Type, Expression>;
+    using WrapperConcept = calculate::WrapperConcept<Type, Expression>;
+    using Wrapper = calculate::Wrapper<Type, Expression>;
 
     template<typename Callable>
     struct Inspect {
@@ -96,7 +96,7 @@ public:
 
 template<typename Expression>
 class Variable final : public Symbol<Expression> {
-    using Symbol = Symbol<Expression>;
+    using Symbol = calculate::Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
     bool _equal(const Symbol&) const noexcept override { return false; }
@@ -117,7 +117,7 @@ public:
 
 template<typename Expression>
 class Constant final : public Symbol<Expression> {
-    using Symbol = Symbol<Expression>;
+    using Symbol = calculate::Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
     bool _equal(const Symbol& other) const noexcept override {
@@ -146,7 +146,7 @@ public:
 
 template<typename Expression>
 class Function final : public Symbol<Expression> {
-    using Symbol = Symbol<Expression>;
+    using Symbol = calculate::Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
     bool _equal(const Symbol&) const noexcept override { return true; }
@@ -180,7 +180,7 @@ public:
 
 template<typename Expression>
 class Operator final : public Symbol<Expression> {
-    using Symbol = Symbol<Expression>;
+    using Symbol = calculate::Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
 public:

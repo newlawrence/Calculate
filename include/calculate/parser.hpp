@@ -17,17 +17,17 @@ namespace calculate {
 template<typename BaseType>
 class BaseParser {
 public:
-    using DefaultLexer = Lexer<BaseType>;
-    using Lexer = BaseLexer<BaseType>;
+    using DefaultLexer = calculate::Lexer<BaseType>;
+    using Lexer = calculate::BaseLexer<BaseType>;
     using Type = BaseType;
 
-    using Symbol = Symbol<Node<BaseParser>>;
-    using Variable = Variable<Node<BaseParser>>;
-    using Constant = Constant<Node<BaseParser>>;
-    using Function = Function<Node<BaseParser>>;
-    using Operator = Operator<Node<BaseParser>>;
+    using Symbol = calculate::Symbol<Node<BaseParser>>;
+    using Variable = calculate::Variable<Node<BaseParser>>;
+    using Constant = calculate::Constant<Node<BaseParser>>;
+    using Function = calculate::Function<Node<BaseParser>>;
+    using Operator = calculate::Operator<Node<BaseParser>>;
 
-    using Expression = Node<BaseParser>;
+    using Expression = calculate::Node<BaseParser>;
     private: using VariableHandler = typename Expression::VariableHandler;
 
     public: using SymbolType = typename Symbol::SymbolType;

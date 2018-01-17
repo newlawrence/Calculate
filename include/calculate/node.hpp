@@ -21,7 +21,7 @@ public:
     using Lexer = typename Parser::Lexer;
     using Type = typename Parser::Type;
 
-    using Symbol = Symbol<Node>;
+    using Symbol = calculate::Symbol<Node>;
     using SymbolType = typename Symbol::SymbolType;
 
 
