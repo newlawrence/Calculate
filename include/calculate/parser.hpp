@@ -555,7 +555,8 @@ public:
             }
         }
     }
-/*
+
+
     Expression optimize(const Expression& node) const noexcept {
         if (node.variables().empty())
             return create_node(node._symbol->evaluate(node._nodes));
@@ -565,7 +566,6 @@ public:
             nodes.emplace_back(optimize(another));
         return create_node(node._token, std::move(nodes), node.variables());
     }
-*/
 };
 
 }

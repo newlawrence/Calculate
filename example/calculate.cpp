@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
         )
         ("postfix,p", "Use postfix parser")
         ("complex,c", "Use complex parser")
-        //("optimize,o", "Optimize expression")
+        ("optimize,o", "Optimize expression")
         (
             "iter,i",
             po::value<std::size_t>()->default_value(1000),
@@ -98,7 +98,7 @@ void run(
     Parser parser{};
 
     std::chrono::steady_clock::time_point begin;
-    std::chrono::steady_clock::time_point::rep build_time,/* opt_time,*/ eval_time;
+    std::chrono::steady_clock::time_point::rep build_time, opt_time, eval_time;
     std::size_t iterations = arguments["iter"].as<std::size_t>();
     Type result;
 
@@ -127,7 +127,7 @@ void run(
         ).count() / iterations;
     }
 
-    /*if (arguments.count("optimize")) {
+    if (arguments.count("optimize")) {
         function = parser.optimize(function);
         if (arguments.count("analysis")) {
             begin = std::chrono::steady_clock::now();
@@ -137,7 +137,7 @@ void run(
                 std::chrono::steady_clock::now() - begin
             ).count() / iterations;
         }
-    }*/
+    }
 
     result = function(values);
     if (arguments.count("analysis")) {
@@ -165,8 +165,8 @@ void run(
         std::cout << "Result:            " << parser.to_string(result) << "\n";
         std::cout << "Iterations:        " << iterations << "\n";
         std::cout << "Building time:     " << build_time << " us" << "\n";
-        /*if (arguments.count("optimize"))
-            std::cout << "Optimization time: " << opt_time << " us" << "\n";*/
+        if (arguments.count("optimize"))
+            std::cout << "Optimization time: " << opt_time << " us" << "\n";
         std::cout << "Evaluation time:   " << eval_time << " ns" << std::endl;
     }
     else
