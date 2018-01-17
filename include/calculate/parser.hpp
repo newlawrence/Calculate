@@ -198,16 +198,15 @@ private:
                 previous.type == SymbolType::CONSTANT ||
                 previous.type == SymbolType::RIGHT
             ) {
-                auto& current_operator =
-                    static_cast<std::unique_ptr<Operator>>(current.symbol);
+                auto cop = static_cast<Operator*>(current.symbol.get());
                 if (
                     current.type != SymbolType::OPERATOR ||
-                    current_operator->associativity() != Associativity::RIGHT
+                    cop->associativity() != Associativity::RIGHT
                 )
                     fill_parenthesis();
             }
 
-            collected.push(current);
+            collected.push(std::move(current));
             if (original)
                 parsed += current.token;
             previous = std::move(current);
@@ -224,9 +223,8 @@ private:
                 if (current.type != SymbolType::OPERATOR)
                     collect_symbol();
                 else {
-                    auto& current_operator =
-                        static_cast<std::unique_ptr<Operator>>(current.symbol);
-                    if (current_operator->alias().empty())
+                    auto cop = static_cast<Operator*>(current.symbol.get());
+                    if (cop->alias().empty())
                         collect_symbol();
                     else if (tokens.empty())
                         throw SyntaxError{};
@@ -237,9 +235,9 @@ private:
                         case (SymbolType::OPERATOR):
                             parsed += current.token;
                             current = {
-                                current_operator->alias(),
+                                cop->alias(),
                                 SymbolType::FUNCTION,
-                                functions.at(alias).clone()
+                                functions.at(cop->alias()).clone()
                             };
                             collect_symbol(false);
                             current = Left();
@@ -279,16 +277,15 @@ private:
         }
         return collected;
     }
-/*
-    std::queue<std::pair<std::string, SymbolType>> _shunting_yard(
-        std::queue<std::pair<std::string, SymbolType>>&& tokens
+
+    std::queue<SymbolHandler> _shunting_yard(
+        std::queue<SymbolHandler>&& tokens
     ) const {
         using Associativity = typename Operator::Associativity;
 
-        std::queue<std::pair<std::string, SymbolType>> collected{};
-        std::stack<std::pair<std::string, SymbolType>> operations{};
-        std::pair<std::string, SymbolType> element{};
-        std::pair<std::string, SymbolType> another{};
+        std::queue<SymbolHandler> collected{};
+        std::stack<SymbolHandler> operations{};
+        SymbolHandler element{};
 
         std::stack<std::size_t> expected_counter{};
         std::stack<std::size_t> provided_counter{};
@@ -299,30 +296,29 @@ private:
             throw EmptyExpression{};
 
         while (!tokens.empty()) {
-            element = tokens.front();
+            element = std::move(tokens.front());
             tokens.pop();
 
-            switch (element.second) {
-
+            auto& another = operations.top();
+            switch (element.type) {
             case (SymbolType::LEFT):
-                operations.push(element);
+                operations.push(std::move(element));
                 apply_function.push(was_function);
                 was_function = false;
                 break;
 
             case (SymbolType::RIGHT):
                 while (!operations.empty()) {
-                    another = operations.top();
-                    if (another.second != SymbolType::LEFT) {
+                    if (another.type != SymbolType::LEFT) {
                         operations.pop();
-                        collected.push(another);
+                        collected.push(std::move(another));
                     }
                     else
                         break;
                 }
                 if (
                     !operations.empty() &&
-                    operations.top().second == SymbolType::LEFT
+                    operations.top().type == SymbolType::LEFT
                 )
                     operations.pop();
                 else
@@ -330,7 +326,7 @@ private:
                 if (apply_function.top()) {
                     if (expected_counter.top() != provided_counter.top())
                         throw ArgumentsMismatch{
-                            operations.top().first,
+                            operations.top().token,
                             expected_counter.top(),
                             provided_counter.top()
                         };
@@ -342,9 +338,8 @@ private:
 
             case (SymbolType::SEPARATOR):
                 while (!operations.empty()) {
-                    another = operations.top();
-                    if (another.second != SymbolType::LEFT) {
-                        collected.push(another);
+                    if (another.type != SymbolType::LEFT) {
+                        collected.push(std::move(another));
                         operations.pop();
                     }
                     else
@@ -352,7 +347,7 @@ private:
                 }
                 if (apply_function.empty() || !apply_function.top())
                     throw SyntaxError{
-                        "separator '" + element.first + "' outside function"
+                        "separator '" + element.token + "' outside function"
                     };
                 provided_counter.top()++;
                 if (operations.empty())
@@ -360,56 +355,59 @@ private:
                 break;
 
             case (SymbolType::CONSTANT):
-                collected.push(element);
+                collected.push(std::move(element));
                 break;
 
             case (SymbolType::FUNCTION):
-                operations.push(element);
-                expected_counter.push(get<Function>(element.first).arguments());
+                auto cfn = static_cast<Function*>(element.symbol.get());
+                operations.push(std::move(element));
+                expected_counter.push(cfn->arguments());
                 provided_counter.push(1);
                 was_function = true;
                 break;
 
             case (SymbolType::OPERATOR):
                 while (!operations.empty()) {
-                    another = operations.top();
-                    if (another.second == SymbolType::LEFT)
+                    auto& another = operations.top();
+                    if (another.type == SymbolType::LEFT)
                         break;
-                    else if (another.second == SymbolType::FUNCTION) {
-                        collected.push(another);
+                    else if (another.type == SymbolType::FUNCTION) {
+                        collected.push(std::move(another));
                         operations.pop();
                         break;
                     }
                     else {
+                        auto eop = static_cast<Operator*>(element.symbol.get());
+                        auto aop = static_cast<Operator*>(another.symbol.get());
                         auto l1 =
-                            get<Operator>(element.first).associativity() !=
+                            eop->associativity() !=
                             Associativity::RIGHT;
-                        auto p1 = get<Operator>(element.first).precedence();
-                        auto p2 = get<Operator>(another.first).precedence();
+                        auto p1 = eop->precedence();
+                        auto p2 = aop->precedence();
                         if ((l1 && (p1 <= p2)) || (!l1 && (p1 < p2))) {
                             operations.pop();
-                            collected.push(another);
+                            collected.push(std::move(another));
                         }
                         else
                             break;
                     }
                 }
-                operations.push(element);
+                operations.push(std::move(element));
                 break;
             }
         }
 
         while (!operations.empty()) {
-            element = operations.top();
-            if (element.second == SymbolType::LEFT)
-                throw ParenthesisMismatch{};
+            element = std::move(operations.top());
             operations.pop();
-            collected.push(element);
+            if (element.type == SymbolType::LEFT)
+                throw ParenthesisMismatch{};
+            collected.push(std::move(element));
         }
 
         return collected;
     }
-*/
+
 /*
     Expression _create_node(
         const std::pair<std::string, SymbolType>& token,
@@ -616,12 +614,6 @@ public:
         }
     }
 
-
-    Expression variables(
-        const Expression& node,
-        const std::vector<std::string>& variables
-    ) const { return from_postfix(node.postfix(), variables); }
-
     Expression optimize(const Expression& node) const noexcept {
         if (node.variables().empty())
             return create_node(node._symbol->evaluate(node._nodes));
@@ -630,50 +622,6 @@ public:
         for (auto another : node._nodes)
             nodes.emplace_back(optimize(another));
         return create_node(node._token, std::move(nodes), node.variables());
-    }
-
-    Expression replace(
-        const Expression& node,
-        std::size_t branch,
-        const Expression& another
-    ) const { return replace(branch, another, node.variables()); }
-
-    Expression replace(
-        const Expression& node,
-        std::size_t branch,
-        const Expression& another,
-        const std::vector<std::string>& variables
-    ) const {
-        std::string expression{};
-
-        node._nodes.at(branch);
-        for (std::size_t i = 0; i < node._nodes.size(); i++)
-            if (i != branch)
-                expression += node._nodes[i].postfix() + " ";
-            else
-                expression += another.postfix() + " ";
-        return from_postfix(expression + node._token, variables);
-    }
-
-    Expression substitute(
-        const Expression& node,
-        const std::string& variable,
-        Type value
-    ) const {
-        std::vector<std::string> pruned{node.variables()};
-
-        pruned.erase(
-            std::remove(pruned.begin(), pruned.end(), variable),
-            pruned.end()
-        );
-        return from_postfix(
-            util::replace(
-                node.postfix(),
-                variable,
-                create_node(value).postfix()
-            ),
-            pruned
-        );
     }
 */
 };
