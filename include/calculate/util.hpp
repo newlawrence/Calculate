@@ -94,6 +94,7 @@ public:
     using Base::size;
     using Base::find;
     using Base::count;
+    using Base::at;
 
     using Base::erase;
     using Base::clear;
@@ -108,16 +109,6 @@ public:
     mapped_type& operator[](key_type&& key) {
         _validate(key);
         return Base::operator[](std::forward<key_type>(key));
-    }
-
-    mapped_type& at(const key_type& key) {
-        _validate(key);
-        return Base::at(key);
-    }
-
-    const mapped_type& at(const key_type& key) const {
-        _validate(key);
-        return Base::at(key);
     }
 
     template<typename... Args>
