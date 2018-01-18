@@ -13,11 +13,41 @@ namespace calculate {
 
 namespace util {
 
+template<typename Type>
+std::enable_if_t<std::is_integral<Type>::value, Type> cast(
+    const std::string& value
+) { return static_cast<Type>(std::stoll(value)); }
+
+template<> inline int cast<int>(const std::string& value) {
+    return std::stoi(value);
+}
+
+template<> inline long cast<long>(const std::string& value) {
+    return std::stol(value);
+}
+
+
+template<typename Type>
+std::enable_if_t<std::is_floating_point<Type>::value, Type> cast(
+    const std::string& value
+) { return static_cast<Type>(std::stold(value)); }
+
+template<> inline float cast<float>(const std::string& value) {
+    return std::stof(value);
+}
+
+template<> inline double cast<double>(const std::string& value) {
+    return std::stod(value);
+}
+
+
+
 template<class Type>
 void hash_combine(std::size_t& seed, const Type& object) {
     std::hash<Type> hasher;
     seed ^= hasher(object) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
+
 
 inline std::string replace(
     std::string where,

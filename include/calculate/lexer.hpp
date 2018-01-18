@@ -89,16 +89,6 @@ template<typename Type>
 class Lexer final : public BaseLexer<Type> {
     using BaseLexer = calculate::BaseLexer<Type>;
 
-    template<typename Num>
-    static std::enable_if_t<std::is_integral<Num>::value, Num> _cast(
-        const std::string& token
-    ) { return static_cast<Num>(std::stoll(token)); }
-
-    template<typename Num>
-    static std::enable_if_t<std::is_floating_point<Num>::value, Num> _cast(
-        const std::string& token
-    ) { return static_cast<Num>(std::stold(token)); }
-
 public:
     Lexer(
         const detail::StringInitializer& strings=detail::DefaultPunctuation(),
@@ -115,13 +105,13 @@ public:
     Type to_value(const std::string& token) const override {
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
-        return _cast<Type>(token);
+        return util::cast<Type>(token);
     }
 
     std::string to_string(Type value) const noexcept override {
         std::ostringstream string{};
 
-        string << std::setprecision(std::numeric_limits<Type>::digits10);
+        string << std::setprecision(std::numeric_limits<Type>::max_digits10);
         string << value;
         return string.str();
     }
@@ -131,16 +121,6 @@ public:
 template<typename Type>
 class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
     using BaseLexer = calculate::BaseLexer<std::complex<Type>>;
-
-    template<typename Num>
-    static std::enable_if_t<std::is_integral<Num>::value, Num> _cast(
-        const std::string& token
-    ) { return static_cast<Num>(std::stoll(token)); }
-
-    template<typename Num>
-    static std::enable_if_t<std::is_floating_point<Num>::value, Num> _cast(
-        const std::string& token
-    ) { return static_cast<Num>(std::stold(token)); }
 
     static constexpr Type _zero = static_cast<Type>(0);
 
@@ -164,15 +144,15 @@ public:
             throw BadCast{token};
 
         if (token.back() != 'i')
-            return _cast<Type>(token);
-        return 1i * _cast<Type>(token);
+            return util::cast<Type>(token);
+        return 1i * util::cast<Type>(token);
     }
 
     std::string to_string(std::complex<Type> value) const noexcept override {
         std::ostringstream string{};
         Type real{std::real(value)}, imag{std::imag(value)};
 
-        string << std::setprecision(std::numeric_limits<Type>::digits10);
+        string << std::setprecision(std::numeric_limits<Type>::max_digits10);
         if (real != _zero)
             string << real << (imag > _zero ? "+" : "");
         if (real == _zero || imag != _zero)
