@@ -52,7 +52,18 @@ public:
     >
     Symbol(Callable&& callable) :
             _wrapper{std::forward<Callable>(callable), &Expression::evaluate}
-    {}
+    {
+        static_assert(
+            detail::NotSame<Callable, Function<Expression>>::value ||
+            detail::Argc<Callable>::value > 0,
+            "Functions must have at least one argument"
+        );
+        static_assert(
+            detail::NotSame<Callable, Operator<Expression>>::value ||
+            detail::Argc<Callable>::value == 2,
+            "Operators must have two arguments"
+        );
+	}
 
     template<
         typename Callable,
@@ -157,12 +168,7 @@ public:
     template<typename Callable>
     Function(Callable&& callable) :
             Symbol{std::forward<Callable>(callable)}
-    {
-        static_assert(
-            detail::Argc<Callable>::value > 0,
-            "Functions must have at least one argument"
-        );
-    }
+    {}
 
     Function() : Symbol{[](const Type& x) noexcept { return x; }} {}
 
@@ -213,12 +219,7 @@ public:
             _alias{alias},
             _precedence{precedence},
             _associativity{associativity}
-    {
-        static_assert(
-            detail::Argc<Callable>::value == 2,
-            "Operators must have two arguments"
-        );
-    }
+    {}
 
     Operator() :
         Symbol{[](const Type& x, const Type&) noexcept { return x; }},
