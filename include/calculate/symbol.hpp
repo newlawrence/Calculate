@@ -6,6 +6,9 @@
 
 namespace calculate {
 
+template<typename> class Function;
+template<typename> class Operator;
+
 template<typename Expression>
 class Symbol {
     friend struct std::hash<Symbol>;

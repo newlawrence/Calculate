@@ -159,16 +159,16 @@ struct NotSame {
 template<typename Type, std::size_t>
 using ExtractType = Type;
 
-template<typename, std::size_t argcount, typename = std::make_index_sequence<argcount>>
+template<typename, std::size_t argc, typename = std::make_index_sequence<argc>>
 struct Repeat {};
 
-template<typename Type, std::size_t argcount, std::size_t... indices>
-struct Repeat<Type, argcount, std::index_sequence<indices...>> {
+template<typename Type, std::size_t argc, std::size_t... indices>
+struct Repeat<Type, argc, std::index_sequence<indices...>> {
     using type = std::tuple<ExtractType<Type, indices>...>;
 };
 
-template<typename Type, std::size_t argcount>
-using Repeated = typename Repeat<Type, argcount>::type;
+template<typename Type, std::size_t argc>
+using Repeated = typename Repeat<Type, argc>::type;
 
 }
 
