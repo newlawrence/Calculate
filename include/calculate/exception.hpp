@@ -23,15 +23,6 @@ struct BadCast : BaseError {
     {}
 };
 
-struct AccessViolation : BaseError {
-    AccessViolation() :
-            BaseError{
-                "Access violation: call to a non const method from a const "
-                "wrapper"
-            }
-    {}
-};
-
 struct ArgumentsMismatch : BaseError {
     const std::size_t needed;
     const std::size_t provided;

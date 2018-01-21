@@ -5,76 +5,113 @@
 #include <iomanip>
 #include <sstream>
 
-#include "exception.hpp"
 #include "util.hpp"
 
 
 namespace calculate {
 
-template<typename Type>
-class Lexer {
-    template<typename Num>
-    static std::enable_if_t<std::is_integral<Num>::value, Num> _cast(
-        const std::string& token
-    ) { return static_cast<Num>(std::stoll(token)); }
+namespace detail {
 
-    template<typename Num>
-    static std::enable_if_t<std::is_floating_point<Num>::value, Num> _cast(
-        const std::string& token
-    ) { return static_cast<Num>(std::stold(token)); }
+struct StringInitializer { std::string s1, s2, s3, s4; };
+
+inline StringInitializer DefaultPunctuation() { return {"(", ")", ",", "."}; }
+
+inline StringInitializer DefaultRegexes() {
+    return {
+        R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_",
+        R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
+        R"_(^[^A-Za-z\d.(),_\s]+$)_",
+        R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
+        R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
+        R"_(([^A-Za-z\d\.(),_\s]+)|)_"
+        R"_((\()|(\))|(,)|(\.))_"
+    };
+}
+
+inline StringInitializer DefaultComplexRegexes() {
+    return {
+        R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_",
+        R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
+        R"_(^[^A-Za-z\d.(),_\s]+$)_",
+        R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?)|)_"
+        R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
+        R"_(([^A-Za-z\d\.(),_\s]+)|)_"
+        R"_((\()|(\))|(,)|(\.))_"
+    };
+}
+
+}
+
+
+template<typename Type>
+struct BaseLexer {
+    const std::string left;
+    const std::string right;
+    const std::string separator;
+    const std::string decimal;
+    const std::string number;
+    const std::string name;
+    const std::string symbol;
+    const std::string tokenizer;
+
+    const std::regex number_regex;
+    const std::regex name_regex;
+    const std::regex symbol_regex;
+    const std::regex tokenizer_regex;
+
+    BaseLexer(
+        const detail::StringInitializer& strings,
+        const detail::StringInitializer& regexes
+    ) :
+            left{strings.s1},
+            right{strings.s2},
+            separator{strings.s3},
+            decimal{strings.s4},
+            number{regexes.s1},
+            name{regexes.s2},
+            symbol{regexes.s3},
+            tokenizer{regexes.s4},
+            number_regex{regexes.s1},
+            name_regex{regexes.s2},
+            symbol_regex{regexes.s3},
+            tokenizer_regex{regexes.s4}
+    {}
+
+    virtual ~BaseLexer() = default;
+
+    virtual std::shared_ptr<BaseLexer> clone() const noexcept = 0;
+    virtual Type to_value(const std::string&) const = 0;
+    virtual std::string to_string(Type) const noexcept = 0;
+};
+
+
+template<typename Type>
+class Lexer final : public BaseLexer<Type> {
+    using BaseLexer = calculate::BaseLexer<Type>;
 
 public:
-    static const std::string& left() {
-        static std::string string{"("};
-        return string;
-    };
-    static const std::string& right() {
-        static std::string string{")"};
-        return string;
-    };
-    static const std::string& decimal() {
-        static std::string string{"."};
-        return string;
-    };
-    static const std::string& separator() {
-        static std::string string{","};
-        return string;
-    };
-
-    static const util::Regex& number() {
-        static util::Regex regex{
-R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_"
-        };
-        return regex;
-    };
-    static const util::Regex& name() {
-        static util::Regex regex{R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"};
-        return regex;
-    };
-    static const util::Regex& symbol() {
-        static util::Regex regex{R"_(^[^A-Za-z\d.(),_\s]+$)_"};
-        return regex;
-    };
-    static const util::Regex& tokenizer() {
-        static util::Regex regex{
-            R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
-            R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-            R"_(([^A-Za-z\d\.(),_\s]+)|)_"
-            R"_((\()|(\))|(,)|(\.))_"
-        };
-        return regex;
-    };
-
-    static Type to_value(const std::string& token) {
-        if (!std::regex_search(token, number().regex))
-            throw BadCast{token};
-        return _cast<Type>(token);
+    Lexer(
+        const detail::StringInitializer& strings=detail::DefaultPunctuation(),
+        const detail::StringInitializer& regexes=detail::DefaultRegexes()
+    ) : BaseLexer{strings, regexes} {
+        if (this->decimal != ".")
+            throw UnsuitableName{this->decimal};
     }
 
-    static std::string to_string(Type value) {
+    std::shared_ptr<BaseLexer> clone() const noexcept override {
+        return std::make_shared<Lexer>(*this);
+    }
+
+    Type to_value(const std::string& token) const override {
+        if (!std::regex_search(token, this->number_regex))
+            throw BadCast{token};
+        return util::cast<Type>(token);
+    }
+
+    std::string to_string(Type value) const noexcept override {
         std::ostringstream string{};
 
-        string << std::setprecision(std::numeric_limits<Type>::digits10);
+        string << std::setprecision(std::numeric_limits<Type>::max_digits10);
         string << value;
         return string.str();
     }
@@ -82,67 +119,40 @@ R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_"
 
 
 template<typename Type>
-class Lexer<std::complex<Type>> {
+class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
+    using BaseLexer = calculate::BaseLexer<std::complex<Type>>;
+
     static constexpr Type _zero = static_cast<Type>(0);
 
 public:
-    static const std::string& left() {
-        static std::string string{"("};
-        return string;
-    };
-    static const std::string& right() {
-        static std::string string{")"};
-        return string;
-    };
-    static const std::string& decimal() {
-        static std::string string{"."};
-        return string;
-    };
-    static const std::string& separator() {
-        static std::string string{","};
-        return string;
-    };
-
-    static const util::Regex& number() {
-        static util::Regex regex{
-            R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_"
-        };
-        return regex;
-    };
-    static const util::Regex& name() {
-        static util::Regex regex{R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"};
-        return regex;
-    };
-    static const util::Regex& symbol() {
-        static util::Regex regex{R"_(^[^A-Za-z\d.(),_\s]+$)_"};
-        return regex;
-    };
-    static const util::Regex& tokenizer() {
-        static util::Regex regex{
-            R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?)|)_"
-            R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-            R"_(([^A-Za-z\d\.(),_\s]+)|)_"
-            R"_((\()|(\))|(,)|(\.))_"
-        };
-        return regex;
-    };
-
-    static std::complex<Type> to_value(const std::string& token) {
-        using namespace std::complex_literals;
-
-        if (token.back() != 'i')
-            return std::complex<Type>{Lexer<Type>::to_value(token)};
-        else
-            return 1i * Lexer<Type>::to_value(
-                token.substr(0, token.size() - 1)
-            );
+    Lexer(
+        const detail::StringInitializer& strings=detail::DefaultPunctuation(),
+        const detail::StringInitializer& regexes=detail::DefaultComplexRegexes()
+    ) : BaseLexer{strings, regexes} {
+        if (this->decimal != ".")
+            throw UnsuitableName{this->decimal};
     }
 
-    static std::string to_string(std::complex<Type> value) {
+    std::shared_ptr<BaseLexer> clone() const noexcept override {
+        return std::make_shared<Lexer>(*this);
+    }
+
+    std::complex<Type> to_value(const std::string& token) const override {
+        using namespace std::complex_literals;
+
+        if (!std::regex_search(token, this->number_regex))
+            throw BadCast{token};
+
+        if (token.back() != 'i')
+            return util::cast<Type>(token);
+        return 1i * util::cast<Type>(token);
+    }
+
+    std::string to_string(std::complex<Type> value) const noexcept override {
         std::ostringstream string{};
         Type real{std::real(value)}, imag{std::imag(value)};
 
-        string << std::setprecision(std::numeric_limits<Type>::digits10);
+        string << std::setprecision(std::numeric_limits<Type>::max_digits10);
         if (real != _zero)
             string << real << (imag > _zero ? "+" : "");
         if (real == _zero || imag != _zero)
