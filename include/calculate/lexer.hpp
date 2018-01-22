@@ -145,7 +145,7 @@ public:
 
         if (token.back() != 'i')
             return util::cast<Type>(token);
-        return 1i * util::cast<Type>(token);
+        return 1.i * util::cast<Type>(token);
     }
 
     std::string to_string(std::complex<Type> value) const noexcept override {
