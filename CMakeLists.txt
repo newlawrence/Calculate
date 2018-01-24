@@ -10,8 +10,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 include_directories(include)
 include_directories(tool/Catch2/single_include)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/release/bin/")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/debug/bin/")
+if(CMAKE_GENERATOR MATCHES "^Visual Studio.*$")
+    set(msvc_toolchain TRUE)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release/bin")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/Debug/bin")
+else()
+    set(msvc_toolchain FALSE)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+endif()
 
 if(WIN32 AND NOT MINGW AND NOT MSYS AND NOT CYGWIN)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} /Ox")
@@ -19,8 +25,8 @@ if(WIN32 AND NOT MINGW AND NOT MSYS AND NOT CYGWIN)
     set(CMAKE_CXX_FLAGS "")
 else()
     if(
-        (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU") OR
-        (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+        (CMAKE_CXX_COMPILER_ID MATCHES GNU) OR
+        (CMAKE_CXX_COMPILER_ID MATCHES Clang)
     )
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Werror")
     endif()
@@ -29,52 +35,40 @@ else()
     set(CMAKE_CXX_FLAGS "")
 endif()
 
-if(MSVC)
-    add_definitions(-DBOOST_ALL_NO_LIB)
-    add_definitions(-DBOOST_ALL_DYN_LINK)
-    set(Boost_USE_STATIC_LIBS OFF)
-    set(Boost_USE_MULTITHREADED ON)
-    set(Boost_USE_STATIC_RUNTIME OFF)
-endif()
-find_package(Boost COMPONENTS system filesystem program_options)
-if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
-    string(REPLACE ";" "\n       " boost_libraries "${Boost_LIBRARIES}")
-    add_executable(calculate example/calculate.cpp)
-    target_link_libraries(calculate ${Boost_LIBRARIES})
+if(BOOST_ROOT)
+    if(MSVC)
+        add_definitions(-DBOOST_ALL_NO_LIB)
+        add_definitions(-DBOOST_ALL_DYN_LINK)
+        set(Boost_USE_STATIC_LIBS OFF)
+        set(Boost_USE_MULTITHREADED ON)
+        set(Boost_USE_STATIC_RUNTIME OFF)
+    endif()
+    find_package(Boost COMPONENTS system filesystem program_options)
+    if(Boost_FOUND)
+        include_directories(${Boost_INCLUDE_DIRS})
+        string(REPLACE ";" "\n       " boost_libraries "${Boost_LIBRARIES}")
+        add_executable(calculate example/calculate.cpp)
+        target_link_libraries(calculate ${Boost_LIBRARIES})
+    endif()
 endif()
 
 file(GLOB TEST_SOURCES RELATIVE "${CMAKE_SOURCE_DIR}" test/*.cpp)
+add_custom_target(all_test)
 foreach(test_source ${TEST_SOURCES})
     get_filename_component(test_name "${test_source}" NAME_WE)
     set(test_name "test_${test_name}")
-    add_executable("${test_name}" "${test_source}")
-    if(MSVC)
-        set_target_properties("${test_name}"
-        PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/release/test/"
-            RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/debug/test/"
-        )
-        add_test(
-            NAME "${test_name}"
-            COMMAND "${CMAKE_BINARY_DIR}/$<CONFIGURATION>/test/${test_name}"
-        )
+    if(msvc_toolchain)
+        set(test_folder "${CMAKE_BINARY_DIR}/$<CONFIGURATION>/test")
     else()
-        set_target_properties("${test_name}"
-        PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/release/test/"
-            RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/debug/test/"
-        )
-        if(CMAKE_BUILD_TYPE STREQUAL "Release")
-            add_test(
-                NAME "${test_name}"
-                COMMAND "${CMAKE_BINARY_DIR}/release/test/${test_name}"
-            )
-        else()
-            add_test(
-                NAME "${test_name}"
-                COMMAND "${CMAKE_BINARY_DIR}/debug/test/${test_name}"
-            )
-        endif()
+        set(test_folder "${CMAKE_BINARY_DIR}/test")
     endif()
+
+    add_executable(${test_name} "${test_source}")
+    set_target_properties(${test_name}
+    PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${test_folder}"
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${test_folder}"
+    )
+    add_test(NAME ${test_name} COMMAND "${test_folder}/${test_name}")
+    add_dependencies(all_test ${test_name})
 endforeach()
