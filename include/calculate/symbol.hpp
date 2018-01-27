@@ -28,7 +28,7 @@ private:
 
     template<typename Callable>
     struct Inspect {
-        static constexpr bool not_me =
+        static constexpr bool not_self =
             detail::NotSame<Callable, Symbol>::value;
         static constexpr bool is_model =
             std::is_base_of<WrapperConcept, Callable>::value;
@@ -47,8 +47,8 @@ private:
 public:
     template<
         typename Callable,
-        std::enable_if_t<Inspect<Callable>::not_me>* = nullptr,
-        std::enable_if_t<!Inspect<Callable>::is_model>* = nullptr
+        typename = std::enable_if_t<Inspect<Callable>::not_self>,
+        typename = std::enable_if_t<!Inspect<Callable>::is_model>
     >
     Symbol(Callable&& callable) :
             _wrapper{std::forward<Callable>(callable), &Expression::evaluate}
@@ -67,7 +67,7 @@ public:
 
     template<
         typename Callable,
-        std::enable_if_t<Inspect<Callable>::is_model>* = nullptr
+        typename = std::enable_if_t<Inspect<Callable>::is_model>
     >
     Symbol(Callable&& callable) :
             _wrapper{std::forward<Callable>(callable)}
