@@ -8,7 +8,7 @@
 namespace calculate {
 
 struct BaseError : public std::runtime_error {
-    BaseError(const std::string& what) : runtime_error{what} {}
+    BaseError(std::string what) : runtime_error{std::move(what)} {}
     BaseError() :
             runtime_error{std::string{"Base error: unexpected error"}}
     {}

@@ -6,6 +6,9 @@
 
 namespace calculate {
 
+template<typename> class Function;
+template<typename> class Operator;
+
 template<typename Expression>
 class Symbol {
     friend struct std::hash<Symbol>;
@@ -211,12 +214,12 @@ public:
     template<typename Callable>
     Operator(
         Callable&& callable,
-        const std::string& alias,
+        std::string alias,
         std::size_t precedence,
         Associativity associativity
     ) :
             Symbol{std::forward<Callable>(callable)},
-            _alias{alias},
+            _alias{std::move(alias)},
             _precedence{precedence},
             _associativity{associativity}
     {}
