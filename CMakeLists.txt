@@ -47,28 +47,20 @@ if(BOOST_ROOT)
     if(Boost_FOUND)
         include_directories(${Boost_INCLUDE_DIRS})
         string(REPLACE ";" "\n       " boost_libraries "${Boost_LIBRARIES}")
-        add_executable(calculate example/calculate.cpp)
+        add_executable(calculate ${CMAKE_SOURCE_DIR}/example/calculate.cpp)
         target_link_libraries(calculate ${Boost_LIBRARIES})
     endif()
 endif()
 
-file(GLOB TEST_SOURCES RELATIVE "${CMAKE_SOURCE_DIR}" test/*.cpp)
-add_custom_target(all_test)
-foreach(test_source ${TEST_SOURCES})
-    get_filename_component(test_name "${test_source}" NAME_WE)
-    set(test_name "test_${test_name}")
-    if(msvc_toolchain)
-        set(test_folder "${CMAKE_BINARY_DIR}/$<CONFIGURATION>/test")
-    else()
-        set(test_folder "${CMAKE_BINARY_DIR}/test")
-    endif()
-
-    add_executable(${test_name} "${test_source}")
-    set_target_properties(${test_name}
-    PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${test_folder}"
-        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${test_folder}"
-    )
-    add_test(NAME ${test_name} COMMAND "${test_folder}/${test_name}")
-    add_dependencies(all_test ${test_name})
-endforeach()
+file(GLOB test_sources "${CMAKE_SOURCE_DIR}/test/*.cpp")
+add_executable(unittests "${test_sources}")
+if(msvc_toolchain)
+    set(test_folder "${CMAKE_BINARY_DIR}/$<CONFIGURATION>/test")
+else()
+    set(test_folder "${CMAKE_BINARY_DIR}/test")
+endif()
+set_target_properties(unittests PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${test_folder}"
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${test_folder}"
+)
+add_test(NAME test COMMAND "${test_folder}/unittests")
