@@ -8,7 +8,7 @@
 
 namespace calculate {
 
-class Parser : public BaseParser<double> {};
+using Parser = BaseParser<double>;
 
 class DefaultParser : public Parser {
 public:
@@ -95,7 +95,7 @@ public:
 };
 
 
-class ComplexParser : public BaseParser<std::complex<double>> {};
+using ComplexParser = BaseParser<std::complex<double>>;
 
 class DefaultComplexParser : public ComplexParser {
 public:
