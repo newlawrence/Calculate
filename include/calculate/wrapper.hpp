@@ -176,7 +176,7 @@ using Repeated = typename Repeat<Type, argc>::type;
 template<typename Type, typename Source>
 struct WrapperConcept {
     virtual ~WrapperConcept() = default;
-    virtual std::shared_ptr<WrapperConcept> copy() const noexcept = 0;
+    virtual std::shared_ptr<WrapperConcept> clone() const noexcept = 0;
     virtual std::size_t argc() const noexcept = 0;
     virtual Type call(const std::vector<Type>&) const = 0;
     virtual Type eval(const std::vector<Source>&) const = 0;
@@ -233,7 +233,7 @@ class Wrapper {
                 _adapter{adapter}
         {}
 
-        std::shared_ptr<WrapperConcept> copy() const noexcept override {
+        std::shared_ptr<WrapperConcept> clone() const noexcept override {
             return std::make_shared<WrapperModel>(*this);
         }
 
@@ -333,7 +333,7 @@ public:
             }
     {}
 
-    Wrapper copy() const noexcept { return Wrapper{_callable->copy()}; }
+    Wrapper clone() const noexcept { return Wrapper{_callable->clone()}; }
 
     std::size_t argc() const noexcept { return _callable->argc(); }
 

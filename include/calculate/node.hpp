@@ -49,7 +49,7 @@ public:
         }
 
     public:
-        explicit VariableHandler(
+        VariableHandler(
             const std::vector<std::string>& keys,
             Lexer& lexer
         ) :
@@ -122,9 +122,7 @@ private:
     std::vector<Node> _nodes;
     std::size_t _hash;
 
-    Node() = delete;
-
-    explicit Node(
+    Node(
         const std::shared_ptr<Lexer>& _lexer,
         const std::shared_ptr<VariableHandler>& variables,
         const std::string& token,

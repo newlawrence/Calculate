@@ -49,23 +49,6 @@ void hash_combine(std::size_t& seed, const Type& object) {
 }
 
 
-inline std::string replace(
-    std::string where,
-    const std::string& what,
-    const std::string& by
-) {
-    std::size_t index = 0;
-    while (true) {
-        index = where.find(what, index);
-        if (index == std::string::npos)
-            break;
-        where.replace(index, what.size(), by);
-        index += what.size();
-    }
-    return where;
-}
-
-
 template<typename Kind, typename Parser>
 class SymbolContainer final : std::unordered_map<std::string, Kind> {
     friend Parser;

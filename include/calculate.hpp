@@ -84,12 +84,12 @@ public:
         });
 
         operators.insert({
-            {"+", {std::move(add), "id", 3333u, Associativity::BOTH}},
-            {"-", {std::move(subtract), "neg", 3333u, Associativity::LEFT}},
-            {"*", {std::move(multiply), "", 6666u, Associativity::BOTH}},
-            {"/", {std::move(divide), "", 6666u, Associativity::LEFT}},
-            {"%", {std::move(truncate), "", 6666u, Associativity::LEFT}},
-            {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
+            {"+", {&(*add), "id", 3333u, Associativity::BOTH}},
+            {"-", {&(*subtract), "neg", 3333u, Associativity::LEFT}},
+            {"*", {&(*multiply), "", 6666u, Associativity::BOTH}},
+            {"/", {&(*divide), "", 6666u, Associativity::LEFT}},
+            {"%", {&(*truncate), "", 6666u, Associativity::LEFT}},
+            {"^", {&(*raise), "", 9999u, Associativity::RIGHT}}
         });
     }
 };
@@ -150,12 +150,12 @@ public:
             {"id", [](const Type& z) noexcept { return z; }},
             {"neg", [](const Type& z) noexcept { return -z; }},
             {"inv", [](const Type& z) noexcept { return Type{1} / z; }},
-            {"real", std::move(real)},
-            {"imag", std::move(imag)},
-            {"abs", std::move(abs)},
-            {"arg", std::move(arg)},
-            {"norm", std::move(norm)},
-            {"polar", std::move(polar)},
+            {"real", &(*real)},
+            {"imag", &(*imag)},
+            {"abs", &(*abs)},
+            {"arg", &(*arg)},
+            {"norm", &(*norm)},
+            {"polar", &(*polar)},
             {"conj", static_cast<Type(*)(const Type&)>(std::conj)},
             {"proj", static_cast<Type(*)(const Type&)>(std::exp)},
             {"exp", static_cast<Type(*)(const Type&)>(std::exp)},
@@ -178,11 +178,11 @@ public:
         });
 
         operators.insert({
-            {"+", {std::move(add), "id", 3333u, Associativity::BOTH}},
-            {"-", {std::move(subtract), "neg", 3333u, Associativity::LEFT}},
-            {"*", {std::move(multiply), "", 6666u, Associativity::BOTH}},
-            {"/", {std::move(divide), "", 6666u, Associativity::LEFT}},
-            {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
+            {"+", {&(*add), "id", 3333u, Associativity::BOTH}},
+            {"-", {&(*subtract), "neg", 3333u, Associativity::LEFT}},
+            {"*", {&(*multiply), "", 6666u, Associativity::BOTH}},
+            {"/", {&(*divide), "", 6666u, Associativity::LEFT}},
+            {"^", {&(*raise), "", 9999u, Associativity::RIGHT}}
         });
     }
 };
