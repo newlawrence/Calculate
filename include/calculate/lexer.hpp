@@ -91,9 +91,9 @@ class Lexer final : public BaseLexer<Type> {
 
 public:
     Lexer(
-        const detail::StringInitializer& strings=detail::DefaultPunctuation(),
-        const detail::StringInitializer& regexes=detail::DefaultRegexes()
-    ) : BaseLexer{strings, regexes} {
+        detail::StringInitializer strings=detail::DefaultPunctuation(),
+        detail::StringInitializer regexes=detail::DefaultRegexes()
+    ) : BaseLexer{std::move(strings), std::move(regexes)} {
         if (this->decimal != ".")
             throw UnsuitableName{this->decimal};
     }
@@ -126,9 +126,9 @@ class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
 
 public:
     Lexer(
-        const detail::StringInitializer& strings=detail::DefaultPunctuation(),
-        const detail::StringInitializer& regexes=detail::DefaultComplexRegexes()
-    ) : BaseLexer{strings, regexes} {
+        detail::StringInitializer strings=detail::DefaultPunctuation(),
+        detail::StringInitializer regexes=detail::DefaultComplexRegexes()
+    ) : BaseLexer{std::move(strings), std::move(regexes)} {
         if (this->decimal != ".")
             throw UnsuitableName{this->decimal};
     }
