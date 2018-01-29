@@ -114,16 +114,6 @@ public:
     using Base::swap;
     using Base::reserve;
 
-    mapped_type& operator[](const key_type& key) {
-        _validate(key);
-        return Base::operator[](key);
-    }
-
-    mapped_type& operator[](key_type&& key) {
-        _validate(key);
-        return Base::operator[](std::forward<key_type>(key));
-    }
-
     template<typename... Args>
     std::pair<iterator, bool> emplace(const std::string& key, Args&&... args) {
         _validate(key);
