@@ -20,9 +20,8 @@ else()
 endif()
 
 if(WIN32 AND NOT MINGW AND NOT MSYS AND NOT CYGWIN)
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} /Ox")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} /Od /Debug:full")
-    set(CMAKE_CXX_FLAGS "")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od /Debug:full")
 else()
     if(
         (CMAKE_CXX_COMPILER_ID MATCHES GNU) OR
@@ -30,9 +29,8 @@ else()
     )
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Werror")
     endif()
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0")
-    set(CMAKE_CXX_FLAGS "")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 endif()
 
 if(BOOST_ROOT)
