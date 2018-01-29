@@ -145,8 +145,6 @@ public:
             Symbol{[value]() noexcept { return value; }}
     {}
 
-    Constant() : Symbol{[]() noexcept { return Type{}; }} {}
-
     SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
 
     std::unique_ptr<Symbol> clone() const noexcept override {
@@ -172,8 +170,6 @@ public:
     Function(Callable&& callable) :
             Symbol{std::forward<Callable>(callable)}
     {}
-
-    Function() : Symbol{[](const Type& x) noexcept { return x; }} {}
 
     SymbolType symbol() const noexcept override { return SymbolType::FUNCTION; }
 
@@ -222,13 +218,6 @@ public:
             _alias{std::move(alias)},
             _precedence{precedence},
             _associativity{associativity}
-    {}
-
-    Operator() :
-        Symbol{[](const Type& x, const Type&) noexcept { return x; }},
-        _alias{""},
-        _precedence{0u},
-        _associativity{Associativity::BOTH}
     {}
 
     SymbolType symbol() const noexcept override { return SymbolType::OPERATOR; }
