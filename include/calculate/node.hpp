@@ -50,15 +50,19 @@ public:
 
     public:
         VariableHandler(
-            const std::vector<std::string>& keys,
+            std::vector<std::string> keys,
             Lexer& lexer
         ) :
-                variables{keys},
-                _size{keys.size()},
+                variables{std::move(keys)},
+                _size{variables.size()},
                 _values{std::make_unique<Type[]>(_size)},
                 _temp{0u, nullptr}
         {
-            std::unordered_set<std::string> singles{keys.begin(), keys.end()};
+            std::unordered_set<std::string> singles{
+                variables.begin(),
+                variables.end()
+            };
+
             for (const auto &variable : keys) {
                 if (!std::regex_match(variable, lexer.name_regex))
                     throw UnsuitableName{variable};
@@ -67,9 +71,9 @@ public:
             }
         }
 
-        explicit VariableHandler(const std::vector<std::string>& keys) :
-                variables{keys},
-                _size{keys.size()},
+        explicit VariableHandler(std::vector<std::string> keys) :
+                variables{std::move(keys)},
+                _size{variables.size()},
                 _values{std::make_unique<Type[]>(_size)},
                 _temp{0u, nullptr}
         {}
@@ -125,14 +129,14 @@ private:
     Node(
         const std::shared_ptr<Lexer>& _lexer,
         const std::shared_ptr<VariableHandler>& variables,
-        const std::string& token,
+        std::string token,
         std::unique_ptr<Symbol>&& symbol,
         std::vector<Node>&& nodes,
         std::size_t hash
     ) :
             _lexer{_lexer},
             _variables{variables},
-            _token{token},
+            _token{std::move(token)},
             _symbol{std::move(symbol)},
             _nodes{std::move(nodes)},
             _hash{hash}
