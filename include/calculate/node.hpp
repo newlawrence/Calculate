@@ -49,7 +49,7 @@ public:
         }
 
     public:
-        explicit VariableHandler(
+        VariableHandler(
             std::vector<std::string> keys,
             Lexer& lexer
         ) :
@@ -63,7 +63,7 @@ public:
                 variables.end()
             };
 
-            for (const auto &variable : variables) {
+            for (const auto &variable : keys) {
                 if (!std::regex_match(variable, lexer.name_regex))
                     throw UnsuitableName{variable};
                 else if (singles.erase(variable) == 0)
@@ -78,11 +78,13 @@ public:
                 _temp{0u, nullptr}
         {}
 
-        std::shared_ptr<VariableHandler> clone() noexcept {
+        std::shared_ptr<VariableHandler> rebuild(
+            std::vector<std::string> keys
+        ) noexcept {
             ++_temp.first;
             if (bool{_temp.second})
                 return _temp.second;
-            _temp.second = std::make_shared<VariableHandler>(variables);
+            _temp.second = std::make_shared<VariableHandler>(std::move(keys));
             return _temp.second;
         }
 
@@ -126,9 +128,7 @@ private:
     std::vector<Node> _nodes;
     std::size_t _hash;
 
-    Node() = delete;
-
-    explicit Node(
+    Node(
         const std::shared_ptr<Lexer>& _lexer,
         const std::shared_ptr<VariableHandler>& variables,
         std::string token,
@@ -160,14 +160,12 @@ private:
         };
         std::vector<std::string> pruned{};
 
-        for (const auto& variable : variables())
+        for (const auto& variable : _variables->variables)
             if (
                 std::find(tokens.begin(), tokens.end(), variable) !=
                 tokens.end()
             )
                 pruned.push_back(variable);
-
-        pruned.erase(std::unique(pruned.begin(), pruned.end()), pruned.end());
         return pruned;
     }
 
@@ -175,7 +173,7 @@ private:
 public:
     Node(const Node& other) noexcept :
             _lexer{other._lexer},
-            _variables{other._variables->clone()},
+            _variables{other._variables->rebuild(other._pruned())},
             _token{other._token},
             _symbol{nullptr},
             _nodes{other._nodes},
@@ -216,8 +214,8 @@ public:
     }
 
     explicit operator Type() const {
-        if (variables().size() > 0)
-            throw ArgumentsMismatch{variables().size(), 0};
+        if (_variables->variables.size() > 0)
+            throw ArgumentsMismatch{_variables->variables.size(), 0};
         return _symbol->evaluate(_nodes);
     }
 
