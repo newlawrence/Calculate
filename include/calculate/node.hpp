@@ -152,28 +152,10 @@ private:
     }
 
 
-    std::vector<std::string> _pruned() const noexcept {
-        std::istringstream extractor{postfix()};
-        std::vector<std::string> tokens{
-            std::istream_iterator<std::string>{extractor},
-            std::istream_iterator<std::string>{}
-        };
-        std::vector<std::string> pruned{};
-
-        for (const auto& variable : _variables->variables)
-            if (
-                std::find(tokens.begin(), tokens.end(), variable) !=
-                tokens.end()
-            )
-                pruned.push_back(variable);
-        return pruned;
-    }
-
-
 public:
     Node(const Node& other) noexcept :
             _lexer{other._lexer},
-            _variables{other._variables->rebuild(other._pruned())},
+            _variables{other._variables->rebuild(other.variables())},
             _token{other._token},
             _symbol{nullptr},
             _nodes{other._nodes},
@@ -348,7 +330,17 @@ public:
     }
 
     std::vector<std::string> variables() const noexcept {
-        return _variables->variables;
+        std::istringstream extractor{postfix()};
+        std::vector<std::string> tokens{
+            std::istream_iterator<std::string>{extractor},
+            std::istream_iterator<std::string>{}
+        };
+        std::vector<std::string> pruned{};
+
+        for (const auto& var : _variables->variables)
+            if (std::find(tokens.begin(), tokens.end(), var) != tokens.end())
+                pruned.push_back(var);
+        return pruned;
     }
 };
 

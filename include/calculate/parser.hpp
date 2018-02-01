@@ -481,7 +481,7 @@ private:
             throw UnusedSymbol{operands.top().token()};
         }
 
-        auto pruned = operands.top()._pruned();
+        auto pruned = operands.top().variables();
         for (const auto& variable : variables->variables)
             if (
                 std::find(
