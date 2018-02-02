@@ -12,7 +12,8 @@ using Parser = BaseParser<double>;
 
 class DefaultParser : public Parser {
 public:
-    DefaultParser() {
+    template<typename LexerType>
+    DefaultParser(const LexerType& lexer) : Parser{lexer} {
         using Associativity = Operator::Associativity;
 
         auto add = [](Type x1, Type x2) noexcept { return x1 + x2; };
@@ -92,6 +93,8 @@ public:
             {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
         });
     }
+
+    DefaultParser() : DefaultParser{DefaultLexer{}} {}
 };
 
 
@@ -99,7 +102,8 @@ using ComplexParser = BaseParser<std::complex<double>>;
 
 class DefaultComplexParser : public ComplexParser {
 public:
-    DefaultComplexParser() {
+    template<typename LexerType>
+    DefaultComplexParser(const LexerType& lexer) : ComplexParser{lexer} {
         using namespace std::complex_literals;
         using Associativity = Operator::Associativity;
 
@@ -185,6 +189,8 @@ public:
             {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
         });
     }
+
+    DefaultComplexParser() : DefaultComplexParser{DefaultLexer{}} {}
 };
 
 }

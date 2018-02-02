@@ -63,7 +63,7 @@ public:
                 variables.end()
             };
 
-            for (const auto &variable : keys) {
+            for (const auto &variable : variables) {
                 if (!std::regex_match(variable, lexer.name_regex))
                     throw UnsuitableName{variable};
                 else if (singles.erase(variable) == 0)
