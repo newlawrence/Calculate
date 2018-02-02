@@ -3,6 +3,7 @@
 
 #include <complex>
 #include <iomanip>
+#include <locale>
 #include <sstream>
 
 #include "util.hpp"
@@ -103,9 +104,14 @@ public:
     }
 
     Type to_value(const std::string& token) const override {
+        std::istringstream converter{token};
+        Type value;
+
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
-        return util::cast<Type>(token);
+        converter.imbue(std::locale("C"));
+        converter >> value;
+        return value;
     }
 
     std::string to_string(Type value) const noexcept override {
@@ -140,12 +146,17 @@ public:
     std::complex<Type> to_value(const std::string& token) const override {
         using namespace std::complex_literals;
 
+        std::istringstream converter{token};
+        Type value;
+
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
+        converter.imbue(std::locale("C"));
+        converter >> value;
 
         if (token.back() != 'i')
-            return util::cast<Type>(token);
-        return 1i * util::cast<Type>(token);
+            return value;
+        return 1i * value;
     }
 
     std::string to_string(std::complex<Type> value) const noexcept override {
