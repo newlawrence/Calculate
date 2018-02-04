@@ -559,7 +559,7 @@ public:
 
     Expression optimize(const Expression& node) const noexcept {
         if (node.variables().empty())
-            return create_node(node._symbol->evaluate(node._nodes));
+            return create_node(Type{node});
 
         auto nodes = std::vector<Expression>{};
         nodes.reserve(node._symbol->arguments());
