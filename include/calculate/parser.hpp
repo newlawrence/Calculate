@@ -194,12 +194,6 @@ private:
                     throw SyntaxError{};
             }
 
-            if (original && current.type == SymbolType::LEFT)
-                automatic.push(false);
-            else if (current.type == SymbolType::RIGHT)
-                if (!automatic.empty() && !automatic.top())
-                    automatic.pop();
-
             if (
                 previous.type == SymbolType::CONSTANT ||
                 previous.type == SymbolType::RIGHT
@@ -211,6 +205,12 @@ private:
                 )
                     fill_parenthesis();
             }
+
+            if (original && current.type == SymbolType::LEFT)
+                automatic.push(false);
+            else if (current.type == SymbolType::RIGHT)
+                if (!automatic.empty() && !automatic.top())
+                    automatic.pop();
 
             collected.push(std::move(current));
             if (original)
