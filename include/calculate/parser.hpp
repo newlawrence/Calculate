@@ -144,18 +144,20 @@ private:
     std::queue<SymbolHandler> _parse_infix(
         std::queue<SymbolHandler>&& symbols
     ) const {
+        using Associativity = typename Operator::Associativity;
+
         std::string parsed{};
         std::queue<SymbolHandler> collected{};
         SymbolHandler previous{Left()};
         SymbolHandler current{};
-        std::stack<std::size_t> parenthesis_counter{};
+        std::stack<bool> automatic{};
 
         auto fill_parenthesis = [&]() {
-            while (!parenthesis_counter.empty()) {
-                if (parenthesis_counter.top() == 0) {
+            while (!automatic.empty()) {
+                if (automatic.top()) {
                     collected.push(Right());
                     previous = Right();
-                    parenthesis_counter.pop();
+                    automatic.pop();
                 }
                 else
                     break;
@@ -192,11 +194,23 @@ private:
                     throw SyntaxError{};
             }
 
+            if (original && current.type == SymbolType::LEFT)
+                automatic.push(false);
+            else if (current.type == SymbolType::RIGHT)
+                if (!automatic.empty() && !automatic.top())
+                    automatic.pop();
+
             if (
                 previous.type == SymbolType::CONSTANT ||
                 previous.type == SymbolType::RIGHT
-            )
-                fill_parenthesis();
+            ) {
+                auto cop = static_cast<Operator*>(current.symbol.get());
+                if (
+                    current.type != SymbolType::OPERATOR ||
+                    cop->associativity() != Associativity::RIGHT
+                )
+                    fill_parenthesis();
+            }
 
             collected.push(std::move(current));
             if (original)
@@ -233,21 +247,14 @@ private:
                             };
                             collect_symbol(false);
                             current = Left();
+                            automatic.push(true);
                             collect_symbol(false);
-                            parenthesis_counter.push(0);
                             break;
                         default:
                             collect_symbol();
                         }
                     }
                 }
-            }
-
-            if (!parenthesis_counter.empty()) {
-                if (current.type == SymbolType::LEFT)
-                    parenthesis_counter.top()++;
-                else if (current.type == SymbolType::RIGHT)
-                    parenthesis_counter.top()--;
             }
 
             if (
@@ -536,7 +543,7 @@ public:
     Expression optimize(const Expression& node) const noexcept {
         auto variables = node.variables();
         if (variables.empty())
-            return from_infix(to_string(Type{node}));
+            return from_infix(to_string(Type{from_postfix(node.postfix())}));
 
         auto postfix = std::string{};
         auto context =
