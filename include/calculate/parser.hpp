@@ -144,8 +144,6 @@ private:
     std::queue<SymbolHandler> _parse_infix(
         std::queue<SymbolHandler>&& symbols
     ) const {
-        using Associativity = typename Operator::Associativity;
-
         std::string parsed{};
         std::queue<SymbolHandler> collected{};
         SymbolHandler previous{Left()};
@@ -197,14 +195,8 @@ private:
             if (
                 previous.type == SymbolType::CONSTANT ||
                 previous.type == SymbolType::RIGHT
-            ) {
-                auto cop = static_cast<Operator*>(current.symbol.get());
-                if (
-                    current.type != SymbolType::OPERATOR ||
-                    cop->associativity() != Associativity::RIGHT
-                )
-                    fill_parenthesis();
-            }
+            )
+                fill_parenthesis();
 
             collected.push(std::move(current));
             if (original)
