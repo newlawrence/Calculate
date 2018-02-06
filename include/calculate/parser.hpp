@@ -39,9 +39,9 @@ private:
 
 
 public:
-    util::SymbolContainer<Constant, BaseParser> constants;
-    util::SymbolContainer<Function, BaseParser> functions;
-    util::SymbolContainer<Operator, BaseParser> operators;
+    SymbolContainer<Constant, BaseParser> constants;
+    SymbolContainer<Function, BaseParser> functions;
+    SymbolContainer<Operator, BaseParser> operators;
 
     template<typename LexerType>
     BaseParser(const LexerType& lexer) :
@@ -498,23 +498,6 @@ public:
         return _lexer->to_string(value);
     }
 
-    Expression create_node(Type value) const {
-        return from_infix(to_string(value));
-    }
-
-    Expression create_node(
-        const std::string& token,
-        const std::vector<Expression>& nodes={},
-        const std::vector<std::string>& variables={}
-    ) const {
-        std::string postfix{};
-
-        auto context = std::make_shared<VariableHandler>(variables, *_lexer);
-        for (const auto& node : nodes)
-            postfix += node.postfix() + " ";
-        return _build_tree(_tokenize(postfix + token, context), context);
-    }
-
     Expression from_infix(
         const std::string& expression,
         const std::vector<std::string>& variables={}
@@ -550,16 +533,17 @@ public:
         }
     }
 
-
     Expression optimize(const Expression& node) const noexcept {
-        if (node.variables().empty())
-            return create_node(Type{node});
+        auto variables = node.variables();
+        if (variables.empty())
+            return from_infix(to_string(Type{node}));
 
-        auto nodes = std::vector<Expression>{};
-        nodes.reserve(node._symbol->arguments());
-        for (auto another : node._nodes)
-            nodes.emplace_back(optimize(another));
-        return create_node(node._token, std::move(nodes), node.variables());
+        auto postfix = std::string{};
+        auto context =
+            std::make_shared<VariableHandler>(std::move(variables), *_lexer);
+        for (const auto& branch : node._nodes)
+            postfix += optimize(branch).postfix() + " ";
+        return _build_tree(_tokenize(postfix + node.token(), context), context);
     }
 };
 

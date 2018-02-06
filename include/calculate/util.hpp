@@ -19,6 +19,8 @@ void hash_combine(std::size_t& seed, const Type& object) {
     seed ^= hasher(object) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
+}
+
 
 template<typename Kind, typename Parser>
 class SymbolContainer final : std::unordered_map<std::string, Kind> {
@@ -115,8 +117,6 @@ public:
         Base::insert(list);
     }
 };
-
-}
 
 }
 

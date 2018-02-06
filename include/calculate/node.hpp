@@ -259,6 +259,10 @@ public:
 
     const_iterator end() const noexcept { return _nodes.end(); }
 
+    const_iterator cbegin() const noexcept { return _nodes.cbegin(); }
+
+    const_iterator cend() const noexcept { return _nodes.cend(); }
+
     friend std::ostream& operator<<(
         std::ostream& ostream,
         const Node& node
