@@ -209,7 +209,7 @@ private:
             collected.push(std::move(current));
             if (original)
                 parsed += current.token;
-            previous = std::move(current);
+            previous = {collected.back().token, collected.back().type, nullptr};
         };
 
         if (symbols.size() == 0)
@@ -330,6 +330,8 @@ private:
                             expected_counter.top(),
                             provided_counter.top()
                         };
+                    collected.push(std::move(operations.top()));
+                    operations.pop();
                     expected_counter.pop();
                     provided_counter.pop();
                 }
