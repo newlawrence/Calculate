@@ -20,8 +20,21 @@ public:
         auto subtract = [](Type x1, Type x2) noexcept { return x1 - x2; };
         auto multiply = [](Type x1, Type x2) noexcept { return x1 * x2; };
         auto divide = [](Type x1, Type x2) noexcept { return x1 / x2; };
-        auto truncate = static_cast<Type(*)(Type, Type)>(std::fmod);
-        auto raise = static_cast<Type(*)(Type, Type)>(std::pow);
+        auto modulus = static_cast<Type(*)(Type, Type)>(std::fmod);
+        auto raise = [](Type x1, Type x2) noexcept {
+            if (x2 > 0. && std::trunc(x2) == x2) {
+                auto exponent = static_cast<int>(x2);
+                auto product = 1.;
+                while (exponent) {
+                    if (exponent & 1)
+                        product *= x1;
+                    exponent >>= 1;
+                    x1 *= x1;
+                }
+                return product;
+            }
+            return std::pow(x1, x2);
+        };
 
         constants.insert({
             {"pi", 3.14159265358979323846},
@@ -89,7 +102,7 @@ public:
             {"-", {std::move(subtract), "neg", 3333u, Associativity::LEFT}},
             {"*", {std::move(multiply), "", 6666u, Associativity::BOTH}},
             {"/", {std::move(divide), "", 6666u, Associativity::LEFT}},
-            {"%", {std::move(truncate), "", 6666u, Associativity::LEFT}},
+            {"%", {std::move(modulus), "", 6666u, Associativity::LEFT}},
             {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
         });
     }
