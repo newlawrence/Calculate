@@ -103,18 +103,31 @@ public:
             return _values[index(token)];
         }
 
-        void update(const std::vector<Type>& values) {
-            if (_size != values.size())
-                throw ArgumentsMismatch{_size, values.size()};
-            for (std::size_t i = 0; i < _size; i++)
-                _values[i] = values[i];
+        template<typename Args>
+        std::enable_if_t<util::is_iterable<Args>::value> update(Args&& vals) {
+            std::size_t i{};
+
+            for (auto val = std::begin(vals); val != std::end(vals); ++val) {
+                if (i < _size)
+                    _values[i] = *val;
+                ++i;
+            }
+            if (_size != i)
+                throw ArgumentsMismatch{_size, i};
+        }
+
+        template<typename Arg>
+        std::enable_if_t<!util::is_iterable<Arg>::value> update(Arg&& val) {
+            if (_size != 1)
+                throw ArgumentsMismatch{_size, 1};
+            _values[0] = val;
         }
 
         template<typename... Args>
-        void update(Args... args) {
-            if (_size != sizeof...(args))
-                throw ArgumentsMismatch{_size, sizeof...(args)};
-            _update(0, args...);
+        std::enable_if_t<sizeof...(Args) != 1> update(Args&&... vals) {
+            if (_size != sizeof...(vals))
+                throw ArgumentsMismatch{_size, sizeof...(vals)};
+            _update(0, vals...);
         }
     };
 
