@@ -343,7 +343,8 @@ public:
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
-        return _callable->call(std::vector<Type>{std::forward<Args>(args)...});
+        return _callable
+            ->call(util::to_vector<Type>(std::forward<Args>(args)...));
     }
 
     bool operator==(const Wrapper& other) const noexcept {

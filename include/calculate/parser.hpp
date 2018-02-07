@@ -505,34 +505,36 @@ public:
         return _lexer->to_string(value);
     }
 
-    Expression from_infix(
-        const std::string& expression,
-        const std::vector<std::string>& variables={}
-    ) const {
-        auto context = std::make_shared<VariableHandler>(variables, *_lexer);
-        return _build_tree(
-            _shunting_yard(_parse_infix(_tokenize(expression, context))),
-            context
+    template<typename... Args>
+    Expression from_infix(const std::string& expr, Args&&... vars) const {
+        auto variables = std::make_shared<VariableHandler>(
+            util::to_vector<std::string>(std::forward<Args>(vars)...),
+            *_lexer
         );
+        auto postfix = _shunting_yard(_parse_infix(_tokenize(expr, variables)));
+
+        return _build_tree(std::move(postfix), variables);
     }
 
-    Expression from_postfix(
-        const std::string& expression,
-        const std::vector<std::string>& variables={}
-    ) const {
-        auto context = std::make_shared<VariableHandler>(variables, *_lexer);
-        return _build_tree(_tokenize(expression, context), context);
+    template<typename... Args>
+    Expression from_postfix(const std::string& expr, Args&&... vars) const {
+        auto variables = std::make_shared<VariableHandler>(
+            util::to_vector<std::string>(std::forward<Args>(vars)...),
+            *_lexer
+        );
+
+        return _build_tree(_tokenize(expr, variables), variables);
     }
 
     Expression parse(const std::string& expression) const {
-        std::vector<std::string> variables{};
+        std::vector<std::string> vars{};
 
         while (true) {
             try {
-                return from_infix(expression, variables);
+                return from_infix(expression, vars);
             }
             catch (const UndefinedSymbol& exception) {
-                variables.emplace_back(exception.token);
+                vars.emplace_back(exception.token);
             }
             catch (const UnsuitableName& exception) {
                 throw UndefinedSymbol{exception.token};
@@ -541,16 +543,18 @@ public:
     }
 
     Expression optimize(const Expression& node) const noexcept {
-        auto variables = node.variables();
-        if (variables.empty())
+        auto vars = node.variables();
+        if (vars.empty())
             return from_infix(to_string(Type{from_postfix(node.postfix())}));
 
         auto postfix = std::string{};
-        auto context =
-            std::make_shared<VariableHandler>(std::move(variables), *_lexer);
+        auto variables =
+            std::make_shared<VariableHandler>(std::move(vars), *_lexer);
         for (const auto& branch : node._nodes)
             postfix += optimize(branch).postfix() + " ";
-        return _build_tree(_tokenize(postfix + node.token(), context), context);
+        postfix += node.token();
+
+        return _build_tree(_tokenize(postfix, variables), variables);
     }
 };
 
