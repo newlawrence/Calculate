@@ -104,7 +104,7 @@ public:
         }
 
         template<typename Args>
-        std::enable_if_t<util::is_iterable<Args>::value> update(Args&& vals) {
+        std::enable_if_t<util::Check<Args>::iterable> update(Args&& vals) {
             std::size_t i{};
 
             for (auto val = std::begin(vals); val != std::end(vals); ++val) {
@@ -117,7 +117,7 @@ public:
         }
 
         template<typename Arg>
-        std::enable_if_t<!util::is_iterable<Arg>::value> update(Arg&& val) {
+        std::enable_if_t<!util::Check<Arg>::iterable> update(Arg&& val) {
             if (_size != 1)
                 throw ArgumentsMismatch{_size, 1};
             _values[0] = val;
