@@ -38,8 +38,6 @@ private:
             std::is_base_of<WrapperConcept, Callable>::value;
     };
 
-    using Wrapper::eval;
-
     std::size_t _hash() const noexcept {
         if (symbol() == SymbolType::CONSTANT)
             return std::hash<Type>()(static_cast<const Wrapper&>(*this)());

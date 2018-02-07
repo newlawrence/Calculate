@@ -198,13 +198,13 @@ public:
     explicit operator Type() const {
         if (_variables->variables.size() > 0)
             throw ArgumentsMismatch{_variables->variables.size(), 0};
-        return _symbol->eval(_nodes);
+        return _symbol->_eval(_nodes);
     }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
         _variables->update(std::forward<Args>(args)...);
-        return _symbol->eval(_nodes);
+        return _symbol->_eval(_nodes);
     }
 
     bool operator==(const Node& other) const noexcept {
@@ -272,7 +272,7 @@ public:
     }
 
     static Type evaluate(const Node& node) {
-        return node._symbol->eval(node._nodes);
+        return node._symbol->_eval(node._nodes);
     }
 
     const Lexer& lexer() const noexcept { return *_lexer; }
