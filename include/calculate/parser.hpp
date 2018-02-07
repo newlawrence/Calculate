@@ -39,9 +39,9 @@ private:
 
 
 public:
-    util::SymbolContainer<Constant, BaseParser> constants;
-    util::SymbolContainer<Function, BaseParser> functions;
-    util::SymbolContainer<Operator, BaseParser> operators;
+    SymbolContainer<Constant, BaseParser> constants;
+    SymbolContainer<Function, BaseParser> functions;
+    SymbolContainer<Operator, BaseParser> operators;
 
     template<typename LexerType>
     BaseParser(const LexerType& lexer) :
@@ -150,14 +150,14 @@ private:
         std::queue<SymbolHandler> collected{};
         SymbolHandler previous{Left()};
         SymbolHandler current{};
-        std::stack<std::size_t> parenthesis_counter{};
+        std::stack<bool> automatic{};
 
         auto fill_parenthesis = [&]() {
-            while (!parenthesis_counter.empty()) {
-                if (parenthesis_counter.top() == 0) {
+            while (!automatic.empty()) {
+                if (automatic.top()) {
                     collected.push(Right());
                     previous = Right();
-                    parenthesis_counter.pop();
+                    automatic.pop();
                 }
                 else
                     break;
@@ -206,10 +206,16 @@ private:
                     fill_parenthesis();
             }
 
+            if (original && current.type == SymbolType::LEFT)
+                automatic.push(false);
+            else if (current.type == SymbolType::RIGHT)
+                if (!automatic.empty() && !automatic.top())
+                    automatic.pop();
+
             collected.push(std::move(current));
             if (original)
                 parsed += current.token;
-            previous = std::move(current);
+            previous = {collected.back().token, collected.back().type, nullptr};
         };
 
         if (symbols.size() == 0)
@@ -241,21 +247,14 @@ private:
                             };
                             collect_symbol(false);
                             current = Left();
+                            automatic.push(true);
                             collect_symbol(false);
-                            parenthesis_counter.push(0);
                             break;
                         default:
                             collect_symbol();
                         }
                     }
                 }
-            }
-
-            if (!parenthesis_counter.empty()) {
-                if (current.type == SymbolType::LEFT)
-                    parenthesis_counter.top()++;
-                else if (current.type == SymbolType::RIGHT)
-                    parenthesis_counter.top()--;
             }
 
             if (
@@ -330,6 +329,8 @@ private:
                             expected_counter.top(),
                             provided_counter.top()
                         };
+                    collected.push(std::move(operations.top()));
+                    operations.pop();
                     expected_counter.pop();
                     provided_counter.pop();
                 }
@@ -504,23 +505,6 @@ public:
         return _lexer->to_string(value);
     }
 
-    Expression create_node(Type value) const {
-        return from_infix(to_string(value));
-    }
-
-    Expression create_node(
-        const std::string& token,
-        const std::vector<Expression>& nodes={},
-        const std::vector<std::string>& variables={}
-    ) const {
-        std::string postfix{};
-
-        auto context = std::make_shared<VariableHandler>(variables, *_lexer);
-        for (const auto& node : nodes)
-            postfix += node.postfix() + " ";
-        return _build_tree(_tokenize(postfix + token, context), context);
-    }
-
     Expression from_infix(
         const std::string& expression,
         const std::vector<std::string>& variables={}
@@ -556,16 +540,17 @@ public:
         }
     }
 
-
     Expression optimize(const Expression& node) const noexcept {
-        if (node.variables().empty())
-            return create_node(node._symbol->evaluate(node._nodes));
+        auto variables = node.variables();
+        if (variables.empty())
+            return from_infix(to_string(Type{from_postfix(node.postfix())}));
 
-        auto nodes = std::vector<Expression>{};
-        nodes.reserve(node._symbol->arguments());
-        for (auto another : node._nodes)
-            nodes.emplace_back(optimize(another));
-        return create_node(node._token, std::move(nodes), node.variables());
+        auto postfix = std::string{};
+        auto context =
+            std::make_shared<VariableHandler>(std::move(variables), *_lexer);
+        for (const auto& branch : node._nodes)
+            postfix += optimize(branch).postfix() + " ";
+        return _build_tree(_tokenize(postfix + node.token(), context), context);
     }
 };
 
