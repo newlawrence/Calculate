@@ -7,7 +7,6 @@
 #include <sstream>
 
 #include "symbol.hpp"
-#include "util.hpp"
 
 
 namespace calculate {

@@ -1,13 +1,12 @@
 #ifndef __CALCULATE_WRAPPER_HPP__
 #define __CALCULATE_WRAPPER_HPP__
 
-#include <memory>
 #include <type_traits>
 #include <tuple>
 #include <vector>
 #include <utility>
 
-#include "exception.hpp"
+#include "util.hpp"
 
 
 namespace calculate {
