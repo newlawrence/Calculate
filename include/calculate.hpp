@@ -136,7 +136,7 @@ public:
             return static_cast<Type>(std::norm(z));
         };
         auto polar = [](const Type& z1, const Type& z2) noexcept {
-            return z1 * std::exp(1i * z2);
+            return z1 * std::exp(1.i * z2);
         };
 
         auto add = [](const Type& z1, const Type& z2) noexcept {

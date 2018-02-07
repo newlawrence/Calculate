@@ -212,10 +212,10 @@ private:
                 if (!automatic.empty() && !automatic.top())
                     automatic.pop();
 
-            collected.push(std::move(current));
             if (original)
-                parsed += current.token;
-            previous = {collected.back().token, collected.back().type, nullptr};
+                parsed += current.token + " ";
+            previous = {current.token, current.type, nullptr};
+            collected.push(std::move(current));
         };
 
         if (symbols.size() == 0)
@@ -239,7 +239,7 @@ private:
                         case (SymbolType::LEFT):
                         case (SymbolType::SEPARATOR):
                         case (SymbolType::OPERATOR):
-                            parsed += current.token;
+                            parsed += current.token + " ";
                             current = {
                                 cop->alias(),
                                 SymbolType::FUNCTION,
@@ -266,11 +266,11 @@ private:
                 throw SyntaxError{};
         }
         catch (const SyntaxError&) {
-            parsed += " '" + current.token + "' ";
+            parsed +=" '" + current.token + "' ";
             while (!symbols.empty()) {
                 current = std::move(symbols.front());
                 symbols.pop();
-                parsed += current.token;
+                parsed += current.token + " ";
             }
             throw SyntaxError{parsed};
         }

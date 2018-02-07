@@ -8,7 +8,7 @@
 namespace calculate {
 
 struct BaseError : public std::runtime_error {
-    BaseError(std::string what) : runtime_error{std::move(what)} {}
+    explicit BaseError(std::string what) : runtime_error{std::move(what)} {}
     BaseError() :
             runtime_error{std::string{"Base error: unexpected error"}}
     {}
@@ -16,7 +16,7 @@ struct BaseError : public std::runtime_error {
 
 
 struct BadCast : BaseError {
-    BadCast(const std::string& token) :
+    explicit BadCast(const std::string& token) :
             BaseError{
                 "Bad cast: cannot perform numeric conversion: '" + token + "'"
             }
@@ -56,7 +56,7 @@ struct ParenthesisMismatch : BaseError {
 
 struct RepeatedSymbol : BaseError {
     const std::string token;
-    RepeatedSymbol(const std::string& t) :
+    explicit RepeatedSymbol(const std::string& t) :
             BaseError{"Repeated symbol: '" + t + "'"},
             token{t}
     {}
@@ -64,12 +64,14 @@ struct RepeatedSymbol : BaseError {
 
 struct SyntaxError : BaseError {
     SyntaxError() : BaseError{"Syntax error"} {}
-    SyntaxError(const std::string& what) : BaseError{"Syntax error: " + what} {}
+    explicit SyntaxError(const std::string& what) :
+            BaseError{"Syntax error: " + what}
+    {}
 };
 
 struct UndefinedSymbol : BaseError {
     const std::string token;
-    UndefinedSymbol(const std::string& t) :
+    explicit UndefinedSymbol(const std::string& t) :
             BaseError{"Undefined symbol: '" + t + "'"},
             token{t}
     {}
@@ -77,7 +79,7 @@ struct UndefinedSymbol : BaseError {
 
 struct UnsuitableName : BaseError {
     const std::string token;
-    UnsuitableName(const std::string& t) :
+    explicit UnsuitableName(const std::string& t) :
             BaseError{"Unsuitable symbol name: '" + t + "'"},
             token{t}
     {}
@@ -85,7 +87,7 @@ struct UnsuitableName : BaseError {
 
 struct UnusedSymbol : BaseError {
     const std::string token;
-    UnusedSymbol(const std::string& t) :
+    explicit UnusedSymbol(const std::string& t) :
             BaseError{"Unused symbol: '" + t + "'"}, token{t}
     {}
 };
