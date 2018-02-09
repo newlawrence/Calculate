@@ -543,7 +543,7 @@ public:
     }
 
     Expression optimize(const Expression& node) const noexcept {
-        auto vars = node.variables();
+        auto vars = node._pruned();
         if (vars.empty())
             return from_infix(to_string(Type{from_postfix(node.postfix())}));
 
