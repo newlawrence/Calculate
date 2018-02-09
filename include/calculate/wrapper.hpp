@@ -1,13 +1,12 @@
 #ifndef __CALCULATE_WRAPPER_HPP__
 #define __CALCULATE_WRAPPER_HPP__
 
-#include <memory>
 #include <type_traits>
 #include <tuple>
 #include <vector>
 #include <utility>
 
-#include "exception.hpp"
+#include "util.hpp"
 
 
 namespace calculate {
@@ -159,16 +158,16 @@ struct NotSame {
 template<typename Type, std::size_t>
 using ExtractType = Type;
 
-template<typename, std::size_t argcount, typename = std::make_index_sequence<argcount>>
+template<typename, std::size_t argc, typename = std::make_index_sequence<argc>>
 struct Repeat {};
 
-template<typename Type, std::size_t argcount, std::size_t... indices>
-struct Repeat<Type, argcount, std::index_sequence<indices...>> {
+template<typename Type, std::size_t argc, std::size_t... indices>
+struct Repeat<Type, argc, std::index_sequence<indices...>> {
     using type = std::tuple<ExtractType<Type, indices>...>;
 };
 
-template<typename Type, std::size_t argcount>
-using Repeated = typename Repeat<Type, argcount>::type;
+template<typename Type, std::size_t argc>
+using Repeated = typename Repeat<Type, argc>::type;
 
 }
 
@@ -176,7 +175,7 @@ using Repeated = typename Repeat<Type, argcount>::type;
 template<typename Type, typename Source>
 struct WrapperConcept {
     virtual ~WrapperConcept() = default;
-    virtual std::shared_ptr<WrapperConcept> copy() const noexcept = 0;
+    virtual std::shared_ptr<WrapperConcept> clone() const noexcept = 0;
     virtual std::size_t argc() const noexcept = 0;
     virtual Type call(const std::vector<Type>&) const = 0;
     virtual Type eval(const std::vector<Source>&) const = 0;
@@ -233,7 +232,7 @@ class Wrapper {
                 _adapter{adapter}
         {}
 
-        std::shared_ptr<WrapperConcept> copy() const noexcept override {
+        std::shared_ptr<WrapperConcept> clone() const noexcept override {
             return std::make_shared<WrapperModel>(*this);
         }
 
@@ -338,13 +337,14 @@ public:
             }
     {}
 
-    Wrapper copy() const noexcept { return Wrapper{_callable->copy()}; }
+    Wrapper clone() const noexcept { return Wrapper{_callable->clone()}; }
 
     std::size_t argc() const noexcept { return _callable->argc(); }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
-        return _callable->call(std::vector<Type>{std::forward<Args>(args)...});
+        return _callable
+            ->call(util::to_vector<Type>(std::forward<Args>(args)...));
     }
 
     bool operator==(const Wrapper& other) const noexcept {

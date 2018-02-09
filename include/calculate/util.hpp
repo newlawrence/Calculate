@@ -13,6 +13,49 @@ namespace calculate {
 
 namespace util {
 
+namespace detail {
+
+    using std::begin;
+    using std::end;
+
+    template<typename Type>
+    static constexpr decltype(
+        begin(std::declval<Type&>()) != end(std::declval<Type&>()),
+        ++std::declval<decltype(begin(std::declval<Type&>()))&>(),
+        *begin(std::declval<Type&>()),
+        bool{}
+    ) is_iterable(int) { return true; }
+
+    template<typename Type>
+    static constexpr bool is_iterable(...) { return false; }
+
+}
+
+template<typename Type>
+struct Check {
+    static constexpr bool iterable = detail::is_iterable<Type>(0);
+};
+
+
+template<typename Type, typename Args>
+std::enable_if_t<Check<Args>::iterable, std::vector<Type>>
+to_vector(Args&& args) {
+    return std::vector<Type>{std::begin(args), std::end(args)};
+}
+
+template<typename Type, typename Arg>
+std::enable_if_t<!Check<Arg>::iterable, std::vector<Type>>
+to_vector(Arg&& arg) {
+    return std::vector<Type>{std::forward<Arg>(arg)};
+}
+
+template<typename Type, typename... Args>
+std::enable_if_t<sizeof...(Args) != 1, std::vector<Type>>
+to_vector(Args&&... args) {
+    return std::vector<Type>{std::forward<Args>(args)...};
+}
+
+
 template<class Type>
 void hash_combine(std::size_t& seed, const Type& object) {
     std::hash<Type> hasher;

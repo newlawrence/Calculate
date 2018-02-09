@@ -95,6 +95,7 @@ void run(
     const po::variables_map& arguments
 ) {
     using Type = typename Parser::Type;
+
     Parser parser{};
 
     std::chrono::steady_clock::time_point begin;
@@ -114,8 +115,8 @@ void run(
     }
 
     auto parse = arguments.count("postfix") ?
-        &Parser::from_postfix :
-        &Parser::from_infix;
+        &Parser::template from_postfix<const std::vector<std::string>&> :
+        &Parser::template from_infix<const std::vector<std::string>&>;
 
     auto function = (parser.*parse)(expression, variables);
     if (arguments.count("analysis")) {
