@@ -191,7 +191,14 @@ public:
             default_separator(),
             default_decimal()
         }
-    ) : BaseLexer{regexes, strings} {}
+    ) : BaseLexer{regexes, strings} {
+        if (this->decimal != default_decimal())
+            throw LexerError{
+                "default lexer must use '" +
+                default_decimal() +
+                "' as decimal mark"
+            };
+    }
 
     std::shared_ptr<BaseLexer> clone() const noexcept override {
         return std::make_shared<Lexer>(*this);
@@ -236,7 +243,14 @@ public:
             default_separator(),
             default_decimal()
         }
-    ) : BaseLexer{regexes, strings} {}
+    ) : BaseLexer{regexes, strings} {
+        if (this->decimal != default_decimal())
+            throw LexerError{
+                "default lexer must use '" +
+                default_decimal() +
+                "' as decimal mark"
+            };
+    }
 
     std::shared_ptr<BaseLexer> clone() const noexcept override {
         return std::make_shared<Lexer>(*this);
