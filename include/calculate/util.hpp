@@ -13,39 +13,55 @@ namespace calculate {
 
 namespace util {
 
+namespace detail {
+
+    using std::begin;
+    using std::end;
+
+    template<typename Type>
+    static constexpr decltype(
+        begin(std::declval<Type&>()) != end(std::declval<Type&>()),
+        ++std::declval<decltype(begin(std::declval<Type&>()))&>(),
+        *begin(std::declval<Type&>()),
+        bool{}
+    ) is_iterable(int) { return true; }
+
+    template<typename Type>
+    static constexpr bool is_iterable(...) { return false; }
+
+}
+
 template<typename Type>
-std::enable_if_t<std::is_integral<Type>::value, Type> cast(
-    const std::string& value
-) { return static_cast<Type>(std::stoll(value)); }
+struct Check {
+    static constexpr bool iterable = detail::is_iterable<Type>(0);
+};
 
-template<> inline int cast<int>(const std::string& value) {
-    return std::stoi(value);
+
+template<typename Type, typename Args>
+std::enable_if_t<Check<Args>::iterable, std::vector<Type>>
+to_vector(Args&& args) {
+    return std::vector<Type>{std::begin(args), std::end(args)};
 }
 
-template<> inline long cast<long>(const std::string& value) {
-    return std::stol(value);
+template<typename Type, typename Arg>
+std::enable_if_t<!Check<Arg>::iterable, std::vector<Type>>
+to_vector(Arg&& arg) {
+    return std::vector<Type>{std::forward<Arg>(arg)};
 }
 
-
-template<typename Type>
-std::enable_if_t<std::is_floating_point<Type>::value, Type> cast(
-    const std::string& value
-) { return static_cast<Type>(std::stold(value)); }
-
-template<> inline float cast<float>(const std::string& value) {
-    return std::stof(value);
+template<typename Type, typename... Args>
+std::enable_if_t<sizeof...(Args) != 1, std::vector<Type>>
+to_vector(Args&&... args) {
+    return std::vector<Type>{std::forward<Args>(args)...};
 }
-
-template<> inline double cast<double>(const std::string& value) {
-    return std::stod(value);
-}
-
 
 
 template<class Type>
 void hash_combine(std::size_t& seed, const Type& object) {
     std::hash<Type> hasher;
     seed ^= hasher(object) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
 }
 
 
@@ -144,8 +160,6 @@ public:
         Base::insert(list);
     }
 };
-
-}
 
 }
 

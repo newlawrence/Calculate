@@ -1,13 +1,12 @@
 #ifndef __CALCULATE_WRAPPER_HPP__
 #define __CALCULATE_WRAPPER_HPP__
 
-#include <memory>
 #include <type_traits>
 #include <tuple>
 #include <vector>
 #include <utility>
 
-#include "exception.hpp"
+#include "util.hpp"
 
 
 namespace calculate {
@@ -259,6 +258,11 @@ class Wrapper {
 
     Wrapper(std::shared_ptr<WrapperConcept>&& callable) : _callable{callable} {}
 
+protected:
+    Type _eval(const std::vector<Source>& args) const {
+        return _callable->eval(args);
+    }
+
 public:
     template<typename Callable, typename Adapter>
     Wrapper(Callable&& callable, Adapter&& adapter) :
@@ -337,23 +341,10 @@ public:
 
     std::size_t argc() const noexcept { return _callable->argc(); }
 
-    Type operator()(const std::vector<Type>& args) const {
-        return _callable->call(args);
-    }
-
     template<typename... Args>
     Type operator()(Args&&... args) const {
-        return _callable->call(std::vector<Type>{std::forward<Args>(args)...});
-    }
-
-    Type eval(const std::vector<Source>& args) const {
-        return _callable->eval(args);
-    }
-
-    template<typename... Args>
-    Type eval(Args&&... args) const {
         return _callable
-            ->eval(std::vector<Source>{std::forward<Args>(args)...});
+            ->call(util::to_vector<Type>(std::forward<Args>(args)...));
     }
 
     bool operator==(const Wrapper& other) const noexcept {

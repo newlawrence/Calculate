@@ -7,7 +7,6 @@
 #include <sstream>
 
 #include "symbol.hpp"
-#include "util.hpp"
 
 
 namespace calculate {
@@ -63,7 +62,7 @@ public:
                 variables.end()
             };
 
-            for (const auto &variable : keys) {
+            for (const auto &variable : variables) {
                 if (!std::regex_match(variable, lexer.name_regex))
                     throw UnsuitableName{variable};
                 else if (singles.erase(variable) == 0)
@@ -104,18 +103,31 @@ public:
             return _values[index(token)];
         }
 
-        void update(const std::vector<Type>& values) {
-            if (_size != values.size())
-                throw ArgumentsMismatch{_size, values.size()};
-            for (std::size_t i = 0; i < _size; i++)
-                _values[i] = values[i];
+        template<typename Args>
+        std::enable_if_t<util::Check<Args>::iterable> update(Args&& vals) {
+            std::size_t i{};
+
+            for (auto val = std::begin(vals); val != std::end(vals); ++val) {
+                if (i < _size)
+                    _values[i] = *val;
+                ++i;
+            }
+            if (_size != i)
+                throw ArgumentsMismatch{_size, i};
+        }
+
+        template<typename Arg>
+        std::enable_if_t<!util::Check<Arg>::iterable> update(Arg&& val) {
+            if (_size != 1)
+                throw ArgumentsMismatch{_size, 1};
+            _values[0] = val;
         }
 
         template<typename... Args>
-        void update(Args... args) {
-            if (_size != sizeof...(args))
-                throw ArgumentsMismatch{_size, sizeof...(args)};
-            _update(0, args...);
+        std::enable_if_t<sizeof...(Args) != 1> update(Args&&... vals) {
+            if (_size != sizeof...(vals))
+                throw ArgumentsMismatch{_size, sizeof...(vals)};
+            _update(0, vals...);
         }
     };
 
@@ -151,11 +163,25 @@ private:
             };
     }
 
+    std::vector<std::string> _pruned() const noexcept {
+        std::istringstream extractor{postfix()};
+        std::vector<std::string> tokens{
+            std::istream_iterator<std::string>{extractor},
+            std::istream_iterator<std::string>{}
+        };
+        std::vector<std::string> pruned{};
+
+        for (const auto& var : _variables->variables)
+            if (std::find(tokens.begin(), tokens.end(), var) != tokens.end())
+                pruned.push_back(var);
+        return pruned;
+    }
+
 
 public:
     Node(const Node& other) noexcept :
             _lexer{other._lexer},
-            _variables{other._variables->rebuild(other.variables())},
+            _variables{other._variables->rebuild(other._pruned())},
             _token{other._token},
             _symbol{nullptr},
             _nodes{other._nodes},
@@ -198,18 +224,13 @@ public:
     explicit operator Type() const {
         if (_variables->variables.size() > 0)
             throw ArgumentsMismatch{_variables->variables.size(), 0};
-        return _symbol->evaluate(_nodes);
-    }
-
-    Type operator()(const std::vector<Type>& values) const {
-        _variables->update(values);
-        return _symbol->evaluate(_nodes);
+        return _symbol->_eval(_nodes);
     }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
         _variables->update(std::forward<Args>(args)...);
-        return _symbol->evaluate(_nodes);
+        return _symbol->_eval(_nodes);
     }
 
     bool operator==(const Node& other) const noexcept {
@@ -264,6 +285,10 @@ public:
 
     const_iterator end() const noexcept { return _nodes.end(); }
 
+    const_iterator cbegin() const noexcept { return _nodes.cbegin(); }
+
+    const_iterator cend() const noexcept { return _nodes.cend(); }
+
     friend std::ostream& operator<<(
         std::ostream& ostream,
         const Node& node
@@ -273,7 +298,7 @@ public:
     }
 
     static Type evaluate(const Node& node) {
-        return node._symbol->evaluate(node._nodes);
+        return node._symbol->_eval(node._nodes);
     }
 
     const Lexer& lexer() const noexcept { return *_lexer; }
@@ -330,17 +355,7 @@ public:
     }
 
     std::vector<std::string> variables() const noexcept {
-        std::istringstream extractor{postfix()};
-        std::vector<std::string> tokens{
-            std::istream_iterator<std::string>{extractor},
-            std::istream_iterator<std::string>{}
-        };
-        std::vector<std::string> pruned{};
-
-        for (const auto& var : _variables->variables)
-            if (std::find(tokens.begin(), tokens.end(), var) != tokens.end())
-                pruned.push_back(var);
-        return pruned;
+        return _variables->variables;
     }
 };
 

@@ -10,8 +10,9 @@ template<typename> class Function;
 template<typename> class Operator;
 
 template<typename Expression>
-class Symbol {
+class Symbol : Wrapper<typename Expression::Type, Expression> {
     friend struct std::hash<Symbol>;
+    friend Expression;
 
 public:
     using Type = typename Expression::Type;
@@ -37,12 +38,10 @@ private:
             std::is_base_of<WrapperConcept, Callable>::value;
     };
 
-    Wrapper _wrapper;
-
     std::size_t _hash() const noexcept {
         if (symbol() == SymbolType::CONSTANT)
-            return std::hash<Type>()(_wrapper());
-        return std::hash<Wrapper>()(_wrapper);
+            return std::hash<Type>()(static_cast<const Wrapper&>(*this)());
+        return std::hash<Wrapper>()(static_cast<const Wrapper&>(*this));
     }
 
     virtual bool _equal(const Symbol&) const noexcept = 0;
@@ -54,7 +53,7 @@ public:
         typename = std::enable_if_t<!Inspect<Callable>::is_model>
     >
     Symbol(Callable&& callable) :
-            _wrapper{std::forward<Callable>(callable), &Expression::evaluate}
+            Wrapper{std::forward<Callable>(callable), &Expression::evaluate}
     {
         static_assert(
             detail::NotSame<Callable, Function<Expression>>::value ||
@@ -73,16 +72,19 @@ public:
         typename = std::enable_if_t<Inspect<Callable>::is_model>
     >
     Symbol(Callable&& callable) :
-            _wrapper{std::forward<Callable>(callable)}
+            Wrapper{std::forward<Callable>(callable)}
     {}
 
     virtual ~Symbol() = default;
 
     template<typename Class>
     bool operator==(const Class& other) const noexcept {
+        auto& this_wrapper = static_cast<const Wrapper&>(*this);
+        auto& other_wrapper = static_cast<const Wrapper&>(other);
+
         if (symbol() != other.symbol())
             return false;
-        if (symbol() != SymbolType::CONSTANT && _wrapper != other._wrapper)
+        if (symbol() != SymbolType::CONSTANT && this_wrapper != other_wrapper)
             return false;
         return this->_equal(other);
     }
@@ -92,16 +94,11 @@ public:
         return !operator==(other);
     }
 
-    template<typename... Args>
-    Type operator()(Args&&... args) const {
-        return _wrapper(std::forward<Args>(args)...);
-    }
+    using Wrapper::operator();
 
-    Type evaluate(const std::vector<Expression>& nodes) const {
-        return _wrapper.eval(nodes);
+    std::size_t arguments() const noexcept {
+        return static_cast<const Wrapper*>(this)->argc();
     }
-
-    std::size_t arguments() const noexcept { return _wrapper.argc(); }
 
     virtual SymbolType symbol() const noexcept = 0;
 
