@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <locale>
 #include <sstream>
+#include <unordered_set>
 
 #include "util.hpp"
 
@@ -13,43 +14,58 @@ namespace calculate {
 
 namespace detail {
 
-struct StringInitializer { std::string s1, s2, s3, s4; };
+struct RegexesInitializer {
+    std::string number;
+    std::string name;
+    std::string symbol;
+};
 
-inline StringInitializer DefaultPunctuation() { return {"(", ")", ",", "."}; }
+struct StringsInitializer {
+    std::string left;
+    std::string right;
+    std::string separator;
+    std::string decimal;
+};
 
-inline StringInitializer DefaultRegexes() {
-    return {
-        R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_",
-        R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
-        R"_(^[^A-Za-z\d.(),_\s]+$)_",
-        R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
-        R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-        R"_(([^A-Za-z\d\.(),_\s]+)|)_"
-        R"_((\()|(\))|(,)|(\.))_"
-    };
-}
 
-inline StringInitializer DefaultComplexRegexes() {
-    return {
-        R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_",
-        R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
-        R"_(^[^A-Za-z\d.(),_\s]+$)_",
-        R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?)|)_"
-        R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-        R"_(([^A-Za-z\d\.(),_\s]+)|)_"
-        R"_((\()|(\))|(,)|(\.))_"
-    };
+inline std::unordered_set<char> regex_scaped() {
+    static std::unordered_set<char> chars =
+        {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
+    return chars;
 }
 
 }
+
+inline std::string default_number() {
+    return R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_";
+}
+
+inline std::string default_complex() {
+    return R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_";
+}
+
+inline std::string default_name() { return R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_"; }
+
+inline std::string default_symbol() { return R"_(^[^A-Za-z\d.(),_\s]+$)_"; }
+
+
+inline std::string default_left() { return "("; }
+
+inline std::string default_right() { return ")"; }
+
+inline std::string default_separator() { return ","; }
+
+inline std::string default_decimal() { return "."; }
 
 
 template<typename Type>
-struct BaseLexer {
+class BaseLexer {
+public:
     const std::string left;
     const std::string right;
     const std::string separator;
     const std::string decimal;
+
     const std::string number;
     const std::string name;
     const std::string symbol;
@@ -60,25 +76,79 @@ struct BaseLexer {
     const std::regex symbol_regex;
     const std::regex tokenizer_regex;
 
-    BaseLexer(
-        const detail::StringInitializer& strings,
-        const detail::StringInitializer& regexes
-    ) :
-            left{strings.s1},
-            right{strings.s2},
-            separator{strings.s3},
-            decimal{strings.s4},
-            number{regexes.s1},
-            name{regexes.s2},
-            symbol{regexes.s3},
-            tokenizer{regexes.s4},
-            number_regex{regexes.s1},
-            name_regex{regexes.s2},
-            symbol_regex{regexes.s3},
-            tokenizer_regex{regexes.s4}
-    {}
+private:
+    std::string _adapt_regex(std::string regex) const {
+        if (regex.front() != '^')
+            regex.insert(0, 1, '^');
+        if (regex.back() != '$')
+            regex.append(1, '$');
 
+        try{
+            std::regex{regex};
+        }
+        catch(const std::regex_error&) {
+            throw LexerError{"bad regex '" + regex + "'"};
+        }
+        return regex;
+    }
+
+    std::string _generate_tokenizer() const {
+        std::string tokenizer{};
+
+        auto escape = [](std::string token) {
+            for (const auto& character : detail::regex_scaped()) {
+                size_t index = 0;
+                while (true) {
+                    index = token.find(character, index);
+                    if (index == std::string::npos)
+                        break;
+                    token.insert(index, 1, '\\');
+                    index += 2;
+                }
+            }
+            return token;
+        };
+
+        tokenizer += "(" + number.substr(1, number.size() - 2) + ")|";
+        tokenizer += "(" + name.substr(1, name.size() - 2) + ")|";
+        tokenizer += "(" + symbol.substr(1, symbol.size() - 2) + ")|";
+        tokenizer += "(" + escape(left) + ")|";
+        tokenizer += "(" + escape(right) + ")|";
+        tokenizer += "(" + escape(separator) + ")|";
+        tokenizer += "(" + escape(decimal) + ")";
+        return tokenizer;
+    }
+
+public:
+    BaseLexer(
+        const detail::RegexesInitializer& regexes,
+        const detail::StringsInitializer& strings
+    ) :
+            left{strings.left},
+            right{strings.right},
+            separator{strings.separator},
+            decimal{strings.decimal},
+            number{_adapt_regex(regexes.number)},
+            name{_adapt_regex(regexes.name)},
+            symbol{_adapt_regex(regexes.symbol)},
+            tokenizer{_generate_tokenizer()},
+            number_regex{number},
+            name_regex{name},
+            symbol_regex{symbol},
+            tokenizer_regex{tokenizer}
+    {
+        if ((left == right || left == separator || left == decimal) ||
+            (right == separator || right == decimal) ||
+            (separator == decimal)
+        )
+            throw LexerError{"tokens must be different"};
+
+    }
+    BaseLexer(const BaseLexer&) = default;
     virtual ~BaseLexer() = default;
+
+    BaseLexer& operator=(const BaseLexer&) = delete;
+    BaseLexer& operator=(BaseLexer&&) = delete;
 
     virtual std::shared_ptr<BaseLexer> clone() const noexcept = 0;
     virtual Type to_value(const std::string&) const = 0;
@@ -92,12 +162,18 @@ class Lexer final : public BaseLexer<Type> {
 
 public:
     Lexer(
-        detail::StringInitializer strings=detail::DefaultPunctuation(),
-        detail::StringInitializer regexes=detail::DefaultRegexes()
-    ) : BaseLexer{std::move(strings), std::move(regexes)} {
-        if (this->decimal != ".")
-            throw UnsuitableName{this->decimal};
-    }
+        const detail::RegexesInitializer& regexes={
+            default_number(),
+            default_name(),
+            default_symbol()
+        },
+        const detail::StringsInitializer& strings={
+            default_left(),
+            default_right(),
+            default_separator(),
+            default_decimal()
+        }
+    ) : BaseLexer{regexes, strings} {}
 
     std::shared_ptr<BaseLexer> clone() const noexcept override {
         return std::make_shared<Lexer>(*this);
@@ -123,7 +199,6 @@ public:
     }
 };
 
-
 template<typename Type>
 class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
     using BaseLexer = calculate::BaseLexer<std::complex<Type>>;
@@ -132,12 +207,18 @@ class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
 
 public:
     Lexer(
-        detail::StringInitializer strings=detail::DefaultPunctuation(),
-        detail::StringInitializer regexes=detail::DefaultComplexRegexes()
-    ) : BaseLexer{std::move(strings), std::move(regexes)} {
-        if (this->decimal != ".")
-            throw UnsuitableName{this->decimal};
-    }
+        const detail::RegexesInitializer& regexes={
+            default_complex(),
+            default_name(),
+            default_symbol()
+        },
+        const detail::StringsInitializer& strings={
+            default_left(),
+            default_right(),
+            default_separator(),
+            default_decimal()
+        }
+    ) : BaseLexer{regexes, strings} {}
 
     std::shared_ptr<BaseLexer> clone() const noexcept override {
         return std::make_shared<Lexer>(*this);
