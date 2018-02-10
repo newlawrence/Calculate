@@ -137,12 +137,30 @@ public:
             symbol_regex{symbol},
             tokenizer_regex{tokenizer}
     {
-        if ((left == right || left == separator || left == decimal) ||
-            (right == separator || right == decimal) ||
-            (separator == decimal)
+        enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR, DECIMAL};
+        std::smatch match{};
+
+        if (left == right ||
+            left == separator ||
+            left == decimal ||
+            right == separator ||
+            right == decimal ||
+            separator == decimal
         )
             throw LexerError{"tokens must be different"};
 
+        std::regex_search(left, match, tokenizer_regex);
+        if (match[Group::LEFT].str().empty())
+            throw LexerError{"tokenizer doesn't match left symbol"};
+        std::regex_search(right, match, tokenizer_regex);
+        if (match[Group::RIGHT].str().empty())
+            throw LexerError{"tokenizer doesn't match right symbol"};
+        std::regex_search(separator, match, tokenizer_regex);
+        if (match[Group::SEPARATOR].str().empty())
+            throw LexerError{"tokenizer doesn't match separator symbol"};
+        std::regex_search(decimal, match, tokenizer_regex);
+        if (match[Group::DECIMAL].str().empty())
+            throw LexerError{"tokenizer doesn't match decimal symbol"};
     }
     BaseLexer(const BaseLexer&) = default;
     virtual ~BaseLexer() = default;
