@@ -1,3 +1,11 @@
+/*
+    Calculate - Version 2.0.0rc1
+    Date 2018/02/11
+    Released under MIT license
+    Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
+*/
+
+
 #ifndef __CALCULATE_EXCEPTION_HPP__
 #define __CALCULATE_EXCEPTION_HPP__
 
@@ -14,6 +22,12 @@ struct BaseError : public std::runtime_error {
     {}
 };
 
+
+struct LexerError : BaseError {
+    explicit LexerError(const std::string& what) :
+            BaseError{"Lexer error: " + what}
+    {}
+};
 
 struct BadCast : BaseError {
     explicit BadCast(const std::string& token) :
@@ -47,11 +61,11 @@ struct ArgumentsMismatch : BaseError {
 };
 
 struct EmptyExpression : BaseError {
-    EmptyExpression() : BaseError{"empty expression"} {}
+    EmptyExpression() : BaseError{"Empty expression"} {}
 };
 
 struct ParenthesisMismatch : BaseError {
-    ParenthesisMismatch() : BaseError{"parenthesis mismatch"} {}
+    ParenthesisMismatch() : BaseError{"Parenthesis mismatch"} {}
 };
 
 struct RepeatedSymbol : BaseError {
