@@ -6,7 +6,6 @@
 #include <ostream>
 #include <queue>
 #include <string>
-#include <unordered_set>
 
 #include "lexer.hpp"
 #include "node.hpp"

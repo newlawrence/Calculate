@@ -5,6 +5,7 @@
 #include <ostream>
 #include <stack>
 #include <sstream>
+#include <unordered_set>
 
 #include "symbol.hpp"
 

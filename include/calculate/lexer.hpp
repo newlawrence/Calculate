@@ -13,43 +13,50 @@ namespace calculate {
 
 namespace detail {
 
-struct StringInitializer { std::string s1, s2, s3, s4; };
+struct RegexesInitializer {
+    std::string number;
+    std::string name;
+    std::string symbol;
+};
 
-inline StringInitializer DefaultPunctuation() { return {"(", ")", ",", "."}; }
+struct StringsInitializer {
+    std::string left;
+    std::string right;
+    std::string separator;
+    std::string decimal;
+};
 
-inline StringInitializer DefaultRegexes() {
-    return {
-        R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)_",
-        R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
-        R"_(^[^A-Za-z\d.(),_\s]+$)_",
-        R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)_"
-        R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-        R"_(([^A-Za-z\d\.(),_\s]+)|)_"
-        R"_((\()|(\))|(,)|(\.))_"
-    };
-}
 
-inline StringInitializer DefaultComplexRegexes() {
-    return {
-        R"_(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)_",
-        R"_(^[A-Za-z_]+[A-Za-z_\d]*$)_",
-        R"_(^[^A-Za-z\d.(),_\s]+$)_",
-        R"_(((?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?)|)_"
-        R"_(([A-Za-z_]+[A-Za-z_\d]*)|)_"
-        R"_(([^A-Za-z\d\.(),_\s]+)|)_"
-        R"_((\()|(\))|(,)|(\.))_"
-    };
-}
+const char scape[] = {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
 
 }
+
+const char default_number[] = R"(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)";
+
+const char default_complex[] = R"(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)";
+
+const char default_name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
+
+const char default_symbol[] = R"(^[^A-Za-z\d.(),_\s]+$)";
+
+
+const char default_left[] = "(";
+
+const char default_right[] = ")";
+
+const char default_separator[] = ",";
+
+const char default_decimal[] = ".";
 
 
 template<typename Type>
-struct BaseLexer {
+class BaseLexer {
+public:
     const std::string left;
     const std::string right;
     const std::string separator;
     const std::string decimal;
+
     const std::string number;
     const std::string name;
     const std::string symbol;
@@ -60,25 +67,97 @@ struct BaseLexer {
     const std::regex symbol_regex;
     const std::regex tokenizer_regex;
 
-    BaseLexer(
-        const detail::StringInitializer& strings,
-        const detail::StringInitializer& regexes
-    ) :
-            left{strings.s1},
-            right{strings.s2},
-            separator{strings.s3},
-            decimal{strings.s4},
-            number{regexes.s1},
-            name{regexes.s2},
-            symbol{regexes.s3},
-            tokenizer{regexes.s4},
-            number_regex{regexes.s1},
-            name_regex{regexes.s2},
-            symbol_regex{regexes.s3},
-            tokenizer_regex{regexes.s4}
-    {}
+private:
+    std::string _adapt_regex(std::string regex) const {
+        if (regex.front() != '^')
+            regex.insert(0, 1, '^');
+        if (regex.back() != '$')
+            regex.append(1, '$');
 
+        try{
+            std::regex{regex};
+        }
+        catch(const std::regex_error&) {
+            throw LexerError{"bad regex '" + regex + "'"};
+        }
+        return regex;
+    }
+
+    std::string _generate_tokenizer() const {
+        std::string tokenizer{};
+
+        auto escape = [](std::string token) {
+            for (const auto& character : detail::scape) {
+                size_t index = 0;
+                while (true) {
+                    index = token.find(character, index);
+                    if (index == std::string::npos)
+                        break;
+                    token.insert(index, 1, '\\');
+                    index += 2;
+                }
+            }
+            return token;
+        };
+
+        tokenizer += "(" + number.substr(1, number.size() - 2) + ")|";
+        tokenizer += "(" + name.substr(1, name.size() - 2) + ")|";
+        tokenizer += "(" + symbol.substr(1, symbol.size() - 2) + ")|";
+        tokenizer += "(" + escape(left) + ")|";
+        tokenizer += "(" + escape(right) + ")|";
+        tokenizer += "(" + escape(separator) + ")|";
+        tokenizer += "(" + escape(decimal) + ")";
+        return tokenizer;
+    }
+
+public:
+    BaseLexer(
+        const detail::RegexesInitializer& regexes,
+        const detail::StringsInitializer& strings
+    ) :
+            left{strings.left},
+            right{strings.right},
+            separator{strings.separator},
+            decimal{strings.decimal},
+            number{_adapt_regex(regexes.number)},
+            name{_adapt_regex(regexes.name)},
+            symbol{_adapt_regex(regexes.symbol)},
+            tokenizer{_generate_tokenizer()},
+            number_regex{number},
+            name_regex{name},
+            symbol_regex{symbol},
+            tokenizer_regex{tokenizer}
+    {
+        enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR, DECIMAL};
+        std::smatch match{};
+
+        if (left == right ||
+            left == separator ||
+            left == decimal ||
+            right == separator ||
+            right == decimal ||
+            separator == decimal
+        )
+            throw LexerError{"tokens must be different"};
+
+        std::regex_search(left, match, tokenizer_regex);
+        if (match[Group::LEFT].str().empty())
+            throw LexerError{"tokenizer doesn't match left symbol"};
+        std::regex_search(right, match, tokenizer_regex);
+        if (match[Group::RIGHT].str().empty())
+            throw LexerError{"tokenizer doesn't match right symbol"};
+        std::regex_search(separator, match, tokenizer_regex);
+        if (match[Group::SEPARATOR].str().empty())
+            throw LexerError{"tokenizer doesn't match separator symbol"};
+        std::regex_search(decimal, match, tokenizer_regex);
+        if (match[Group::DECIMAL].str().empty())
+            throw LexerError{"tokenizer doesn't match decimal symbol"};
+    }
+    BaseLexer(const BaseLexer&) = default;
     virtual ~BaseLexer() = default;
+
+    BaseLexer& operator=(const BaseLexer&) = delete;
+    BaseLexer& operator=(BaseLexer&&) = delete;
 
     virtual std::shared_ptr<BaseLexer> clone() const noexcept = 0;
     virtual Type to_value(const std::string&) const = 0;
@@ -90,13 +169,39 @@ template<typename Type>
 class Lexer final : public BaseLexer<Type> {
     using BaseLexer = calculate::BaseLexer<Type>;
 
+    mutable std::istringstream _istream;
+    mutable std::ostringstream _ostream;
+
 public:
     Lexer(
-        detail::StringInitializer strings=detail::DefaultPunctuation(),
-        detail::StringInitializer regexes=detail::DefaultRegexes()
-    ) : BaseLexer{std::move(strings), std::move(regexes)} {
-        if (this->decimal != ".")
-            throw UnsuitableName{this->decimal};
+        const detail::RegexesInitializer& regexes={
+            default_number,
+            default_name,
+            default_symbol
+        },
+        const detail::StringsInitializer& strings={
+            default_left,
+            default_right,
+            default_separator,
+            default_decimal
+        }
+    ) : BaseLexer{regexes, strings}, _istream{}, _ostream{} {
+        if (this->decimal != default_decimal)
+            throw LexerError{
+                "default lexer must use '" +
+                std::string{default_decimal} +
+                "' as decimal mark"
+            };
+
+        _istream.imbue(std::locale("C"));
+        _ostream.imbue(std::locale("C"));
+        _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
+    }
+
+    Lexer(const Lexer& other) : BaseLexer{other}, _istream{}, _ostream{} {
+        _istream.imbue(std::locale("C"));
+        _ostream.imbue(std::locale("C"));
+        _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
     }
 
     std::shared_ptr<BaseLexer> clone() const noexcept override {
@@ -104,25 +209,26 @@ public:
     }
 
     Type to_value(const std::string& token) const override {
-        std::istringstream converter{token};
         Type value;
 
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
-        converter.imbue(std::locale("C"));
-        converter >> value;
+
+        _istream.str(token);
+        _istream.clear();
+
+        _istream >> value;
         return value;
     }
 
     std::string to_string(Type value) const noexcept override {
-        std::ostringstream string{};
+        _ostream.clear();
+        _ostream.str("");
 
-        string << std::setprecision(std::numeric_limits<Type>::max_digits10);
-        string << value;
-        return string.str();
+        _ostream << value;
+        return _ostream.str();
     }
 };
-
 
 template<typename Type>
 class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
@@ -130,13 +236,39 @@ class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
 
     static constexpr Type _zero = static_cast<Type>(0);
 
+    mutable std::istringstream _istream;
+    mutable std::ostringstream _ostream;
+
 public:
     Lexer(
-        detail::StringInitializer strings=detail::DefaultPunctuation(),
-        detail::StringInitializer regexes=detail::DefaultComplexRegexes()
-    ) : BaseLexer{std::move(strings), std::move(regexes)} {
-        if (this->decimal != ".")
-            throw UnsuitableName{this->decimal};
+        const detail::RegexesInitializer& regexes={
+            default_complex,
+            default_name,
+            default_symbol
+        },
+        const detail::StringsInitializer& strings={
+            default_left,
+            default_right,
+            default_separator,
+            default_decimal
+        }
+    ) : BaseLexer{regexes, strings}, _istream{}, _ostream{} {
+        if (this->decimal != default_decimal)
+            throw LexerError{
+                "default lexer must use '" +
+                std::string{default_decimal} +
+                "' as decimal mark"
+            };
+
+        _istream.imbue(std::locale("C"));
+        _ostream.imbue(std::locale("C"));
+        _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
+    }
+
+    Lexer(const Lexer& other) : BaseLexer{other}, _istream{}, _ostream{} {
+        _istream.imbue(std::locale("C"));
+        _ostream.imbue(std::locale("C"));
+        _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
     }
 
     std::shared_ptr<BaseLexer> clone() const noexcept override {
@@ -146,29 +278,31 @@ public:
     std::complex<Type> to_value(const std::string& token) const override {
         using namespace std::complex_literals;
 
-        std::istringstream converter{token};
         Type value;
 
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
-        converter.imbue(std::locale("C"));
-        converter >> value;
 
+        _istream.str(token);
+        _istream.clear();
+
+        _istream >> value;
         if (token.back() != 'i')
             return value;
         return 1i * value;
     }
 
     std::string to_string(std::complex<Type> value) const noexcept override {
-        std::ostringstream string{};
         Type real{std::real(value)}, imag{std::imag(value)};
 
-        string << std::setprecision(std::numeric_limits<Type>::max_digits10);
+        _ostream.clear();
+        _ostream.str("");
+
         if (real != _zero)
-            string << real << (imag > _zero ? "+" : "");
+            _ostream << real << (imag > _zero ? "+" : "");
         if (real == _zero || imag != _zero)
-            string << imag << (real != _zero || imag != _zero ? "i" : "");
-        return string.str();
+            _ostream << imag << (real != _zero || imag != _zero ? "i" : "");
+        return _ostream.str();
     }
 };
 

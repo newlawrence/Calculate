@@ -15,6 +15,12 @@ struct BaseError : public std::runtime_error {
 };
 
 
+struct LexerError : BaseError {
+    explicit LexerError(const std::string& what) :
+            BaseError{"Lexer error: " + what}
+    {}
+};
+
 struct BadCast : BaseError {
     explicit BadCast(const std::string& token) :
             BaseError{
@@ -47,11 +53,11 @@ struct ArgumentsMismatch : BaseError {
 };
 
 struct EmptyExpression : BaseError {
-    EmptyExpression() : BaseError{"empty expression"} {}
+    EmptyExpression() : BaseError{"Empty expression"} {}
 };
 
 struct ParenthesisMismatch : BaseError {
-    ParenthesisMismatch() : BaseError{"parenthesis mismatch"} {}
+    ParenthesisMismatch() : BaseError{"Parenthesis mismatch"} {}
 };
 
 struct RepeatedSymbol : BaseError {
