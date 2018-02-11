@@ -178,6 +178,9 @@ template<typename Type>
 class Lexer final : public BaseLexer<Type> {
     using BaseLexer = calculate::BaseLexer<Type>;
 
+    mutable std::istringstream _istream;
+    mutable std::ostringstream _ostream;
+
 public:
     Lexer(
         const detail::RegexesInitializer& regexes={
@@ -191,13 +194,20 @@ public:
             default_separator(),
             default_decimal()
         }
-    ) : BaseLexer{regexes, strings} {
+    ) : BaseLexer{regexes, strings}, _istream{}, _ostream{} {
         if (this->decimal != default_decimal())
             throw LexerError{
                 "default lexer must use '" +
                 default_decimal() +
                 "' as decimal mark"
             };
+        _istream.imbue(std::locale("C"));
+        _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
+    }
+
+    Lexer(const Lexer& other) : BaseLexer{other}, _istream{}, _ostream{} {
+        _istream.imbue(std::locale("C"));
+        _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
     }
 
     std::shared_ptr<BaseLexer> clone() const noexcept override {
@@ -205,22 +215,21 @@ public:
     }
 
     Type to_value(const std::string& token) const override {
-        std::istringstream converter{token};
         Type value;
 
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
-        converter.imbue(std::locale("C"));
-        converter >> value;
+        _istream.str(token);
+        _istream.clear();
+        _istream >> value;
         return value;
     }
 
     std::string to_string(Type value) const noexcept override {
-        std::ostringstream string{};
-
-        string << std::setprecision(std::numeric_limits<Type>::max_digits10);
-        string << value;
-        return string.str();
+        _ostream.clear();
+        _ostream.seekp(0);
+        _ostream << value;
+        return _ostream.str();
     }
 };
 
@@ -229,6 +238,8 @@ class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
     using BaseLexer = calculate::BaseLexer<std::complex<Type>>;
 
     static constexpr Type _zero = static_cast<Type>(0);
+    mutable std::istringstream _istream;
+    mutable std::ostringstream _ostream;
 
 public:
     Lexer(
@@ -243,13 +254,20 @@ public:
             default_separator(),
             default_decimal()
         }
-    ) : BaseLexer{regexes, strings} {
+    ) : BaseLexer{regexes, strings}, _istream{}, _ostream{} {
         if (this->decimal != default_decimal())
             throw LexerError{
                 "default lexer must use '" +
                 default_decimal() +
                 "' as decimal mark"
             };
+        _istream.imbue(std::locale("C"));
+        _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
+    }
+
+    Lexer(const Lexer& other) : BaseLexer{other}, _istream{}, _ostream{} {
+        _istream.imbue(std::locale("C"));
+        _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
     }
 
     std::shared_ptr<BaseLexer> clone() const noexcept override {
@@ -259,13 +277,13 @@ public:
     std::complex<Type> to_value(const std::string& token) const override {
         using namespace std::complex_literals;
 
-        std::istringstream converter{token};
         Type value;
 
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
-        converter.imbue(std::locale("C"));
-        converter >> value;
+        _istream.str(token);
+        _istream.clear();
+        _istream >> value;
 
         if (token.back() != 'i')
             return value;
@@ -273,15 +291,15 @@ public:
     }
 
     std::string to_string(std::complex<Type> value) const noexcept override {
-        std::ostringstream string{};
         Type real{std::real(value)}, imag{std::imag(value)};
 
-        string << std::setprecision(std::numeric_limits<Type>::max_digits10);
+        _ostream.clear();
+        _ostream.seekp(0);
         if (real != _zero)
-            string << real << (imag > _zero ? "+" : "");
+            _ostream << real << (imag > _zero ? "+" : "");
         if (real == _zero || imag != _zero)
-            string << imag << (real != _zero || imag != _zero ? "i" : "");
-        return string.str();
+            _ostream << imag << (real != _zero || imag != _zero ? "i" : "");
+        return _ostream.str();
     }
 };
 

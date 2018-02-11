@@ -105,6 +105,7 @@ public:
     virtual std::unique_ptr<Symbol> clone() const noexcept = 0;
 };
 
+
 template<typename Expression>
 class Variable final : public Symbol<Expression> {
     using Symbol = calculate::Symbol<Expression>;
