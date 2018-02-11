@@ -1,3 +1,11 @@
+/*
+    Calculate - Version 2.0.0rc1
+    Date 2018/02/11
+    Released under MIT license
+    Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
+*/
+
+
 #include <exception>
 #include <chrono>
 #include <limits>
@@ -18,7 +26,6 @@ template<typename Parser>
 void run(
     std::string,
     std::vector<std::string>,
-    const std::vector<std::string>&,
     const po::variables_map&
 );
 
@@ -28,7 +35,6 @@ int main(int argc, char *argv[]) {
     po::variables_map arguments;
     std::string string;
     std::vector<std::string> variables;
-    std::vector<std::string> substitutions;
 
     po::options_description named_args("Options");
     named_args.add_options()
@@ -46,11 +52,6 @@ int main(int argc, char *argv[]) {
         ("postfix,p", "Use postfix parser")
         ("complex,c", "Use complex parser")
         ("optimize,o", "Optimize expression")
-        (
-            "sub,s",
-            po::value<std::vector<std::string>>(&substitutions),
-            "Substitute variable by value (var:value)"
-        )
         (
             "iter,i",
             po::value<std::size_t>()->default_value(1000),
@@ -79,19 +80,9 @@ int main(int argc, char *argv[]) {
         po::notify(arguments);
 
         if (arguments.count("complex"))
-            run<calculate::DefaultComplexParser>(
-                string,
-                variables,
-                substitutions,
-                arguments
-            );
+            run<calculate::DefaultComplexParser>(string, variables, arguments);
         else
-            run<calculate::DefaultParser>(
-                string,
-                variables,
-                substitutions,
-                arguments
-            );
+            run<calculate::DefaultParser>(string, variables, arguments);
     }
     catch (const po::error& error) {
         std::cerr << "Command line error: " << error.what() << std::endl;
@@ -109,10 +100,10 @@ template<typename Parser>
 void run(
     std::string expression,
     std::vector<std::string> variables,
-    const std::vector<std::string>& substitutions,
     const po::variables_map& arguments
 ) {
     using Type = typename Parser::Type;
+
     Parser parser{};
 
     std::chrono::steady_clock::time_point begin;
@@ -126,48 +117,23 @@ void run(
             auto sep = var.find(":");
             if (sep == 0 || sep > var.size() - 2)
                 throw po::error("bad variable input '" + var + "'");
-            values.push_back(parser.cast(var.substr(sep + 1, var.size())));
+            values.push_back(parser.to_value(var.substr(sep + 1, var.size())));
             var = var.substr(0, sep);
         }
     }
 
     auto parse = arguments.count("postfix") ?
-        &Parser::from_postfix :
-        &Parser::from_infix;
-    auto whole_set = variables;
-    if (arguments.count("sub")) {
-        for (auto& sub : substitutions) {
-            auto sep = sub.find(":");
-            if (sep == 0 || sep > sub.size() - 2)
-                throw po::error("bad substitution input '" + sub + "'");
-            auto var = sub.substr(0, sep);
-            if (
-                std::find(variables.begin(), variables.end(), var) ==
-                variables.end()
-            )
-                whole_set.push_back(var);
-        }
-    }
+        &Parser::template from_postfix<const std::vector<std::string>&> :
+        &Parser::template from_infix<const std::vector<std::string>&>;
 
-    auto function = (parser.*parse)(expression, whole_set);
+    auto function = (parser.*parse)(expression, variables);
     if (arguments.count("analysis")) {
         begin = std::chrono::steady_clock::now();
         for (std::size_t i = 0; i < iterations; i++)
-            (parser.*parse)(expression, whole_set);
+            (parser.*parse)(expression, variables);
         build_time = std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::steady_clock::now() - begin
         ).count() / iterations;
-    }
-
-    if (arguments.count("sub")) {
-        for (auto& sub : substitutions) {
-            auto sep = sub.find(":");
-            function = parser.substitute(
-                function,
-                sub.substr(0, sep),
-                parser.cast(sub.substr(sep + 1, sub.size()))
-            );
-        }
     }
 
     if (arguments.count("optimize")) {

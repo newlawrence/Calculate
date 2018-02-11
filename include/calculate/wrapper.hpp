@@ -1,13 +1,20 @@
+/*
+    Calculate - Version 2.0.0rc1
+    Date 2018/02/11
+    Released under MIT license
+    Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
+*/
+
+
 #ifndef __CALCULATE_WRAPPER_HPP__
 #define __CALCULATE_WRAPPER_HPP__
 
-#include <memory>
 #include <type_traits>
 #include <tuple>
 #include <vector>
 #include <utility>
 
-#include "exception.hpp"
+#include "util.hpp"
 
 
 namespace calculate {
@@ -159,28 +166,27 @@ struct NotSame {
 template<typename Type, std::size_t>
 using ExtractType = Type;
 
-template<typename, std::size_t n, typename = std::make_index_sequence<n>>
+template<typename, std::size_t argc, typename = std::make_index_sequence<argc>>
 struct Repeat {};
 
-template<typename Type, std::size_t n, std::size_t... indices>
-struct Repeat<Type, n, std::index_sequence<indices...>> {
+template<typename Type, std::size_t argc, std::size_t... indices>
+struct Repeat<Type, argc, std::index_sequence<indices...>> {
     using type = std::tuple<ExtractType<Type, indices>...>;
 };
 
-template<typename Type, std::size_t n>
-using Repeated = typename Repeat<Type, n>::type;
+template<typename Type, std::size_t argc>
+using Repeated = typename Repeat<Type, argc>::type;
 
 }
 
 
 template<typename Type, typename Source>
 struct WrapperConcept {
-    virtual std::shared_ptr<WrapperConcept> copy() const noexcept = 0;
+    virtual ~WrapperConcept() = default;
+    virtual std::shared_ptr<WrapperConcept> clone() const noexcept = 0;
     virtual std::size_t argc() const noexcept = 0;
-    virtual bool is_const() const noexcept = 0;
-    virtual Type evaluate(const std::vector<Source>&) const = 0;
-    virtual Type evaluate(const std::vector<Source>&) = 0;
-    virtual ~WrapperConcept() {}
+    virtual Type call(const std::vector<Type>&) const = 0;
+    virtual Type eval(const std::vector<Source>&) const = 0;
 };
 
 
@@ -188,43 +194,43 @@ template<typename Type, typename Source = Type>
 class Wrapper {
     friend struct std::hash<Wrapper>;
 
-	using WrapperConcept = calculate::WrapperConcept<Type, Source>;
+    using WrapperConcept = calculate::WrapperConcept<Type, Source>;
 
     template<typename Callable>
     struct Inspect {
-        static constexpr bool not_me =
+        static constexpr bool not_self =
             detail::NotSame<Callable, Wrapper>::value;
         static constexpr bool is_model =
             std::is_base_of<WrapperConcept, Callable>::value;
     };
 
-    template<typename Callable, typename Adapter, std::size_t n, bool constant>
+    template<typename Callable, typename Adapter, std::size_t argcount>
     class WrapperModel final : public WrapperConcept {
+        using False = std::integral_constant<bool, false>::type;
+        using True = std::integral_constant<bool, true>::type;
+
         Callable _callable;
         Adapter _adapter;
 
         template<std::size_t... indices>
-        Type _evaluate(
-            std::integral_constant<bool, true>::type,
-            const std::vector<Source>& args
+        Type _invoke(
+            const std::vector<Type>& args,
+            std::integral_constant<bool, false>::type,
+            std::index_sequence<indices...>
         ) const {
-            return const_cast<WrapperModel*>(this)
-                ->_evaluate(args, std::make_index_sequence<n>{});
+            if (args.size() != argcount)
+                throw ArgumentsMismatch{argcount, args.size()};
+            return _callable(args[indices]...);
         }
 
         template<std::size_t... indices>
-        Type _evaluate(
-            std::integral_constant<bool, false>::type,
-            const std::vector<Source>&
-        ) const { throw AccessViolation{}; }
-
-        template<std::size_t... indices>
-        Type _evaluate(
+        Type _invoke(
             const std::vector<Source>& args,
+            std::integral_constant<bool, true>::type,
             std::index_sequence<indices...>
-        ) {
-            if (args.size() != n)
-                throw ArgumentsMismatch{n, args.size()};
+        ) const {
+            if (args.size() != argcount)
+                throw ArgumentsMismatch{argcount, args.size()};
             return _callable(_adapter(args[indices])...);
         }
 
@@ -234,20 +240,18 @@ class Wrapper {
                 _adapter{adapter}
         {}
 
-        std::shared_ptr<WrapperConcept> copy() const noexcept override {
+        std::shared_ptr<WrapperConcept> clone() const noexcept override {
             return std::make_shared<WrapperModel>(*this);
         }
 
-        std::size_t argc() const noexcept override { return n; }
+        std::size_t argc() const noexcept override { return argcount; }
 
-        bool is_const() const noexcept override { return constant; }
-
-        Type evaluate(const std::vector<Source>& args) const override {
-            return _evaluate(std::integral_constant<bool, constant>{}, args);
+        Type call(const std::vector<Type>& args) const override {
+            return _invoke(args, False{}, std::make_index_sequence<argcount>{});
         }
 
-        Type evaluate(const std::vector<Source>& args) override {
-            return _evaluate(args, std::make_index_sequence<n>{});
+        Type eval(const std::vector<Source>& args) const override {
+            return _invoke(args, True{}, std::make_index_sequence<argcount>{});
         }
     };
 
@@ -255,15 +259,17 @@ class Wrapper {
 	using ModelType = WrapperModel<
         Callable,
         Adapter,
-        detail::Argc<Callable>::value,
-        detail::IsConst<Callable>::value
+        detail::Argc<Callable>::value
     >;
 
     std::shared_ptr<WrapperConcept> _callable;
 
-    Wrapper(std::shared_ptr<WrapperConcept>&& callable) :
-            _callable{std::move(callable)}
-    {}
+    Wrapper(std::shared_ptr<WrapperConcept>&& callable) : _callable{callable} {}
+
+protected:
+    Type _eval(const std::vector<Source>& args) const {
+        return _callable->eval(args);
+    }
 
 public:
     template<typename Callable, typename Adapter>
@@ -306,15 +312,19 @@ public:
             "Wrong adapter return type"
         );
         static_assert(
+            detail::IsConst<Callable>::value,
+            "Non constant callable"
+        );
+        static_assert(
             detail::IsConst<Adapter>::value,
-            "Non constant adapter function"
+            "Non constant adapter"
         );
     }
 
     template<
         typename Callable,
-        std::enable_if_t<Inspect<Callable>::not_me>* = nullptr,
-        std::enable_if_t<!Inspect<Callable>::is_model>* = nullptr
+        typename = std::enable_if_t<Inspect<Callable>::not_self>,
+        typename = std::enable_if_t<!Inspect<Callable>::is_model>
     >
     Wrapper(Callable&& callable=[]() { return Type(); }) :
             Wrapper{
@@ -325,7 +335,7 @@ public:
 
     template<
         typename Callable,
-        std::enable_if_t<Inspect<Callable>::is_model>* = nullptr
+        typename = std::enable_if_t<Inspect<Callable>::is_model>
     >
     Wrapper(Callable&& callable) :
             _callable{
@@ -335,36 +345,23 @@ public:
             }
     {}
 
-    Type operator()(const std::vector<Source>& args) const {
-        return const_cast<const WrapperConcept*>(_callable.get())
-            ->evaluate(args);
-    }
+    Wrapper clone() const noexcept { return Wrapper{_callable->clone()}; }
 
-    Type operator()(const std::vector<Source>& args) {
-        return _callable->evaluate(args);
-    }
+    std::size_t argc() const noexcept { return _callable->argc(); }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
-        return const_cast<const WrapperConcept*>(_callable.get())
-            ->evaluate(std::vector<Source>{std::forward<Args>(args)...});
-    }
-
-    template<typename... Args>
-    Type operator()(Args&&... args) {
         return _callable
-            ->evaluate(std::vector<Source>{std::forward<Args>(args)...});
+            ->call(util::to_vector<Type>(std::forward<Args>(args)...));
     }
 
     bool operator==(const Wrapper& other) const noexcept {
         return _callable == other._callable;
     }
 
-    Wrapper copy() const noexcept { return Wrapper{_callable->copy()}; }
-
-    std::size_t argc() const noexcept { return _callable->argc(); }
-
-    bool is_const() const noexcept { return _callable->is_const(); }
+    bool operator!=(const Wrapper& other) const noexcept {
+        return !operator==(other);
+    }
 };
 
 }

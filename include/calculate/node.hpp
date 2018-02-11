@@ -1,44 +1,49 @@
+/*
+    Calculate - Version 2.0.0rc1
+    Date 2018/02/11
+    Released under MIT license
+    Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
+*/
+
+
 #ifndef __CALCULATE_NODE_HPP__
 #define __CALCULATE_NODE_HPP__
 
 #include <iterator>
-#include <memory>
 #include <ostream>
 #include <stack>
 #include <sstream>
-#include <utility>
-#include <vector>
+#include <unordered_set>
 
-#include "exception.hpp"
-#include "util.hpp"
+#include "symbol.hpp"
 
 
 namespace calculate {
 
 template<typename Parser>
 class Node {
-    using Type = typename Parser::Type;
-    using Lexer = typename Parser::Lexer;
-    using SymbolType = typename Parser::SymbolType;
-    using Associativity = typename Parser::Associativity;
-    using Constant = typename Parser::Constant;
-    using Function = typename Parser::Function;
-    using Operator = typename Parser::Operator;
-
-    friend typename Parser::Base;
     friend struct std::hash<Node>;
+    friend Parser;
+
+public:
+    using Lexer = typename Parser::Lexer;
+    using Type = typename Parser::Type;
+
+    using Symbol = calculate::Symbol<Node>;
+    using SymbolType = typename Symbol::SymbolType;
 
 
 public:
     using const_iterator = typename std::vector<Node>::const_iterator;
 
-    class Variables {
+    class VariableHandler {
     public:
         const std::vector<std::string> variables;
 
     private:
         std::size_t _size;
         std::unique_ptr<Type[]> _values;
+        std::pair<std::size_t, std::shared_ptr<VariableHandler>> _temp;
 
         void _update(std::size_t) const {}
 
@@ -52,23 +57,48 @@ public:
         }
 
     public:
-        explicit Variables(const std::vector<std::string>& keys={}) :
-                variables{keys},
-                _size{keys.size()},
-                _values{std::make_unique<Type[]>(_size)}
+        VariableHandler(
+            std::vector<std::string> keys,
+            Lexer& lexer
+        ) :
+                variables{std::move(keys)},
+                _size{variables.size()},
+                _values{std::make_unique<Type[]>(_size)},
+                _temp{0u, nullptr}
         {
-            std::unordered_set<std::string> singles{keys.begin(), keys.end()};
-            for (const auto &variable : keys) {
-                if (!std::regex_match(variable, Lexer::name().regex))
+            std::unordered_set<std::string> singles{
+                variables.begin(),
+                variables.end()
+            };
+
+            for (const auto &variable : variables) {
+                if (!std::regex_match(variable, lexer.name_regex))
                     throw UnsuitableName{variable};
                 else if (singles.erase(variable) == 0)
                     throw RepeatedSymbol{variable};
             }
         }
 
-        bool has(const std::string& token) const {
-            auto found = std::find(variables.begin(), variables.end(), token);
-            return found != variables.end();
+        explicit VariableHandler(std::vector<std::string> keys) :
+                variables{std::move(keys)},
+                _size{variables.size()},
+                _values{std::make_unique<Type[]>(_size)},
+                _temp{0u, nullptr}
+        {}
+
+        std::shared_ptr<VariableHandler> rebuild(
+            std::vector<std::string> keys
+        ) noexcept {
+            ++_temp.first;
+            if (bool{_temp.second})
+                return _temp.second;
+            _temp.second = std::make_shared<VariableHandler>(std::move(keys));
+            return _temp.second;
+        }
+
+        void reset() noexcept {
+            if (!--_temp.first)
+                _temp.second = nullptr;
         }
 
         std::size_t index(const std::string& token) const {
@@ -82,60 +112,65 @@ public:
             return _values[index(token)];
         }
 
-        void update(const std::vector<Type>& values) {
-            if (_size != values.size())
-                throw ArgumentsMismatch{_size, values.size()};
-            for (std::size_t i = 0; i < _size; i++)
-                _values[i] = values[i];
+        template<typename Args>
+        std::enable_if_t<util::Check<Args>::iterable> update(Args&& vals) {
+            std::size_t i{};
+
+            for (auto val = std::begin(vals); val != std::end(vals); ++val) {
+                if (i < _size)
+                    _values[i] = *val;
+                ++i;
+            }
+            if (_size != i)
+                throw ArgumentsMismatch{_size, i};
+        }
+
+        template<typename Arg>
+        std::enable_if_t<!util::Check<Arg>::iterable> update(Arg&& val) {
+            if (_size != 1)
+                throw ArgumentsMismatch{_size, 1};
+            _values[0] = val;
         }
 
         template<typename... Args>
-        void update(Args... args) {
-            if (_size != sizeof...(args))
-                throw ArgumentsMismatch{_size, sizeof...(args)};
-            _update(0, args...);
+        std::enable_if_t<sizeof...(Args) != 1> update(Args&&... vals) {
+            if (_size != sizeof...(vals))
+                throw ArgumentsMismatch{_size, sizeof...(vals)};
+            _update(0, vals...);
         }
     };
 
 
 private:
+    std::shared_ptr<Lexer> _lexer;
+    std::shared_ptr<VariableHandler> _variables;
     std::string _token;
-    SymbolType _symbol;
-    std::shared_ptr<Variables> _variables;
-    Function _function;
+    std::unique_ptr<Symbol> _symbol;
     std::vector<Node> _nodes;
     std::size_t _hash;
-    std::size_t _precedence;
-    Associativity _associativity;
 
-    Node() = delete;
-
-    explicit Node(
-        const std::pair<std::string, SymbolType>& token,
-        const std::shared_ptr<Variables>& variables,
-        const Function& function,
+    Node(
+        const std::shared_ptr<Lexer>& _lexer,
+        const std::shared_ptr<VariableHandler>& variables,
+        std::string token,
+        std::unique_ptr<Symbol>&& symbol,
         std::vector<Node>&& nodes,
-        std::size_t hash,
-        std::size_t precedence=std::numeric_limits<std::size_t>::max(),
-        Associativity associativity=Associativity::BOTH
+        std::size_t hash
     ) :
-            _token{token.first},
-            _symbol{token.second},
+            _lexer{_lexer},
             _variables{variables},
-            _function{function},
+            _token{std::move(token)},
+            _symbol{std::move(symbol)},
             _nodes{std::move(nodes)},
-            _hash{hash},
-            _precedence{precedence},
-            _associativity{associativity}
+            _hash{hash}
     {
-        if (_nodes.size() != _function.arguments())
+        if (_nodes.size() != _symbol->arguments())
             throw ArgumentsMismatch{
                 _token,
                 _nodes.size(),
-                _function.arguments()
+                _symbol->arguments()
             };
     }
-
 
     std::vector<std::string> _pruned() const noexcept {
         std::istringstream extractor{postfix()};
@@ -145,48 +180,40 @@ private:
         };
         std::vector<std::string> pruned{};
 
-        for (const auto& variable : variables())
-            if (
-                std::find(
-                    tokens.begin(),
-                    tokens.end(),
-                    variable
-                ) != tokens.end()
-            )
-                pruned.push_back(variable);
-
-        pruned.erase(std::unique(pruned.begin(), pruned.end()), pruned.end());
+        for (const auto& var : _variables->variables)
+            if (std::find(tokens.begin(), tokens.end(), var) != tokens.end())
+                pruned.push_back(var);
         return pruned;
-    }
-
-    void _rebind(const std::shared_ptr<Variables>& context) noexcept {
-        _variables = context;
-        for (auto& node : _nodes)
-            node._rebind(context);
     }
 
 
 public:
     Node(const Node& other) noexcept :
+            _lexer{other._lexer},
+            _variables{other._variables->rebuild(other._pruned())},
             _token{other._token},
-            _symbol{other._symbol},
-            _variables{},
-            _function{other._function},
+            _symbol{nullptr},
             _nodes{other._nodes},
-            _hash{other._hash},
-            _precedence{other._precedence},
-            _associativity{other._associativity}
-    { _rebind(std::make_shared<Variables>(other._pruned())); }
+            _hash{other._hash}
+    {
+        using Variable = Variable<Node>;
+
+        other._variables->reset();
+        try {
+            _symbol = Variable{_variables->at(_token)}.clone();
+        }
+        catch (const UndefinedSymbol&) {
+            _symbol = other._symbol->clone();
+        }
+    }
 
     Node(Node&& other) noexcept :
+            _lexer{std::move(other._lexer)},
+            _variables{std::move(other._variables)},
             _token{std::move(other._token)},
             _symbol{std::move(other._symbol)},
-            _variables{std::move(other._variables)},
-            _function{std::move(other._function)},
             _nodes{std::move(other._nodes)},
-            _hash{std::move(other._hash)},
-            _precedence{std::move(other._precedence)},
-            _associativity{std::move(other._associativity)}
+            _hash{std::move(other._hash)}
     {}
 
     const Node& operator=(Node other) noexcept {
@@ -196,34 +223,23 @@ public:
 
     friend void swap(Node& one, Node& another) noexcept {
         using std::swap;
+        swap(one._lexer, another._lexer);
+        swap(one._variables, another._variables);
         swap(one._token, another._token);
         swap(one._symbol, another._symbol);
-        swap(one._variables, another._variables);
-        swap(one._function, another._function);
         swap(one._nodes, another._nodes);
-        swap(one._precedence, another._precedence);
-        swap(one._associativity, another._associativity);
-    }
-
-    static Type eval(const Node& node) {
-        return node._function(node._nodes);
     }
 
     explicit operator Type() const {
-        if (variables().size() > 0)
-            throw ArgumentsMismatch{variables().size(), 0};
-        return _function(_nodes);
-    }
-
-    Type operator()(const std::vector<Type>& values) const {
-        _variables->update(values);
-        return _function(_nodes);
+        if (_variables->variables.size() > 0)
+            throw ArgumentsMismatch{_variables->variables.size(), 0};
+        return _symbol->_eval(_nodes);
     }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
         _variables->update(std::forward<Args>(args)...);
-        return _function(_nodes);
+        return _symbol->_eval(_nodes);
     }
 
     bool operator==(const Node& other) const noexcept {
@@ -231,26 +247,16 @@ public:
         std::stack<const_iterator> those{};
 
         auto equal = [&](auto left, auto right) {
-            if (
-                left->_variables->has(left->_token) &&
-                right->_variables->has(right->_token)
-            )
-                return left->_variables->index(left->_token) ==
+            try {
+                return
+                    left->_variables->index(left->_token) ==
                     right->_variables->index(right->_token);
-
-            if (left->_symbol == right->_symbol) {
-                if (left->symbol() == SymbolType::CONSTANT)
-                    return left->_function() == right->_function();
-                else if (left->symbol() == SymbolType::FUNCTION)
-                    return left->_function == right->_function;
-                else if (left->symbol() == SymbolType::OPERATOR)
-                    return
-                        left->_function == right->_function &&
-                        left->_precedence == right ->_precedence &&
-                        left->_associativity == right->_associativity;
             }
-
-            return false;
+            catch (const UndefinedSymbol&) {
+                if (left->_symbol == right->_symbol)
+                    return true;
+                return *(left->_symbol) == *(right->_symbol);
+            }
         };
 
         if (!equal(this, &other))
@@ -276,6 +282,10 @@ public:
         return true;
     }
 
+    bool operator!=(const Node& other) const noexcept {
+        return !operator==(other);
+    }
+
     const Node& operator[](std::size_t index) const { return _nodes[index]; }
 
     const Node& at(std::size_t index) const { return _nodes.at(index); }
@@ -284,9 +294,9 @@ public:
 
     const_iterator end() const noexcept { return _nodes.end(); }
 
-    const_iterator rbegin() const noexcept { return _nodes.rbegin(); }
+    const_iterator cbegin() const noexcept { return _nodes.cbegin(); }
 
-    const_iterator rend() const noexcept { return _nodes.rend(); }
+    const_iterator cend() const noexcept { return _nodes.cend(); }
 
     friend std::ostream& operator<<(
         std::ostream& ostream,
@@ -296,35 +306,46 @@ public:
         return ostream;
     }
 
-    std::string token() const noexcept { return _token; }
+    static Type evaluate(const Node& node) {
+        return node._symbol->_eval(node._nodes);
+    }
 
-    SymbolType symbol() const noexcept { return _symbol; }
+    const Lexer& lexer() const noexcept { return *_lexer; }
+
+    const std::string& token() const noexcept { return _token; }
+
+    SymbolType symbol() const noexcept { return _symbol->symbol(); }
 
     std::size_t branches() const noexcept { return _nodes.size(); }
 
     std::string infix() const noexcept {
+        using Operator = Operator<Node>;
+        using Associativity = typename Operator::Associativity;
+
         std::string infix{};
 
         auto brace = [&](std::size_t i) {
             const auto& node = _nodes[i];
-            if (node._symbol == SymbolType::OPERATOR) {
-                auto pp = _precedence;
-                auto cp = node._precedence;
+            if (node._symbol->symbol() == SymbolType::OPERATOR) {
+                auto po = static_cast<Operator*>(_symbol.get());
+                auto co = static_cast<Operator*>(node._symbol.get());
+                auto pp = po->precedence();
+                auto cp = co->precedence();
                 auto pa = !i ?
-                    _associativity != Associativity::RIGHT :
-                    _associativity != Associativity::LEFT;
+                    po->associativity() != Associativity::RIGHT :
+                    po->associativity() != Associativity::LEFT;
                 if ((pa && cp < pp) || (!pa && cp <= pp))
-                    return Lexer::left() + node.infix() + Lexer::right();
+                    return _lexer->left + node.infix() + _lexer->right;
             }
             return node.infix();
         };
 
-        switch (_symbol) {
+        switch (_symbol->symbol()) {
         case (SymbolType::FUNCTION):
-            infix += _token + Lexer::left();
+            infix += _token + _lexer->left;
             for (const auto& node : _nodes)
-                infix += node.infix() + Lexer::separator();
-            infix.back() = Lexer::right().front();
+                infix += node.infix() + _lexer->separator;
+            infix.back() = _lexer->right.front();
             return infix;
         case (SymbolType::OPERATOR):
             infix += brace(0) + _token + brace(1);
