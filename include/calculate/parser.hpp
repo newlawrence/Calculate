@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.0.0rc1
-    Last modified 2018/02/12
+    Last modified 2018/02/13
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -491,7 +491,7 @@ private:
             throw UnusedSymbol{operands.top().token()};
         }
 
-        auto pruned = operands.top().variables();
+        auto pruned = operands.top()._pruned();
         for (const auto& variable : variables->variables)
             if (
                 std::find(

@@ -173,8 +173,8 @@ private:
     }
 
     std::vector<std::string> _pruned() const noexcept {
+        static const std::regex space{R"(\s)"};
         std::string pfx{postfix()};
-        std::regex space{R"(\s)"};
         std::sregex_token_iterator extractor(pfx.begin(), pfx.end(), space, -1);
         std::vector<std::string> tokens{extractor, {}};
         std::vector<std::string> pruned{};
