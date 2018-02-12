@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.0.0rc1
-    Last modified 2018/02/11
+    Last modified 2018/02/13
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -12,7 +12,7 @@
 #include <iterator>
 #include <ostream>
 #include <stack>
-#include <sstream>
+#include <regex>
 #include <unordered_set>
 
 #include "symbol.hpp"
@@ -173,11 +173,10 @@ private:
     }
 
     std::vector<std::string> _pruned() const noexcept {
-        std::istringstream extractor{postfix()};
-        std::vector<std::string> tokens{
-            std::istream_iterator<std::string>{extractor},
-            std::istream_iterator<std::string>{}
-        };
+        std::string pfx{postfix()};
+        std::regex space{R"(\s)"};
+        std::sregex_token_iterator extractor(pfx.begin(), pfx.end(), space, -1);
+        std::vector<std::string> tokens{extractor, {}};
         std::vector<std::string> pruned{};
 
         for (const auto& var : _variables->variables)
