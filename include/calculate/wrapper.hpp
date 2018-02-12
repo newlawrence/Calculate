@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.0.0rc1
-    Date 2018/02/11
+    Last modified 2018/02/11
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
