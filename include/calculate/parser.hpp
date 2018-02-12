@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.0.0rc1
-    Last modified 2018/02/11
+    Last modified 2018/02/12
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -11,7 +11,6 @@
 
 #include <algorithm>
 #include <limits>
-#include <ostream>
 #include <queue>
 #include <string>
 
@@ -246,7 +245,7 @@ private:
                         case (SymbolType::LEFT):
                         case (SymbolType::SEPARATOR):
                         case (SymbolType::OPERATOR):
-                            parsed += current.token + " ";
+                            parsed += cop->alias() + " ";
                             current = {
                                 cop->alias(),
                                 SymbolType::FUNCTION,
@@ -263,6 +262,7 @@ private:
                     }
                 }
             }
+            current = {"", SymbolType::CONSTANT, nullptr};
 
             if (
                 previous.type == SymbolType::CONSTANT ||
@@ -273,13 +273,15 @@ private:
                 throw SyntaxError{};
         }
         catch (const SyntaxError&) {
-            parsed +=" '" + current.token + "' ";
+            parsed +="'" + current.token + "' ";
             while (!symbols.empty()) {
                 current = std::move(symbols.front());
                 symbols.pop();
                 parsed += current.token + " ";
             }
-            throw SyntaxError{parsed};
+            if (current.token == "" && current.type == SymbolType::CONSTANT)
+                throw SyntaxError{"'" + previous.token + "'"};
+            throw SyntaxError{parsed.substr(0, parsed.size() - 1)};
         }
         return collected;
     }

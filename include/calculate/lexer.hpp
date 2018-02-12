@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.0.0rc1
-    Last modified 2018/02/11
+    Last modified 2018/02/12
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -147,6 +147,9 @@ public:
             separator == decimal
         )
             throw LexerError{"tokens must be different"};
+
+        if (std::regex_match(" ", tokenizer_regex))
+            throw LexerError{"tokenizer matching space"};
 
         std::regex_search(left, match, tokenizer_regex);
         if (match[Group::LEFT].str().empty())
