@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.0.0rc1
-    Date 2018/02/11
+    Calculate - Version 2.0.0rc2
+    Last modified 2018/02/13
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -11,7 +11,6 @@
 
 #include <algorithm>
 #include <limits>
-#include <ostream>
 #include <queue>
 #include <string>
 
@@ -72,15 +71,15 @@ private:
         std::unique_ptr<Symbol> symbol;
     };
 
-    SymbolHandler Left() const noexcept {
+    SymbolHandler _left() const noexcept {
         return {_lexer->left, SymbolType::LEFT, nullptr};
     }
 
-    SymbolHandler Right() const noexcept {
+    SymbolHandler _right() const noexcept {
         return {_lexer->right, SymbolType::RIGHT, nullptr};
     }
 
-    SymbolHandler Separator() const noexcept {
+    SymbolHandler _separator() const noexcept {
         return {_lexer->separator, SymbolType::SEPARATOR, nullptr};
     }
 
@@ -107,11 +106,11 @@ private:
             if (is(Group::DECIMAL))
                 throw SyntaxError{"orphan decimal mark '" + token + "'"};
             else if (is(Group::LEFT))
-                symbols.push(Left());
+                symbols.push(_left());
             else if (is(Group::RIGHT))
-                symbols.push(Right());
+                symbols.push(_right());
             else if (is(Group::SEPARATOR))
-                symbols.push(Separator());
+                symbols.push(_separator());
             else if (is(Group::NAME) && has(constants, found_constant))
                 symbols.push({
                     token,
@@ -155,15 +154,15 @@ private:
 
         std::string parsed{};
         std::queue<SymbolHandler> collected{};
-        SymbolHandler previous{Left()};
+        SymbolHandler previous{_left()};
         SymbolHandler current{};
         std::stack<bool> automatic{};
 
         auto fill_parenthesis = [&]() {
             while (!automatic.empty()) {
                 if (automatic.top()) {
-                    collected.push(Right());
-                    previous = Right();
+                    collected.push(_right());
+                    previous = _right();
                     automatic.pop();
                 }
                 else
@@ -253,7 +252,7 @@ private:
                                 functions.at(cop->alias()).clone()
                             };
                             collect_symbol(false);
-                            current = Left();
+                            current = _left();
                             automatic.push(true);
                             collect_symbol(false);
                             break;
@@ -263,6 +262,7 @@ private:
                     }
                 }
             }
+            current = {"", SymbolType::CONSTANT, nullptr};
 
             if (
                 previous.type == SymbolType::CONSTANT ||
@@ -273,12 +273,22 @@ private:
                 throw SyntaxError{};
         }
         catch (const SyntaxError&) {
-            parsed +=" '" + current.token + "' ";
+            parsed +="'" + current.token + "' ";
             while (!symbols.empty()) {
                 current = std::move(symbols.front());
                 symbols.pop();
                 parsed += current.token + " ";
             }
+
+            if (current.token.empty()) {
+                auto n = parsed.rfind(' ', parsed.size() - 5);
+                if (n == std::string::npos)
+                    parsed = "'" + previous.token + "'";
+                else
+                    parsed = parsed.substr(0, n) + " '" + previous.token + "'";
+            }
+            else
+                parsed = parsed.substr(0, parsed.size() - 1);
             throw SyntaxError{parsed};
         }
         return collected;
@@ -489,7 +499,7 @@ private:
             throw UnusedSymbol{operands.top().token()};
         }
 
-        auto pruned = operands.top().variables();
+        auto pruned = operands.top()._pruned();
         for (const auto& variable : variables->variables)
             if (
                 std::find(
