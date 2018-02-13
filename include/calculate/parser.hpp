@@ -71,15 +71,15 @@ private:
         std::unique_ptr<Symbol> symbol;
     };
 
-    SymbolHandler Left() const noexcept {
+    SymbolHandler _left() const noexcept {
         return {_lexer->left, SymbolType::LEFT, nullptr};
     }
 
-    SymbolHandler Right() const noexcept {
+    SymbolHandler _right() const noexcept {
         return {_lexer->right, SymbolType::RIGHT, nullptr};
     }
 
-    SymbolHandler Separator() const noexcept {
+    SymbolHandler _separator() const noexcept {
         return {_lexer->separator, SymbolType::SEPARATOR, nullptr};
     }
 
@@ -106,11 +106,11 @@ private:
             if (is(Group::DECIMAL))
                 throw SyntaxError{"orphan decimal mark '" + token + "'"};
             else if (is(Group::LEFT))
-                symbols.push(Left());
+                symbols.push(_left());
             else if (is(Group::RIGHT))
-                symbols.push(Right());
+                symbols.push(_right());
             else if (is(Group::SEPARATOR))
-                symbols.push(Separator());
+                symbols.push(_separator());
             else if (is(Group::NAME) && has(constants, found_constant))
                 symbols.push({
                     token,
@@ -154,15 +154,15 @@ private:
 
         std::string parsed{};
         std::queue<SymbolHandler> collected{};
-        SymbolHandler previous{Left()};
+        SymbolHandler previous{_left()};
         SymbolHandler current{};
         std::stack<bool> automatic{};
 
         auto fill_parenthesis = [&]() {
             while (!automatic.empty()) {
                 if (automatic.top()) {
-                    collected.push(Right());
-                    previous = Right();
+                    collected.push(_right());
+                    previous = _right();
                     automatic.pop();
                 }
                 else
@@ -245,14 +245,14 @@ private:
                         case (SymbolType::LEFT):
                         case (SymbolType::SEPARATOR):
                         case (SymbolType::OPERATOR):
-                            parsed += cop->alias() + " ";
+                            parsed += current.token + " ";
                             current = {
                                 cop->alias(),
                                 SymbolType::FUNCTION,
                                 functions.at(cop->alias()).clone()
                             };
                             collect_symbol(false);
-                            current = Left();
+                            current = _left();
                             automatic.push(true);
                             collect_symbol(false);
                             break;
@@ -279,9 +279,17 @@ private:
                 symbols.pop();
                 parsed += current.token + " ";
             }
-            if (current.token == "" && current.type == SymbolType::CONSTANT)
-                throw SyntaxError{"'" + previous.token + "'"};
-            throw SyntaxError{parsed.substr(0, parsed.size() - 1)};
+
+            if (current.token.empty()) {
+                auto n = parsed.rfind(' ', parsed.size() - 5);
+                if (n == std::string::npos)
+                    parsed = "'" + previous.token + "'";
+                else
+                    parsed = parsed.substr(0, n) + " '" + previous.token + "'";
+            }
+            else
+                parsed = parsed.substr(0, parsed.size() - 1);
+            throw SyntaxError{parsed};
         }
         return collected;
     }
