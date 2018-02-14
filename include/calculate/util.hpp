@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.0.0rc1
-    Date 2018/02/11
+    Calculate - Version 2.0.0rc2
+    Last modified 2018/02/13
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -137,6 +137,14 @@ public:
     using Base::clear;
     using Base::swap;
     using Base::reserve;
+
+    mapped_type& operator[](const key_type& key) {
+        return Base::find(key)->second;
+    }
+
+    mapped_type& operator[](key_type&& key) {
+        return Base::find(std::move(key))->second;
+    }
 
     template<typename... Args>
     std::pair<iterator, bool> emplace(const std::string& key, Args&&... args) {
