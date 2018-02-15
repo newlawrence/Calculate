@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.0.0rc2
-    Last modified 2018/02/13
+    Last modified 2018/02/15
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -229,7 +229,7 @@ public:
         swap(one._nodes, another._nodes);
     }
 
-    explicit operator Type() const {
+    operator Type() const {
         if (_variables->variables.size() > 0)
             throw ArgumentsMismatch{_variables->variables.size(), 0};
         return _symbol->_eval(_nodes);

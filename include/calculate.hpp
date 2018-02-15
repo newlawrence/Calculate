@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.0.0rc2
-    Last modified 2018/02/06
+    Last modified 2018/02/15
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -20,8 +20,7 @@ using Parser = BaseParser<double>;
 
 class DefaultParser : public Parser {
 public:
-    template<typename LexerType>
-    DefaultParser(const LexerType& lexer) : Parser{lexer} {
+    DefaultParser(const Lexer& lexer) : Parser{lexer} {
         using Associativity = Operator::Associativity;
 
         auto add = [](Type x1, Type x2) noexcept { return x1 + x2; };
@@ -123,8 +122,7 @@ using ComplexParser = BaseParser<std::complex<double>>;
 
 class DefaultComplexParser : public ComplexParser {
 public:
-    template<typename LexerType>
-    DefaultComplexParser(const LexerType& lexer) : ComplexParser{lexer} {
+    DefaultComplexParser(const Lexer& lexer) : ComplexParser{lexer} {
         using namespace std::complex_literals;
         using Associativity = Operator::Associativity;
 
