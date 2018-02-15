@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.0.0rc2
-    Last modified 2018/02/13
+    Calculate - Version 2.0.0rc3
+    Last modified 2018/02/15
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -49,8 +49,7 @@ public:
     SymbolContainer<Function, BaseParser> functions;
     SymbolContainer<Operator, BaseParser> operators;
 
-    template<typename LexerType>
-    BaseParser(const LexerType& lexer) :
+    BaseParser(const Lexer& lexer) :
         _lexer{lexer.clone()},
         constants{_lexer.get()},
         functions{_lexer.get()},
