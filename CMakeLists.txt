@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include_directories(include)
-include_directories(tool)
+include_directories(tool/include)
 
 if(CMAKE_GENERATOR MATCHES "^Visual Studio.*$")
     set(msvc_toolchain TRUE)
