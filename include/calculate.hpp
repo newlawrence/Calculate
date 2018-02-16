@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.0.0rc3
-    Last modified 2018/02/15
+    Last modified 2018/02/16
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -20,7 +20,7 @@ using Parser = BaseParser<double>;
 
 class DefaultParser : public Parser {
 public:
-    DefaultParser(const Lexer& lexer) : Parser{lexer} {
+    DefaultParser(const Lexer& lexer=DefaultLexer{}) : Parser{lexer} {
         using Associativity = Operator::Associativity;
 
         auto add = [](Type x1, Type x2) noexcept { return x1 + x2; };
@@ -113,8 +113,6 @@ public:
             {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
         });
     }
-
-    DefaultParser() : DefaultParser{DefaultLexer{}} {}
 };
 
 
@@ -122,42 +120,30 @@ using ComplexParser = BaseParser<std::complex<double>>;
 
 class DefaultComplexParser : public ComplexParser {
 public:
-    DefaultComplexParser(const Lexer& lexer) : ComplexParser{lexer} {
+    DefaultComplexParser(const Lexer& lexer=DefaultLexer{}) :
+            ComplexParser{lexer}
+    {
         using namespace std::complex_literals;
         using Associativity = Operator::Associativity;
 
-        auto real = [](const Type& z) noexcept {
-            return static_cast<Type>(std::real(z));
-        };
-        auto imag = [](const Type& z) noexcept {
-            return static_cast<Type>(std::imag(z));
-        };
-        auto abs = [](const Type& z) noexcept {
-            return static_cast<Type>(std::abs(z));
-        };
-        auto arg = [](const Type& z) noexcept {
-            return static_cast<Type>(std::arg(z));
-        };
-        auto norm = [](const Type& z) noexcept {
-            return static_cast<Type>(std::norm(z));
-        };
+        auto real = [](const Type& z) noexcept { return Type{std::real(z)}; };
+        auto imag = [](const Type& z) noexcept { return Type{std::imag(z)}; };
+        auto abs = [](const Type& z) noexcept { return Type{std::abs(z)}; };
+        auto arg = [](const Type& z) noexcept { return Type{std::arg(z)}; };
+        auto norm = [](const Type& z) noexcept { return Type{std::norm(z)}; };
         auto polar = [](const Type& z1, const Type& z2) noexcept {
             return z1 * std::exp(1.i * z2);
         };
 
-        auto add = [](const Type& z1, const Type& z2) noexcept {
-            return z1 + z2;
-        };
-        auto subtract = [](const Type& z1, const Type& z2) noexcept {
-            return z1 - z2;
-        };
-        auto multiply = [](const Type& z1, const Type& z2) noexcept {
-            return z1 * z2;
-        };
-        auto divide = [](const Type& z1, const Type& z2) noexcept {
-            return z1 / z2;
-        };
-        auto raise = [](const Type& z1, const Type& z2) {
+        auto add =
+            [](const Type& z1, const Type& z2) noexcept { return z1 + z2; };
+        auto subtract =
+            [](const Type& z1, const Type& z2) noexcept { return z1 - z2; };
+        auto multiply =
+            [](const Type& z1, const Type& z2) noexcept { return z1 * z2; };
+        auto divide =
+            [](const Type& z1, const Type& z2) noexcept { return z1 / z2; };
+        auto raise = [](const Type& z1, const Type& z2) noexcept {
             return std::pow(z1, z2);
         };
 
@@ -208,8 +194,6 @@ public:
             {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
         });
     }
-
-    DefaultComplexParser() : DefaultComplexParser{DefaultLexer{}} {}
 };
 
 }
