@@ -32,9 +32,9 @@ install:
   - mv cmake ${DEPS_DIR}
   - export PATH=${DEPS_DIR}/cmake/bin:${PATH}
   - cmake --version
-  - mkdir build
 
 script:
-  - CC=gcc-5 CXX=g++-5 cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=Debug
+  - CC=gcc-5 CXX=g++-5 cmake -H. -Bbuild
   - cmake --build build --target all_test
   - cmake --build build --target test
+  - cmake --build build --target coverage
