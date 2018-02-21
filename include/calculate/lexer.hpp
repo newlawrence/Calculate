@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.0.0rc3
-    Last modified 2018/02/11
+    Last modified 2018/02/21
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <locale>
 #include <sstream>
+#include <type_traits>
 
 #include "util.hpp"
 
@@ -186,7 +187,7 @@ class Lexer final : public BaseLexer<Type> {
 public:
     Lexer(
         const detail::RegexesInitializer& regexes={
-            default_number,
+            std::is_integral<Type>::value ?  R"(^\d+$)" : default_number,
             default_name,
             default_symbol
         },
@@ -253,7 +254,7 @@ class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
 public:
     Lexer(
         const detail::RegexesInitializer& regexes={
-            default_complex,
+            std::is_integral<Type>::value ?  R"(^\d+i?$)" : default_complex,
             default_name,
             default_symbol
         },

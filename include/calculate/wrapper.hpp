@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.0.0rc3
-    Last modified 2018/02/20
+    Last modified 2018/02/21
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -49,10 +49,12 @@ struct NoexceptRemover<Result(Type::*)(Args...) const noexcept> {
     using type = Result(Type::*)(Args...) const;
 };
 
+template<typename Type>
+using WithoutNoexcept = typename NoexceptRemover<Type>::type;
+
 
 template<typename Type>
-struct Traits :
-    Traits<typename NoexceptRemover<decltype(&Type::operator())>::type> {};
+struct Traits : Traits<WithoutNoexcept<decltype(&Type::operator())>> {};
 
 template<typename Result, typename... Args>
 struct Traits<std::function<Result(Args...)>> {
