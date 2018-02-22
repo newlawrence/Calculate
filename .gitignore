@@ -1,19 +1,11 @@
-# OS related
+# Builds
+build/
+
+# Jet Brains
+.idea/
+
+# MacOS
 .DS_Store
 .AppleDouble
 .LSOverride
 ._*
-.idea/
-Win32/
-
-# Extensions
-*.swp
-
-# CMake related
-cmake_install.cmake
-CMakeCache.txt
-Makefile
-CMakeFiles/
-cmake-build-debug/
-cmake-build-release/
-

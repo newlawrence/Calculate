@@ -1,0 +1,44 @@
+language: cpp
+
+compiler:
+  - gcc
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-5
+
+env:
+  global:
+    - DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
+    - CMAKE_FILE=cmake-3.10.2-Linux-x86_64.tar.gz
+    - CMAKE_URL=http://www.cmake.org/files/v3.10/${CMAKE_FILE}
+
+branches:
+  only:
+    - master
+    - develop
+
+before_install:
+  - mkdir -p ${DEPS_DIR}
+
+install:
+  - wget ${CMAKE_URL} --quiet --no-check-certificate
+  - mkdir -p cmake
+  - tar -xzf ${CMAKE_FILE} -C cmake --strip-components 1
+  - mv cmake ${DEPS_DIR}
+  - export PATH=${DEPS_DIR}/cmake/bin:${PATH}
+  - cmake --version
+
+script:
+  - CC=gcc-5 CXX=g++-5 CV=gcov-5 cmake -H. -Bbuild
+  - cmake --build build --target all_test
+  - cmake --build build --target test
+  - cmake --build build --target coverage
+
+after_success:
+  - pushd build/cov/bin
+  - bash <(curl -s https://codecov.io/bash) -x gcov
+  - popd
