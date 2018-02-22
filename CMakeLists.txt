@@ -34,7 +34,7 @@ if((CMAKE_CXX_COMPILER_ID MATCHES GNU) OR (CMAKE_CXX_COMPILER_ID MATCHES Clang))
         file(MAKE_DIRECTORY "${coverage_dir}")
         file(MAKE_DIRECTORY "${coverage_dir}/bin")
         file(MAKE_DIRECTORY "${coverage_dir}/src")
-        message(STATUS "Targets configured for coverage '${gcov_program}'")
+        message(STATUS "Targets configured for coverage using '${gcov_program}'")
     endif()
 endif()
 
