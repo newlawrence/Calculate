@@ -32,10 +32,14 @@ install:
   - mv cmake ${DEPS_DIR}
   - export PATH=${DEPS_DIR}/cmake/bin:${PATH}
   - cmake --version
-  - sed -i -e 's/gcov)/gcov-5)/g' CMakeLists.txt
 
 script:
-  - CC=gcc-5 CXX=g++-5 cmake -H. -Bbuild
+  - CC=gcc-5 CXX=g++-5 CV=gcov-5 cmake -H. -Bbuild
   - cmake --build build --target all_test
   - cmake --build build --target test
   - cmake --build build --target coverage
+
+after_success:
+  - pushd build/cov/bin
+  - bash <(curl -s https://codecov.io/bash) -x gcov
+  - popd
