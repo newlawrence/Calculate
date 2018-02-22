@@ -1,14 +1,14 @@
 ![Calculate](resource/calculate.svg)
 
-| Version | 2.0.0rc3 |
+| Version | 2.0.0rc4 |
 | ------- | ---------|
 
 ---
 
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/newlawrence/Calculate/blob/7f96b434dd77461f17a71f3fe3025c21b73ed0d0/copying)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/9QYrwcXWfsFurOAJ)
-[![Build Status](https://travis-ci.org/newlawrence/Calculate.svg?branch=feature%2Ftests)](https://travis-ci.org/newlawrence/Calculate)
-[![codecov](https://codecov.io/gh/newlawrence/Calculate/branch/feature%2Ftests/graph/badge.svg)](https://codecov.io/gh/newlawrence/Calculate)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/hQct8Y1a6C5lUyVb)
+[![Build Status](https://travis-ci.org/newlawrence/Calculate.svg?branch=master)](https://travis-ci.org/newlawrence/Calculate)
+[![codecov](https://codecov.io/gh/newlawrence/Calculate/branch/master/graph/badge.svg)](https://codecov.io/gh/newlawrence/Calculate)
 
 Header-only library written in modern **C++** aiming for flexibility and ease of use.
 
