@@ -20,7 +20,6 @@ branches:
   only:
     - master
     - develop
-    - feature/tests  # Provisional
 
 before_install:
   - mkdir -p ${DEPS_DIR}
