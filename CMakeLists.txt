@@ -52,6 +52,8 @@ if(WIN32 AND NOT MINGW AND NOT MSYS AND NOT CYGWIN)
 else()
     if(gcov_able)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra -Werror")
+    endif()
+    if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-noexcept-type")
     endif()
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
@@ -135,9 +137,6 @@ foreach(test_source ${TEST_SOURCES})
         RUNTIME_OUTPUT_DIRECTORY_RELEASE "${test_folder}"
         RUNTIME_OUTPUT_DIRECTORY_DEBUG "${test_folder}"
     )
-    if(coverage)
-        target_link_libraries(${test_name} gcov)
-    endif()
     add_test(NAME ${test_name} COMMAND "${test_folder}/${test_name}")
     add_dependencies(all_test ${test_name})
 

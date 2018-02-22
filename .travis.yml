@@ -32,7 +32,7 @@ install:
   - mv cmake ${DEPS_DIR}
   - export PATH=${DEPS_DIR}/cmake/bin:${PATH}
   - cmake --version
-  - alias gcov="gcov-5"
+  - sed -i -e 's/gcov)/gcov-5)/g' CMakeLists.txt
 
 script:
   - CC=gcc-5 CXX=g++-5 cmake -H. -Bbuild
