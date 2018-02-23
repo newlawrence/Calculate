@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.0.0rc4
-    Last modified 2018/02/21
+    Last modified 2018/02/23
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -295,7 +295,10 @@ public:
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
 
-        _istream.str(token);
+        if (token.back() != 'i')
+            _istream.str(token);
+        else
+            _istream.str(token.substr(0, token.size() - 1));
         _istream.clear();
 
         _istream >> value;
