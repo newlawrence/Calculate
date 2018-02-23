@@ -210,7 +210,7 @@ public:
         _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
     }
 
-    Lexer(const Lexer& other) : BaseLexer{other}, _istream{}, _ostream{} {
+    Lexer(const Lexer& other) : BaseLexer(other), _istream{}, _ostream{} {
         _istream.imbue(std::locale("C"));
         _ostream.imbue(std::locale("C"));
         _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
@@ -277,7 +277,7 @@ public:
         _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
     }
 
-    Lexer(const Lexer& other) : BaseLexer{other}, _istream{}, _ostream{} {
+    Lexer(const Lexer& other) : BaseLexer(other), _istream{}, _ostream{} {
         _istream.imbue(std::locale("C"));
         _ostream.imbue(std::locale("C"));
         _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
