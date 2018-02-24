@@ -19,7 +19,6 @@ env:
 branches:
   only:
     - master
-    - develop
 
 before_install:
   - mkdir -p ${DEPS_DIR}

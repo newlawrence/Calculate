@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.0.0rc4
-    Last modified 2018/02/16
+    Calculate - Version 2.0.0rc5
+    Last modified 2018/02/23
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -16,11 +16,21 @@
 
 namespace calculate {
 
-using Parser = BaseParser<double>;
+class Parser : public BaseParser<double> {
+public:
+    using DefaultLexer = calculate::Lexer<Type>;
+
+    Parser(const Lexer& lexer=DefaultLexer{}) :
+            BaseParser<Type>{lexer}
+    {}
+};
+
 
 class DefaultParser : public Parser {
 public:
-    DefaultParser(const Lexer& lexer=DefaultLexer{}) : Parser{lexer} {
+    DefaultParser(const Lexer& lexer=DefaultLexer{}) :
+            Parser{lexer}
+    {
         using Associativity = Operator::Associativity;
 
         auto add = [](Type x1, Type x2) noexcept { return x1 + x2; };
@@ -116,7 +126,14 @@ public:
 };
 
 
-using ComplexParser = BaseParser<std::complex<double>>;
+class ComplexParser : public BaseParser<std::complex<double>> {
+public:
+    using DefaultLexer = calculate::Lexer<Type>;
+
+    ComplexParser(const Lexer& lexer=DefaultLexer{}) :
+            BaseParser<Type>{lexer}
+    {}
+};
 
 class DefaultComplexParser : public ComplexParser {
 public:

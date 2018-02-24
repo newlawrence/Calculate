@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.0.0rc4
-    Last modified 2018/02/16
+    Calculate - Version 2.0.0rc5
+    Last modified 2018/02/23
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -23,7 +23,6 @@ namespace calculate {
 template<typename BaseType>
 class BaseParser {
 public:
-    using DefaultLexer = calculate::Lexer<BaseType>;
     using Lexer = calculate::BaseLexer<BaseType>;
     using Type = BaseType;
 
@@ -49,7 +48,7 @@ public:
     SymbolContainer<Function, BaseParser> functions;
     SymbolContainer<Operator, BaseParser> operators;
 
-    BaseParser(const Lexer& lexer=DefaultLexer{}) :
+    BaseParser(const Lexer& lexer) :
         _lexer{lexer.clone()},
         constants{_lexer.get()},
         functions{_lexer.get()},
@@ -512,7 +511,7 @@ private:
 
 public:
     Type to_value(const std::string& expression) const {
-        return Type{from_infix(expression)};
+        return from_infix(expression);
     }
 
     std::string to_string(Type value) const {
@@ -559,7 +558,7 @@ public:
     Expression optimize(const Expression& node) const noexcept {
         auto vars = node._pruned();
         if (vars.empty())
-            return from_infix(to_string(Type{from_postfix(node.postfix())}));
+            return from_infix(to_string(from_postfix(node.postfix())));
 
         auto postfix = std::string{};
         auto variables =

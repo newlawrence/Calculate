@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.0.0rc4
-    Last modified 2018/02/21
+    Calculate - Version 2.0.0rc5
+    Last modified 2018/02/23
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -210,7 +210,7 @@ public:
         _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
     }
 
-    Lexer(const Lexer& other) : BaseLexer{other}, _istream{}, _ostream{} {
+    Lexer(const Lexer& other) : BaseLexer(other), _istream{}, _ostream{} {
         _istream.imbue(std::locale("C"));
         _ostream.imbue(std::locale("C"));
         _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
@@ -277,7 +277,7 @@ public:
         _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
     }
 
-    Lexer(const Lexer& other) : BaseLexer{other}, _istream{}, _ostream{} {
+    Lexer(const Lexer& other) : BaseLexer(other), _istream{}, _ostream{} {
         _istream.imbue(std::locale("C"));
         _ostream.imbue(std::locale("C"));
         _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
@@ -295,7 +295,10 @@ public:
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
 
-        _istream.str(token);
+        if (token.back() != 'i')
+            _istream.str(token);
+        else
+            _istream.str(token.substr(0, token.size() - 1));
         _istream.clear();
 
         _istream >> value;

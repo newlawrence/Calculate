@@ -19,12 +19,12 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 message(STATUS "Setting build type to '${CMAKE_BUILD_TYPE}'")
 
-set(gcov_able FALSE)
-set(coverage FALSE)
 set(gcov_program "$ENV{CV}")
 if(NOT gcov_program)
     set(gcov_program gcov)
 endif()
+set(gcov_able FALSE)
+set(coverage FALSE)
 find_program(GCOV ${gcov_program})
 if((CMAKE_CXX_COMPILER_ID MATCHES GNU) OR (CMAKE_CXX_COMPILER_ID MATCHES Clang))
     set(gcov_able TRUE)
@@ -69,6 +69,7 @@ else()
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-inline")
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs")
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ftest-coverage")
+        set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_STATIC_LINKER_FLAGS_DEBUG} --coverage")
     endif()
 endif()
 
@@ -96,9 +97,8 @@ add_custom_target(all_test)
 if(coverage)
     file(MAKE_DIRECTORY "${coverage_dir}/src/temp")
     add_custom_target(coverage)
-    add_custom_command(
-        TARGET coverage
-        POST_BUILD
+    add_custom_command(TARGET coverage POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E echo "Generating gcov sources..."
         COMMAND ${CMAKE_COMMAND} -E make_directory "${coverage_dir}/src/temp"
         COMMAND ${CMAKE_COMMAND} -E chdir "${coverage_dir}/src/temp"
             ${GCOV} "${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp"
@@ -112,17 +112,16 @@ if(coverage)
     find_program(LCOV lcov)
     find_program(GENHTML genhtml)
     if(LCOV AND GENHTML)
-        file(MAKE_DIRECTORY "${coverage_dir}/html")
-        set(coverage_info "${coverage_dir}/html/coverage.info")
-        add_custom_command(
-            TARGET coverage
-            POST_BUILD
+        file(MAKE_DIRECTORY "${coverage_dir}/rep")
+        set(coverage_info "${coverage_dir}/rep/coverage.info")
+        add_custom_command(TARGET coverage POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E echo "Generating coverage report..."
             COMMAND ${LCOV} -c -d "${coverage_dir}/bin"
-                -o "${coverage_info}" > /dev/null
+                -o "${coverage_info}" --gcov-tool ${GCOV} > /dev/null
             COMMAND ${LCOV} -e "${coverage_info}" "*Calculate/include*"
                 -o "${coverage_info}" > /dev/null
             COMMAND ${GENHTML} "${coverage_info}"
-                -o "${coverage_dir}/html" > /dev/null
+                -o "${coverage_dir}/rep" > /dev/null
         )
         message(STATUS "Enabled coverage report in HTML format")
     endif()
