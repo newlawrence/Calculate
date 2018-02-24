@@ -18,7 +18,9 @@ namespace calculate {
 
 class Parser : public BaseParser<double> {
 public:
-    Parser(const Lexer& lexer=calculate::Lexer<Type>{}) :
+    using DefaultLexer = calculate::Lexer<Type>;
+
+    Parser(const Lexer& lexer=DefaultLexer{}) :
             BaseParser<Type>{lexer}
     {}
 };
@@ -26,7 +28,7 @@ public:
 
 class DefaultParser : public Parser {
 public:
-    DefaultParser(const Lexer& lexer=calculate::Lexer<Type>{}) :
+    DefaultParser(const Lexer& lexer=DefaultLexer{}) :
             Parser{lexer}
     {
         using Associativity = Operator::Associativity;
@@ -126,14 +128,16 @@ public:
 
 class ComplexParser : public BaseParser<std::complex<double>> {
 public:
-    ComplexParser(const Lexer& lexer=calculate::Lexer<Type>{}) :
+    using DefaultLexer = calculate::Lexer<Type>;
+
+    ComplexParser(const Lexer& lexer=DefaultLexer{}) :
             BaseParser<Type>{lexer}
     {}
 };
 
 class DefaultComplexParser : public ComplexParser {
 public:
-    DefaultComplexParser(const Lexer& lexer=calculate::Lexer<Type>{}) :
+    DefaultComplexParser(const Lexer& lexer=DefaultLexer{}) :
             ComplexParser{lexer}
     {
         using namespace std::complex_literals;
