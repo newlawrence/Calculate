@@ -319,7 +319,7 @@ public:
         return node._symbol->_eval(node._nodes);
     }
 
-    const Lexer& lexer() const noexcept { return *_lexer; }
+    std::shared_ptr<Lexer> lexer() const noexcept { return _lexer; }
 
     const std::string& token() const noexcept { return _token; }
 
