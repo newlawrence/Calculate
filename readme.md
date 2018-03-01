@@ -1,14 +1,16 @@
 ![Calculate](resource/calculate.svg)
 
-| Version | 2.0.0rc5 |
+| Version | 2.0.0 |
 | ------- | ---------|
 
 ---
 
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/newlawrence/Calculate/blob/7f96b434dd77461f17a71f3fe3025c21b73ed0d0/copying)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/NCIhd84sx4I7oTQQ)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/d9OdoL5gJUYARsRz)
 [![Build Status](https://travis-ci.org/newlawrence/Calculate.svg?branch=master)](https://travis-ci.org/newlawrence/Calculate)
 [![codecov](https://codecov.io/gh/newlawrence/Calculate/branch/master/graph/badge.svg)](https://codecov.io/gh/newlawrence/Calculate)
+
+> Warning! Expected one more API change. Please wait until version 2.0.1 is released to use safely in production.
 
 Header-only library written in modern **C++** aiming for flexibility and ease of use. **Calculate** is not only a mathematical expressions parser but an engine built on top of the [Shunting Yard algorithm](https://en.wikipedia.org/wiki/Shunting-yard_algorithm).
 
