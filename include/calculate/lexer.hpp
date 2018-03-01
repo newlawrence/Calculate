@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.0.0rc5
-    Last modified 2018/02/23
+    Last modified 2018/03/01
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -320,6 +320,27 @@ public:
         return _ostream.str();
     }
 };
+
+
+template<typename Type>
+inline std::shared_ptr<BaseLexer<Type>> make_lexer() noexcept {
+    return std::make_shared<Lexer<Type>>();
+}
+
+template<typename Type>
+inline std::shared_ptr<BaseLexer<Type>> make_lexer(
+    const detail::RegexesInitializer& regexes
+) noexcept {
+    return std::make_shared<Lexer<Type>>(regexes);
+}
+
+template<typename Type>
+inline std::shared_ptr<BaseLexer<Type>> make_lexer(
+    const detail::RegexesInitializer& regexes,
+    const detail::StringsInitializer& strings
+) noexcept {
+    return std::make_shared<Lexer<Type>>(regexes, strings);
+}
 
 }
 
