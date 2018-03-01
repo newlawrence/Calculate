@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.0.0rc5
-    Last modified 2018/02/15
+    Calculate - Version 2.0.0
+    Last modified 2018/03/01
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -35,6 +35,8 @@ public:
 
 public:
     using const_iterator = typename std::vector<Node>::const_iterator;
+    using const_reverse_iterator =
+            typename std::vector<Node>::const_reverse_iterator;
 
     class VariableHandler {
     public:
@@ -289,13 +291,21 @@ public:
 
     const Node& at(std::size_t index) const { return _nodes.at(index); }
 
-    const_iterator begin() const noexcept { return _nodes.begin(); }
+    const_iterator begin() const noexcept { return _nodes.cbegin(); }
 
-    const_iterator end() const noexcept { return _nodes.end(); }
+    const_iterator end() const noexcept { return _nodes.cend(); }
 
     const_iterator cbegin() const noexcept { return _nodes.cbegin(); }
 
     const_iterator cend() const noexcept { return _nodes.cend(); }
+
+    const_reverse_iterator rbegin() const noexcept { return _nodes.crbegin(); }
+
+    const_reverse_iterator rend() const noexcept { return _nodes.crend(); }
+
+    const_reverse_iterator crbegin() const noexcept { return _nodes.crbegin(); }
+
+    const_reverse_iterator crend() const noexcept { return _nodes.crend(); }
 
     friend std::ostream& operator<<(
         std::ostream& ostream,
@@ -309,7 +319,7 @@ public:
         return node._symbol->_eval(node._nodes);
     }
 
-    const Lexer& lexer() const noexcept { return *_lexer; }
+    std::shared_ptr<Lexer> lexer() const noexcept { return _lexer; }
 
     const std::string& token() const noexcept { return _token; }
 

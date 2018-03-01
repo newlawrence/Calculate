@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.0.0rc5
-    Last modified 2018/02/23
+    Calculate - Version 2.0.0
+    Last modified 2018/03/01
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -49,15 +49,22 @@ public:
     SymbolContainer<Operator, BaseParser> operators;
 
     BaseParser(const Lexer& lexer) :
-        _lexer{lexer.clone()},
-        constants{_lexer.get()},
-        functions{_lexer.get()},
-        operators{_lexer.get()}
+            _lexer{lexer.clone()},
+            constants{_lexer.get()},
+            functions{_lexer.get()},
+            operators{_lexer.get()}
+    {}
+
+    BaseParser(std::shared_ptr<Lexer> lexer) :
+            _lexer{std::move(lexer)},
+            constants{_lexer.get()},
+            functions{_lexer.get()},
+            operators{_lexer.get()}
     {}
 
     virtual ~BaseParser() = default;
 
-    const Lexer& lexer() const noexcept { return *_lexer; }
+    std::shared_ptr<Lexer> lexer() const noexcept { return _lexer; }
 
 
 private:

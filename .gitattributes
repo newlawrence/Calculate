@@ -9,11 +9,4 @@ tool/* linguist-vendored
 copying linguist-vendored
 *.txt linguist-vendored
 *.md linguist-vendored
-*.ipynb linguist-vendored
 *.yml linguist-vendored
-*.yaml linguist-vendored
-*.sh linguist-vendored
-*.bat linguist-vendored
-*.in linguist-vendored
-*.diff linguist-vendored
-*.patch linguist-vendored

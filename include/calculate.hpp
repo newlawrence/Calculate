@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.0.0rc5
-    Last modified 2018/02/23
+    Calculate - Version 2.0.0
+    Last modified 2018/03/01
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -18,18 +18,20 @@ namespace calculate {
 
 class Parser : public BaseParser<double> {
 public:
-    using DefaultLexer = calculate::Lexer<Type>;
-
-    Parser(const Lexer& lexer=DefaultLexer{}) :
-            BaseParser<Type>{lexer}
+    template<typename LexerType>
+    Parser(LexerType&& lexer) :
+            BaseParser<Type>{std::forward<LexerType>(lexer)}
     {}
+
+    Parser() : Parser{make_lexer<Type>()} {}
 };
 
 
 class DefaultParser : public Parser {
 public:
-    DefaultParser(const Lexer& lexer=DefaultLexer{}) :
-            Parser{lexer}
+    template<typename LexerType>
+    DefaultParser(LexerType&& lexer) :
+            Parser{std::forward<LexerType>(lexer)}
     {
         using Associativity = Operator::Associativity;
 
@@ -123,22 +125,26 @@ public:
             {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
         });
     }
+
+    DefaultParser() : DefaultParser{make_lexer<Type>()} {}
 };
 
 
 class ComplexParser : public BaseParser<std::complex<double>> {
 public:
-    using DefaultLexer = calculate::Lexer<Type>;
-
-    ComplexParser(const Lexer& lexer=DefaultLexer{}) :
-            BaseParser<Type>{lexer}
+    template<typename LexerType>
+    ComplexParser(LexerType&& lexer) :
+            BaseParser<Type>{std::forward<LexerType>(lexer)}
     {}
+
+    ComplexParser() : ComplexParser{make_lexer<Type>()} {}
 };
 
 class DefaultComplexParser : public ComplexParser {
 public:
-    DefaultComplexParser(const Lexer& lexer=DefaultLexer{}) :
-            ComplexParser{lexer}
+    template<typename LexerType>
+    DefaultComplexParser(LexerType&& lexer) :
+            ComplexParser{std::forward<LexerType>(lexer)}
     {
         using namespace std::complex_literals;
         using Associativity = Operator::Associativity;
@@ -211,6 +217,8 @@ public:
             {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
         });
     }
+
+    DefaultComplexParser() : DefaultComplexParser{make_lexer<Type>()} {}
 };
 
 }
