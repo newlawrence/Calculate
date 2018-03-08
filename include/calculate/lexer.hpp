@@ -80,14 +80,14 @@ public:
     const std::string number;
     const std::string name;
     const std::string symbol;
-    const std::string connector;
 
     const std::regex number_regex;
     const std::regex name_regex;
     const std::regex symbol_regex;
 
 private:
-    const std::regex _prefix_regex;
+    const std::regex _prefixer_regex;
+    const std::regex _splitter_regex;
     const std::regex _tokenizer_regex;
 
     bool _match(const std::smatch& match, TokenType type) const noexcept {
@@ -139,8 +139,7 @@ private:
 public:
     BaseLexer(
         const detail::RegexesInitializer& regexes,
-        const detail::StringsInitializer& strings,
-        std::string con=""
+        const detail::StringsInitializer& strings
     ) :
             left{strings.left},
             right{strings.right},
@@ -149,11 +148,11 @@ public:
             number{_adapt_regex(regexes.number)},
             name{_adapt_regex(regexes.name)},
             symbol{_adapt_regex(regexes.symbol)},
-            connector{std::move(con)},
             number_regex{number},
             name_regex{name},
             symbol_regex{symbol},
-            _prefix_regex{symbol.substr(0, symbol.size() - 1)},
+            _prefixer_regex{symbol.substr(0, symbol.size() - 1)},
+            _splitter_regex{symbol.substr(1, symbol.size() - 2)},
             _tokenizer_regex{_generate_tokenizer()}
     {
         std::smatch match{};
@@ -169,9 +168,6 @@ public:
 
         if (std::regex_match(" ", _tokenizer_regex))
             throw LexerError{"tokenizer matching space"};
-
-        if (connector.size() && !std::regex_match(connector, symbol_regex))
-            throw LexerError{"symbol regex doesn't match connector"};
 
         std::regex_search(left, match, _tokenizer_regex);
         if (!_match(match, TokenType::LEFT))
@@ -192,7 +188,7 @@ public:
     BaseLexer& operator=(const BaseLexer&) = delete;
     BaseLexer& operator=(BaseLexer&&) = delete;
 
-    std::queue<TokenHandler> tokenize(std::string expression) const {
+    std::queue<TokenHandler> tokenize(std::string expression, bool postfix=false) const {
         std::queue<TokenHandler> tokens{};
         std::smatch match{}, unary{};
         TokenType last{TokenType::LEFT};
@@ -200,25 +196,36 @@ public:
         while (std::regex_search(expression, match, _tokenizer_regex)) {
             auto token = match.str();
 
-            if (_match(match, TokenType::NUMBER)) {
-                switch (last) {
-                case (TokenType::NUMBER):
-                case (TokenType::NAME):
-                case (TokenType::RIGHT):
-                    if (std::regex_search(token, unary, _prefix_regex)) {
-                        if (connector.size() && connector != unary.str()) {
-                            tokens.push({connector, TokenType::SYMBOL});
-                            tokens.push({token, TokenType::NUMBER});
-                            break;
-                        }
-                        tokens.push({unary.str(), TokenType::SYMBOL});
-                        tokens.push({unary.suffix().str(), TokenType::NUMBER});
-                        break;
-                    }
-                default:
-                    tokens.push({std::move(token), TokenType::NUMBER});
+            if (!postfix && _match(match, TokenType::NUMBER)) {
+                if (
+                    last != TokenType::SYMBOL &&
+                    last != TokenType::LEFT &&
+                    std::regex_search(token, unary, _prefixer_regex)
+                ) {
+                    tokens.push({unary.str(), TokenType::SYMBOL});
+                    token = unary.suffix().str();
+                }
+
+                std::sregex_token_iterator
+                    nums{token.begin(), token.end(), _splitter_regex, -1},
+                    syms{token.begin(), token.end(), _splitter_regex},
+                    end{};
+
+                if (nums->str().empty()) {
+                    nums++;
+                    tokens.push(
+                        {(syms++)->str() + (nums++)->str(), TokenType::NUMBER}
+                    );
+                }
+                else
+                    tokens.push({*nums++, TokenType::NUMBER});
+                while (nums != end && syms != end) {
+                    tokens.push({*syms++, TokenType::SYMBOL});
+                    tokens.push({*nums++, TokenType::NUMBER});
                 }
             }
+            else if (_match(match, TokenType::NUMBER))
+                tokens.push({std::move(token), TokenType::NUMBER});
             else if (_match(match, TokenType::NAME))
                 tokens.push({std::move(token), TokenType::NAME});
             else if (_match(match, TokenType::SYMBOL))
@@ -331,7 +338,7 @@ public:
             default_separator,
             default_decimal
         }
-    ) : BaseLexer{regexes, strings, "+"}, _istream{}, _ostream{} {
+    ) : BaseLexer{regexes, strings}, _istream{}, _ostream{} {
         if (this->decimal != default_decimal)
             throw LexerError{
                 "default lexer must use '" +
