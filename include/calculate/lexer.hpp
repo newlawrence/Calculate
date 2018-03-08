@@ -80,6 +80,7 @@ public:
     const std::string number;
     const std::string name;
     const std::string symbol;
+    const std::string connector;
 
     const std::regex number_regex;
     const std::regex name_regex;
@@ -138,7 +139,8 @@ private:
 public:
     BaseLexer(
         const detail::RegexesInitializer& regexes,
-        const detail::StringsInitializer& strings
+        const detail::StringsInitializer& strings,
+        std::string con=""
     ) :
             left{strings.left},
             right{strings.right},
@@ -147,6 +149,7 @@ public:
             number{_adapt_regex(regexes.number)},
             name{_adapt_regex(regexes.name)},
             symbol{_adapt_regex(regexes.symbol)},
+            connector{std::move(con)},
             number_regex{number},
             name_regex{name},
             symbol_regex{symbol},
@@ -166,6 +169,9 @@ public:
 
         if (std::regex_match(" ", _tokenizer_regex))
             throw LexerError{"tokenizer matching space"};
+
+        if (connector.size() && !std::regex_match(connector, symbol_regex))
+            throw LexerError{"symbol regex doesn't match connector"};
 
         std::regex_search(left, match, _tokenizer_regex);
         if (!_match(match, TokenType::LEFT))
@@ -200,6 +206,11 @@ public:
                 case (TokenType::NAME):
                 case (TokenType::RIGHT):
                     if (std::regex_search(token, unary, _prefix_regex)) {
+                        if (connector.size() && connector != unary.str()) {
+                            tokens.push({connector, TokenType::SYMBOL});
+                            tokens.push({token, TokenType::NUMBER});
+                            break;
+                        }
                         tokens.push({unary.str(), TokenType::SYMBOL});
                         tokens.push({unary.suffix().str(), TokenType::NUMBER});
                         break;
@@ -320,7 +331,7 @@ public:
             default_separator,
             default_decimal
         }
-    ) : BaseLexer{regexes, strings}, _istream{}, _ostream{} {
+    ) : BaseLexer{regexes, strings, "+"}, _istream{}, _ostream{} {
         if (this->decimal != default_decimal)
             throw LexerError{
                 "default lexer must use '" +
