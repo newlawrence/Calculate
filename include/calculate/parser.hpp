@@ -11,8 +11,6 @@
 
 #include <algorithm>
 #include <limits>
-#include <queue>
-#include <string>
 
 #include "lexer.hpp"
 #include "node.hpp"

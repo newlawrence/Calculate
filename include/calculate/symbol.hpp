@@ -25,14 +25,8 @@ class Symbol : Wrapper<typename Expression::Type, Expression> {
 public:
     using Type = typename Expression::Type;
 
-    enum class SymbolType : int {
-        LEFT=0,
-        RIGHT,
-        SEPARATOR,
-        CONSTANT,
-        FUNCTION,
-        OPERATOR
-    };
+    enum class SymbolType :
+            int { LEFT=0, RIGHT, SEPARATOR, CONSTANT, FUNCTION, OPERATOR };
 
 private:
     using WrapperConcept = calculate::WrapperConcept<Type, Expression>;

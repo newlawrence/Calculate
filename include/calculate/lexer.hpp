@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/01
+    Last modified 2018/03/08
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -12,6 +12,7 @@
 #include <complex>
 #include <iomanip>
 #include <locale>
+#include <queue>
 #include <sstream>
 #include <type_traits>
 
@@ -40,9 +41,15 @@ const char scape[] = {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
 
 }
 
-const char default_number[] = R"(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)";
+const char default_number[] =
+    R"(^[+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)";
 
-const char default_complex[] = R"(^(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?i?$)";
+const char default_complex[] =
+    R"(^(?:)"
+    R"((?:(?:[+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))"
+    R"((?:[+\-](?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)i)|)"
+    R"((?:(?:[+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)i?))"
+    R"()$)";
 
 const char default_name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
 
@@ -61,6 +68,10 @@ const char default_decimal[] = ".";
 template<typename Type>
 class BaseLexer {
 public:
+    enum class TokenType :
+            int { NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR, DECIMAL };
+    using TokenHandler = std::pair<std::string, TokenType>;
+
     const std::string left;
     const std::string right;
     const std::string separator;
@@ -69,14 +80,19 @@ public:
     const std::string number;
     const std::string name;
     const std::string symbol;
-    const std::string tokenizer;
 
     const std::regex number_regex;
     const std::regex name_regex;
     const std::regex symbol_regex;
-    const std::regex tokenizer_regex;
 
 private:
+    const std::regex _prefix_regex;
+    const std::regex _tokenizer_regex;
+
+    bool _match(const std::smatch& match, TokenType type) const noexcept {
+        return !match[static_cast<int>(type)].str().empty();
+    }
+
     std::string _adapt_regex(std::string regex) const {
         if (regex.front() != '^')
             regex.insert(0, 1, '^');
@@ -131,13 +147,12 @@ public:
             number{_adapt_regex(regexes.number)},
             name{_adapt_regex(regexes.name)},
             symbol{_adapt_regex(regexes.symbol)},
-            tokenizer{_generate_tokenizer()},
             number_regex{number},
             name_regex{name},
             symbol_regex{symbol},
-            tokenizer_regex{tokenizer}
+            _prefix_regex{symbol.substr(0, symbol.size() - 1)},
+            _tokenizer_regex{_generate_tokenizer()}
     {
-        enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR, DECIMAL};
         std::smatch match{};
 
         if (left == right ||
@@ -149,20 +164,20 @@ public:
         )
             throw LexerError{"tokens must be different"};
 
-        if (std::regex_match(" ", tokenizer_regex))
+        if (std::regex_match(" ", _tokenizer_regex))
             throw LexerError{"tokenizer matching space"};
 
-        std::regex_search(left, match, tokenizer_regex);
-        if (match[Group::LEFT].str().empty())
+        std::regex_search(left, match, _tokenizer_regex);
+        if (!_match(match, TokenType::LEFT))
             throw LexerError{"tokenizer doesn't match left symbol"};
-        std::regex_search(right, match, tokenizer_regex);
-        if (match[Group::RIGHT].str().empty())
+        std::regex_search(right, match, _tokenizer_regex);
+        if (!_match(match, TokenType::RIGHT))
             throw LexerError{"tokenizer doesn't match right symbol"};
-        std::regex_search(separator, match, tokenizer_regex);
-        if (match[Group::SEPARATOR].str().empty())
+        std::regex_search(separator, match, _tokenizer_regex);
+        if (!_match(match, TokenType::SEPARATOR))
             throw LexerError{"tokenizer doesn't match separator symbol"};
-        std::regex_search(decimal, match, tokenizer_regex);
-        if (match[Group::DECIMAL].str().empty())
+        std::regex_search(decimal, match, _tokenizer_regex);
+        if (!_match(match, TokenType::DECIMAL))
             throw LexerError{"tokenizer doesn't match decimal symbol"};
     }
     BaseLexer(const BaseLexer&) = default;
@@ -170,6 +185,47 @@ public:
 
     BaseLexer& operator=(const BaseLexer&) = delete;
     BaseLexer& operator=(BaseLexer&&) = delete;
+
+    std::queue<TokenHandler> tokenize(std::string expression) const {
+        std::queue<TokenHandler> tokens{};
+        std::smatch match{}, unary{};
+        TokenType last{TokenType::LEFT};
+
+        while (std::regex_search(expression, match, _tokenizer_regex)) {
+            auto token = match.str();
+
+            if (_match(match, TokenType::NUMBER)) {
+                switch (last) {
+                case (TokenType::NUMBER):
+                case (TokenType::NAME):
+                case (TokenType::RIGHT):
+                    if (std::regex_search(token, unary, _prefix_regex)) {
+                        tokens.push({unary.str(), TokenType::SYMBOL});
+                        tokens.push({unary.suffix().str(), TokenType::NUMBER});
+                        break;
+                    }
+                default:
+                    tokens.push({std::move(token), TokenType::NUMBER});
+                }
+            }
+            else if (_match(match, TokenType::NAME))
+                tokens.push({std::move(token), TokenType::NAME});
+            else if (_match(match, TokenType::SYMBOL))
+                tokens.push({std::move(token), TokenType::SYMBOL});
+            else if (_match(match, TokenType::LEFT))
+                tokens.push({std::move(token), TokenType::LEFT});
+            else if (_match(match, TokenType::RIGHT))
+                tokens.push({std::move(token), TokenType::RIGHT});
+            else if (_match(match, TokenType::SEPARATOR))
+                tokens.push({std::move(token), TokenType::SEPARATOR});
+            else
+                throw SyntaxError{"orphan decimal mark '" + token + "'"};
+
+            expression = match.suffix().str();
+            last = tokens.back().second;
+        }
+        return tokens;
+    }
 
     virtual std::shared_ptr<BaseLexer> clone() const noexcept = 0;
     virtual Type to_value(const std::string&) const = 0;
