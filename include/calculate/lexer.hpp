@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/08
+    Last modified 2018/03/09
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -38,6 +38,17 @@ struct StringsInitializer {
 
 
 const char scape[] = {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
+
+const char isp[] =
+    R"(^(?:(?:([+\-]?\d+)([+\-]?\d+)i)|([+\-]?\d+)|(?:([+\-]?\d+)i?))$)";
+
+const char rsp[] =
+    R"(^(?:)"
+    R"((?:([+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))"
+    R"(([+\-](?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)i)|)"
+    R"(([+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)"
+    R"((?:([+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)i?))"
+    R"()$)";
 
 }
 
@@ -338,11 +349,14 @@ class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
     mutable std::istringstream _istream;
     mutable std::ostringstream _ostream;
 
+    const std::regex _splitter;
+
 public:
     Lexer(
         const detail::RegexesInitializer& regexes={
             std::is_integral<Type>::value ?
-                default_integer_complex : default_real_complex,
+                default_integer_complex :
+                default_real_complex,
             default_name,
             default_symbol
         },
@@ -352,7 +366,12 @@ public:
             default_separator,
             default_decimal
         }
-    ) : BaseLexer{regexes, strings}, _istream{}, _ostream{} {
+    ) :
+            BaseLexer{regexes, strings},
+            _istream{},
+            _ostream{},
+            _splitter{std::is_integral<Type>::value ? detail::isp : detail::rsp}
+    {
         if (this->decimal != default_decimal)
             throw LexerError{
                 "default lexer must use '" +
@@ -365,7 +384,12 @@ public:
         _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
     }
 
-    Lexer(const Lexer& other) : BaseLexer(other), _istream{}, _ostream{} {
+    Lexer(const Lexer& other) :
+            BaseLexer(other),
+            _istream{},
+            _ostream{},
+            _splitter{std::is_integral<Type>::value ? detail::isp : detail::rsp}
+    {
         _istream.imbue(std::locale("C"));
         _ostream.imbue(std::locale("C"));
         _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
@@ -376,23 +400,32 @@ public:
     }
 
     std::complex<Type> to_value(const std::string& token) const override {
-        using namespace std::complex_literals;
-
-        Type value;
+        std::smatch match{};
+        Type real{}, imag{};
 
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
 
-        if (token.back() != 'i')
-            _istream.str(token);
-        else
-            _istream.str(token.substr(0, token.size() - 1));
-        _istream.clear();
+        auto& istream = _istream;
+        auto write = [&real, &imag, &match, &istream](std::size_t i) noexcept {
+            istream.str(match[i].str());
+            istream.clear();
+            if (i % 2)
+                istream >> real;
+            else
+                istream >> imag;
+        };
 
-        _istream >> value;
-        if (token.back() != 'i')
-            return value;
-        return 1i * value;
+        std::regex_search(token, match, _splitter);
+        if (!match[3].str().empty())
+            write(3);
+        else if (!match[4].str().empty())
+            write(4);
+        else {
+            write(1);
+            write(2);
+        }
+        return {real, imag};
     }
 
     std::string to_string(std::complex<Type> value) const noexcept override {
