@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/01
+    Last modified 2018/03/08
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -86,64 +86,62 @@ private:
 
 
     std::queue<SymbolHandler> _tokenize(
-        std::string expression,
-        const std::shared_ptr<VariableHandler>& variables
+        const std::string& expression,
+        const std::shared_ptr<VariableHandler>& variables,
+        bool postfix=false
     ) const {
-        enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR, DECIMAL};
+        using TokenType = typename Lexer::TokenType;
+
         std::queue<SymbolHandler> symbols{};
-        std::smatch match{};
+        decltype(constants.begin()) con;
+        decltype(functions.begin()) fun;
+        decltype(operators.begin()) oper;
 
-        auto is = [&match](auto group) { return !match[group].str().empty(); };
-        auto has = [&match](const auto& container, auto& founded) {
-            return (founded = container.find(match.str())) != container.end();
-        };
+        auto tokens = _lexer->tokenize(expression, postfix);
+        while (!tokens.empty()) {
+            auto token = tokens.front();
+            auto has = [&token](const auto& container, auto& iter) noexcept {
+                return (iter = container.find(token.first)) != container.end();
+            };
+            tokens.pop();
 
-        decltype(constants.begin()) found_constant;
-        decltype(functions.begin()) found_function;
-        decltype(operators.begin()) found_operator;
-
-        while (std::regex_search(expression, match, _lexer->tokenizer_regex)) {
-            auto token = match.str();
-            if (is(Group::DECIMAL))
-                throw SyntaxError{"orphan decimal mark '" + token + "'"};
-            else if (is(Group::LEFT))
+            if (token.second == TokenType::LEFT)
                 symbols.push(_left());
-            else if (is(Group::RIGHT))
+            else if (token.second == TokenType::RIGHT)
                 symbols.push(_right());
-            else if (is(Group::SEPARATOR))
+            else if (token.second == TokenType::SEPARATOR)
                 symbols.push(_separator());
-            else if (is(Group::NAME) && has(constants, found_constant))
+            else if (token.second == TokenType::NAME && has(constants, con))
                 symbols.push({
-                    token,
+                    std::move(token.first),
                     SymbolType::CONSTANT,
-                    found_constant->second.clone()
+                    con->second.clone()
                 });
-            else if (is(Group::NAME) && has(functions, found_function))
+            else if (token.second == TokenType::NAME && has(functions, fun))
                 symbols.push({
-                    token,
+                    std::move(token.first),
                     SymbolType::FUNCTION,
-                    found_function->second.clone()
+                    fun->second.clone()
                 });
-            else if (is(Group::SYMBOL) && has(operators, found_operator))
+            else if (token.second == TokenType::SYMBOL && has(operators, oper))
                 symbols.push({
-                    token,
+                    std::move(token.first),
                     SymbolType::OPERATOR,
-                    found_operator->second.clone()
+                    oper->second.clone()
                 });
-            else if (is(Group::NUMBER))
+            else if (token.second == TokenType::NUMBER)
                 symbols.push({
-                    token,
+                    token.first,
                     SymbolType::CONSTANT,
-                    Constant{_lexer->to_value(token)}.clone()
+                    Constant{_lexer->to_value(std::move(token.first))}.clone()
                 });
             else {
                 symbols.push({
-                    token,
+                    token.first,
                     SymbolType::CONSTANT,
-                    Variable{variables->at(token)}.clone()
+                    Variable{variables->at(std::move(token.first))}.clone()
                 });
             }
-            expression = match.suffix().str();
         }
         return symbols;
     }
@@ -541,7 +539,7 @@ public:
             *_lexer
         );
 
-        return _build_tree(_tokenize(expr, variables), variables);
+        return _build_tree(_tokenize(expr, variables, true), variables);
     }
 
     Expression parse(const std::string& expression) const {

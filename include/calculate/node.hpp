@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/01
+    Last modified 2018/03/09
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -187,6 +187,91 @@ private:
         return pruned;
     }
 
+    bool _compare(const Node& other) const noexcept {
+        std::stack<std::pair<const_iterator, const_iterator>> these{};
+        std::stack<const_iterator> those{};
+
+        auto equal = [&](auto left, auto right) {
+            try {
+                return
+                    left->_variables->index(left->_token) ==
+                    right->_variables->index(right->_token);
+            }
+            catch (const UndefinedSymbol&) {
+                if (left->_symbol == right->_symbol)
+                    return true;
+                return *(left->_symbol) == *(right->_symbol);
+            }
+        };
+
+        if (!equal(this, &other))
+            return false;
+
+        these.push({this->begin(), this->end()});
+        those.push(other.begin());
+        while(!these.empty()) {
+            auto one = these.top();
+            auto another = those.top();
+            these.pop();
+            those.pop();
+
+            if (one.first != one.second) {
+                if (!equal(one.first, another))
+                    return false;
+                these.push({one.first->begin(), one.first->end()});
+                these.push({one.first + 1, one.second});
+                those.push(another->begin());
+                those.push(another + 1);
+            }
+        }
+        return true;
+    }
+
+    std::string _infix(bool check) const noexcept {
+        using Operator = Operator<Node>;
+        using Associativity = typename Operator::Associativity;
+
+        std::string infix{};
+
+        auto brace = [&](std::size_t i) {
+            const auto& node = _nodes[i];
+            if (node._symbol->symbol() == SymbolType::OPERATOR) {
+                auto po = static_cast<Operator*>(_symbol.get());
+                auto co = static_cast<Operator*>(node._symbol.get());
+                auto pp = po->precedence();
+                auto cp = co->precedence();
+                auto pa = !i ?
+                    po->associativity() != Associativity::RIGHT :
+                    po->associativity() != Associativity::LEFT;
+                if ((pa && cp < pp) || (!pa && cp <= pp))
+                    return _lexer->left + node._infix(false) + _lexer->right;
+            }
+            return node._infix(check || i);
+        };
+
+        switch (_symbol->symbol()) {
+        case (SymbolType::FUNCTION):
+            infix += _token + _lexer->left;
+            for (auto node = _nodes.begin(); node != _nodes.end(); node++)
+                infix +=
+                    node->_infix(false) +
+                    (node + 1 != _nodes.end() ? _lexer->separator : "");
+            infix += _lexer->right;
+            return infix;
+
+        case (SymbolType::OPERATOR):
+            infix += brace(0) + _token + brace(1);
+            return infix;
+
+        default:
+            if (check && _lexer->prefixed(_token))
+                return _lexer->left + _token + _lexer->right;
+            return _token;
+        }
+
+        return infix;
+    }
+
 
 public:
     Node(const Node& other) noexcept :
@@ -244,43 +329,9 @@ public:
     }
 
     bool operator==(const Node& other) const noexcept {
-        std::stack<std::pair<const_iterator, const_iterator>> these{};
-        std::stack<const_iterator> those{};
-
-        auto equal = [&](auto left, auto right) {
-            try {
-                return
-                    left->_variables->index(left->_token) ==
-                    right->_variables->index(right->_token);
-            }
-            catch (const UndefinedSymbol&) {
-                if (left->_symbol == right->_symbol)
-                    return true;
-                return *(left->_symbol) == *(right->_symbol);
-            }
-        };
-
-        if (!equal(this, &other))
+        if (_hash != other._hash)
             return false;
-
-        these.push({this->begin(), this->end()});
-        those.push(other.begin());
-        while(!these.empty()) {
-            auto one = these.top();
-            auto another = those.top();
-            these.pop();
-            those.pop();
-
-            if (one.first != one.second) {
-                if (!equal(one.first, another))
-                    return false;
-                these.push({one.first->begin(), one.first->end()});
-                these.push({one.first + 1, one.second});
-                those.push(another->begin());
-                those.push(another + 1);
-            }
-        }
-        return true;
+        return _compare(other);
     }
 
     bool operator!=(const Node& other) const noexcept {
@@ -327,42 +378,7 @@ public:
 
     std::size_t branches() const noexcept { return _nodes.size(); }
 
-    std::string infix() const noexcept {
-        using Operator = Operator<Node>;
-        using Associativity = typename Operator::Associativity;
-
-        std::string infix{};
-
-        auto brace = [&](std::size_t i) {
-            const auto& node = _nodes[i];
-            if (node._symbol->symbol() == SymbolType::OPERATOR) {
-                auto po = static_cast<Operator*>(_symbol.get());
-                auto co = static_cast<Operator*>(node._symbol.get());
-                auto pp = po->precedence();
-                auto cp = co->precedence();
-                auto pa = !i ?
-                    po->associativity() != Associativity::RIGHT :
-                    po->associativity() != Associativity::LEFT;
-                if ((pa && cp < pp) || (!pa && cp <= pp))
-                    return _lexer->left + node.infix() + _lexer->right;
-            }
-            return node.infix();
-        };
-
-        switch (_symbol->symbol()) {
-        case (SymbolType::FUNCTION):
-            infix += _token + _lexer->left;
-            for (const auto& node : _nodes)
-                infix += node.infix() + _lexer->separator;
-            infix.back() = _lexer->right.front();
-            return infix;
-        case (SymbolType::OPERATOR):
-            infix += brace(0) + _token + brace(1);
-            return infix;
-        default:
-            return _token;
-        }
-    }
+    std::string infix() const noexcept { return _infix(false); }
 
     std::string postfix() const noexcept {
         std::string postfix{};

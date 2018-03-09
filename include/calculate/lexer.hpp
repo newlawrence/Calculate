@@ -188,7 +188,10 @@ public:
     BaseLexer& operator=(const BaseLexer&) = delete;
     BaseLexer& operator=(BaseLexer&&) = delete;
 
-    std::queue<TokenHandler> tokenize(std::string expression, bool postfix=false) const {
+    std::queue<TokenHandler> tokenize(
+        std::string expression,
+        bool postfix=false
+    ) const {
         std::queue<TokenHandler> tokens{};
         std::smatch match{}, unary{};
         TokenType last{TokenType::LEFT};
@@ -200,6 +203,7 @@ public:
                 if (
                     last != TokenType::SYMBOL &&
                     last != TokenType::LEFT &&
+                    last != TokenType::SEPARATOR &&
                     std::regex_search(token, unary, _prefixer_regex)
                 ) {
                     tokens.push({unary.str(), TokenType::SYMBOL});
@@ -211,14 +215,14 @@ public:
                     syms{token.begin(), token.end(), _splitter_regex},
                     end{};
 
-                if (nums->str().empty()) {
-                    nums++;
-                    tokens.push(
-                        {(syms++)->str() + (nums++)->str(), TokenType::NUMBER}
-                    );
-                }
+                if (nums->str().empty())
+                    tokens.push({
+                        (syms++)->str() + ((++nums)++)->str(),
+                        TokenType::NUMBER
+                    });
                 else
                     tokens.push({*nums++, TokenType::NUMBER});
+
                 while (nums != end && syms != end) {
                     tokens.push({*syms++, TokenType::SYMBOL});
                     tokens.push({*nums++, TokenType::NUMBER});
@@ -244,6 +248,10 @@ public:
         }
         return tokens;
     }
+
+    bool prefixed(const std::string& token) const noexcept {
+        return std::regex_search(token, _prefixer_regex);
+    };
 
     virtual std::shared_ptr<BaseLexer> clone() const noexcept = 0;
     virtual Type to_value(const std::string&) const = 0;
