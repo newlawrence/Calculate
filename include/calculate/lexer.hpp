@@ -41,10 +41,15 @@ const char scape[] = {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
 
 }
 
-const char default_number[] =
+const char default_integer[] = R"(^[+\-]?\d+$)";
+
+const char default_real[] =
     R"(^[+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)";
 
-const char default_complex[] =
+const char default_integer_complex[]=
+    R"(^(?:(?:(?:[+\-]?\d+)(?:[+\-]?\d+)i)|(?:(?:[+\-]?\d+)i?))$)";
+
+const char default_real_complex[] =
     R"(^(?:)"
     R"((?:(?:[+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))"
     R"((?:[+\-](?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)i)|)"
@@ -269,7 +274,7 @@ class Lexer final : public BaseLexer<Type> {
 public:
     Lexer(
         const detail::RegexesInitializer& regexes={
-            std::is_integral<Type>::value ?  R"(^\d+$)" : default_number,
+            std::is_integral<Type>::value ? default_integer : default_real,
             default_name,
             default_symbol
         },
@@ -336,7 +341,8 @@ class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
 public:
     Lexer(
         const detail::RegexesInitializer& regexes={
-            std::is_integral<Type>::value ?  R"(^\d+i?$)" : default_complex,
+            std::is_integral<Type>::value ?
+                default_integer_complex : default_real_complex,
             default_name,
             default_symbol
         },

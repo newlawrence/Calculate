@@ -227,7 +227,7 @@ private:
         return true;
     }
 
-    std::string _infix(bool check) const noexcept {
+    std::string _infix(bool right) const noexcept {
         using Operator = Operator<Node>;
         using Associativity = typename Operator::Associativity;
 
@@ -246,29 +246,27 @@ private:
                 if ((pa && cp < pp) || (!pa && cp <= pp))
                     return _lexer->left + node._infix(false) + _lexer->right;
             }
-            return node._infix(check || i);
+            return node._infix(right || i);
         };
 
         switch (_symbol->symbol()) {
         case (SymbolType::FUNCTION):
             infix += _token + _lexer->left;
-            for (auto node = _nodes.begin(); node != _nodes.end(); node++)
-                infix +=
-                    node->_infix(false) +
-                    (node + 1 != _nodes.end() ? _lexer->separator : "");
-            infix += _lexer->right;
-            return infix;
+            for (auto node = _nodes.begin(); node != _nodes.end(); node++) {
+                infix += node->_infix(false);
+                infix += (node + 1 != _nodes.end() ? _lexer->separator : "");
+            }
+            return infix + _lexer->right;
 
         case (SymbolType::OPERATOR):
             infix += brace(0) + _token + brace(1);
             return infix;
 
         default:
-            if (check && _lexer->prefixed(_token))
+            if (right && _lexer->prefixed(_token))
                 return _lexer->left + _token + _lexer->right;
             return _token;
         }
-
         return infix;
     }
 
