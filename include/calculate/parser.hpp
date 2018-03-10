@@ -90,56 +90,79 @@ private:
         const std::string& expression,
         const std::shared_ptr<VariableHandler>& variables
     ) const {
+        using Associativity = typename Operator::Associativity;
         using TokenType = typename Lexer::TokenType;
 
         std::queue<SymbolHandler> symbols{};
-        decltype(constants.begin()) con;
-        decltype(functions.begin()) fun;
-        decltype(operators.begin()) oper;
+        decltype(constants.begin()) c;
+        decltype(functions.begin()) f;
+        decltype(operators.begin()) o;
 
         auto tokens = _lexer->tokenize(expression);
-        for (auto token = tokens.begin(); token != tokens.end(); token++) {
-            auto has = [&token](const auto& container, auto& iter) noexcept {
-                return (iter = container.find(token->first)) != container.end();
+        for (auto t = tokens.begin(); t != tokens.end(); t++) {
+            auto token = t->first;
+            auto type = t->second;
+            auto next = t + 1;
+
+            auto has = [](const auto& cont, const auto& t, auto& it) noexcept {
+                return (it = cont.find(t)) != cont.end();
             };
 
-            if (token->second == TokenType::LEFT)
-                symbols.push(_left());
-            else if (token->second == TokenType::RIGHT)
-                symbols.push(_right());
-            else if (token->second == TokenType::SEPARATOR)
-                symbols.push(_separator());
-            else if (token->second == TokenType::NAME && has(constants, con))
-                symbols.push({
-                    std::move(token->first),
-                    SymbolType::CONSTANT,
-                    con->second.clone()
-                });
-            else if (token->second == TokenType::NAME && has(functions, fun))
-                symbols.push({
-                    std::move(token->first),
-                    SymbolType::FUNCTION,
-                    fun->second.clone()
-                });
-            else if (token->second == TokenType::SYMBOL && has(operators, oper))
-                symbols.push({
-                    std::move(token->first),
-                    SymbolType::OPERATOR,
-                    oper->second.clone()
-                });
-            else if (token->second == TokenType::NUMBER)
-                symbols.push({
-                    token->first,
-                    SymbolType::CONSTANT,
-                    Constant{_lexer->to_value(std::move(token->first))}.clone()
-                });
-            else {
-                symbols.push({
-                    token->first,
-                    SymbolType::CONSTANT,
-                    Variable{variables->at(std::move(token->first))}.clone()
-                });
+            if (type == TokenType::NUMBER) {
+                auto na = Associativity::LEFT;
+                if (next != tokens.end() && has(operators, next->first, o))
+                    na = o->second.associativity();
+
+                if (na == Associativity::RIGHT && _lexer->prefixed(token)) {
+                    auto splitted = _lexer->split(token);
+                    symbols.push({
+                        splitted.first,
+                        SymbolType::OPERATOR,
+                        operators.at(splitted.first).clone()
+                    });
+                    symbols.push({
+                        splitted.second,
+                        SymbolType::CONSTANT,
+                        Constant{_lexer->to_value(splitted.second)}.clone()
+                    });
+                }
+                else
+                    symbols.push({
+                        token,
+                        SymbolType::CONSTANT,
+                        Constant{_lexer->to_value(token)}.clone()
+                    });
             }
+            else if (type == TokenType::LEFT)
+                symbols.push(_left());
+            else if (type == TokenType::RIGHT)
+                symbols.push(_right());
+            else if (type == TokenType::SEPARATOR)
+                symbols.push(_separator());
+            else if (type == TokenType::NAME && has(constants, token, c))
+                symbols.push({
+                    std::move(token),
+                    SymbolType::CONSTANT,
+                    c->second.clone()
+                });
+            else if (type == TokenType::NAME && has(functions, token, f))
+                symbols.push({
+                    std::move(token),
+                    SymbolType::FUNCTION,
+                    f->second.clone()
+                });
+            else if (type == TokenType::SYMBOL && has(operators, token, o))
+                symbols.push({
+                    std::move(token),
+                    SymbolType::OPERATOR,
+                    o->second.clone()
+                });
+            else
+                symbols.push({
+                    token,
+                    SymbolType::CONSTANT,
+                    Variable{variables->at(token)}.clone()
+                });
         }
         return symbols;
     }

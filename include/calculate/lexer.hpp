@@ -93,6 +93,7 @@ public:
         DECIMAL
     };
     using TokenHandler = std::pair<std::string, TokenType>;
+    using PrefixHandler = std::pair<std::string, std::string>;
 
     const std::string left;
     const std::string right;
@@ -266,8 +267,20 @@ public:
     bool prefixed(const std::string& token) const noexcept {
         std::sregex_token_iterator
             num{token.begin(), token.end(), _splitter_regex, -1};
+
         return num->str().empty();
     };
+
+    PrefixHandler split(const std::string& token) const noexcept {
+        std::sregex_token_iterator
+            num{token.begin(), token.end(), _splitter_regex, -1},
+            sym{token.begin(), token.end(), _splitter_regex},
+            end{};
+
+        if (sym == end || num == end || ++num == end)
+            return {"", ""};
+        return {*sym, *num};
+    }
 
     virtual std::shared_ptr<BaseLexer> clone() const noexcept = 0;
     virtual Type to_value(const std::string&) const = 0;
