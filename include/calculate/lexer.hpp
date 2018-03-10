@@ -277,7 +277,7 @@ public:
             sym{token.begin(), token.end(), _splitter_regex},
             end{};
 
-        if (sym == end || num == end || ++num == end)
+        if (sym == end || num == end || !num->str().empty() || ++num == end)
             return {"", ""};
         return {*sym, *num};
     }

@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/09
+    Last modified 2018/03/10
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -235,8 +235,8 @@ private:
 
         auto brace = [&](std::size_t i) {
             const auto& node = _nodes[i];
+            auto po = static_cast<Operator*>(_symbol.get());
             if (node._symbol->symbol() == SymbolType::OPERATOR) {
-                auto po = static_cast<Operator*>(_symbol.get());
                 auto co = static_cast<Operator*>(node._symbol.get());
                 auto pp = po->precedence();
                 auto cp = co->precedence();
@@ -246,7 +246,8 @@ private:
                 if ((pa && cp < pp) || (!pa && cp <= pp))
                     return _lexer->left + node._infix(false) + _lexer->right;
             }
-            return node._infix(right || i);
+            auto r = right || i || po->associativity() == Associativity::RIGHT;
+            return node._infix(r);
         };
 
         switch (_symbol->symbol()) {
