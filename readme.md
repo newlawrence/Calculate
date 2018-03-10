@@ -10,8 +10,6 @@
 [![Build Status](https://travis-ci.org/newlawrence/Calculate.svg?branch=master)](https://travis-ci.org/newlawrence/Calculate)
 [![codecov](https://codecov.io/gh/newlawrence/Calculate/branch/master/graph/badge.svg)](https://codecov.io/gh/newlawrence/Calculate)
 
-> Warning! Expected one more API change. Please wait until version 2.0.1 is released to use safely in production.
-
 Header-only library written in modern **C++** aiming for flexibility and ease of use. **Calculate** is not only a mathematical expressions parser but an engine built on top of the [Shunting Yard algorithm](https://en.wikipedia.org/wiki/Shunting-yard_algorithm).
 
 The main objective of the library is to offer a clean and intuitive interface, where the expressions act and feel like regular functions. Another objective is to be completely configurable; from the data type to the tokenizing logic, the library is in fact a custom parser factory.
@@ -30,12 +28,10 @@ sum(1., 2.);  // returns 3.
 ### Features
 
 * **Generic**. `double` and `std::complex<double>` parsers included by default.
-* **Infix** and **postfix** notations allowed.
 * User defined constants, functions and operators.
-* Regex based customizable lexers. Fully configurable tokenizing logic.
-* **Header-only** only. Very easy to deploy.
-* Fully **value semantics** based **API**. All of the **Calculate**'s objects are stack friendly.
-* Introspection using **template metaprogramming**. What else?
+* **Infix** and **postfix** notations supported.
+* Regex-based customizable lexers.
+* **Header-only**.
 
 ### Requirements
 
