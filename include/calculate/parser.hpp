@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/08
+    Last modified 2018/03/10
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <queue>
 
 #include "lexer.hpp"
 #include "node.hpp"
@@ -87,8 +88,7 @@ private:
 
     std::queue<SymbolHandler> _tokenize(
         const std::string& expression,
-        const std::shared_ptr<VariableHandler>& variables,
-        bool postfix=false
+        const std::shared_ptr<VariableHandler>& variables
     ) const {
         using TokenType = typename Lexer::TokenType;
 
@@ -97,49 +97,47 @@ private:
         decltype(functions.begin()) fun;
         decltype(operators.begin()) oper;
 
-        auto tokens = _lexer->tokenize(expression, postfix);
-        while (!tokens.empty()) {
-            auto token = tokens.front();
+        auto tokens = _lexer->tokenize(expression);
+        for (auto token = tokens.begin(); token != tokens.end(); token++) {
             auto has = [&token](const auto& container, auto& iter) noexcept {
-                return (iter = container.find(token.first)) != container.end();
+                return (iter = container.find(token->first)) != container.end();
             };
-            tokens.pop();
 
-            if (token.second == TokenType::LEFT)
+            if (token->second == TokenType::LEFT)
                 symbols.push(_left());
-            else if (token.second == TokenType::RIGHT)
+            else if (token->second == TokenType::RIGHT)
                 symbols.push(_right());
-            else if (token.second == TokenType::SEPARATOR)
+            else if (token->second == TokenType::SEPARATOR)
                 symbols.push(_separator());
-            else if (token.second == TokenType::NAME && has(constants, con))
+            else if (token->second == TokenType::NAME && has(constants, con))
                 symbols.push({
-                    std::move(token.first),
+                    std::move(token->first),
                     SymbolType::CONSTANT,
                     con->second.clone()
                 });
-            else if (token.second == TokenType::NAME && has(functions, fun))
+            else if (token->second == TokenType::NAME && has(functions, fun))
                 symbols.push({
-                    std::move(token.first),
+                    std::move(token->first),
                     SymbolType::FUNCTION,
                     fun->second.clone()
                 });
-            else if (token.second == TokenType::SYMBOL && has(operators, oper))
+            else if (token->second == TokenType::SYMBOL && has(operators, oper))
                 symbols.push({
-                    std::move(token.first),
+                    std::move(token->first),
                     SymbolType::OPERATOR,
                     oper->second.clone()
                 });
-            else if (token.second == TokenType::NUMBER)
+            else if (token->second == TokenType::NUMBER)
                 symbols.push({
-                    token.first,
+                    token->first,
                     SymbolType::CONSTANT,
-                    Constant{_lexer->to_value(std::move(token.first))}.clone()
+                    Constant{_lexer->to_value(std::move(token->first))}.clone()
                 });
             else {
                 symbols.push({
-                    token.first,
+                    token->first,
                     SymbolType::CONSTANT,
-                    Variable{variables->at(std::move(token.first))}.clone()
+                    Variable{variables->at(std::move(token->first))}.clone()
                 });
             }
         }
@@ -539,7 +537,7 @@ public:
             *_lexer
         );
 
-        return _build_tree(_tokenize(expr, variables, true), variables);
+        return _build_tree(_tokenize(expr, variables), variables);
     }
 
     Expression parse(const std::string& expression) const {

@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/09
+    Last modified 2018/03/10
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -12,7 +12,6 @@
 #include <complex>
 #include <iomanip>
 #include <locale>
-#include <queue>
 #include <sstream>
 #include <type_traits>
 
@@ -84,8 +83,15 @@ const char default_decimal[] = ".";
 template<typename Type>
 class BaseLexer {
 public:
-    enum class TokenType :
-            int { NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR, DECIMAL };
+    enum class TokenType : int {
+        NUMBER=1,
+        NAME,
+        SYMBOL,
+        LEFT,
+        RIGHT,
+        SEPARATOR,
+        DECIMAL
+    };
     using TokenHandler = std::pair<std::string, TokenType>;
 
     const std::string left;
@@ -102,7 +108,6 @@ public:
     const std::regex symbol_regex;
 
 private:
-    const std::regex _prefixer_regex;
     const std::regex _splitter_regex;
     const std::regex _tokenizer_regex;
 
@@ -167,13 +172,13 @@ public:
             number_regex{number},
             name_regex{name},
             symbol_regex{symbol},
-            _prefixer_regex{symbol.substr(0, symbol.size() - 1)},
             _splitter_regex{symbol.substr(1, symbol.size() - 2)},
             _tokenizer_regex{_generate_tokenizer()}
     {
         std::smatch match{};
 
-        if (left == right ||
+        if (
+            left == right ||
             left == separator ||
             left == decimal ||
             right == separator ||
@@ -204,58 +209,51 @@ public:
     BaseLexer& operator=(const BaseLexer&) = delete;
     BaseLexer& operator=(BaseLexer&&) = delete;
 
-    std::queue<TokenHandler> tokenize(
-        std::string expression,
-        bool postfix=false
-    ) const {
-        std::queue<TokenHandler> tokens{};
-        std::smatch match{}, unary{};
+    std::vector<TokenHandler> tokenize(std::string expression) const {
+        std::vector<TokenHandler> tokens{};
+        std::smatch match{};
         TokenType last{TokenType::LEFT};
 
         while (std::regex_search(expression, match, _tokenizer_regex)) {
             auto token = match.str();
 
-            if (!postfix && _match(match, TokenType::NUMBER)) {
-                if (
-                    last != TokenType::SYMBOL &&
-                    last != TokenType::LEFT &&
-                    last != TokenType::SEPARATOR &&
-                    std::regex_search(token, unary, _prefixer_regex)
-                ) {
-                    tokens.push({unary.str(), TokenType::SYMBOL});
-                    token = unary.suffix().str();
-                }
-
+            if (_match(match, TokenType::NUMBER)) {
                 std::sregex_token_iterator
                     nums{token.begin(), token.end(), _splitter_regex, -1},
                     syms{token.begin(), token.end(), _splitter_regex},
                     end{};
 
-                if (nums->str().empty())
-                    tokens.push({
-                        (syms++)->str() + ((++nums)++)->str(),
-                        TokenType::NUMBER
-                    });
+                if (nums->str().empty()) {
+                    auto sym = (syms++)->str(), num = ((++nums)++)->str();
+                    if (
+                        last != TokenType::SYMBOL &&
+                        last != TokenType::LEFT &&
+                        last != TokenType::SEPARATOR
+                    ) {
+                        tokens.emplace_back(std::move(sym), TokenType::SYMBOL);
+                        tokens.emplace_back(std::move(num), TokenType::NUMBER);
+                    }
+                    else
+                        tokens.emplace_back(sym + num, TokenType::NUMBER);
+                }
                 else
-                    tokens.push({*nums++, TokenType::NUMBER});
+                    tokens.emplace_back((nums++)->str(), TokenType::NUMBER);
 
                 while (nums != end && syms != end) {
-                    tokens.push({*syms++, TokenType::SYMBOL});
-                    tokens.push({*nums++, TokenType::NUMBER});
+                    tokens.emplace_back((syms++)->str(), TokenType::SYMBOL);
+                    tokens.emplace_back((nums++)->str(), TokenType::NUMBER);
                 }
             }
-            else if (_match(match, TokenType::NUMBER))
-                tokens.push({std::move(token), TokenType::NUMBER});
             else if (_match(match, TokenType::NAME))
-                tokens.push({std::move(token), TokenType::NAME});
+                tokens.emplace_back(std::move(token), TokenType::NAME);
             else if (_match(match, TokenType::SYMBOL))
-                tokens.push({std::move(token), TokenType::SYMBOL});
+                tokens.emplace_back(std::move(token), TokenType::SYMBOL);
             else if (_match(match, TokenType::LEFT))
-                tokens.push({std::move(token), TokenType::LEFT});
+                tokens.emplace_back(std::move(token), TokenType::LEFT);
             else if (_match(match, TokenType::RIGHT))
-                tokens.push({std::move(token), TokenType::RIGHT});
+                tokens.emplace_back(std::move(token), TokenType::RIGHT);
             else if (_match(match, TokenType::SEPARATOR))
-                tokens.push({std::move(token), TokenType::SEPARATOR});
+                tokens.emplace_back(std::move(token), TokenType::SEPARATOR);
             else
                 throw SyntaxError{"orphan decimal mark '" + token + "'"};
 
@@ -266,7 +264,9 @@ public:
     }
 
     bool prefixed(const std::string& token) const noexcept {
-        return std::regex_search(token, _prefixer_regex);
+        std::sregex_token_iterator
+            num{token.begin(), token.end(), _splitter_regex, -1};
+        return num->str().empty();
     };
 
     virtual std::shared_ptr<BaseLexer> clone() const noexcept = 0;

@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/02/07
+    Last modified 2018/03/10
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -25,8 +25,14 @@ class Symbol : Wrapper<typename Expression::Type, Expression> {
 public:
     using Type = typename Expression::Type;
 
-    enum class SymbolType :
-            int { LEFT=0, RIGHT, SEPARATOR, CONSTANT, FUNCTION, OPERATOR };
+    enum class SymbolType : int {
+        LEFT=0,
+        RIGHT,
+        SEPARATOR,
+        CONSTANT,
+        FUNCTION,
+        OPERATOR
+    };
 
 private:
     using WrapperConcept = calculate::WrapperConcept<Type, Expression>;
