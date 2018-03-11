@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/02/07
+    Last modified 2018/02/11
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -104,12 +104,13 @@ void run(
 ) {
     using Type = typename Parser::Type;
 
-    Parser parser{};
-
     std::chrono::steady_clock::time_point begin;
     std::chrono::steady_clock::time_point::rep build_time, opt_time, eval_time;
     std::size_t iterations = arguments["iter"].as<std::size_t>();
     Type result;
+
+    auto parser = Parser{};
+    auto lexer = parser.lexer();
 
     std::vector<Type> values;
     if (arguments.count("var")) {
@@ -117,7 +118,7 @@ void run(
             auto sep = var.find(":");
             if (sep == 0 || sep > var.size() - 2)
                 throw po::error("bad variable input '" + var + "'");
-            values.push_back(parser.to_value(var.substr(sep + 1, var.size())));
+            values.push_back(lexer->to_value(var.substr(sep + 1, var.size())));
             var = var.substr(0, sep);
         }
     }
@@ -168,10 +169,10 @@ void run(
             std::cout << "\n";
             std::cout << "Values:            ";
             for (const auto& val : values)
-                std::cout << parser.to_string(val) << " ";
+                std::cout << lexer->to_string(val) << " ";
             std::cout << "\n";
         }
-        std::cout << "Result:            " << parser.to_string(result) << "\n";
+        std::cout << "Result:            " << lexer->to_string(result) << "\n";
         std::cout << "Iterations:        " << iterations << "\n";
         std::cout << "Building time:     " << build_time << " us" << "\n";
         if (arguments.count("optimize"))
@@ -179,5 +180,5 @@ void run(
         std::cout << "Evaluation time:   " << eval_time << " ns" << std::endl;
     }
     else
-        std::cout << parser.to_string(result) << std::endl;
+        std::cout << lexer->to_string(result) << std::endl;
 }

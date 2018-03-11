@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/10
+    Last modified 2018/03/11
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -534,14 +534,6 @@ private:
 
 
 public:
-    Type to_value(const std::string& expression) const {
-        return from_infix(expression);
-    }
-
-    std::string to_string(Type value) const {
-        return _lexer->to_string(value);
-    }
-
     template<typename... Args>
     Expression from_infix(const std::string& expr, Args&&... vars) const {
         auto variables = std::make_shared<VariableHandler>(
@@ -582,7 +574,7 @@ public:
     Expression optimize(const Expression& node) const noexcept {
         auto vars = node._pruned();
         if (vars.empty())
-            return from_infix(to_string(from_postfix(node.postfix())));
+            return from_infix(_lexer->to_string(from_postfix(node.postfix())));
 
         auto postfix = std::string{};
         auto variables =
