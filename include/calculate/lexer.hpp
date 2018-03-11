@@ -158,6 +158,62 @@ private:
         return tokenizer;
     }
 
+    std::vector<TokenHandler> _tokenize(std::string string, bool infix) const {
+        std::vector<TokenHandler> tokens{};
+        std::smatch match{};
+        TokenType last{TokenType::LEFT};
+
+        while (std::regex_search(string, match, _tokenizer_regex)) {
+            auto token = match.str();
+
+            if (_match(match, TokenType::NUMBER)) {
+                std::sregex_token_iterator
+                    nums{token.begin(), token.end(), _splitter_regex, -1},
+                    syms{token.begin(), token.end(), _splitter_regex},
+                    end{};
+
+                if (nums->str().empty()) {
+                    auto sym = (syms++)->str(), num = ((++nums)++)->str();
+                    if (
+                        infix &&
+                        last != TokenType::SYMBOL &&
+                        last != TokenType::LEFT &&
+                        last != TokenType::SEPARATOR
+                    ) {
+                        tokens.emplace_back(std::move(sym), TokenType::SYMBOL);
+                        tokens.emplace_back(std::move(num), TokenType::NUMBER);
+                    }
+                    else
+                        tokens.emplace_back(sym + num, TokenType::NUMBER);
+                }
+                else
+                    tokens.emplace_back((nums++)->str(), TokenType::NUMBER);
+
+                while (nums != end && syms != end) {
+                    tokens.emplace_back((syms++)->str(), TokenType::SYMBOL);
+                    tokens.emplace_back((nums++)->str(), TokenType::NUMBER);
+                }
+            }
+            else if (_match(match, TokenType::NAME))
+                tokens.emplace_back(std::move(token), TokenType::NAME);
+            else if (_match(match, TokenType::SYMBOL))
+                tokens.emplace_back(std::move(token), TokenType::SYMBOL);
+            else if (_match(match, TokenType::LEFT))
+                tokens.emplace_back(std::move(token), TokenType::LEFT);
+            else if (_match(match, TokenType::RIGHT))
+                tokens.emplace_back(std::move(token), TokenType::RIGHT);
+            else if (_match(match, TokenType::SEPARATOR))
+                tokens.emplace_back(std::move(token), TokenType::SEPARATOR);
+            else
+                throw SyntaxError{"orphan decimal mark '" + token + "'"};
+
+            string = match.suffix().str();
+            last = tokens.back().second;
+        }
+        return tokens;
+    }
+
+
 public:
     BaseLexer(
         const detail::RegexesInitializer& regexes,
@@ -210,60 +266,12 @@ public:
     BaseLexer& operator=(const BaseLexer&) = delete;
     BaseLexer& operator=(BaseLexer&&) = delete;
 
-    std::vector<TokenHandler> tokenize(std::string string, bool infix) const {
-        std::vector<TokenHandler> tokens{};
-        std::smatch match{};
-        TokenType last{TokenType::LEFT};
+    std::vector<TokenHandler> tokenize_infix(std::string string) const {
+        return _tokenize(std::move(string), true);
+    }
 
-        while (std::regex_search(string, match, _tokenizer_regex)) {
-            auto token = match.str();
-
-            if (infix && _match(match, TokenType::NUMBER)) {
-                std::sregex_token_iterator
-                    nums{token.begin(), token.end(), _splitter_regex, -1},
-                    syms{token.begin(), token.end(), _splitter_regex},
-                    end{};
-
-                if (nums->str().empty()) {
-                    auto sym = (syms++)->str(), num = ((++nums)++)->str();
-                    if (
-                        last != TokenType::SYMBOL &&
-                        last != TokenType::LEFT &&
-                        last != TokenType::SEPARATOR
-                    ) {
-                        tokens.emplace_back(std::move(sym), TokenType::SYMBOL);
-                        tokens.emplace_back(std::move(num), TokenType::NUMBER);
-                    }
-                    else
-                        tokens.emplace_back(sym + num, TokenType::NUMBER);
-                }
-                else
-                    tokens.emplace_back((nums++)->str(), TokenType::NUMBER);
-
-                while (nums != end && syms != end) {
-                    tokens.emplace_back((syms++)->str(), TokenType::SYMBOL);
-                    tokens.emplace_back((nums++)->str(), TokenType::NUMBER);
-                }
-            }
-            else if (_match(match, TokenType::NUMBER))
-                tokens.emplace_back(std::move(token), TokenType::NUMBER);
-            else if (_match(match, TokenType::NAME))
-                tokens.emplace_back(std::move(token), TokenType::NAME);
-            else if (_match(match, TokenType::SYMBOL))
-                tokens.emplace_back(std::move(token), TokenType::SYMBOL);
-            else if (_match(match, TokenType::LEFT))
-                tokens.emplace_back(std::move(token), TokenType::LEFT);
-            else if (_match(match, TokenType::RIGHT))
-                tokens.emplace_back(std::move(token), TokenType::RIGHT);
-            else if (_match(match, TokenType::SEPARATOR))
-                tokens.emplace_back(std::move(token), TokenType::SEPARATOR);
-            else
-                throw SyntaxError{"orphan decimal mark '" + token + "'"};
-
-            string = match.suffix().str();
-            last = tokens.back().second;
-        }
-        return tokens;
+    std::vector<TokenHandler> tokenize_postfix(std::string string) const {
+        return _tokenize(std::move(string), false);
     }
 
     bool prefixed(const std::string& token) const noexcept {

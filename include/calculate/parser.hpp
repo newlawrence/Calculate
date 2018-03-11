@@ -99,7 +99,10 @@ private:
         decltype(functions.begin()) f;
         decltype(operators.begin()) o;
 
-        auto tokens = _lexer->tokenize(expression, infix);
+        auto tokens = infix ?
+            _lexer->tokenize_infix(expression) :
+            _lexer->tokenize_postfix(expression);
+
         for (auto t = tokens.begin(); t != tokens.end(); t++) {
             auto token = t->first;
             auto type = t->second;
