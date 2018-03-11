@@ -61,7 +61,7 @@ public:
             operators{_lexer.get()}
     {}
 
-    virtual ~BaseParser() = default;
+    ~BaseParser() = default;
 
     std::shared_ptr<Lexer> lexer() const noexcept { return _lexer; }
 
