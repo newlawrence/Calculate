@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/10
+    Last modified 2018/03/11
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -210,15 +210,15 @@ public:
     BaseLexer& operator=(const BaseLexer&) = delete;
     BaseLexer& operator=(BaseLexer&&) = delete;
 
-    std::vector<TokenHandler> tokenize(std::string expression) const {
+    std::vector<TokenHandler> tokenize(std::string string, bool infix) const {
         std::vector<TokenHandler> tokens{};
         std::smatch match{};
         TokenType last{TokenType::LEFT};
 
-        while (std::regex_search(expression, match, _tokenizer_regex)) {
+        while (std::regex_search(string, match, _tokenizer_regex)) {
             auto token = match.str();
 
-            if (_match(match, TokenType::NUMBER)) {
+            if (infix && _match(match, TokenType::NUMBER)) {
                 std::sregex_token_iterator
                     nums{token.begin(), token.end(), _splitter_regex, -1},
                     syms{token.begin(), token.end(), _splitter_regex},
@@ -245,6 +245,8 @@ public:
                     tokens.emplace_back((nums++)->str(), TokenType::NUMBER);
                 }
             }
+            else if (_match(match, TokenType::NUMBER))
+                tokens.emplace_back(std::move(token), TokenType::NUMBER);
             else if (_match(match, TokenType::NAME))
                 tokens.emplace_back(std::move(token), TokenType::NAME);
             else if (_match(match, TokenType::SYMBOL))
@@ -258,7 +260,7 @@ public:
             else
                 throw SyntaxError{"orphan decimal mark '" + token + "'"};
 
-            expression = match.suffix().str();
+            string = match.suffix().str();
             last = tokens.back().second;
         }
         return tokens;

@@ -88,7 +88,8 @@ private:
 
     std::queue<SymbolHandler> _tokenize(
         const std::string& expression,
-        const std::shared_ptr<VariableHandler>& variables
+        const std::shared_ptr<VariableHandler>& variables,
+        bool infix
     ) const {
         using Associativity = typename Operator::Associativity;
         using TokenType = typename Lexer::TokenType;
@@ -98,7 +99,7 @@ private:
         decltype(functions.begin()) f;
         decltype(operators.begin()) o;
 
-        auto tokens = _lexer->tokenize(expression);
+        auto tokens = _lexer->tokenize(expression, infix);
         for (auto t = tokens.begin(); t != tokens.end(); t++) {
             auto token = t->first;
             auto type = t->second;
@@ -113,7 +114,7 @@ private:
                 if (next != tokens.end() && has(operators, next->first, o))
                     na = o->second.associativity();
 
-                if (na == Associativity::RIGHT && _lexer->prefixed(token)) {
+                if (infix && na == Associativity::RIGHT && _lexer->prefixed(token)) {
                     auto splitted = _lexer->split(token);
                     symbols.push({
                         splitted.first,
@@ -540,7 +541,8 @@ public:
             util::to_vector<std::string>(std::forward<Args>(vars)...),
             *_lexer
         );
-        auto postfix = _shunting_yard(_parse_infix(_tokenize(expr, variables)));
+        auto postfix =
+            _shunting_yard(_parse_infix(_tokenize(expr, variables, true)));
 
         return _build_tree(std::move(postfix), variables);
     }
@@ -552,7 +554,7 @@ public:
             *_lexer
         );
 
-        return _build_tree(_tokenize(expr, variables), variables);
+        return _build_tree(_tokenize(expr, variables, false), variables);
     }
 
     Expression parse(const std::string& expression) const {
@@ -583,7 +585,7 @@ public:
             postfix += optimize(branch).postfix() + " ";
         postfix += node.token();
 
-        return _build_tree(_tokenize(postfix, variables), variables);
+        return _build_tree(_tokenize(postfix, variables, false), variables);
     }
 };
 
