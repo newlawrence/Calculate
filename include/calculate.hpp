@@ -20,18 +20,7 @@ class Parser : public BaseParser<double> {
 public:
     template<typename LexerType>
     Parser(LexerType&& lexer) :
-            BaseParser<Type>{std::forward<LexerType>(lexer)}
-    {}
-
-    Parser() : Parser{make_lexer<Type>()} {}
-};
-
-
-class DefaultParser : public Parser {
-public:
-    template<typename LexerType>
-    DefaultParser(LexerType&& lexer) :
-            Parser{std::forward<LexerType>(lexer)}
+            BaseParser<double>{std::forward<LexerType>(lexer)}
     {
         using Associativity = Operator::Associativity;
 
@@ -126,7 +115,7 @@ public:
         });
     }
 
-    DefaultParser() : DefaultParser{make_lexer<Type>()} {}
+    Parser() : Parser{make_lexer<Type>()} {}
 };
 
 
@@ -134,17 +123,7 @@ class ComplexParser : public BaseParser<std::complex<double>> {
 public:
     template<typename LexerType>
     ComplexParser(LexerType&& lexer) :
-            BaseParser<Type>{std::forward<LexerType>(lexer)}
-    {}
-
-    ComplexParser() : ComplexParser{make_lexer<Type>()} {}
-};
-
-class DefaultComplexParser : public ComplexParser {
-public:
-    template<typename LexerType>
-    DefaultComplexParser(LexerType&& lexer) :
-            ComplexParser{std::forward<LexerType>(lexer)}
+            BaseParser<std::complex<double>>{std::forward<LexerType>(lexer)}
     {
         using namespace std::complex_literals;
         using Associativity = Operator::Associativity;
@@ -218,7 +197,7 @@ public:
         });
     }
 
-    DefaultComplexParser() : DefaultComplexParser{make_lexer<Type>()} {}
+    ComplexParser() : ComplexParser{make_lexer<Type>()} {}
 };
 
 }

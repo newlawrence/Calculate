@@ -80,9 +80,9 @@ int main(int argc, char *argv[]) {
         po::notify(arguments);
 
         if (arguments.count("complex"))
-            run<calculate::DefaultComplexParser>(string, variables, arguments);
+            run<calculate::ComplexParser>(string, variables, arguments);
         else
-            run<calculate::DefaultParser>(string, variables, arguments);
+            run<calculate::Parser>(string, variables, arguments);
     }
     catch (const po::error& error) {
         std::cerr << "Command line error: " << error.what() << std::endl;
