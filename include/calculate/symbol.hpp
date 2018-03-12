@@ -31,7 +31,8 @@ public:
         SEPARATOR,
         CONSTANT,
         FUNCTION,
-        OPERATOR
+        OPERATOR,
+        PREFIX
     };
 
 private:

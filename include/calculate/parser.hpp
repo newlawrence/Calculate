@@ -101,6 +101,7 @@ private:
         decltype(constants.begin()) c;
         decltype(functions.begin()) f;
         decltype(operators.begin()) o;
+        decltype(prefixes.begin()) p;
 
         auto tokens = infix ?
             _lexer->tokenize_infix(expression) :
@@ -115,18 +116,41 @@ private:
                 return (it = cont.find(t)) != cont.end();
             };
 
-            if (type == TokenType::NUMBER) {
-                auto na = Associativity::LEFT;
-                if (next != tokens.end() && has(operators, next->first, o))
-                    na = o->second.associativity();
+            auto push_operator = [&](const auto& token) noexcept {
+                auto previous =
+                    symbols.empty() ? SymbolType::LEFT : symbols.back().type;
+                auto prefix =
+                    previous == SymbolType::LEFT ||
+                    previous == SymbolType::SEPARATOR ||
+                    previous == SymbolType::OPERATOR;
 
-                if (infix && na == Associativity::RIGHT && _lexer->prefixed(token)) {
-                    auto splitted = _lexer->split(token);
+                if (
+                    infix && prefix &&
+                    has(prefixes, token, p) &&
+                    has(functions, p->second, f)
+                )
                     symbols.push({
-                        splitted.first,
-                        SymbolType::OPERATOR,
-                        operators.at(splitted.first).clone()
+                        std::move(p->second),
+                        SymbolType::PREFIX,
+                        f->second.clone()
                     });
+                else
+                    symbols.push({
+                        std::move(token),
+                        SymbolType::OPERATOR,
+                        o->second.clone()
+                    });
+            };
+
+            if (type == TokenType::NUMBER) {
+                if (
+                    infix && next != tokens.end() &&
+                    has(operators, next->first, o) &&
+                    o->second.associativity() == Associativity::RIGHT &&
+                    _lexer->prefixed(token)
+                ) {
+                    auto splitted = _lexer->split(token);
+                    push_operator(splitted.first);
                     symbols.push({
                         splitted.second,
                         SymbolType::CONSTANT,
@@ -146,6 +170,8 @@ private:
                 symbols.push(_right());
             else if (type == TokenType::SEPARATOR)
                 symbols.push(_separator());
+            else if (type == TokenType::SYMBOL && has(operators, token, o))
+                push_operator(token);
             else if (type == TokenType::NAME && has(constants, token, c))
                 symbols.push({
                     std::move(token),
@@ -157,12 +183,6 @@ private:
                     std::move(token),
                     SymbolType::FUNCTION,
                     f->second.clone()
-                });
-            else if (type == TokenType::SYMBOL && has(operators, token, o))
-                symbols.push({
-                    std::move(token),
-                    SymbolType::OPERATOR,
-                    o->second.clone()
                 });
             else
                 symbols.push({
@@ -215,12 +235,14 @@ private:
                 if (
                     current.type == SymbolType::CONSTANT ||
                     current.type == SymbolType::LEFT ||
-                    current.type == SymbolType::FUNCTION
+                    current.type == SymbolType::FUNCTION ||
+                    current.type == SymbolType::PREFIX
                 )
                     break;
                 else
                     throw SyntaxError{};
             case (SymbolType::FUNCTION):
+            case (SymbolType::PREFIX):
                 if (current.type == SymbolType::LEFT)
                     break;
                 else
@@ -259,34 +281,16 @@ private:
                 current = std::move(symbols.front());
                 symbols.pop();
 
-                if (current.type != SymbolType::OPERATOR)
-                    collect_symbol();
-                else {
-                    auto prefix = prefixes.find(current.token);
-                    if (prefix == prefixes.end())
-                        collect_symbol();
-                    else if (symbols.empty())
+                if (current.type != SymbolType::PREFIX) {
+                    if (current.type == SymbolType::OPERATOR && symbols.empty())
                         throw SyntaxError{};
-                    else {
-                        switch (previous.type) {
-                        case (SymbolType::LEFT):
-                        case (SymbolType::SEPARATOR):
-                        case (SymbolType::OPERATOR):
-                            parsed += current.token + " ";
-                            current = {
-                                prefix->second,
-                                SymbolType::FUNCTION,
-                                functions.at(prefix->second).clone()
-                            };
-                            collect_symbol(false);
-                            current = _left();
-                            automatic.push(true);
-                            collect_symbol(false);
-                            break;
-                        default:
-                            collect_symbol();
-                        }
-                    }
+                    collect_symbol();
+                }
+                else {
+                    collect_symbol(false);
+                    current = _left();
+                    automatic.push(true);
+                    collect_symbol(false);
                 }
             }
             current = {"", SymbolType::CONSTANT, nullptr};
@@ -404,6 +408,7 @@ private:
                 break;
 
             case (SymbolType::FUNCTION):
+            case (SymbolType::PREFIX):
                 expected_counter.push(element.symbol->arguments());
                 provided_counter.push(1);
                 was_function = true;
@@ -415,7 +420,10 @@ private:
                     auto& another = operations.top();
                     if (another.type == SymbolType::LEFT)
                         break;
-                    else if (another.type == SymbolType::FUNCTION) {
+                    else if (
+                        another.type == SymbolType::FUNCTION ||
+                        another.type == SymbolType::PREFIX
+                    ) {
                         collected.push(std::move(another));
                         operations.pop();
                         break;
