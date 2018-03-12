@@ -1,6 +1,6 @@
 ![Calculate](resource/calculate.svg)
 
-| Version | 2.0.0 |
+| Version | 2.1.0dev0 |
 | ------- | ---------|
 
 ---
@@ -17,7 +17,7 @@ The main objective of the library is to offer a clean and intuitive interface, w
 
 
 ```c++
-auto parser = calculate::DefaultParser{};
+auto parser = calculate::Parser{};
 auto sum = parser.parse("x+y");
 
 sum(1., 2.);  // returns 3.
@@ -27,11 +27,11 @@ sum(1., 2.);  // returns 3.
 
 ### Features
 
-* **Generic**. `double` and `std::complex<double>` parsers included by default.
-* User defined constants, functions and operators.
-* **Infix** and **postfix** notations supported.
+* Generic. `double` and `std::complex<double>` parsers included by default.
+* User defined constants, functions, and prefix, suffix and binary operators.
+* Infix and postfix notations supported.
 * Regex-based customizable lexers.
-* **Header-only**.
+* Header-only.
 
 ### Requirements
 

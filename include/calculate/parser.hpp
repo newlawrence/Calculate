@@ -110,58 +110,56 @@ private:
             _lexer->tokenize_infix(expression) :
             _lexer->tokenize_postfix(expression);
 
+        auto has = [](const auto& cont, const auto& t, auto& it) noexcept {
+            return (it = cont.find(t)) != cont.end();
+        };
+
+        auto push_operator = [&](const auto& token) {
+            auto p = symbols.empty() ? SymbolType::LEFT : symbols.back().type;
+            auto leftmost =
+                p == SymbolType::LEFT ||
+                p == SymbolType::SEPARATOR ||
+                p == SymbolType::OPERATOR;
+
+            if (
+                infix && leftmost &&
+                has(prefixes, token, a) &&
+                has(functions, a->second, f)
+            )
+                symbols.push({
+                    std::move(a->second),
+                    SymbolType::PREFIX,
+                    f->second.clone()
+                });
+            else if (
+                infix &&
+                has(suffixes, token, a) &&
+                has(functions, a->second, f)
+            )
+                symbols.push({
+                    std::move(a->second),
+                    SymbolType::SUFFIX,
+                    f->second.clone()
+                });
+            else if (has(operators, token, o))
+                symbols.push({
+                    std::move(token),
+                    SymbolType::OPERATOR,
+                    o->second.clone()
+                });
+            else
+                throw UndefinedSymbol{token};
+        };
+
         for (auto t = tokens.begin(); t != tokens.end(); t++) {
             auto token = t->first;
             auto type = t->second;
             auto next = t + 1;
 
-            auto has = [](const auto& cont, const auto& t, auto& it) noexcept {
-                return (it = cont.find(t)) != cont.end();
-            };
-
-            auto push_operator = [&](const auto& token) noexcept {
-                auto previous =
-                    symbols.empty() ? SymbolType::LEFT : symbols.back().type;
-                auto prefix =
-                    previous == SymbolType::LEFT ||
-                    previous == SymbolType::SEPARATOR ||
-                    previous == SymbolType::OPERATOR;
-
-                if (
-                    infix && prefix &&
-                    has(prefixes, token, a) &&
-                    has(functions, a->second, f)
-                )
-                    symbols.push({
-                        std::move(a->second),
-                        SymbolType::PREFIX,
-                        f->second.clone()
-                    });
-                else if (
-                    infix &&
-                    has(suffixes, token, a) &&
-                    has(functions, a->second, f)
-                )
-                    symbols.push({
-                        std::move(a->second),
-                        SymbolType::SUFFIX,
-                        f->second.clone()
-                    });
-                else if (has(operators, token, o))
-                    symbols.push({
-                        std::move(token),
-                        SymbolType::OPERATOR,
-                        o->second.clone()
-                    });
-                else
-                   throw UndefinedSymbol{token};
-            };
-
             if (type == TokenType::NUMBER) {
                 auto prefix =
-                    next != tokens.end() &&
-                    has(operators, next->first, o)
-                    && o->second.associativity() == Associativity::RIGHT;
+                    next != tokens.end() && has(operators, next->first, o) &&
+                    o->second.associativity() == Associativity::RIGHT;
                 auto suffix =
                     !symbols.empty() &&
                     symbols.back().type == SymbolType::SUFFIX;
