@@ -43,6 +43,13 @@ public:
             }
             return std::pow(x1, x2);
         };
+        auto factorial = [](Type x) noexcept {
+            Type result = 1.;
+            for (Type i = 2.; i <= x; ++i) {
+                result *= i;
+            }
+            return result;
+        };
 
         constants.insert({
             {"pi", 3.14159265358979323846},
@@ -102,7 +109,8 @@ public:
             {"erf", static_cast<Type(*)(Type)>(std::erf)},
             {"erfc", static_cast<Type(*)(Type)>(std::erfc)},
             {"tgamma", static_cast<Type(*)(Type)>(std::tgamma)},
-            {"lgamma", static_cast<Type(*)(Type)>(std::lgamma)}
+            {"lgamma", static_cast<Type(*)(Type)>(std::lgamma)},
+            {"fact", std::move(factorial)}
         });
 
         operators.insert({
@@ -115,6 +123,8 @@ public:
         });
 
         prefixes.insert({{"+", "id"}, {"-", "neg"}});
+
+        suffixes.insert({{"!", "fact"}});
     }
 
     Parser() : Parser{make_lexer<Type>()} {}

@@ -47,13 +47,15 @@ public:
     SymbolContainer<Function, BaseParser> functions;
     SymbolContainer<Operator, BaseParser> operators;
     AliasContainer<BaseParser> prefixes;
+    AliasContainer<BaseParser> suffixes;
 
     BaseParser(const Lexer& lexer) :
             _lexer{lexer.clone()},
             constants{_lexer.get()},
             functions{_lexer.get()},
             operators{_lexer.get()},
-            prefixes{_lexer.get()}
+            prefixes{_lexer.get()},
+            suffixes{_lexer.get()}
     {}
 
     BaseParser(std::shared_ptr<Lexer> lexer) :
@@ -61,7 +63,8 @@ public:
             constants{_lexer.get()},
             functions{_lexer.get()},
             operators{_lexer.get()},
-            prefixes{_lexer.get()}
+            prefixes{_lexer.get()},
+            suffixes{_lexer.get()}
     {}
 
     ~BaseParser() = default;
@@ -101,7 +104,7 @@ private:
         decltype(constants.begin()) c;
         decltype(functions.begin()) f;
         decltype(operators.begin()) o;
-        decltype(prefixes.begin()) p;
+        decltype(prefixes.begin()) a;
 
         auto tokens = infix ?
             _lexer->tokenize_infix(expression) :
@@ -126,29 +129,44 @@ private:
 
                 if (
                     infix && prefix &&
-                    has(prefixes, token, p) &&
-                    has(functions, p->second, f)
+                    has(prefixes, token, a) &&
+                    has(functions, a->second, f)
                 )
                     symbols.push({
-                        std::move(p->second),
+                        std::move(a->second),
                         SymbolType::PREFIX,
                         f->second.clone()
                     });
-                else
+                else if (
+                    infix &&
+                    has(suffixes, token, a) &&
+                    has(functions, a->second, f)
+                )
+                    symbols.push({
+                        std::move(a->second),
+                        SymbolType::SUFFIX,
+                        f->second.clone()
+                    });
+                else if (has(operators, token, o))
                     symbols.push({
                         std::move(token),
                         SymbolType::OPERATOR,
                         o->second.clone()
                     });
+                else
+                   throw UndefinedSymbol{token};
             };
 
             if (type == TokenType::NUMBER) {
-                if (
-                    infix && next != tokens.end() &&
-                    has(operators, next->first, o) &&
-                    o->second.associativity() == Associativity::RIGHT &&
-                    _lexer->prefixed(token)
-                ) {
+                auto prefix =
+                    next != tokens.end() &&
+                    has(operators, next->first, o)
+                    && o->second.associativity() == Associativity::RIGHT;
+                auto suffix =
+                    !symbols.empty() &&
+                    symbols.back().type == SymbolType::SUFFIX;
+
+                if (infix && (prefix || suffix) && _lexer->prefixed(token)) {
                     auto splitted = _lexer->split(token);
                     push_operator(splitted.first);
                     symbols.push({
@@ -170,7 +188,7 @@ private:
                 symbols.push(_right());
             else if (type == TokenType::SEPARATOR)
                 symbols.push(_separator());
-            else if (type == TokenType::SYMBOL && has(operators, token, o))
+            else if (type == TokenType::SYMBOL)
                 push_operator(token);
             else if (type == TokenType::NAME && has(constants, token, c))
                 symbols.push({
@@ -221,10 +239,12 @@ private:
             switch (previous.type) {
             case (SymbolType::RIGHT):
             case (SymbolType::CONSTANT):
+            case (SymbolType::SUFFIX):
                 if (
                     current.type == SymbolType::RIGHT ||
                     current.type == SymbolType::SEPARATOR ||
-                    current.type == SymbolType::OPERATOR
+                    current.type == SymbolType::OPERATOR ||
+                    current.type == SymbolType::SUFFIX
                 )
                     break;
                 else
@@ -297,7 +317,8 @@ private:
 
             if (
                 previous.type == SymbolType::CONSTANT ||
-                previous.type == SymbolType::RIGHT
+                previous.type == SymbolType::RIGHT ||
+                previous.type == SymbolType::SUFFIX
             )
                 fill_parenthesis();
             else
@@ -404,6 +425,7 @@ private:
                 break;
 
             case (SymbolType::CONSTANT):
+            case (SymbolType::SUFFIX):
                 collected.push(std::move(element));
                 break;
 

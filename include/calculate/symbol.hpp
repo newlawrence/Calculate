@@ -32,7 +32,8 @@ public:
         CONSTANT,
         FUNCTION,
         OPERATOR,
-        PREFIX
+        PREFIX,
+        SUFFIX
     };
 
 private:
