@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/10
+    Last modified 2018/03/12
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -200,14 +200,12 @@ public:
     enum class Associativity : int {LEFT=0, RIGHT, BOTH};
 
 private:
-    std::string _alias;
     std::size_t _precedence;
     Associativity _associativity;
 
     bool _equal(const Symbol& other) const noexcept override {
         auto op = static_cast<const Operator&>(other);
         return
-            _alias == op._alias &&
             _precedence == op._precedence &&
             _associativity == op._associativity;
     }
@@ -216,12 +214,10 @@ public:
     template<typename Callable>
     Operator(
         Callable&& callable,
-        std::string alias,
         std::size_t precedence,
         Associativity associativity
     ) :
             Symbol{std::forward<Callable>(callable)},
-            _alias{std::move(alias)},
             _precedence{precedence},
             _associativity{associativity}
     {}
@@ -236,8 +232,6 @@ public:
     Type operator()(Args&&... args) const {
         return Symbol::operator()(std::forward<Args>(args)...);
     }
-
-    const std::string& alias() const noexcept { return _alias; }
 
     std::size_t precedence() const noexcept { return _precedence; }
 

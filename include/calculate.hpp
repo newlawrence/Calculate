@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/11
+    Last modified 2018/03/12
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -106,13 +106,15 @@ public:
         });
 
         operators.insert({
-            {"+", {std::move(add), "id", 3333u, Associativity::BOTH}},
-            {"-", {std::move(subtract), "neg", 3333u, Associativity::LEFT}},
-            {"*", {std::move(multiply), "", 6666u, Associativity::BOTH}},
-            {"/", {std::move(divide), "", 6666u, Associativity::LEFT}},
-            {"%", {std::move(modulus), "", 6666u, Associativity::LEFT}},
-            {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
+            {"+", {std::move(add), 3333u, Associativity::BOTH}},
+            {"-", {std::move(subtract), 3333u, Associativity::LEFT}},
+            {"*", {std::move(multiply), 6666u, Associativity::BOTH}},
+            {"/", {std::move(divide), 6666u, Associativity::LEFT}},
+            {"%", {std::move(modulus), 6666u, Associativity::LEFT}},
+            {"^", {std::move(raise), 9999u, Associativity::RIGHT}}
         });
+
+        prefixes.insert({{"+", "id"}, {"-", "neg"}});
     }
 
     Parser() : Parser{make_lexer<Type>()} {}
@@ -189,12 +191,14 @@ public:
         });
 
         operators.insert({
-            {"+", {std::move(add), "id", 3333u, Associativity::BOTH}},
-            {"-", {std::move(subtract), "neg", 3333u, Associativity::LEFT}},
-            {"*", {std::move(multiply), "", 6666u, Associativity::BOTH}},
-            {"/", {std::move(divide), "", 6666u, Associativity::LEFT}},
-            {"^", {std::move(raise), "", 9999u, Associativity::RIGHT}}
+            {"+", {std::move(add), 3333u, Associativity::BOTH}},
+            {"-", {std::move(subtract), 3333u, Associativity::LEFT}},
+            {"*", {std::move(multiply), 6666u, Associativity::BOTH}},
+            {"/", {std::move(divide), 6666u, Associativity::LEFT}},
+            {"^", {std::move(raise), 9999u, Associativity::RIGHT}}
         });
+
+        prefixes.insert({{"+", "id"}, {"-", "neg"}});
     }
 
     ComplexParser() : ComplexParser{make_lexer<Type>()} {}

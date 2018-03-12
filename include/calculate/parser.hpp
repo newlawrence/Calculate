@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/11
+    Last modified 2018/03/12
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -46,19 +46,22 @@ public:
     SymbolContainer<Constant, BaseParser> constants;
     SymbolContainer<Function, BaseParser> functions;
     SymbolContainer<Operator, BaseParser> operators;
+    AliasContainer<BaseParser> prefixes;
 
     BaseParser(const Lexer& lexer) :
             _lexer{lexer.clone()},
             constants{_lexer.get()},
             functions{_lexer.get()},
-            operators{_lexer.get()}
+            operators{_lexer.get()},
+            prefixes{_lexer.get()}
     {}
 
     BaseParser(std::shared_ptr<Lexer> lexer) :
             _lexer{std::move(lexer)},
             constants{_lexer.get()},
             functions{_lexer.get()},
-            operators{_lexer.get()}
+            operators{_lexer.get()},
+            prefixes{_lexer.get()}
     {}
 
     ~BaseParser() = default;
@@ -259,8 +262,8 @@ private:
                 if (current.type != SymbolType::OPERATOR)
                     collect_symbol();
                 else {
-                    auto cop = static_cast<Operator*>(current.symbol.get());
-                    if (cop->alias().empty())
+                    auto prefix = prefixes.find(current.token);
+                    if (prefix == prefixes.end())
                         collect_symbol();
                     else if (symbols.empty())
                         throw SyntaxError{};
@@ -271,9 +274,9 @@ private:
                         case (SymbolType::OPERATOR):
                             parsed += current.token + " ";
                             current = {
-                                cop->alias(),
+                                prefix->second,
                                 SymbolType::FUNCTION,
-                                functions.at(cop->alias()).clone()
+                                functions.at(prefix->second).clone()
                             };
                             collect_symbol(false);
                             current = _left();
