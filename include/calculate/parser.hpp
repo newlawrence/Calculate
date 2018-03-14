@@ -221,7 +221,7 @@ private:
         SymbolHandler current{};
         std::stack<bool> automatic{};
 
-        auto fill_parenthesis = [&]() {
+        auto fill_parenthesis = [&]() noexcept {
             while (!automatic.empty()) {
                 if (automatic.top()) {
                     collected.push(_right());
@@ -233,7 +233,22 @@ private:
             }
         };
 
-        auto collect_symbol = [&](bool original=true) {
+        auto get_symbol = [&](const auto& handler) noexcept {
+            switch (handler.type) {
+            case (SymbolType::PREFIX):
+                for (const auto& prefix : prefixes)
+                    if (prefix.second == handler.token)
+                        return prefix.first;
+            case (SymbolType::SUFFIX):
+                for (const auto& suffix : suffixes)
+                    if (suffix.second == handler.token)
+                        return suffix.first;
+            default:
+                return handler.token;
+            }
+        };
+
+        auto collect_symbol = [&](bool log=true) {
             switch (previous.type) {
             case (SymbolType::RIGHT):
             case (SymbolType::CONSTANT):
@@ -279,14 +294,14 @@ private:
                     fill_parenthesis();
             }
 
-            if (original && current.type == SymbolType::LEFT)
+            if (log && current.type == SymbolType::LEFT)
                 automatic.push(false);
             else if (current.type == SymbolType::RIGHT)
                 if (!automatic.empty() && !automatic.top())
                     automatic.pop();
 
-            if (original)
-                parsed += current.token + " ";
+            if (log)
+                parsed += get_symbol(current) + " ";
             previous = {current.token, current.type, nullptr};
             collected.push(std::move(current));
         };
@@ -299,19 +314,17 @@ private:
                 current = std::move(symbols.front());
                 symbols.pop();
 
-                if (current.type != SymbolType::PREFIX) {
-                    if (current.type == SymbolType::OPERATOR && symbols.empty())
-                        throw SyntaxError{};
+                if (current.type != SymbolType::PREFIX)
                     collect_symbol();
-                }
                 else {
-                    collect_symbol(false);
+                    if (symbols.empty())
+                        throw SyntaxError{};
+                    collect_symbol(true);
                     current = _left();
                     automatic.push(true);
                     collect_symbol(false);
                 }
             }
-            current = {"", SymbolType::CONSTANT, nullptr};
 
             if (
                 previous.type == SymbolType::CONSTANT ||
@@ -323,19 +336,18 @@ private:
                 throw SyntaxError{};
         }
         catch (const SyntaxError&) {
-            parsed +="'" + current.token + "' ";
+            parsed +="'" + get_symbol(current) + "' ";
             while (!symbols.empty()) {
                 current = std::move(symbols.front());
                 symbols.pop();
-                parsed += current.token + " ";
+                parsed += get_symbol(current) + " ";
             }
 
             if (current.token.empty()) {
                 auto n = parsed.rfind(' ', parsed.size() - 5);
-                if (n == std::string::npos)
-                    parsed = "'" + previous.token + "'";
-                else
-                    parsed = parsed.substr(0, n) + " '" + previous.token + "'";
+                parsed =
+                    (n == std::string::npos ? "" : parsed.substr(0, n) + " ") +
+                    "'" + get_symbol(previous) + "'";
             }
             else
                 parsed = parsed.substr(0, parsed.size() - 1);
