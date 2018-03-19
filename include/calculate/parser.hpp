@@ -162,8 +162,8 @@ private:
                     next != tokens.end() && has(operators, next->first, o) &&
                     o->second.associativity() == Associativity::RIGHT;
                 auto suffix =
-                    !symbols.empty() &&
-                    symbols.back().type == SymbolType::SUFFIX;
+                    (next != tokens.end() && has(suffixes, next->first, a)) ||
+                    (symbols.size() && symbols.back().type == SymbolType::SUFFIX);
 
                 if (infix && (prefix || suffix) && _lexer->prefixed(token)) {
                     auto splitted = _lexer->split(token);
@@ -284,14 +284,16 @@ private:
             }
 
             if (
+                previous.type == SymbolType::RIGHT ||
                 previous.type == SymbolType::CONSTANT ||
-                previous.type == SymbolType::RIGHT
+                previous.type == SymbolType::SUFFIX
             ) {
-                auto cop = static_cast<Operator*>(current.symbol.get());
-                if (
+                auto co = static_cast<Operator*>(current.symbol.get());
+                auto not_right =
                     current.type != SymbolType::OPERATOR ||
-                    cop->associativity() != Associativity::RIGHT
-                )
+                    co->associativity() != Associativity::RIGHT;
+                not_right = not_right && current.type != SymbolType::SUFFIX;
+                if (not_right)
                     fill_parenthesis();
             }
 
@@ -328,8 +330,8 @@ private:
             }
 
             if (
-                previous.type == SymbolType::CONSTANT ||
                 previous.type == SymbolType::RIGHT ||
+                previous.type == SymbolType::CONSTANT ||
                 previous.type == SymbolType::SUFFIX
             )
                 fill_parenthesis();
@@ -462,13 +464,11 @@ private:
                         break;
                     }
                     else {
-                        auto eop = static_cast<Operator*>(element.symbol.get());
-                        auto aop = static_cast<Operator*>(another.symbol.get());
-                        auto l1 =
-                            eop->associativity() !=
-                            Associativity::RIGHT;
-                        auto p1 = eop->precedence();
-                        auto p2 = aop->precedence();
+                        auto eo = static_cast<Operator*>(element.symbol.get());
+                        auto ao = static_cast<Operator*>(another.symbol.get());
+                        auto l1 = eo->associativity() != Associativity::RIGHT;
+                        auto p1 = eo->precedence();
+                        auto p2 = ao->precedence();
                         if ((l1 && (p1 <= p2)) || (!l1 && (p1 < p2))) {
                             collected.push(std::move(another));
                             operations.pop();
