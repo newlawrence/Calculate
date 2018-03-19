@@ -119,7 +119,8 @@ private:
             auto leftmost =
                 p == SymbolType::LEFT ||
                 p == SymbolType::SEPARATOR ||
-                p == SymbolType::OPERATOR;
+                p == SymbolType::OPERATOR ||
+                p == SymbolType::PREFIX;
 
             if (
                 infix && leftmost &&
