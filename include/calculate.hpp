@@ -30,24 +30,24 @@ public:
         auto divide = [](Type x1, Type x2) noexcept { return x1 / x2; };
         auto modulus = static_cast<Type(*)(Type, Type)>(std::fmod);
         auto raise = [](Type x1, Type x2) noexcept {
-            if (x2 > 0. && std::trunc(x2) == x2) {
-                auto exponent = static_cast<int>(x2);
-                auto product = 1.;
-                while (exponent) {
-                    if (exponent & 1)
-                        product *= x1;
-                    exponent >>= 1;
-                    x1 *= x1;
-                }
-                return product;
+            if (x2 <= 0. || x2 > 256 || std::trunc(x2) != x2)
+                return std::pow(x1, x2);
+            auto exponent = static_cast<int>(x2);
+            auto product = 1.;
+            while (exponent) {
+                if (exponent & 1)
+                    product *= x1;
+                exponent >>= 1;
+                x1 *= x1;
             }
-            return std::pow(x1, x2);
+            return product;
         };
         auto factorial = [](Type x) noexcept {
-            Type result = 1.;
-            for (Type i = 2.; i <= x; ++i) {
+            if (x > 256)
+                return std::numeric_limits<Type>::infinity();
+            auto result = 1.;
+            for (auto i = 2.; i <= x; i++)
                 result *= i;
-            }
             return result;
         };
 
