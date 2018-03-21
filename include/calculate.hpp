@@ -9,8 +9,6 @@
 #ifndef __CALCULATE_HPP__
 #define __CALCULATE_HPP__
 
-#include <cmath>
-
 #include "calculate/parser.hpp"
 
 

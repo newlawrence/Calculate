@@ -9,8 +9,10 @@
 #ifndef __CALCULATE_LEXER_HPP__
 #define __CALCULATE_LEXER_HPP__
 
+#include <cmath>
 #include <complex>
 #include <iomanip>
+#include <limits>
 #include <locale>
 #include <sstream>
 #include <type_traits>
@@ -38,32 +40,54 @@ struct StringsInitializer {
 
 const char scape[] = {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
 
-const char isp[] =
-    R"(^(?:(?:([+\-]?\d+)([+\-]?\d+)i)|([+\-]?\d+)|(?:([+\-]?\d+)i?))$)";
+const char split[] = R"(^(?:(?:(.*[^ij])([+\-].+)[ij])|(.*[^ij])|(.+)[ij])$)";
 
-const char rsp[] =
-    R"(^(?:)"
-    R"((?:([+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))"
-    R"(([+\-](?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)i)|)"
-    R"(([+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)|)"
-    R"((?:([+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)i?))"
-    R"()$)";
+
+template<typename Type>
+Type read(std::istringstream& istream, const std::string& token) {
+    if (token == "NaN" || token == "+NaN" || token == "-NaN")
+        return std::numeric_limits<Type>::quiet_NaN();
+    if (token == "Inf" || token == "+Inf")
+        return std::numeric_limits<Type>::infinity();
+    if (token == "-Inf")
+        return -std::numeric_limits<Type>::infinity();
+
+    Type value;
+    istream.str(token);
+    istream.clear();
+    istream >> value;
+    return value;
+}
+
+template<typename Type>
+std::string write(std::ostringstream& ostream, Type value) {
+    if (std::isnan(value))
+        return "NaN";
+    if (std::isinf(value))
+        return std::signbit(value) ? "-Inf" : "+Inf";
+
+    ostream.clear();
+    ostream.str("");
+    ostream << value;
+    return ostream.str();
+}
 
 }
 
-const char default_integer[] = R"(^[+\-]?\d+$)";
+const char default_integer[] =
+    R"(^[+\-]?\d+$)";
 
 const char default_real[] =
-    R"(^[+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?$)";
+    R"(^[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))$)";
 
 const char default_integer_complex[]=
-    R"(^(?:(?:(?:[+\-]?\d+)(?:[+\-]?\d+)i)|(?:(?:[+\-]?\d+)i?))$)";
+    R"(^(?:(?:(?:[+\-]?\d+)(?:[+\-]?\d+)[ij])|(?:(?:[+\-]?\d+)[ij]?))$)";
 
 const char default_real_complex[] =
     R"(^(?:)"
-    R"((?:(?:[+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))"
-    R"((?:[+\-](?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)i)|)"
-    R"((?:(?:[+\-]?(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)i?))"
+    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))))"
+    R"((?:[+\-](?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij])|)"
+    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij]?))"
     R"()$)";
 
 const char default_name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
@@ -276,7 +300,8 @@ public:
 
     bool prefixed(const std::string& token) const noexcept {
         std::sregex_token_iterator
-            num{token.begin(), token.end(), _splitter_regex, -1};
+            num{token.begin(), token.end(), _splitter_regex, -1},
+            sym{token.begin(), token.end(), _splitter_regex};
 
         return num->str().empty();
     };
@@ -342,24 +367,13 @@ public:
     }
 
     Type to_value(const std::string& token) const override {
-        Type value;
-
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
-
-        _istream.str(token);
-        _istream.clear();
-
-        _istream >> value;
-        return value;
+        return detail::read<Type>(_istream, token);
     }
 
     std::string to_string(Type value) const noexcept override {
-        _ostream.clear();
-        _ostream.str("");
-
-        _ostream << value;
-        return _ostream.str();
+        return detail::write<Type>(_ostream, value);
     }
 };
 
@@ -393,7 +407,7 @@ public:
             BaseLexer{regexes, strings},
             _istream{},
             _ostream{},
-            _splitter{std::is_integral<Type>::value ? detail::isp : detail::rsp}
+            _splitter{detail::split}
     {
         if (this->decimal != default_decimal)
             throw LexerError{
@@ -411,7 +425,7 @@ public:
             BaseLexer(other),
             _istream{},
             _ostream{},
-            _splitter{std::is_integral<Type>::value ? detail::isp : detail::rsp}
+            _splitter{detail::split}
     {
         _istream.imbue(std::locale("C"));
         _ostream.imbue(std::locale("C"));
@@ -423,45 +437,34 @@ public:
     }
 
     std::complex<Type> to_value(const std::string& token) const override {
-        std::smatch match{};
-        Type real{}, imag{};
-
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
 
-        auto& istream = _istream;
-        auto write = [&real, &imag, &match, &istream](std::size_t i) noexcept {
-            istream.str(match[i].str());
-            istream.clear();
-            if (i % 2)
-                istream >> real;
-            else
-                istream >> imag;
-        };
-
+        std::smatch match{};
         std::regex_search(token, match, _splitter);
         if (!match[3].str().empty())
-            write(3);
-        else if (!match[4].str().empty())
-            write(4);
-        else {
-            write(1);
-            write(2);
-        }
-        return {real, imag};
+            return {detail::read<Type>(_istream, match[3].str()), Type{}};
+        if (!match[4].str().empty())
+            return {Type{}, detail::read<Type>(_istream, match[4].str())};
+        return {
+            detail::read<Type>(_istream, match[1].str()),
+            detail::read<Type>(_istream, match[2].str())
+        };
     }
 
     std::string to_string(std::complex<Type> value) const noexcept override {
         Type real{std::real(value)}, imag{std::imag(value)};
-
-        _ostream.clear();
-        _ostream.str("");
+        std::string token;
 
         if (real != _zero)
-            _ostream << real << (imag > _zero ? "+" : "");
+            token +=
+                detail::write<Type>(_ostream, real) +
+                (imag > _zero && std::isfinite(imag) ? "+" : "");
         if (real == _zero || imag != _zero)
-            _ostream << imag << (real != _zero || imag != _zero ? "i" : "");
-        return _ostream.str();
+            token +=
+                detail::write<Type>(_ostream, imag) +
+                (real != _zero || imag != _zero ? "j" : "");
+        return token;
     }
 };
 

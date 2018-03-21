@@ -10,7 +10,6 @@
 #define __CALCULATE_PARSER_HPP__
 
 #include <algorithm>
-#include <limits>
 #include <queue>
 
 #include "lexer.hpp"
