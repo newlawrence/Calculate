@@ -74,6 +74,7 @@ std::string write(std::ostringstream& ostream, Type value) {
 
 }
 
+
 const char default_integer[] =
     R"(^[+\-]?\d+$)";
 
@@ -90,9 +91,11 @@ const char default_real_complex[] =
     R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij]?))"
     R"()$)";
 
-const char default_name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
+const char default_name[] =
+    R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
 
-const char default_symbol[] = R"(^[^A-Za-z\d.(),_\s]+$)";
+const char default_symbol[] =
+    R"(^[^A-Za-z\d.(),_\s]+$)";
 
 
 const char default_left[] = "(";
@@ -214,8 +217,14 @@ private:
                     tokens.emplace_back((nums++)->str(), TokenType::NUMBER);
 
                 while (nums != end && syms != end) {
-                    tokens.emplace_back((syms++)->str(), TokenType::SYMBOL);
-                    tokens.emplace_back((nums++)->str(), TokenType::NUMBER);
+                    auto sym = (syms++)->str(), num = (nums++)->str();
+                    auto back = tokens.back().first;
+                    if (std::regex_search(back, number_regex)) {
+                        tokens.emplace_back(sym, TokenType::SYMBOL);
+                        tokens.emplace_back(num, TokenType::NUMBER);
+                    }
+                    else
+                        tokens.back().first = back + sym + num;
                 }
             }
             else if (_match(match, TokenType::NAME))
@@ -270,7 +279,6 @@ public:
 
         if (std::regex_match(" ", _tokenizer_regex))
             throw LexerError{"tokenizer matching space"};
-
         std::regex_search(left, match, _tokenizer_regex);
         if (!_match(match, TokenType::LEFT))
             throw LexerError{"tokenizer doesn't match left symbol"};
