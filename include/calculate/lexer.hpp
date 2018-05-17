@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/11
+    Last modified 2018/05/17
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -91,19 +91,13 @@ const char default_real_complex[] =
     R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij]?))"
     R"()$)";
 
-const char default_name[] =
-    R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
+const char default_name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
 
-const char default_symbol[] =
-    R"(^[^A-Za-z\d.(),_\s]+$)";
-
+const char default_symbol[] = R"(^[^A-Za-z\d.(),_\s]+$)";
 
 const char default_left[] = "(";
-
 const char default_right[] = ")";
-
 const char default_separator[] = ",";
-
 const char default_decimal[] = ".";
 
 
