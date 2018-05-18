@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/02/21
+    Last modified 2018/05/18
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -11,7 +11,6 @@
 
 #include <type_traits>
 #include <tuple>
-#include <vector>
 #include <utility>
 
 #include "util.hpp"
@@ -146,7 +145,7 @@ struct WrapperConcept {
     virtual ~WrapperConcept() = default;
     virtual std::shared_ptr<WrapperConcept> clone() const noexcept = 0;
     virtual std::size_t argc() const noexcept = 0;
-    virtual Type call(const std::vector<Type>&) const = 0;
+    virtual Type call(const std::vector<std::reference_wrapper<Type>>&) const = 0;
     virtual Type eval(const std::vector<Source>&) const = 0;
 };
 
@@ -167,16 +166,12 @@ class Wrapper {
 
     template<typename Callable, typename Adapter, std::size_t argcount>
     class WrapperModel final : public WrapperConcept {
-        using False = std::integral_constant<bool, false>::type;
-        using True = std::integral_constant<bool, true>::type;
-
         Callable _callable;
         Adapter _adapter;
 
         template<std::size_t... indices>
         Type _invoke(
-            const std::vector<Type>& args,
-            std::integral_constant<bool, false>::type,
+            const std::vector<std::reference_wrapper<Type>>& args,
             std::index_sequence<indices...>
         ) const {
             if (args.size() != argcount)
@@ -187,7 +182,6 @@ class Wrapper {
         template<std::size_t... indices>
         Type _invoke(
             const std::vector<Source>& args,
-            std::integral_constant<bool, true>::type,
             std::index_sequence<indices...>
         ) const {
             if (args.size() != argcount)
@@ -207,12 +201,12 @@ class Wrapper {
 
         std::size_t argc() const noexcept override { return argcount; }
 
-        Type call(const std::vector<Type>& args) const override {
-            return _invoke(args, False{}, std::make_index_sequence<argcount>{});
+        Type call(const std::vector<std::reference_wrapper<Type>>& args) const override {
+            return _invoke(args, std::make_index_sequence<argcount>{});
         }
 
         Type eval(const std::vector<Source>& args) const override {
-            return _invoke(args, True{}, std::make_index_sequence<argcount>{});
+            return _invoke(args, std::make_index_sequence<argcount>{});
         }
     };
 
@@ -312,8 +306,7 @@ public:
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
-        return _callable
-            ->call(util::to_vector<Type>(std::forward<Args>(args)...));
+        return _callable->call(util::to_reference<Type>(std::forward<Args>(args)...));
     }
 
     bool operator==(const Wrapper& other) const noexcept {

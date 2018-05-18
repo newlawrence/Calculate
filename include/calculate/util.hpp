@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/12
+    Last modified 2018/05/18
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -13,6 +13,7 @@
 #include <memory>
 #include <regex>
 #include <unordered_map>
+#include <vector>
 
 #include "exception.hpp"
 
@@ -47,21 +48,28 @@ struct Check {
 
 template<typename Type, typename Args>
 std::enable_if_t<Check<Args>::iterable, std::vector<Type>>
-to_vector(Args&& args) {
-    return std::vector<Type>{std::begin(args), std::end(args)};
-}
+to_vector(Args&& args) { return {std::begin(args), std::end(args)}; }
 
 template<typename Type, typename Arg>
 std::enable_if_t<!Check<Arg>::iterable, std::vector<Type>>
-to_vector(Arg&& arg) {
-    return std::vector<Type>{std::forward<Arg>(arg)};
-}
+to_vector(Arg&& arg) { return {std::forward<Arg>(arg)}; }
 
 template<typename Type, typename... Args>
 std::enable_if_t<sizeof...(Args) != 1, std::vector<Type>>
-to_vector(Args&&... args) {
-    return std::vector<Type>{std::forward<Args>(args)...};
-}
+to_vector(Args&&... args) { return {std::forward<Args>(args)...}; }
+
+
+template<typename Type, typename Args>
+std::enable_if_t<Check<Args>::iterable, std::vector<std::reference_wrapper<Type>>>
+to_reference(Args&& args) { return {std::begin(args), std::end(args)}; }
+
+template<typename Type, typename Arg>
+std::enable_if_t<!Check<Arg>::iterable, std::vector<std::reference_wrapper<Type>>>
+to_reference(Arg&& arg) { return {std::ref(std::forward<Arg>(arg))}; }
+
+template<typename Type, typename... Args>
+std::enable_if_t<sizeof...(Args) != 1, std::vector<std::reference_wrapper<Type>>>
+to_reference(Args&&... args) { return {std::ref(std::forward<Args>(args))...}; }
 
 
 template<class Type>
