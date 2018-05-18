@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/05/17
+    Last modified 2018/05/18
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -479,17 +479,13 @@ inline std::shared_ptr<BaseLexer<Type>> make_lexer() noexcept {
 template<typename Type>
 inline std::shared_ptr<BaseLexer<Type>> make_lexer(
     const detail::RegexesInitializer& regexes
-) noexcept {
-    return std::make_shared<Lexer<Type>>(regexes);
-}
+) noexcept { return std::make_shared<Lexer<Type>>(regexes); }
 
 template<typename Type>
 inline std::shared_ptr<BaseLexer<Type>> make_lexer(
     const detail::RegexesInitializer& regexes,
     const detail::StringsInitializer& strings
-) noexcept {
-    return std::make_shared<Lexer<Type>>(regexes, strings);
-}
+) noexcept { return std::make_shared<Lexer<Type>>(regexes, strings); }
 
 }
 

@@ -45,31 +45,23 @@ struct Check {
     static constexpr bool iterable = detail::is_iterable<Type>(0);
 };
 
-
 template<typename Type, typename Args>
 std::enable_if_t<Check<Args>::iterable, std::vector<Type>>
 to_vector(Args&& args) { return {std::begin(args), std::end(args)}; }
 
-template<typename Type, typename Arg>
-std::enable_if_t<!Check<Arg>::iterable, std::vector<Type>>
-to_vector(Arg&& arg) { return {std::forward<Arg>(arg)}; }
-
 template<typename Type, typename... Args>
-std::enable_if_t<sizeof...(Args) != 1, std::vector<Type>>
-to_vector(Args&&... args) { return {std::forward<Args>(args)...}; }
-
+std::vector<Type> to_vector(Args&&... args) {
+    return {std::forward<Args>(args)...};
+}
 
 template<typename Type, typename Args>
 std::enable_if_t<Check<Args>::iterable, std::vector<std::reference_wrapper<Type>>>
 to_reference(Args&& args) { return {std::begin(args), std::end(args)}; }
 
-template<typename Type, typename Arg>
-std::enable_if_t<!Check<Arg>::iterable, std::vector<std::reference_wrapper<Type>>>
-to_reference(Arg&& arg) { return {std::ref(std::forward<Arg>(arg))}; }
-
 template<typename Type, typename... Args>
-std::enable_if_t<sizeof...(Args) != 1, std::vector<std::reference_wrapper<Type>>>
-to_reference(Args&&... args) { return {std::ref(std::forward<Args>(args))...}; }
+std::vector<std::reference_wrapper<Type>> to_reference(Args&&... args) {
+    return {std::ref(std::forward<Args>(args))...};
+}
 
 
 template<class Type>

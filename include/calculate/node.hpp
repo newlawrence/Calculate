@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/10
+    Last modified 2018/05/18
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -127,15 +127,8 @@ public:
                 throw ArgumentsMismatch{_size, i};
         }
 
-        template<typename Arg>
-        std::enable_if_t<!util::Check<Arg>::iterable> update(Arg&& val) {
-            if (_size != 1)
-                throw ArgumentsMismatch{_size, 1};
-            _values[0] = val;
-        }
-
         template<typename... Args>
-        std::enable_if_t<sizeof...(Args) != 1> update(Args&&... vals) {
+        void update(Args&&... vals) {
             if (_size != sizeof...(vals))
                 throw ArgumentsMismatch{_size, sizeof...(vals)};
             _update(0, vals...);
