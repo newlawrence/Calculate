@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/02/11
+    Last modified 2018/05/29
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -105,12 +105,15 @@ void run(
     using Type = typename Parser::Type;
 
     std::chrono::steady_clock::time_point begin;
-    std::chrono::steady_clock::time_point::rep build_time, opt_time, eval_time;
+    std::chrono::steady_clock::time_point::rep build_time, eval_time;
     std::size_t iterations = arguments["iter"].as<std::size_t>();
     Type result;
 
     auto parser = Parser{};
     auto lexer = parser.lexer();
+
+    if (arguments.count("optimize"))
+        parser.optimize = true;
 
     std::vector<Type> values;
     if (arguments.count("var")) {
@@ -137,18 +140,6 @@ void run(
         ).count() / iterations;
     }
 
-    if (arguments.count("optimize")) {
-        function = parser.optimize(function);
-        if (arguments.count("analysis")) {
-            begin = std::chrono::steady_clock::now();
-            for (std::size_t i = 0; i < iterations; i++)
-                parser.optimize(function);
-            opt_time = std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::steady_clock::now() - begin
-            ).count() / iterations;
-        }
-    }
-
     result = function(values);
     if (arguments.count("analysis")) {
         begin = std::chrono::steady_clock::now();
@@ -160,8 +151,8 @@ void run(
     }
 
     if (arguments.count("analysis")) {
-        std::cout << "Infix notation:    " << function.infix() << "\n";
-        std::cout << "Postfix notation:  " << function.postfix() << "\n";
+        std::cout << "Infix notation:   " << function.infix() << "\n";
+        std::cout << "Postfix notation: " << function.postfix() << "\n";
         if (arguments.count("var")) {
             std::cout << "Variables:         ";
             for (const auto& var : variables)
@@ -172,12 +163,10 @@ void run(
                 std::cout << lexer->to_string(val) << " ";
             std::cout << "\n";
         }
-        std::cout << "Result:            " << lexer->to_string(result) << "\n";
-        std::cout << "Iterations:        " << iterations << "\n";
-        std::cout << "Building time:     " << build_time << " us" << "\n";
-        if (arguments.count("optimize"))
-            std::cout << "Optimization time: " << opt_time << " us" << "\n";
-        std::cout << "Evaluation time:   " << eval_time << " ns" << std::endl;
+        std::cout << "Result:           " << lexer->to_string(result) << "\n";
+        std::cout << "Iterations:       " << iterations << "\n";
+        std::cout << "Building time:    " << build_time << " us" << "\n";
+        std::cout << "Evaluation time:  " << eval_time << " ns" << std::endl;
     }
     else
         std::cout << lexer->to_string(result) << std::endl;

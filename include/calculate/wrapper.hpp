@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/05/18
+    Last modified 2018/05/29
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -145,8 +145,8 @@ struct WrapperConcept {
     virtual ~WrapperConcept() = default;
     virtual std::shared_ptr<WrapperConcept> clone() const noexcept = 0;
     virtual std::size_t argc() const noexcept = 0;
-    virtual Type call(const std::vector<std::reference_wrapper<Type>>&) const = 0;
-    virtual Type eval(const std::vector<Source>&) const = 0;
+    virtual Type eval(const std::vector<std::reference_wrapper<const Source>>&) const = 0;
+    virtual Type call(const std::vector<std::reference_wrapper<const Type>>&) const = 0;
 };
 
 
@@ -170,23 +170,23 @@ class Wrapper {
         Adapter _adapter;
 
         template<std::size_t... indices>
-        Type _invoke(
-            const std::vector<std::reference_wrapper<Type>>& args,
-            std::index_sequence<indices...>
-        ) const {
-            if (args.size() != argcount)
-                throw ArgumentsMismatch{argcount, args.size()};
-            return _callable(args[indices]...);
-        }
-
-        template<std::size_t... indices>
-        Type _invoke(
-            const std::vector<Source>& args,
+        Type _eval(
+            const std::vector<std::reference_wrapper<const Source>>& args,
             std::index_sequence<indices...>
         ) const {
             if (args.size() != argcount)
                 throw ArgumentsMismatch{argcount, args.size()};
             return _callable(_adapter(args[indices])...);
+        }
+
+        template<std::size_t... indices>
+        Type _call(
+            const std::vector<std::reference_wrapper<const Type>>& args,
+            std::index_sequence<indices...>
+        ) const {
+            if (args.size() != argcount)
+                throw ArgumentsMismatch{argcount, args.size()};
+            return _callable(args[indices]...);
         }
 
     public:
@@ -201,12 +201,12 @@ class Wrapper {
 
         std::size_t argc() const noexcept override { return argcount; }
 
-        Type call(const std::vector<std::reference_wrapper<Type>>& args) const override {
-            return _invoke(args, std::make_index_sequence<argcount>{});
+        Type eval(const std::vector<std::reference_wrapper<const Source>>& args) const override {
+            return _eval(args, std::make_index_sequence<argcount>{});
         }
 
-        Type eval(const std::vector<Source>& args) const override {
-            return _invoke(args, std::make_index_sequence<argcount>{});
+        Type call(const std::vector<std::reference_wrapper<const Type>>& args) const override {
+            return _call(args, std::make_index_sequence<argcount>{});
         }
     };
 
@@ -220,11 +220,6 @@ class Wrapper {
     std::shared_ptr<WrapperConcept> _callable;
 
     Wrapper(std::shared_ptr<WrapperConcept>&& callable) : _callable{callable} {}
-
-protected:
-    Type _eval(const std::vector<Source>& args) const {
-        return _callable->eval(args);
-    }
 
 public:
     template<typename Callable, typename Adapter>
@@ -305,8 +300,13 @@ public:
     std::size_t argc() const noexcept { return _callable->argc(); }
 
     template<typename... Args>
+    Type eval(Args&&... args) const {
+        return _callable->eval(util::to_reference<const Source>(std::forward<Args>(args)...));
+    }
+
+    template<typename... Args>
     Type operator()(Args&&... args) const {
-        return _callable->call(util::to_reference<Type>(std::forward<Args>(args)...));
+        return _callable->call(util::to_reference<const Type>(std::forward<Args>(args)...));
     }
 
     bool operator==(const Wrapper& other) const noexcept {

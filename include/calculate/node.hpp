@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/05/18
+    Last modified 2018/05/29
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -308,16 +308,12 @@ public:
         swap(one._nodes, another._nodes);
     }
 
-    operator Type() const {
-        if (_variables->variables.size() > 0)
-            throw ArgumentsMismatch{_variables->variables.size(), 0};
-        return _symbol->_eval(_nodes);
-    }
+    operator Type() const { return _symbol->eval(_nodes); }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
         _variables->update(std::forward<Args>(args)...);
-        return _symbol->_eval(_nodes);
+        return _symbol->eval(_nodes);
     }
 
     bool operator==(const Node& other) const noexcept {
@@ -350,16 +346,9 @@ public:
 
     const_reverse_iterator crend() const noexcept { return _nodes.crend(); }
 
-    friend std::ostream& operator<<(
-        std::ostream& ostream,
-        const Node& node
-    ) noexcept {
+    friend std::ostream& operator<<(std::ostream& ostream, const Node& node) noexcept {
         ostream << node.infix();
         return ostream;
-    }
-
-    static Type evaluate(const Node& node) {
-        return node._symbol->_eval(node._nodes);
     }
 
     std::shared_ptr<Lexer> lexer() const noexcept { return _lexer; }

@@ -17,6 +17,7 @@ namespace calculate {
 
 struct BaseError : public std::runtime_error {
     explicit BaseError(std::string what) : runtime_error{std::move(what)} {}
+
     BaseError() :
             runtime_error{std::string{"Base error: unexpected error"}}
     {}
@@ -40,6 +41,7 @@ struct BadCast : BaseError {
 struct ArgumentsMismatch : BaseError {
     const std::size_t needed;
     const std::size_t provided;
+
     ArgumentsMismatch(std::size_t n, std::size_t p) :
             BaseError{
                 "Arguments mismatch: " + std::to_string(n) +
@@ -49,6 +51,7 @@ struct ArgumentsMismatch : BaseError {
             needed{n},
             provided{p}
     {}
+
     ArgumentsMismatch(const std::string& token, std::size_t n, std::size_t p) :
             BaseError{
                 "Arguments mismatch: '" + token + "' " + std::to_string(n) +
@@ -70,6 +73,7 @@ struct ParenthesisMismatch : BaseError {
 
 struct RepeatedSymbol : BaseError {
     const std::string token;
+
     explicit RepeatedSymbol(const std::string& t) :
             BaseError{"Repeated symbol: '" + t + "'"},
             token{t}
@@ -78,6 +82,7 @@ struct RepeatedSymbol : BaseError {
 
 struct SyntaxError : BaseError {
     SyntaxError() : BaseError{"Syntax error"} {}
+
     explicit SyntaxError(const std::string& what) :
             BaseError{"Syntax error: " + what}
     {}
@@ -85,6 +90,7 @@ struct SyntaxError : BaseError {
 
 struct UndefinedSymbol : BaseError {
     const std::string token;
+
     explicit UndefinedSymbol(const std::string& t) :
             BaseError{"Undefined symbol: '" + t + "'"},
             token{t}
@@ -93,6 +99,7 @@ struct UndefinedSymbol : BaseError {
 
 struct UnsuitableName : BaseError {
     const std::string token;
+
     explicit UnsuitableName(const std::string& t) :
             BaseError{"Unsuitable symbol name: '" + t + "'"},
             token{t}
@@ -101,8 +108,10 @@ struct UnsuitableName : BaseError {
 
 struct UnusedSymbol : BaseError {
     const std::string token;
+
     explicit UnusedSymbol(const std::string& t) :
-            BaseError{"Unused symbol: '" + t + "'"}, token{t}
+            BaseError{"Unused symbol: '" + t + "'"},
+            token{t}
     {}
 };
 

@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/12
+    Last modified 2018/05/29
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -63,7 +63,10 @@ public:
         typename = std::enable_if_t<!Inspect<Callable>::is_model>
     >
     Symbol(Callable&& callable) :
-            Wrapper{std::forward<Callable>(callable), &Expression::evaluate}
+            Wrapper{
+                std::forward<Callable>(callable),
+                [](const Expression& expression) { return Type{expression}; }
+            }
     {
         static_assert(
             detail::NotSame<Callable, Function<Expression>>::value ||
@@ -105,6 +108,8 @@ public:
     }
 
     using Wrapper::operator();
+
+    using Wrapper::eval;
 
     std::size_t arguments() const noexcept {
         return static_cast<const Wrapper*>(this)->argc();
@@ -160,8 +165,6 @@ public:
     }
 
     operator Type() const { return Symbol::operator()(); }
-
-    operator Type() { return Symbol::operator()(); }
 };
 
 template<typename Expression>

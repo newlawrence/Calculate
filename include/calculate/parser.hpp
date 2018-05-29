@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.0dev0
-    Last modified 2018/03/12
+    Last modified 2018/05/29
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -47,6 +47,7 @@ public:
     SymbolContainer<Operator, BaseParser> operators;
     AliasContainer<BaseParser> prefixes;
     AliasContainer<BaseParser> suffixes;
+    bool optimize;
 
     BaseParser(const Lexer& lexer) :
             _lexer{lexer.clone()},
@@ -54,7 +55,8 @@ public:
             functions{_lexer.get()},
             operators{_lexer.get()},
             prefixes{_lexer.get()},
-            suffixes{_lexer.get()}
+            suffixes{_lexer.get()},
+            optimize{false}
     {}
 
     BaseParser(std::shared_ptr<Lexer> lexer) :
@@ -63,7 +65,8 @@ public:
             functions{_lexer.get()},
             operators{_lexer.get()},
             prefixes{_lexer.get()},
-            suffixes{_lexer.get()}
+            suffixes{_lexer.get()},
+            optimize{false}
     {}
 
     ~BaseParser() = default;
@@ -122,7 +125,8 @@ private:
                 p == SymbolType::PREFIX;
 
             if (
-                infix && leftmost &&
+                infix &&
+                leftmost &&
                 has(prefixes, token, a) &&
                 has(functions, a->second, f)
             )
@@ -531,6 +535,8 @@ private:
 
             else {
                 std::vector<Expression> nodes{};
+                bool collapse{optimize};
+
                 util::hash_combine(hash, *(element.symbol));
                 nodes.reserve(element.symbol->arguments());
 
@@ -541,6 +547,7 @@ private:
                             element.symbol->arguments(),
                             i
                         };
+                    collapse = collapse && operands.top()._pruned().empty();
                     extract.emplace(std::move(operands.top()));
                     operands.pop();
                 }
@@ -548,16 +555,31 @@ private:
                     nodes.emplace_back(std::move(extract.top()));
                     extract.pop();
                 }
-                operands.emplace(
-                    Expression(
-                        _lexer,
-                        variables,
-                        element.token,
-                        std::move(element.symbol),
-                        std::move(nodes),
-                        hash
-                    )
-                );
+
+                if (collapse) {
+                    auto symbol = Constant{element.symbol->eval(nodes)};
+                    operands.emplace(
+                        Expression(
+                            _lexer,
+                            variables,
+                            _lexer->to_string(symbol),
+                            std::move(symbol.clone()),
+                            {},
+                            hash
+                        )
+                    );
+                }
+                else
+                    operands.emplace(
+                        Expression(
+                            _lexer,
+                            variables,
+                            element.token,
+                            std::move(element.symbol),
+                            std::move(nodes),
+                            hash
+                        )
+                    );
             }
         }
 
@@ -617,21 +639,6 @@ public:
                 throw UndefinedSymbol{exception.token};
             }
         }
-    }
-
-    Expression optimize(const Expression& node) const noexcept {
-        auto vars = node._pruned();
-        if (vars.empty())
-            return from_infix(_lexer->to_string(from_postfix(node.postfix())));
-
-        auto postfix = std::string{};
-        auto variables =
-            std::make_shared<VariableHandler>(std::move(vars), *_lexer);
-        for (const auto& branch : node._nodes)
-            postfix += optimize(branch).postfix() + " ";
-        postfix += node.token();
-
-        return _build_tree(_tokenize(postfix, variables, false), variables);
     }
 };
 
