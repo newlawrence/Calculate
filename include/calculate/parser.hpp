@@ -506,6 +506,11 @@ private:
         std::size_t hash{};
 
         while (!symbols.empty()) {
+            std::vector<Expression> nodes{};
+            std::unique_ptr<Symbol> symbol{};
+            std::string token;
+            bool collapse{optimize};
+
             element = std::move(symbols.front());
             symbols.pop();
 
@@ -519,27 +524,8 @@ private:
                     "postfix notation"
                 };
 
-            else if (element.type == SymbolType::CONSTANT) {
-                util::hash_combine(hash, *(element.symbol));
-                operands.emplace(
-                    Expression(
-                        _lexer,
-                        variables,
-                        element.token,
-                        std::move(element.symbol),
-                        {},
-                        hash
-                    )
-                );
-            }
-
-            else {
-                std::vector<Expression> nodes{};
-                bool collapse{optimize};
-
-                util::hash_combine(hash, *(element.symbol));
+            if (element.type != SymbolType::CONSTANT) {
                 nodes.reserve(element.symbol->arguments());
-
                 for (std::size_t i = 0; i < element.symbol->arguments(); i++) {
                     if (operands.empty())
                         throw ArgumentsMismatch{
@@ -554,33 +540,32 @@ private:
                 while (!extract.empty()) {
                     nodes.emplace_back(std::move(extract.top()));
                     extract.pop();
-                }
-
-                if (collapse) {
-                    auto symbol = Constant{element.symbol->eval(nodes)};
-                    operands.emplace(
-                        Expression(
-                            _lexer,
-                            variables,
-                            _lexer->to_string(symbol),
-                            std::move(symbol.clone()),
-                            {},
-                            hash
-                        )
-                    );
-                }
-                else
-                    operands.emplace(
-                        Expression(
-                            _lexer,
-                            variables,
-                            element.token,
-                            std::move(element.symbol),
-                            std::move(nodes),
-                            hash
-                        )
-                    );
+                }                
             }
+            else
+                collapse = false;
+
+            util::hash_combine(hash, *(element.symbol));
+            if (collapse) {
+                symbol = Constant{element.symbol->eval(nodes)}.clone();
+                token = _lexer->to_string(symbol->eval());
+                nodes.clear();
+            }
+            else {
+                symbol = std::move(element.symbol);
+                token = std::move(element.token);
+            }
+
+            operands.emplace(
+                Expression(
+                    _lexer,
+                    variables,
+                    token,
+                    std::move(symbol),
+                    std::move(nodes),
+                    hash
+                )
+            );
         }
 
         if (operands.size() > 1) {

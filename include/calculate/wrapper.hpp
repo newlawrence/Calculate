@@ -145,8 +145,8 @@ struct WrapperConcept {
     virtual ~WrapperConcept() = default;
     virtual std::shared_ptr<WrapperConcept> clone() const noexcept = 0;
     virtual std::size_t argc() const noexcept = 0;
-    virtual Type eval(const std::vector<std::reference_wrapper<const Source>>&) const = 0;
-    virtual Type call(const std::vector<std::reference_wrapper<const Type>>&) const = 0;
+    virtual Type eval(const std::vector<Source>&) const = 0;
+    virtual Type call(const std::vector<Type>&) const = 0;
 };
 
 
@@ -171,7 +171,7 @@ class Wrapper {
 
         template<std::size_t... indices>
         Type _eval(
-            const std::vector<std::reference_wrapper<const Source>>& args,
+            const std::vector<Source>& args,
             std::index_sequence<indices...>
         ) const {
             if (args.size() != argcount)
@@ -181,7 +181,7 @@ class Wrapper {
 
         template<std::size_t... indices>
         Type _call(
-            const std::vector<std::reference_wrapper<const Type>>& args,
+            const std::vector<Type>& args,
             std::index_sequence<indices...>
         ) const {
             if (args.size() != argcount)
@@ -201,11 +201,11 @@ class Wrapper {
 
         std::size_t argc() const noexcept override { return argcount; }
 
-        Type eval(const std::vector<std::reference_wrapper<const Source>>& args) const override {
+        Type eval(const std::vector<Source>& args) const override {
             return _eval(args, std::make_index_sequence<argcount>{});
         }
 
-        Type call(const std::vector<std::reference_wrapper<const Type>>& args) const override {
+        Type call(const std::vector<Type>& args) const override {
             return _call(args, std::make_index_sequence<argcount>{});
         }
     };
@@ -301,12 +301,12 @@ public:
 
     template<typename... Args>
     Type eval(Args&&... args) const {
-        return _callable->eval(util::to_reference<const Source>(std::forward<Args>(args)...));
+        return _callable->eval(util::to_vector<Source>(std::forward<Args>(args)...));
     }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
-        return _callable->call(util::to_reference<const Type>(std::forward<Args>(args)...));
+        return _callable->call(util::to_vector<Type>(std::forward<Args>(args)...));
     }
 
     bool operator==(const Wrapper& other) const noexcept {

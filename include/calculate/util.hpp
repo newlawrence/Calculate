@@ -45,23 +45,15 @@ struct Check {
     static constexpr bool iterable = detail::is_iterable<Type>(0);
 };
 
+template<typename Type>
+const std::vector<Type>& to_vector(const std::vector<Type>& args) { return args; }
+
+template<typename Type, typename... Args>
+std::vector<Type> to_vector(Args&&... args) { return {std::forward<Args>(args)...}; }
+
 template<typename Type, typename Args>
 std::enable_if_t<Check<Args>::iterable, std::vector<Type>>
 to_vector(Args&& args) { return {std::begin(args), std::end(args)}; }
-
-template<typename Type, typename... Args>
-std::vector<Type> to_vector(Args&&... args) {
-    return {std::forward<Args>(args)...};
-}
-
-template<typename Type, typename Args>
-std::enable_if_t<Check<Args>::iterable, std::vector<std::reference_wrapper<Type>>>
-to_reference(Args&& args) { return {std::begin(args), std::end(args)}; }
-
-template<typename Type, typename... Args>
-std::vector<std::reference_wrapper<Type>> to_reference(Args&&... args) {
-    return {std::ref(std::forward<Args>(args))...};
-}
 
 
 template<class Type>
