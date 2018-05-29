@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.0dev0
-    Last modified 2018/05/29
+    Calculate - Version 2.1.1dev0
+    Last modified 2018/05/30
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -508,7 +508,7 @@ private:
         while (!symbols.empty()) {
             std::vector<Expression> nodes{};
             std::unique_ptr<Symbol> symbol{};
-            std::string token;
+            std::string token{};
             bool collapse{optimize};
 
             element = std::move(symbols.front());

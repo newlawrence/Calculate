@@ -1,12 +1,12 @@
 ![Calculate](resource/calculate.svg)
 
-| Version | 2.1.0dev0 |
-| ------- | ---------|
+| Version | 2.1.1dev0 |
+| ------- | --------- |
 
 ---
 
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/newlawrence/Calculate/blob/7f96b434dd77461f17a71f3fe3025c21b73ed0d0/copying)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/d9OdoL5gJUYARsRz)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/o0XVUpqEmcmV68WQ)
 [![Build Status](https://travis-ci.org/newlawrence/Calculate.svg?branch=master)](https://travis-ci.org/newlawrence/Calculate)
 [![codecov](https://codecov.io/gh/newlawrence/Calculate/branch/master/graph/badge.svg)](https://codecov.io/gh/newlawrence/Calculate)
 
@@ -41,5 +41,9 @@ sum(1., 2.);  // returns 3.
 * **clang** version **3.7** and above.
 * **msvc** version **19.0** (**Visual C++ 14.0**) and above.
 * **intel** version **16.0** and above.
+
+### User guide
+
+Want to try? Check out **Calculate**'s [wiki](https://github.com/newlawrence/Calculate/wiki) to get started.
 
 **License:** MIT (see `copying`).
