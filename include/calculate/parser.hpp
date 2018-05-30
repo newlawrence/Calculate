@@ -125,8 +125,7 @@ private:
                 p == SymbolType::PREFIX;
 
             if (
-                infix &&
-                leftmost &&
+                infix && leftmost &&
                 has(prefixes, token, a) &&
                 has(functions, a->second, f)
             )

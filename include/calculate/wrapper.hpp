@@ -38,26 +38,6 @@ struct Traits<std::function<Result(Args...)>, void> {
 
 template<typename Result, typename... Args>
 struct Traits<
-    Result(Args...) noexcept,
-    std::enable_if_t<NoExcept<Result(*)(Args...) noexcept, Args...>::value>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
-
-template<typename Result, typename... Args>
-struct Traits<
-    Result(Args...),
-    std::enable_if_t<!NoExcept<Result(*)(Args...), Args...>::value>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
-
-template<typename Result, typename... Args>
-struct Traits<
     Result(*)(Args...) noexcept,
     std::enable_if_t<NoExcept<Result(*)(Args...) noexcept, Args...>::value>
 > {
@@ -69,26 +49,6 @@ struct Traits<
 template<typename Result, typename... Args>
 struct Traits<
     Result(*)(Args...),
-    std::enable_if_t<!NoExcept<Result(*)(Args...), Args...>::value>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
-
-template<typename Result, typename... Args>
-struct Traits<
-    Result(* const)(Args...) noexcept,
-    std::enable_if_t<NoExcept<Result(*)(Args...) noexcept, Args...>::value>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
-
-template<typename Result, typename... Args>
-struct Traits<
-    Result(* const)(Args...),
     std::enable_if_t<!NoExcept<Result(*)(Args...), Args...>::value>
 > {
     using result = Result;
