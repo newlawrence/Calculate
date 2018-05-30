@@ -238,18 +238,17 @@ private:
         };
 
         auto get_symbol = [&](const auto& handler) noexcept {
-            switch (handler.type) {
-            case (SymbolType::PREFIX):
+            if (handler.type == SymbolType::PREFIX) {
                 for (const auto& prefix : prefixes)
                     if (prefix.second == handler.token)
                         return prefix.first;
-            case (SymbolType::SUFFIX):
+            }
+            else if (handler.type == SymbolType::SUFFIX) {
                 for (const auto& suffix : suffixes)
                     if (suffix.second == handler.token)
                         return suffix.first;
-            default:
-                return handler.token;
             }
+            return handler.token;
         };
 
         auto collect_symbol = [&](bool log=true) {
