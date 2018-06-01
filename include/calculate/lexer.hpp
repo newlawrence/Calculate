@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1dev0
-    Last modified 2018/05/18
+    Last modified 2018/06/01
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -104,8 +104,8 @@ const char default_decimal[] = ".";
 template<typename Type>
 class BaseLexer {
 public:
-    enum class TokenType : int {
-        NUMBER=1,
+    enum class TokenType {
+        NUMBER,
         NAME,
         SYMBOL,
         LEFT,
@@ -134,7 +134,7 @@ private:
     const std::regex _tokenizer_regex;
 
     bool _match(const std::smatch& match, TokenType type) const noexcept {
-        return !match[static_cast<int>(type)].str().empty();
+        return !match[static_cast<int>(type) + 1].str().empty();
     }
 
     std::string _adapt_regex(std::string regex) const {
@@ -231,8 +231,10 @@ private:
                 tokens.emplace_back(std::move(token), TokenType::RIGHT);
             else if (_match(match, TokenType::SEPARATOR))
                 tokens.emplace_back(std::move(token), TokenType::SEPARATOR);
-            else
+            else if (_match(match, TokenType::DECIMAL))
                 throw SyntaxError{"orphan decimal mark '" + token + "'"};
+            else
+                throw SyntaxError{"not matching token '" + token + "'"};
 
             string = match.suffix().str();
             last = tokens.back().second;

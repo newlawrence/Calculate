@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1dev0
-    Last modified 2018/05/30
+    Last modified 2018/06/01
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -25,8 +25,8 @@ class Symbol : Wrapper<typename Expression::Type, Expression> {
 public:
     using Type = typename Expression::Type;
 
-    enum class SymbolType : int {
-        LEFT=0,
+    enum class SymbolType {
+        LEFT,
         RIGHT,
         SEPARATOR,
         CONSTANT,
@@ -202,7 +202,7 @@ class Operator final : public Symbol<Expression> {
 public:
     using Type = typename Expression::Type;
 
-    enum class Associativity : int {LEFT=0, RIGHT, BOTH};
+    enum class Associativity {LEFT, RIGHT, BOTH};
 
 private:
     std::size_t _precedence;
