@@ -24,19 +24,19 @@ namespace util {
 
 namespace detail {
 
-    using std::begin;
-    using std::end;
+using std::begin;
+using std::end;
 
-    template<typename Type>
-    static constexpr decltype(
-        begin(std::declval<Type&>()) != end(std::declval<Type&>()),
-        ++std::declval<decltype(begin(std::declval<Type&>()))&>(),
-        *begin(std::declval<Type&>()),
-        bool{}
-    ) is_iterable(int) { return true; }
+template<typename Type>
+static constexpr decltype(
+    begin(std::declval<Type&>()) != end(std::declval<Type&>()),
+    ++std::declval<decltype(begin(std::declval<Type&>()))&>(),
+    *begin(std::declval<Type&>()),
+    bool{}
+) is_iterable(int) { return true; }
 
-    template<typename Type>
-    static constexpr bool is_iterable(...) { return false; }
+template<typename Type>
+static constexpr bool is_iterable(...) { return false; }
 
 }
 

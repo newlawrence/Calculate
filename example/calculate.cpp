@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1dev0
-    Last modified 2018/05/29
+    Last modified 2018/06/03
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -110,7 +110,7 @@ void run(
     Type result;
 
     auto parser = Parser{};
-    auto lexer = parser.lexer();
+    auto& lexer = parser.lexer();
 
     if (arguments.count("optimize"))
         parser.optimize = true;
@@ -121,7 +121,7 @@ void run(
             auto sep = var.find(":");
             if (sep == 0 || sep > var.size() - 2)
                 throw po::error("bad variable input '" + var + "'");
-            values.push_back(lexer->to_value(var.substr(sep + 1, var.size())));
+            values.push_back(lexer.to_value(var.substr(sep + 1, var.size())));
             var = var.substr(0, sep);
         }
     }
@@ -160,14 +160,14 @@ void run(
             std::cout << "\n";
             std::cout << "Values:            ";
             for (const auto& val : values)
-                std::cout << lexer->to_string(val) << " ";
+                std::cout << lexer.to_string(val) << " ";
             std::cout << "\n";
         }
-        std::cout << "Result:           " << lexer->to_string(result) << "\n";
+        std::cout << "Result:           " << lexer.to_string(result) << "\n";
         std::cout << "Iterations:       " << iterations << "\n";
         std::cout << "Building time:    " << build_time << " us" << "\n";
         std::cout << "Evaluation time:  " << eval_time << " ns" << std::endl;
     }
     else
-        std::cout << lexer->to_string(result) << std::endl;
+        std::cout << lexer.to_string(result) << std::endl;
 }

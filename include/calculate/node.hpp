@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1dev0
-    Last modified 2018/05/29
+    Last modified 2018/06/03
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -59,10 +59,7 @@ public:
         }
 
     public:
-        VariableHandler(
-            std::vector<std::string> keys,
-            Lexer& lexer
-        ) :
+        VariableHandler(std::vector<std::string> keys, Lexer* lexer) :
                 variables{std::move(keys)},
                 _size{variables.size()},
                 _values{std::make_unique<Type[]>(_size)},
@@ -74,7 +71,7 @@ public:
             };
 
             for (const auto &variable : variables) {
-                if (!std::regex_match(variable, lexer.name_regex))
+                if (!std::regex_match(variable, lexer->name_regex))
                     throw UnsuitableName{variable};
                 else if (singles.erase(variable) == 0)
                     throw RepeatedSymbol{variable};
@@ -145,15 +142,15 @@ private:
     std::size_t _hash;
 
     Node(
-        const std::shared_ptr<Lexer>& _lexer,
-        const std::shared_ptr<VariableHandler>& variables,
+        std::shared_ptr<Lexer> _lexer,
+        std::shared_ptr<VariableHandler> variables,
         std::string token,
         std::unique_ptr<Symbol>&& symbol,
         std::vector<Node>&& nodes,
         std::size_t hash
     ) :
-            _lexer{_lexer},
-            _variables{variables},
+            _lexer{std::move(_lexer)},
+            _variables{std::move(variables)},
             _token{std::move(token)},
             _symbol{std::move(symbol)},
             _nodes{std::move(nodes)},
@@ -351,7 +348,7 @@ public:
         return ostream;
     }
 
-    std::shared_ptr<Lexer> lexer() const noexcept { return _lexer; }
+    const Lexer& lexer() const noexcept { return *_lexer; }
 
     const std::string& token() const noexcept { return _token; }
 

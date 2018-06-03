@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1dev0
-    Last modified 2018/05/17
+    Last modified 2018/06/03
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -22,10 +22,7 @@ template<typename T> T div(const T& x, const T& y) noexcept { return x / y; }
 
 class Parser : public BaseParser<double> {
 public:
-    template<typename LexerType>
-    Parser(LexerType&& lexer) :
-            BaseParser<Type>{std::forward<LexerType>(lexer)}
-    {
+    Parser(const Lexer& lexer=make_lexer<Type>()) : BaseParser<Type>{lexer} {
         using Associativity = Operator::Associativity;
         using F1 = Type(*)(Type);
         using F2 = Type(*)(Type, Type);
@@ -131,17 +128,12 @@ public:
 
         suffixes.insert({{"!", "fact"}});
     }
-
-    Parser() : Parser{make_lexer<Type>()} {}
 };
 
 
 class ComplexParser : public BaseParser<std::complex<double>> {
 public:
-    template<typename LexerType>
-    ComplexParser(LexerType&& lexer) :
-            BaseParser<Type>{std::forward<LexerType>(lexer)}
-    {
+    ComplexParser(const Lexer& lexer=make_lexer<Type>()) : BaseParser<Type>{lexer} {
         using namespace std::complex_literals;
         using Associativity = Operator::Associativity;
         using F1 = Type(*)(const Type&);
@@ -200,8 +192,6 @@ public:
 
         prefixes.insert({{"+", "id"}, {"-", "neg"}});
     }
-
-    ComplexParser() : ComplexParser{make_lexer<Type>()} {}
 };
 
 }

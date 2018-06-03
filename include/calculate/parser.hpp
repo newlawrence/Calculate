@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1dev0
-    Last modified 2018/05/30
+    Last modified 2018/06/03
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -59,19 +59,9 @@ public:
             optimize{false}
     {}
 
-    BaseParser(std::shared_ptr<Lexer> lexer) :
-            _lexer{std::move(lexer)},
-            constants{_lexer.get()},
-            functions{_lexer.get()},
-            operators{_lexer.get()},
-            prefixes{_lexer.get()},
-            suffixes{_lexer.get()},
-            optimize{false}
-    {}
-
     ~BaseParser() = default;
 
-    std::shared_ptr<Lexer> lexer() const noexcept { return _lexer; }
+    const Lexer& lexer() const noexcept { return *_lexer; }
 
 
 private:
@@ -590,7 +580,7 @@ public:
     Expression from_infix(const std::string& expr, Args&&... vars) const {
         auto variables = std::make_shared<VariableHandler>(
             util::to_vector<std::string>(std::forward<Args>(vars)...),
-            *_lexer
+            _lexer.get()
         );
         auto postfix =
             _shunting_yard(_parse_infix(_tokenize(expr, variables, true)));
@@ -602,7 +592,7 @@ public:
     Expression from_postfix(const std::string& expr, Args&&... vars) const {
         auto variables = std::make_shared<VariableHandler>(
             util::to_vector<std::string>(std::forward<Args>(vars)...),
-            *_lexer
+            _lexer.get()
         );
 
         return _build_tree(_tokenize(expr, variables, false), variables);
