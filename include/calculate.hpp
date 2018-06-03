@@ -19,6 +19,12 @@ template<typename T> T sub(const T& x, const T& y) noexcept { return x - y; }
 template<typename T> T mul(const T& x, const T& y) noexcept { return x * y; }
 template<typename T> T div(const T& x, const T& y) noexcept { return x / y; }
 
+constexpr std::size_t very_low_precedence = 1111u;
+constexpr std::size_t low_precedence = 2222u;
+constexpr std::size_t normal_precedence = 5555u;
+constexpr std::size_t high_precedence = 8888u;
+constexpr std::size_t very_high_precedence = 9999u;
+
 
 class Parser : public BaseParser<double> {
 public:
@@ -116,12 +122,12 @@ public:
         });
 
         operators.insert({
-            {"+", {&add<Type>, 3333u, Associativity::BOTH}},
-            {"-", {&sub<Type>, 3333u, Associativity::LEFT}},
-            {"*", {&mul<Type>, 6666u, Associativity::BOTH}},
-            {"/", {&div<Type>, 6666u, Associativity::LEFT}},
-            {"%", {static_cast<F2>(std::fmod), 6666u, Associativity::LEFT}},
-            {"^", {std::move(pow), 9999u, Associativity::RIGHT}}
+            {"+", {&add<Type>, low_precedence, Associativity::BOTH}},
+            {"-", {&sub<Type>, low_precedence, Associativity::LEFT}},
+            {"*", {&mul<Type>, normal_precedence, Associativity::BOTH}},
+            {"/", {&div<Type>, normal_precedence, Associativity::LEFT}},
+            {"%", {static_cast<F2>(std::fmod), normal_precedence, Associativity::LEFT}},
+            {"^", {std::move(pow), high_precedence, Associativity::RIGHT}}
         });
 
         prefixes.insert({{"+", "id"}, {"-", "neg"}});
@@ -183,11 +189,11 @@ public:
         });
 
         operators.insert({
-            {"+", {&add<Type>, 3333u, Associativity::BOTH}},
-            {"-", {&sub<Type>, 3333u, Associativity::LEFT}},
-            {"*", {&mul<Type>, 6666u, Associativity::BOTH}},
-            {"/", {&div<Type>, 6666u, Associativity::LEFT}},
-            {"^", {static_cast<F2>(std::pow), 9999u, Associativity::RIGHT}}
+            {"+", {&add<Type>, low_precedence, Associativity::BOTH}},
+            {"-", {&sub<Type>, low_precedence, Associativity::LEFT}},
+            {"*", {&mul<Type>, normal_precedence, Associativity::BOTH}},
+            {"/", {&div<Type>, normal_precedence, Associativity::LEFT}},
+            {"^", {static_cast<F2>(std::pow), high_precedence, Associativity::RIGHT}}
         });
 
         prefixes.insert({{"+", "id"}, {"-", "neg"}});

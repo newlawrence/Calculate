@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1dev0
-    Last modified 2018/06/01
+    Last modified 2018/06/03
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -40,14 +40,6 @@ private:
     using WrapperConcept = calculate::WrapperConcept<Type, Expression>;
     using Wrapper = calculate::Wrapper<Type, Expression>;
 
-    template<typename Callable>
-    struct Inspect {
-        static constexpr bool not_self =
-            detail::NotSame<Callable, Symbol>::value;
-        static constexpr bool is_model =
-            std::is_base_of<WrapperConcept, Callable>::value;
-    };
-
     std::size_t _hash() const noexcept {
         if (symbol() == SymbolType::CONSTANT)
             return std::hash<Type>()(static_cast<const Wrapper&>(*this)());
@@ -59,8 +51,8 @@ private:
 public:
     template<
         typename Callable,
-        typename = std::enable_if_t<Inspect<Callable>::not_self>,
-        typename = std::enable_if_t<!Inspect<Callable>::is_model>
+        typename = std::enable_if_t<util::not_same<Callable, Symbol>>,
+        typename = std::enable_if_t<!util::is_base_of<WrapperConcept, Callable>>
     >
     Symbol(Callable&& callable) :
             Wrapper{
@@ -69,20 +61,20 @@ public:
             }
     {
         static_assert(
-            detail::NotSame<Callable, Function<Expression>>::value ||
-            detail::Argc<Callable>::value > 0,
+            util::not_same<Callable, Function<Expression>> ||
+            util::argc<Callable> > 0,
             "Functions must have at least one argument"
         );
         static_assert(
-            detail::NotSame<Callable, Operator<Expression>>::value ||
-            detail::Argc<Callable>::value == 2,
+            util::not_same<Callable, Operator<Expression>> ||
+            util::argc<Callable> == 2,
             "Operators must have two arguments"
         );
 	}
 
     template<
         typename Callable,
-        typename = std::enable_if_t<Inspect<Callable>::is_model>
+        typename = std::enable_if_t<util::is_base_of<WrapperConcept, Callable>>
     >
     Symbol(Callable&& callable) :
             Wrapper{std::forward<Callable>(callable)}

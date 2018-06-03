@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <queue>
 
+#include "container.hpp"
 #include "lexer.hpp"
 #include "node.hpp"
 

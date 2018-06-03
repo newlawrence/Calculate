@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1dev0
-    Last modified 2018/05/30
+    Last modified 2018/06/03
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -9,8 +9,6 @@
 #ifndef __CALCULATE_WRAPPER_HPP__
 #define __CALCULATE_WRAPPER_HPP__
 
-#include <type_traits>
-#include <tuple>
 #include <utility>
 
 #include "util.hpp"
@@ -19,108 +17,6 @@
 namespace calculate {
 
 namespace detail {
-
-template<typename Function, typename... Args>
-struct NoExcept {
-    static constexpr bool value =
-        noexcept(std::declval<Function>()(std::declval<Args>()...));
-};
-
-template<typename Type, typename = void>
-struct Traits : Traits<decltype(&Type::operator())> {};
-
-template<typename Result, typename... Args>
-struct Traits<std::function<Result(Args...)>, void> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
-
-template<typename Result, typename... Args>
-struct Traits<
-    Result(*)(Args...) noexcept,
-    std::enable_if_t<NoExcept<Result(*)(Args...) noexcept, Args...>::value>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
-
-template<typename Result, typename... Args>
-struct Traits<
-    Result(*)(Args...),
-    std::enable_if_t<!NoExcept<Result(*)(Args...), Args...>::value>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
-
-template<typename Type, typename Result, typename... Args>
-struct Traits<
-    Result(Type::*)(Args...) noexcept,
-    std::enable_if_t<NoExcept<Type, Args...>::value>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = false;
-};
-
-template<typename Type, typename Result, typename... Args>
-struct Traits<
-    Result(Type::*)(Args...),
-    std::enable_if_t<!NoExcept<Type, Args...>::value>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = false;
-};
-
-template<typename Type, typename Result, typename... Args>
-struct Traits<
-    Result(Type::*)(Args...) const noexcept,
-    std::enable_if_t<NoExcept<Type, Args...>::value>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
-
-template<typename Type, typename Result, typename... Args>
-struct Traits<
-    Result(Type::*)(Args...) const,
-    std::enable_if_t<!NoExcept<Type, Args...>::value>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
-
-
-template<typename Function>
-using Result = typename Traits<Function>::result;
-
-template<typename Function>
-using Arguments = typename Traits<Function>::arguments;
-
-template<typename Function>
-struct Argc {
-    static constexpr std::size_t value =
-        std::tuple_size<typename Traits<Function>::arguments>::value;
-};
-
-template<typename Function>
-struct IsConst {
-    static constexpr bool value = Traits<Function>::constant;
-};
-
-template<typename Type, typename Target>
-struct NotSame {
-    static constexpr bool value =
-        !std::is_same<std::decay_t<Type>, Target>::value &&
-        !std::is_base_of<Target, std::decay_t<Type>>::value;
-};
-
 
 template<typename Type, std::size_t>
 using ExtractType = Type;
@@ -154,14 +50,6 @@ class Wrapper {
     friend struct std::hash<Wrapper>;
 
     using WrapperConcept = calculate::WrapperConcept<Type, Source>;
-
-    template<typename Callable>
-    struct Inspect {
-        static constexpr bool not_self =
-            detail::NotSame<Callable, Wrapper>::value;
-        static constexpr bool is_model =
-            std::is_base_of<WrapperConcept, Callable>::value;
-    };
 
     template<typename Callable, typename Adapter, std::size_t argcount>
     class WrapperModel final : public WrapperConcept {
@@ -213,7 +101,7 @@ class Wrapper {
 	using ModelType = WrapperModel<
         Callable,
         Adapter,
-        detail::Argc<Callable>::value
+        util::argc<Callable>
     >;
 
     std::shared_ptr<WrapperConcept> _callable;
@@ -231,49 +119,44 @@ public:
             }
     {
         static_assert(
-            std::is_copy_constructible<Callable>::value,
+            util::is_copy_constructible<Callable>,
             "Non copy-constructible callable"
         );
         static_assert(
-            std::is_copy_constructible<Adapter>::value,
+            util::is_same<
+                util::Arguments<Callable>,
+                detail::Repeated<Type, util::argc<Callable>>
+            >,
+            "Wrong callable arguments types"
+        );
+        static_assert(
+            util::is_same<util::Result<Callable>, Type>,
+            "Wrong callable return type"
+        );
+        static_assert(util::is_const<Callable>, "Non constant callable");
+
+        static_assert(
+            util::is_copy_constructible<Adapter>,
             "Non copy-constructible adapter"
         );
         static_assert(
-            std::is_same<
-                detail::Arguments<Callable>,
-                detail::Repeated<Type, detail::Argc<Callable>::value>
-            >::value,
-            "Wrong arguments types"
-        );
-        static_assert(
-            std::is_same<detail::Result<Callable>, Type>::value,
-            "Wrong return type"
-        );
-        static_assert(
-            std::is_same<
-                detail::Arguments<Adapter>,
+            util::is_same<
+                util::Arguments<Adapter>,
                 detail::Repeated<Source, 1>
-            >::value,
+            >,
             "Wrong adapter arguments types"
         );
         static_assert(
-            std::is_same<detail::Result<Adapter>, Type>::value,
+            util::is_same<util::Result<Adapter>, Type>,
             "Wrong adapter return type"
         );
-        static_assert(
-            detail::IsConst<Callable>::value,
-            "Non constant callable"
-        );
-        static_assert(
-            detail::IsConst<Adapter>::value,
-            "Non constant adapter"
-        );
+        static_assert(util::is_const<Adapter>, "Non constant adapter");
     }
 
     template<
         typename Callable,
-        typename = std::enable_if_t<Inspect<Callable>::not_self>,
-        typename = std::enable_if_t<!Inspect<Callable>::is_model>
+        typename = std::enable_if_t<util::not_same<Callable, Wrapper>>,
+        typename = std::enable_if_t<!util::is_base_of<WrapperConcept, Callable>>
     >
     Wrapper(Callable&& callable=[]() { return Type(); }) :
             Wrapper{
@@ -284,7 +167,7 @@ public:
 
     template<
         typename Callable,
-        typename = std::enable_if_t<Inspect<Callable>::is_model>
+        typename = std::enable_if_t<util::is_base_of<WrapperConcept, Callable>>
     >
     Wrapper(Callable&& callable) :
             _callable{

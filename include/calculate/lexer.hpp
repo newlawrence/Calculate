@@ -24,9 +24,11 @@ namespace calculate {
 
 namespace detail {
 
-const char scape[] = {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
+constexpr const char scape[] =
+    {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
 
-const char split[] = R"(^(?:(?:(.*[^ij])([+\-].+)[ij])|(.*[^ij])|(.+)[ij])$)";
+constexpr const char split[] =
+    R"(^(?:(?:(.*[^ij])([+\-].+)[ij])|(.*[^ij])|(.+)[ij])$)";
 
 
 template<typename Type>
@@ -88,11 +90,11 @@ constexpr const char* default_complex<false> =
 
 template<typename Type>
 constexpr const char* default_number =
-    default_real<std::is_integral<Type>::value>;
+    default_real<util::is_integral<Type>>;
 
 template<typename Type>
 constexpr const char* default_number<std::complex<Type>> = 
-    default_complex<std::is_integral<Type>::value>;
+    default_complex<util::is_integral<Type>>;
 
 constexpr const char default_name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
 

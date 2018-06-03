@@ -112,7 +112,7 @@ public:
         }
 
         template<typename Args>
-        std::enable_if_t<util::Check<Args>::iterable> update(Args&& vals) {
+        std::enable_if_t<util::is_iterable<Args>> update(Args&& vals) {
             std::size_t i{};
 
             for (auto val = std::begin(vals); val != std::end(vals); ++val) {
