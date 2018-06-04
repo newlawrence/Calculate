@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1dev0
-    Last modified 2018/06/03
+    Last modified 2018/06/04
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -15,25 +15,6 @@
 
 
 namespace calculate {
-
-namespace detail {
-
-template<typename Type, std::size_t>
-using ExtractType = Type;
-
-template<typename, std::size_t argc, typename = std::make_index_sequence<argc>>
-struct Repeat {};
-
-template<typename Type, std::size_t argc, std::size_t... indices>
-struct Repeat<Type, argc, std::index_sequence<indices...>> {
-    using type = std::tuple<ExtractType<Type, indices>...>;
-};
-
-template<typename Type, std::size_t argc>
-using Repeated = typename Repeat<Type, argc>::type;
-
-}
-
 
 template<typename Type, typename Source>
 struct WrapperConcept {
@@ -125,7 +106,7 @@ public:
         static_assert(
             util::is_same<
                 util::Arguments<Callable>,
-                detail::Repeated<Type, util::argc<Callable>>
+                util::Tuple<Type, util::argc<Callable>>
             >,
             "Wrong callable arguments types"
         );
@@ -142,7 +123,7 @@ public:
         static_assert(
             util::is_same<
                 util::Arguments<Adapter>,
-                detail::Repeated<Source, 1>
+                util::Tuple<Source, 1>
             >,
             "Wrong adapter arguments types"
         );

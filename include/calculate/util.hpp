@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1dev0
-    Last modified 2018/06/03
+    Last modified 2018/06/04
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -45,15 +45,27 @@ using std::begin;
 using std::end;
 
 template<typename Type>
-static constexpr decltype(
+constexpr decltype(
     begin(std::declval<Type&>()) != end(std::declval<Type&>()),
     ++std::declval<decltype(begin(std::declval<Type&>()))&>(),
     *begin(std::declval<Type&>()),
     bool{}
 ) is_iterable(int) { return true; }
 
-template<typename Type>
-static constexpr bool is_iterable(...) { return false; }
+template<typename>
+constexpr bool is_iterable(...) { return false; }
+
+
+template<typename Type, std::size_t>
+using ExtractType = Type;
+
+template<typename, std::size_t argc, typename = std::make_index_sequence<argc>>
+struct MakeTuple {};
+
+template<typename Type, std::size_t argc, std::size_t... indices>
+struct MakeTuple<Type, argc, std::index_sequence<indices...>> {
+    using type = std::tuple<ExtractType<Type, indices>...>;
+};
 
 
 template<typename Function, typename... Args>
@@ -138,6 +150,9 @@ constexpr bool is_iterable = detail::is_iterable<Type>(0);
 template<typename Type>
 constexpr bool is_noexcept = detail::is_noexcept<Type>;
 
+
+template<typename Type, std::size_t argc>
+using Tuple = typename detail::MakeTuple<Type, argc>::type;
 
 template<typename Function>
 using Result = typename detail::Traits<Function>::result;
