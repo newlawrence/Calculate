@@ -1,5 +1,5 @@
 /*
-    Calculate - Version 2.1.1dev0
+    Calculate - Version 2.1.1rc1
     Last modified 2018/02/10
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
