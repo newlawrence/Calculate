@@ -6,7 +6,7 @@
 ---
 
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/newlawrence/Calculate/blob/7f96b434dd77461f17a71f3fe3025c21b73ed0d0/copying)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/AhvZdhUEY4xrzDNE)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/hgwwABgwIcZbefQQ)
 [![Build Status](https://travis-ci.org/newlawrence/Calculate.svg?branch=master)](https://travis-ci.org/newlawrence/Calculate)
 [![codecov](https://codecov.io/gh/newlawrence/Calculate/branch/master/graph/badge.svg)](https://codecov.io/gh/newlawrence/Calculate)
 
@@ -36,7 +36,6 @@ sum(1., 2.);  // returns 3.
 * **gcc** version **5.1** and above.
 * **clang** version **3.7** and above.
 * **msvc** version **19.10** and above.
-* **intel** version **17.0** and above.
 
 ### User guide
 

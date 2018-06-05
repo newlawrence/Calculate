@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/04
+    Last modified 2018/06/05
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -82,7 +82,7 @@ class Wrapper {
 	using ModelType = WrapperModel<
         Callable,
         Adapter,
-        util::argc<Callable>
+        util::argc_v<Callable>
     >;
 
     std::shared_ptr<WrapperConcept> _callable;
@@ -100,44 +100,44 @@ public:
             }
     {
         static_assert(
-            util::is_copy_constructible<Callable>,
+            util::is_copy_constructible_v<Callable>,
             "Non copy-constructible callable"
         );
         static_assert(
-            util::is_same<
-                util::Arguments<Callable>,
-                util::Tuple<Type, util::argc<Callable>>
+            util::is_same_v<
+                util::args_tuple_t<Callable>,
+                util::make_tuple_t<Type, util::argc_v<Callable>>
             >,
             "Wrong callable arguments types"
         );
         static_assert(
-            util::is_same<util::Result<Callable>, Type>,
+            util::is_same_v<util::result_t<Callable>, Type>,
             "Wrong callable return type"
         );
-        static_assert(util::is_const<Callable>, "Non constant callable");
+        static_assert(util::is_const_v<Callable>, "Non constant callable");
 
         static_assert(
-            util::is_copy_constructible<Adapter>,
+            util::is_copy_constructible_v<Adapter>,
             "Non copy-constructible adapter"
         );
         static_assert(
-            util::is_same<
-                util::Arguments<Adapter>,
-                util::Tuple<Source, 1>
+            util::is_same_v<
+                util::args_tuple_t<Adapter>,
+                util::make_tuple_t<Source, 1>
             >,
             "Wrong adapter arguments types"
         );
         static_assert(
-            util::is_same<util::Result<Adapter>, Type>,
+            util::is_same_v<util::result_t<Adapter>, Type>,
             "Wrong adapter return type"
         );
-        static_assert(util::is_const<Adapter>, "Non constant adapter");
+        static_assert(util::is_const_v<Adapter>, "Non constant adapter");
     }
 
     template<
         typename Callable,
-        typename = std::enable_if_t<util::not_same<Callable, Wrapper>>,
-        typename = std::enable_if_t<!util::is_base_of<WrapperConcept, Callable>>
+        typename = std::enable_if_t<util::not_same_v<Callable, Wrapper>>,
+        typename = std::enable_if_t<!util::is_base_of_v<WrapperConcept, Callable>>
     >
     Wrapper(Callable&& callable=[]() { return Type(); }) :
             Wrapper{
@@ -148,7 +148,7 @@ public:
 
     template<
         typename Callable,
-        typename = std::enable_if_t<util::is_base_of<WrapperConcept, Callable>>
+        typename = std::enable_if_t<util::is_base_of_v<WrapperConcept, Callable>>
     >
     Wrapper(Callable&& callable) :
             _callable{

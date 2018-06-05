@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/03
+    Last modified 2018/06/05
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -112,7 +112,7 @@ public:
         }
 
         template<typename Args>
-        std::enable_if_t<util::is_iterable<Args>> update(Args&& vals) {
+        std::enable_if_t<util::is_iterable_v<Args>> update(Args&& vals) {
             std::size_t i{};
 
             for (auto val = std::begin(vals); val != std::end(vals); ++val) {

@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/03
+    Last modified 2018/06/05
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -51,8 +51,8 @@ private:
 public:
     template<
         typename Callable,
-        typename = std::enable_if_t<util::not_same<Callable, Symbol>>,
-        typename = std::enable_if_t<!util::is_base_of<WrapperConcept, Callable>>
+        typename = std::enable_if_t<util::not_same_v<Callable, Symbol>>,
+        typename = std::enable_if_t<!util::is_base_of_v<WrapperConcept, Callable>>
     >
     Symbol(Callable&& callable) :
             Wrapper{
@@ -61,20 +61,20 @@ public:
             }
     {
         static_assert(
-            util::not_same<Callable, Function<Expression>> ||
-            util::argc<Callable> > 0,
+            util::not_same_v<Callable, Function<Expression>> ||
+            util::argc_v<Callable>> 0,
             "Functions must have at least one argument"
         );
         static_assert(
-            util::not_same<Callable, Operator<Expression>> ||
-            util::argc<Callable> == 2,
+            util::not_same_v<Callable, Operator<Expression>> ||
+            util::argc_v<Callable> == 2,
             "Operators must have two arguments"
         );
 	}
 
     template<
         typename Callable,
-        typename = std::enable_if_t<util::is_base_of<WrapperConcept, Callable>>
+        typename = std::enable_if_t<util::is_base_of_v<WrapperConcept, Callable>>
     >
     Symbol(Callable&& callable) :
             Wrapper{std::forward<Callable>(callable)}

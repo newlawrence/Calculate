@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/03
+    Last modified 2018/06/05
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -90,11 +90,11 @@ constexpr const char* default_complex<false> =
 
 template<typename Type>
 constexpr const char* default_number =
-    default_real<util::is_integral<Type>>;
+    default_real<util::is_integral_v<Type>>;
 
 template<typename Type>
 constexpr const char* default_number<std::complex<Type>> = 
-    default_complex<util::is_integral<Type>>;
+    default_complex<util::is_integral_v<Type>>;
 
 constexpr const char default_name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
 

@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/03
+    Last modified 2018/06/05
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -29,7 +29,6 @@ constexpr std::size_t very_high_precedence = 9999u;
 class Parser : public BaseParser<double> {
 public:
     Parser(const Lexer& lexer=make_lexer<Type>()) : BaseParser<Type>{lexer} {
-        using Associativity = Operator::Associativity;
         using F1 = Type(*)(Type);
         using F2 = Type(*)(Type, Type);
         using F3 = Type(*)(Type, Type, Type);
@@ -141,7 +140,6 @@ class ComplexParser : public BaseParser<std::complex<double>> {
 public:
     ComplexParser(const Lexer& lexer=make_lexer<Type>()) : BaseParser<Type>{lexer} {
         using namespace std::complex_literals;
-        using Associativity = Operator::Associativity;
         using F1 = Type(*)(const Type&);
         using F2 = Type(*)(const Type&, const Type&);
 

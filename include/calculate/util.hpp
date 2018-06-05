@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/04
+    Last modified 2018/06/05
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -24,19 +24,19 @@ namespace calculate {
 namespace util {
 
 template<typename T, typename U>
-constexpr bool is_same = std::is_same<T, U>::value;
+constexpr bool is_same_v = std::is_same<T, U>::value;
 
 template<typename T, typename U>
-constexpr bool is_base_of = std::is_base_of<T, U>::value;
+constexpr bool is_base_of_v = std::is_base_of<T, U>::value;
 
 template<typename T>
-constexpr bool is_integral = std::is_integral<T>::value;
+constexpr bool is_integral_v = std::is_integral<T>::value;
 
 template<typename T>
-constexpr bool is_copy_constructible = std::is_copy_constructible<T>::value;
+constexpr bool is_copy_constructible_v = std::is_copy_constructible<T>::value;
 
 template<typename T>
-constexpr std::size_t tuple_size = std::tuple_size<T>::value;
+constexpr std::size_t tuple_size_v = std::tuple_size<T>::value;
 
 
 namespace detail {
@@ -44,11 +44,11 @@ namespace detail {
 using std::begin;
 using std::end;
 
-template<typename Type>
+template<typename T>
 constexpr decltype(
-    begin(std::declval<Type&>()) != end(std::declval<Type&>()),
-    ++std::declval<decltype(begin(std::declval<Type&>()))&>(),
-    *begin(std::declval<Type&>()),
+    begin(std::declval<T&>()) != end(std::declval<T&>()),
+    ++std::declval<decltype(begin(std::declval<T&>()))&>(),
+    *begin(std::declval<T&>()),
     bool{}
 ) is_iterable(int) { return true; }
 
@@ -56,137 +56,117 @@ template<typename>
 constexpr bool is_iterable(...) { return false; }
 
 
-template<typename Type, std::size_t>
-using ExtractType = Type;
+template<typename T, std::size_t>
+using extract_type = T;
 
 template<typename, std::size_t argc, typename = std::make_index_sequence<argc>>
-struct MakeTuple {};
+struct make_tuple {};
 
-template<typename Type, std::size_t argc, std::size_t... indices>
-struct MakeTuple<Type, argc, std::index_sequence<indices...>> {
-    using type = std::tuple<ExtractType<Type, indices>...>;
+template<typename T, std::size_t argc, std::size_t... indices>
+struct make_tuple<T, argc, std::index_sequence<indices...>> {
+    using type = std::tuple<extract_type<T, indices>...>;
 };
 
 
-template<typename Function, typename... Args>
-constexpr bool is_noexcept =
-    noexcept(std::declval<Function>()(std::declval<Args>()...));
+template<typename T, typename... Args>
+constexpr bool is_noexcept_v = noexcept(std::declval<T>()(std::declval<Args>()...));
 
-template<typename Type, typename = void>
-struct Traits : Traits<decltype(&Type::operator())> {};
-
-template<typename Result, typename... Args>
-struct Traits<std::function<Result(Args...)>, void> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
+template<bool c, typename R, typename... Args>
+struct TraitsHandler {
+    static constexpr bool is_const_v = c;
+    using result_t = R;
+    using args_tuple_t = std::tuple<std::decay_t<Args>...>;
 };
 
-template<typename Result, typename... Args>
+template<typename T, typename = void>
+struct Traits : Traits<decltype(&T::operator())> {};
+
+template<typename R, typename... Args>
 struct Traits<
-    Result(*)(Args...) noexcept,
-    std::enable_if_t<is_noexcept<Result(*)(Args...) noexcept, Args...>>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
+    std::function<R(Args...)>,
+    void
+> : TraitsHandler<true, R, Args...> {};
 
-template<typename Result, typename... Args>
+template<typename R, typename... Args>
 struct Traits<
-    Result(*)(Args...),
-    std::enable_if_t<!is_noexcept<Result(*)(Args...), Args...>>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
+    R(*)(Args...) noexcept,
+    std::enable_if_t<is_noexcept_v<R(*)(Args...) noexcept, Args...>>
+> : TraitsHandler<true, R, Args...> {};
 
-template<typename Type, typename Result, typename... Args>
+template<typename R, typename... Args>
 struct Traits<
-    Result(Type::*)(Args...) noexcept,
-    std::enable_if_t<is_noexcept<Type, Args...>>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = false;
-};
+    R(*)(Args...),
+    std::enable_if_t<!is_noexcept_v<R(*)(Args...), Args...>>
+> : TraitsHandler<true, R, Args...> {};
 
-template<typename Type, typename Result, typename... Args>
+template<typename T, typename R, typename... Args>
 struct Traits<
-    Result(Type::*)(Args...),
-    std::enable_if_t<!is_noexcept<Type, Args...>>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = false;
-};
+    R(T::*)(Args...) noexcept,
+    std::enable_if_t<is_noexcept_v<T, Args...>>
+> : TraitsHandler<false, R, Args...> {};
 
-template<typename Type, typename Result, typename... Args>
+template<typename T, typename R, typename... Args>
 struct Traits<
-    Result(Type::*)(Args...) const noexcept,
-    std::enable_if_t<is_noexcept<Type, Args...>>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
+    R(T::*)(Args...),
+    std::enable_if_t<!is_noexcept_v<T, Args...>>
+> : TraitsHandler<false, R, Args...> {};
 
-template<typename Type, typename Result, typename... Args>
+template<typename T, typename R, typename... Args>
 struct Traits<
-    Result(Type::*)(Args...) const,
-    std::enable_if_t<!is_noexcept<Type, Args...>>
-> {
-    using result = Result;
-    using arguments = std::tuple<std::decay_t<Args>...>;
-    static constexpr bool constant = true;
-};
+    R(T::*)(Args...) const noexcept,
+    std::enable_if_t<is_noexcept_v<T, Args...>>
+> : TraitsHandler<true, R, Args...> {};
+
+template<typename T, typename R, typename... Args>
+struct Traits<
+    R(T::*)(Args...) const,
+    std::enable_if_t<!is_noexcept_v<T, Args...>>
+> : TraitsHandler<true, R, Args...> {};
 
 }
 
-template<typename Type>
-constexpr bool is_iterable = detail::is_iterable<Type>(0);
+template<typename T>
+constexpr bool is_iterable_v = detail::is_iterable<T>(0);
 
-template<typename Type>
-constexpr bool is_noexcept = detail::is_noexcept<Type>;
-
-
-template<typename Type, std::size_t argc>
-using Tuple = typename detail::MakeTuple<Type, argc>::type;
-
-template<typename Function>
-using Result = typename detail::Traits<Function>::result;
-
-template<typename Function>
-constexpr bool is_const = detail::Traits<Function>::constant;
-
-template<typename Function>
-using Arguments = typename detail::Traits<Function>::arguments;
-
-template<typename Function>
-constexpr std::size_t argc =
-    util::tuple_size<typename detail::Traits<Function>::arguments>;
-
-template<typename Type, typename Target>
-constexpr bool not_same =
-    !is_same<std::decay_t<Type>, Target> &&
-    !is_base_of<Target, std::decay_t<Type>>;
+template<typename T>
+constexpr bool is_noexcept_v = detail::is_noexcept_v<T>;
 
 
-template<typename Type>
-const std::vector<Type>& to_vector(const std::vector<Type>& args) { return args; }
+template<typename T, std::size_t argc>
+using make_tuple_t = typename detail::make_tuple<T, argc>::type;
 
-template<typename Type, typename... Args>
-std::vector<Type> to_vector(Args&&... args) { return {std::forward<Args>(args)...}; }
+template<typename T>
+using result_t = typename detail::Traits<T>::result_t;
 
-template<typename Type, typename Args>
-std::enable_if_t<is_iterable<Args>, std::vector<Type>>
+template<typename T>
+constexpr bool is_const_v = detail::Traits<T>::is_const_v;
+
+template<typename T>
+using args_tuple_t = typename detail::Traits<T>::args_tuple_t;
+
+template<typename T>
+constexpr std::size_t argc_v =
+    tuple_size_v<typename detail::Traits<T>::args_tuple_t>;
+
+template<typename T, typename U>
+constexpr bool not_same_v =
+    !is_same_v<std::decay_t<T>, U> &&
+    !is_base_of_v<U, std::decay_t<T>>;
+
+
+template<typename T>
+const std::vector<T>& to_vector(const std::vector<T>& args) { return args; }
+
+template<typename T, typename... Args>
+std::vector<T> to_vector(Args&&... args) { return {std::forward<Args>(args)...}; }
+
+template<typename T, typename Args>
+std::enable_if_t<is_iterable_v<Args>, std::vector<T>>
 to_vector(Args&& args) { return {std::begin(args), std::end(args)}; }
 
-
-template<class Type>
-void hash_combine(std::size_t& seed, const Type& object) {
-    std::hash<Type> hasher;
+template<class T>
+void hash_combine(std::size_t& seed, const T& object) {
+    std::hash<T> hasher;
     seed ^= hasher(object) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
