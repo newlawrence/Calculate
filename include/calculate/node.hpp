@@ -366,7 +366,7 @@ public:
         return postfix + _token;
     }
 
-    std::vector<std::string> variables() const noexcept {
+    const std::vector<std::string>& variables() const noexcept {
         return _variables->variables;
     }
 };

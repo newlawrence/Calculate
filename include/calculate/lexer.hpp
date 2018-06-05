@@ -247,7 +247,7 @@ private:
 public:
     BaseLexer(
         std::string lft, std::string rgt, std::string sep, std::string dec,
-        std::string num, std::string nam, std::string sym        
+        std::string num, std::string nam, std::string sym
     ) :
             left{std::move(lft)},
             right{std::move(rgt)},
@@ -339,9 +339,9 @@ public:
     Lexer(
         std::string lft, std::string rgt, std::string sep,
         std::string num, std::string nam, std::string sym
-    ) : 
+    ) :
             BaseLexer{
-                std::move(lft), std::move(rgt), std::move(sep), ".",
+                std::move(lft), std::move(rgt), std::move(sep), defaults::decimal,
                 std::move(num), std::move(nam), std::move(sym)
             },
             _istream{},
@@ -390,7 +390,7 @@ public:
         std::string num, std::string nam, std::string sym
     ) :
             BaseLexer{
-                std::move(lft), std::move(rgt), std::move(sep), ".",
+                std::move(lft), std::move(rgt), std::move(sep), defaults::decimal,
                 std::move(num), std::move(nam), std::move(sym)
             },
             _istream{},

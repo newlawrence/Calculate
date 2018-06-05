@@ -7,6 +7,7 @@
 # Exclude files from language statistics
 tool/* linguist-vendored
 copying linguist-vendored
+*.patch linguist-vendored
 *.txt linguist-vendored
 *.md linguist-vendored
 *.yml linguist-vendored

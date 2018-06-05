@@ -529,7 +529,7 @@ private:
                 while (!extract.empty()) {
                     nodes.emplace_back(std::move(extract.top()));
                     extract.pop();
-                }                
+                }
             }
             else
                 collapse = false;
