@@ -82,10 +82,7 @@ template<typename T, typename = void>
 struct Traits : Traits<decltype(&T::operator())> {};
 
 template<typename R, typename... Args>
-struct Traits<
-    std::function<R(Args...)>,
-    void
-> : TraitsHandler<true, R, Args...> {};
+struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
 
 template<typename R, typename... Args>
 struct Traits<
@@ -163,6 +160,7 @@ std::vector<T> to_vector(Args&&... args) { return {std::forward<Args>(args)...};
 template<typename T, typename Args>
 std::enable_if_t<is_iterable_v<Args>, std::vector<T>>
 to_vector(Args&& args) { return {std::begin(args), std::end(args)}; }
+
 
 template<class T>
 void hash_combine(std::size_t& seed, const T& object) {

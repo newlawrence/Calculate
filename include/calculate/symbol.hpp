@@ -62,7 +62,7 @@ public:
     {
         static_assert(
             util::not_same_v<Callable, Function<Expression>> ||
-            util::argc_v<Callable>> 0,
+            util::argc_v<Callable> == 0,
             "Functions must have at least one argument"
         );
         static_assert(
@@ -70,7 +70,7 @@ public:
             util::argc_v<Callable> == 2,
             "Operators must have two arguments"
         );
-	}
+    }
 
     template<
         typename Callable,

@@ -14,21 +14,28 @@
 
 namespace calculate {
 
+namespace defaults {
+
 template<typename T> T add(const T& x, const T& y) noexcept { return x + y; }
 template<typename T> T sub(const T& x, const T& y) noexcept { return x - y; }
 template<typename T> T mul(const T& x, const T& y) noexcept { return x * y; }
 template<typename T> T div(const T& x, const T& y) noexcept { return x / y; }
 
-constexpr std::size_t very_low_precedence = 1111u;
-constexpr std::size_t low_precedence = 2222u;
-constexpr std::size_t normal_precedence = 5555u;
-constexpr std::size_t high_precedence = 8888u;
-constexpr std::size_t very_high_precedence = 9999u;
+struct Precedence {
+    static constexpr std::size_t very_low = 1111u;
+    static constexpr std::size_t low = 2222u;
+    static constexpr std::size_t normal = 5555u;
+    static constexpr std::size_t high = 8888u;
+    static constexpr std::size_t very_high = 9999u;
+};
+
+}
 
 
 class Parser : public BaseParser<double> {
 public:
     Parser(const Lexer& lexer=make_lexer<Type>()) : BaseParser<Type>{lexer} {
+        using namespace defaults;
         using F1 = Type(*)(Type);
         using F2 = Type(*)(Type, Type);
         using F3 = Type(*)(Type, Type, Type);
@@ -121,12 +128,12 @@ public:
         });
 
         operators.insert({
-            {"+", {&add<Type>, low_precedence, Associativity::BOTH}},
-            {"-", {&sub<Type>, low_precedence, Associativity::LEFT}},
-            {"*", {&mul<Type>, normal_precedence, Associativity::BOTH}},
-            {"/", {&div<Type>, normal_precedence, Associativity::LEFT}},
-            {"%", {static_cast<F2>(std::fmod), normal_precedence, Associativity::LEFT}},
-            {"^", {std::move(pow), high_precedence, Associativity::RIGHT}}
+            {"+", {&add<Type>, Precedence::low, Associativity::BOTH}},
+            {"-", {&sub<Type>, Precedence::low, Associativity::LEFT}},
+            {"*", {&mul<Type>, Precedence::normal, Associativity::BOTH}},
+            {"/", {&div<Type>, Precedence::normal, Associativity::LEFT}},
+            {"%", {static_cast<F2>(std::fmod), Precedence::normal, Associativity::LEFT}},
+            {"^", {std::move(pow), Precedence::high, Associativity::RIGHT}}
         });
 
         prefixes.insert({{"+", "id"}, {"-", "neg"}});
@@ -140,6 +147,7 @@ class ComplexParser : public BaseParser<std::complex<double>> {
 public:
     ComplexParser(const Lexer& lexer=make_lexer<Type>()) : BaseParser<Type>{lexer} {
         using namespace std::complex_literals;
+        using namespace defaults;
         using F1 = Type(*)(const Type&);
         using F2 = Type(*)(const Type&, const Type&);
 
@@ -187,11 +195,11 @@ public:
         });
 
         operators.insert({
-            {"+", {&add<Type>, low_precedence, Associativity::BOTH}},
-            {"-", {&sub<Type>, low_precedence, Associativity::LEFT}},
-            {"*", {&mul<Type>, normal_precedence, Associativity::BOTH}},
-            {"/", {&div<Type>, normal_precedence, Associativity::LEFT}},
-            {"^", {static_cast<F2>(std::pow), high_precedence, Associativity::RIGHT}}
+            {"+", {&add<Type>, Precedence::low, Associativity::BOTH}},
+            {"-", {&sub<Type>, Precedence::low, Associativity::LEFT}},
+            {"*", {&mul<Type>, Precedence::normal, Associativity::BOTH}},
+            {"/", {&div<Type>, Precedence::normal, Associativity::LEFT}},
+            {"^", {static_cast<F2>(std::pow), Precedence::high, Associativity::RIGHT}}
         });
 
         prefixes.insert({{"+", "id"}, {"-", "neg"}});

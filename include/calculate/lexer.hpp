@@ -22,6 +22,46 @@
 
 namespace calculate {
 
+namespace defaults {
+
+constexpr const char left[] = "(";
+constexpr const char right[] = ")";
+constexpr const char separator[] = ",";
+constexpr const char decimal[] = ".";
+
+template<bool>
+constexpr const char* real =
+    R"(^[+\-]?\d+$)";
+
+template<>
+constexpr const char* real<false> =
+    R"(^[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))$)";
+
+template<bool>
+constexpr const char* complex =
+    R"(^(?:(?:(?:[+\-]?\d+)(?:[+\-]?\d+)[ij])|(?:(?:[+\-]?\d+)[ij]?))$)";
+
+template<>
+constexpr const char* complex<false> =
+    R"(^(?:)"
+    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))))"
+    R"((?:[+\-](?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij])|)"
+    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij]?))"
+    R"()$)";
+
+template<typename Type>
+constexpr const char* number = real<util::is_integral_v<Type>>;
+
+template<typename Type>
+constexpr const char* number<std::complex<Type>> = complex<util::is_integral_v<Type>>;
+
+constexpr const char name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
+
+constexpr const char symbol[] = R"(^[^A-Za-z\d.(),_\s]+$)";
+
+}
+
+
 namespace detail {
 
 constexpr const char scape[] =
@@ -61,44 +101,6 @@ std::string write(std::ostringstream& ostream, Type value) {
 }
 
 }
-
-
-constexpr const char default_left[] = "(";
-constexpr const char default_right[] = ")";
-constexpr const char default_separator[] = ",";
-constexpr const char default_decimal[] = ".";
-
-template<bool>
-constexpr const char* default_real =
-    R"(^[+\-]?\d+$)";
-
-template<>
-constexpr const char* default_real<false> =
-    R"(^[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))$)";
-
-template<bool>
-constexpr const char* default_complex =
-    R"(^(?:(?:(?:[+\-]?\d+)(?:[+\-]?\d+)[ij])|(?:(?:[+\-]?\d+)[ij]?))$)";
-
-template<>
-constexpr const char* default_complex<false> =
-    R"(^(?:)"
-    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))))"
-    R"((?:[+\-](?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij])|)"
-    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij]?))"
-    R"()$)";
-
-template<typename Type>
-constexpr const char* default_number =
-    default_real<util::is_integral_v<Type>>;
-
-template<typename Type>
-constexpr const char* default_number<std::complex<Type>> = 
-    default_complex<util::is_integral_v<Type>>;
-
-constexpr const char default_name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
-
-constexpr const char default_symbol[] = R"(^[^A-Za-z\d.(),_\s]+$)";
 
 
 template<typename Type>
@@ -241,7 +243,6 @@ private:
         }
         return tokens;
     }
-
 
 public:
     BaseLexer(
@@ -451,38 +452,20 @@ public:
 
 template<typename Type>
 Lexer<Type> make_lexer() noexcept {
-    return Lexer<Type>{
-        default_left,
-        default_right,
-        default_separator,
-        default_number<Type>,
-        default_name,
-        default_symbol        
-    };
+    using namespace defaults;
+    return {left, right, separator, number<Type>, name, symbol};
 }
 
 template<typename Type>
 Lexer<Type> make_from_punctuation(std::string lft, std::string rgt, std::string sep) {
-    return Lexer<Type>{
-        std::move(lft),
-        std::move(rgt),
-        std::move(sep),
-        default_number<Type>,
-        default_name,
-        default_symbol
-    };
+    using namespace defaults;
+    return {std::move(lft), std::move(rgt), std::move(sep), number<Type>, name, symbol};
 }
 
 template<typename Type>
 Lexer<Type> make_from_lexicon(std::string num, std::string nam, std::string sym) {
-    return Lexer<Type>{
-        default_left,
-        default_right,
-        default_separator,
-        std::move(num),
-        std::move(nam),
-        std::move(sym)
-    };
+    using namespace defaults;
+    return {left, right, separator, std::move(num), std::move(nam), std::move(sym)};
 }
 
 }
