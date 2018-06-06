@@ -36,8 +36,7 @@ sum(1., 2.);  // returns 3.
 * **gcc** version **5.1** and above.
 * **clang** version **3.7** and above.
 * **msvc** version **19.10** and above.
-
-\* _Patch included to workaround the lack of support of **Variable Templates**, which adds compatibility with **msvc** version **19.0** and **intel** version **18.0** compilers._
+* **intel** version **18.0** and above.
 
 ### User guide
 

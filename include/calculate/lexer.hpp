@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/05
+    Last modified 2018/06/07
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -457,13 +457,13 @@ Lexer<Type> make_lexer() noexcept {
 }
 
 template<typename Type>
-Lexer<Type> make_from_punctuation(std::string lft, std::string rgt, std::string sep) {
+Lexer<Type> lexer_from_symbols(std::string lft, std::string rgt, std::string sep) {
     using namespace defaults;
     return {std::move(lft), std::move(rgt), std::move(sep), number<Type>, name, symbol};
 }
 
 template<typename Type>
-Lexer<Type> make_from_lexicon(std::string num, std::string nam, std::string sym) {
+Lexer<Type> lexer_from_regexes(std::string num, std::string nam, std::string sym) {
     using namespace defaults;
     return {left, right, separator, std::move(num), std::move(nam), std::move(sym)};
 }

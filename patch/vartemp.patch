@@ -68,7 +68,7 @@ index c985a73..ab41f3c 100644
  }
  
  template<typename Type>
- Lexer<Type> make_from_punctuation(std::string lft, std::string rgt, std::string sep) {
+ Lexer<Type> lexer_from_symbols(std::string lft, std::string rgt, std::string sep) {
      using namespace defaults;
 -    return {std::move(lft), std::move(rgt), std::move(sep), number<Type>, name, symbol};
 +    return {std::move(lft), std::move(rgt), std::move(sep), number<Type>::value, name, symbol};
