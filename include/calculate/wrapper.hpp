@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/05
+    Last modified 2018/06/06
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -58,9 +58,10 @@ class Wrapper {
         }
 
     public:
-        WrapperModel(Callable callable, Adapter adapter) :
-                _callable{callable},
-                _adapter{adapter}
+        template<typename CallableType, typename AdapterType>
+        WrapperModel(CallableType&& callable, AdapterType&& adapter) :
+                _callable{std::forward<CallableType>(callable)},
+                _adapter{std::forward<AdapterType>(adapter)}
         {}
 
         std::shared_ptr<WrapperConcept> clone() const noexcept override {
@@ -78,21 +79,21 @@ class Wrapper {
         }
     };
 
-	template<typename Callable, typename Adapter>
-	using ModelType = WrapperModel<
-        Callable,
-        Adapter,
+    template<typename Callable, typename Adapter>
+    using ModelType = WrapperModel<
+        std::decay_t<Callable>,
+        std::decay_t<Adapter>,
         util::argc_v<Callable>
     >;
 
-    std::shared_ptr<WrapperConcept> _callable;
+    std::shared_ptr<WrapperConcept> _wrapper;
 
-    Wrapper(std::shared_ptr<WrapperConcept>&& callable) : _callable{callable} {}
+    Wrapper(std::shared_ptr<WrapperConcept>&& wrapper) : _wrapper{wrapper} {}
 
 public:
     template<typename Callable, typename Adapter>
     Wrapper(Callable&& callable, Adapter&& adapter) :
-            _callable{
+            _wrapper{
                 std::make_shared<ModelType<Callable, Adapter>>(
                     std::forward<Callable>(callable),
                     std::forward<Adapter>(adapter)
@@ -139,7 +140,7 @@ public:
         typename = std::enable_if_t<util::not_same_v<Callable, Wrapper>>,
         typename = std::enable_if_t<!util::is_base_of_v<WrapperConcept, Callable>>
     >
-    Wrapper(Callable&& callable=[]() { return Type(); }) :
+    Wrapper(Callable&& callable=[]() noexcept { return Type(); }) :
             Wrapper{
                 std::forward<Callable>(callable),
                 [](const Source& x) { return Type{x}; }
@@ -151,29 +152,25 @@ public:
         typename = std::enable_if_t<util::is_base_of_v<WrapperConcept, Callable>>
     >
     Wrapper(Callable&& callable) :
-            _callable{
-                std::make_shared<Callable>(
-                    std::forward<Callable>(callable)
-                )
-            }
+            _wrapper{std::make_shared<Callable>(std::forward<Callable>(callable))}
     {}
 
-    Wrapper clone() const noexcept { return Wrapper{_callable->clone()}; }
+    Wrapper clone() const noexcept { return Wrapper{_wrapper->clone()}; }
 
-    std::size_t argc() const noexcept { return _callable->argc(); }
+    std::size_t argc() const noexcept { return _wrapper->argc(); }
 
     template<typename... Args>
     Type eval(Args&&... args) const {
-        return _callable->eval(util::to_vector<Source>(std::forward<Args>(args)...));
+        return _wrapper->eval(util::to_vector<Source>(std::forward<Args>(args)...));
     }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
-        return _callable->call(util::to_vector<Type>(std::forward<Args>(args)...));
+        return _wrapper->call(util::to_vector<Type>(std::forward<Args>(args)...));
     }
 
     bool operator==(const Wrapper& other) const noexcept {
-        return _callable == other._callable;
+        return _wrapper == other._wrapper;
     }
 
     bool operator!=(const Wrapper& other) const noexcept {
@@ -190,7 +187,7 @@ template<typename Type, typename Source>
 struct hash<calculate::Wrapper<Type, Source>> {
     size_t operator()(const calculate::Wrapper<Type, Source>& wrapper) const {
         return hash<std::shared_ptr<calculate::WrapperConcept<Type, Source>>>{}(
-            wrapper._callable
+            wrapper._wrapper
         );
     }
 };

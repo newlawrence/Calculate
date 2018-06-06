@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/05
+    Last modified 2018/06/06
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -79,7 +79,7 @@ struct TraitsHandler {
 };
 
 template<typename T, typename = void>
-struct Traits : Traits<decltype(&T::operator())> {};
+struct Traits : Traits<decltype(&std::decay_t<T>::operator())> {};
 
 template<typename R, typename... Args>
 struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
@@ -87,13 +87,25 @@ struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
 template<typename R, typename... Args>
 struct Traits<
     R(*)(Args...) noexcept,
-    std::enable_if_t<is_noexcept_v<R(*)(Args...) noexcept, Args...>>
+    std::enable_if_t<is_noexcept_v<R(Args...) noexcept, Args...>>
 > : TraitsHandler<true, R, Args...> {};
 
 template<typename R, typename... Args>
 struct Traits<
     R(*)(Args...),
-    std::enable_if_t<!is_noexcept_v<R(*)(Args...), Args...>>
+    std::enable_if_t<!is_noexcept_v<R(Args...), Args...>>
+> : TraitsHandler<true, R, Args...> {};
+
+template<typename R, typename... Args>
+struct Traits<
+    R(&)(Args...) noexcept,
+    std::enable_if_t<is_noexcept_v<R(Args...) noexcept, Args...>>
+> : TraitsHandler<true, R, Args...> {};
+
+template<typename R, typename... Args>
+struct Traits<
+    R(&)(Args...),
+    std::enable_if_t<!is_noexcept_v<R(Args...), Args...>>
 > : TraitsHandler<true, R, Args...> {};
 
 template<typename T, typename R, typename... Args>

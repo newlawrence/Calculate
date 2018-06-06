@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/05
+    Last modified 2018/06/06
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -54,12 +54,7 @@ public:
         typename = std::enable_if_t<util::not_same_v<Callable, Symbol>>,
         typename = std::enable_if_t<!util::is_base_of_v<WrapperConcept, Callable>>
     >
-    Symbol(Callable&& callable) :
-            Wrapper{
-                std::forward<Callable>(callable),
-                [](const Expression& expression) noexcept { return Type{expression}; }
-            }
-    {
+    Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {
         static_assert(
             util::not_same_v<Callable, Function<Expression>> ||
             util::argc_v<Callable> == 0,
@@ -76,9 +71,7 @@ public:
         typename Callable,
         typename = std::enable_if_t<util::is_base_of_v<WrapperConcept, Callable>>
     >
-    Symbol(Callable&& callable) :
-            Wrapper{std::forward<Callable>(callable)}
-    {}
+    Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
 
     virtual ~Symbol() = default;
 

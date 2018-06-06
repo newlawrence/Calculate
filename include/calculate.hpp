@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/05
+    Last modified 2018/06/06
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -124,16 +124,16 @@ public:
             {"erfc", static_cast<F1>(std::erfc)},
             {"tgamma", static_cast<F1>(std::tgamma)},
             {"lgamma", static_cast<F1>(std::lgamma)},
-            {"fact", std::move(fact)}
+            {"fact", fact}
         });
 
         operators.insert({
-            {"+", {&add<Type>, Precedence::low, Associativity::BOTH}},
-            {"-", {&sub<Type>, Precedence::low, Associativity::LEFT}},
-            {"*", {&mul<Type>, Precedence::normal, Associativity::BOTH}},
-            {"/", {&div<Type>, Precedence::normal, Associativity::LEFT}},
+            {"+", {add<Type>, Precedence::low, Associativity::BOTH}},
+            {"-", {sub<Type>, Precedence::low, Associativity::LEFT}},
+            {"*", {mul<Type>, Precedence::normal, Associativity::BOTH}},
+            {"/", {div<Type>, Precedence::normal, Associativity::LEFT}},
             {"%", {static_cast<F2>(std::fmod), Precedence::normal, Associativity::LEFT}},
-            {"^", {std::move(pow), Precedence::high, Associativity::RIGHT}}
+            {"^", {pow, Precedence::high, Associativity::RIGHT}}
         });
 
         prefixes.insert({{"+", "id"}, {"-", "neg"}});
@@ -172,7 +172,7 @@ public:
             {"abs", [](const Type& z) noexcept { return Type{std::abs(z)}; }},
             {"arg", [](const Type& z) noexcept { return Type{std::arg(z)}; }},
             {"norm", [](const Type& z) noexcept { return Type{std::norm(z)}; }},
-            {"polar", std::move(polar)},
+            {"polar", polar},
             {"conj", static_cast<F1>(std::conj)},
             {"proj", static_cast<F1>(std::exp)},
             {"exp", static_cast<F1>(std::exp)},
@@ -195,10 +195,10 @@ public:
         });
 
         operators.insert({
-            {"+", {&add<Type>, Precedence::low, Associativity::BOTH}},
-            {"-", {&sub<Type>, Precedence::low, Associativity::LEFT}},
-            {"*", {&mul<Type>, Precedence::normal, Associativity::BOTH}},
-            {"/", {&div<Type>, Precedence::normal, Associativity::LEFT}},
+            {"+", {add<Type>, Precedence::low, Associativity::BOTH}},
+            {"-", {sub<Type>, Precedence::low, Associativity::LEFT}},
+            {"*", {mul<Type>, Precedence::normal, Associativity::BOTH}},
+            {"/", {div<Type>, Precedence::normal, Associativity::LEFT}},
             {"^", {static_cast<F2>(std::pow), Precedence::high, Associativity::RIGHT}}
         });
 
