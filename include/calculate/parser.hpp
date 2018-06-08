@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/03
+    Last modified 2018/06/08
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -583,10 +583,9 @@ public:
             util::to_vector<std::string>(std::forward<Args>(vars)...),
             _lexer.get()
         );
-        auto postfix =
-            _shunting_yard(_parse_infix(_tokenize(expr, variables, true)));
+        auto symbols = _shunting_yard(_parse_infix(_tokenize(expr, variables, true)));
 
-        return _build_tree(std::move(postfix), variables);
+        return _build_tree(std::move(symbols), variables);
     }
 
     template<typename... Args>
@@ -595,16 +594,17 @@ public:
             util::to_vector<std::string>(std::forward<Args>(vars)...),
             _lexer.get()
         );
+        auto symbols = _tokenize(expr, variables, false);
 
-        return _build_tree(_tokenize(expr, variables, false), variables);
+        return _build_tree(std::move(symbols), variables);
     }
 
-    Expression parse(const std::string& expression) const {
+    Expression parse(const std::string& expr) const {
         std::vector<std::string> vars{};
 
         while (true) {
             try {
-                return from_infix(expression, vars);
+                return from_infix(expr, vars);
             }
             catch (const UndefinedSymbol& exception) {
                 vars.emplace_back(exception.token);
