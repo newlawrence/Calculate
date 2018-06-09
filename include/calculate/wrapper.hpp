@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/06
+    Last modified 2018/06/09
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -89,6 +89,9 @@ class Wrapper {
     std::shared_ptr<WrapperConcept> _wrapper;
 
     Wrapper(std::shared_ptr<WrapperConcept>&& wrapper) : _wrapper{wrapper} {}
+
+protected:
+    Type eval(const std::vector<Source>& args) const { return _wrapper->eval(args); }
 
 public:
     template<typename Callable, typename Adapter>

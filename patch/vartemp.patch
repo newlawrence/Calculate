@@ -1,8 +1,8 @@
 diff --git a/include/calculate/lexer.hpp b/include/calculate/lexer.hpp
-index c985a73..ab41f3c 100644
+index 9ef2a1a..71d4685 100644
 --- a/include/calculate/lexer.hpp
 +++ b/include/calculate/lexer.hpp
-@@ -30,30 +30,42 @@ constexpr const char separator[] = ",";
+@@ -31,30 +31,42 @@ constexpr const char separator[] = ",";
  constexpr const char decimal[] = ".";
  
  template<bool>
@@ -59,7 +59,7 @@ index c985a73..ab41f3c 100644
  
  constexpr const char name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
  
-@@ -453,13 +465,13 @@ public:
+@@ -454,13 +466,13 @@ public:
  template<typename Type>
  Lexer<Type> make_lexer() noexcept {
      using namespace defaults;
@@ -126,10 +126,10 @@ index 53e1dba..e7d8993 100644
      Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
  
 diff --git a/include/calculate/util.hpp b/include/calculate/util.hpp
-index 65e6a82..dcd92cc 100644
+index a1df19f..69cdbfe 100644
 --- a/include/calculate/util.hpp
 +++ b/include/calculate/util.hpp
-@@ -23,22 +23,6 @@ namespace calculate {
+@@ -22,22 +22,6 @@ namespace calculate {
  
  namespace util {
  
@@ -152,7 +152,7 @@ index 65e6a82..dcd92cc 100644
  namespace detail {
  
  using std::begin;
-@@ -69,7 +53,9 @@ struct make_tuple<T, argc, std::index_sequence<indices...>> {
+@@ -68,7 +52,9 @@ struct make_tuple<T, argc, std::index_sequence<indices...>> {
  
  
  template<typename T, typename... Args>
@@ -163,7 +163,7 @@ index 65e6a82..dcd92cc 100644
  
  template<bool c, typename R, typename... Args>
  struct TraitsHandler {
-@@ -87,58 +73,60 @@ struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
+@@ -86,58 +72,60 @@ struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
  template<typename R, typename... Args>
  struct Traits<
      R(*)(Args...) noexcept,
@@ -234,7 +234,7 @@ index 65e6a82..dcd92cc 100644
  
  
  template<typename T, std::size_t argc>
-@@ -148,19 +136,25 @@ template<typename T>
+@@ -147,26 +135,32 @@ template<typename T>
  using result_t = typename detail::Traits<T>::result_t;
  
  template<typename T>
@@ -265,8 +265,7 @@ index 65e6a82..dcd92cc 100644
 +};
  
  
- template<typename T>
-@@ -170,7 +164,7 @@ template<typename T, typename... Args>
+ template<typename T, typename... Args>
  std::vector<T> to_vector(Args&&... args) { return {std::forward<Args>(args)...}; }
  
  template<typename T, typename Args>
@@ -276,7 +275,7 @@ index 65e6a82..dcd92cc 100644
  
  
 diff --git a/include/calculate/wrapper.hpp b/include/calculate/wrapper.hpp
-index bead8fa..a9759bb 100644
+index 67d867f..d9a2b41 100644
 --- a/include/calculate/wrapper.hpp
 +++ b/include/calculate/wrapper.hpp
 @@ -83,7 +83,7 @@ class Wrapper {
@@ -288,7 +287,7 @@ index bead8fa..a9759bb 100644
      >;
  
      std::shared_ptr<WrapperConcept> _wrapper;
-@@ -101,44 +101,44 @@ public:
+@@ -104,44 +104,44 @@ public:
              }
      {
          static_assert(
@@ -346,7 +345,7 @@ index bead8fa..a9759bb 100644
      >
      Wrapper(Callable&& callable=[]() noexcept { return Type(); }) :
              Wrapper{
-@@ -149,7 +149,7 @@ public:
+@@ -152,7 +152,7 @@ public:
  
      template<
          typename Callable,

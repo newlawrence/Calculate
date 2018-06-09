@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/07
+    Last modified 2018/06/09
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <limits>
 #include <locale>
+#include <regex>
 #include <sstream>
 #include <type_traits>
 
