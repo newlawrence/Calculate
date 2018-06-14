@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/08
+    Last modified 2018/06/14
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -522,6 +522,7 @@ private:
                             element.symbol->arguments(),
                             i
                         };
+                    util::hash_combine(hash, operands.top());
                     collapse = collapse && operands.top()._pruned().empty();
                     extract.emplace(std::move(operands.top()));
                     operands.pop();
@@ -539,6 +540,8 @@ private:
                 symbol = Constant{element.symbol->eval(nodes)}.clone();
                 token = _lexer->to_string(symbol->eval());
                 nodes.clear();
+                hash = std::size_t{};
+                util::hash_combine(hash, *symbol);
             }
             else {
                 symbol = std::move(element.symbol);

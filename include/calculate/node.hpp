@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/05
+    Last modified 2018/06/14
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -200,19 +200,19 @@ private:
         these.push({this->begin(), this->end()});
         those.push(other.begin());
         while(!these.empty()) {
-            auto one = these.top();
-            auto another = those.top();
-            these.pop();
-            those.pop();
+            auto& one = these.top();
+            auto& another = those.top();
 
             if (one.first != one.second) {
                 if (!equal(one.first, another))
                     return false;
                 these.push({one.first->begin(), one.first->end()});
-                these.push({one.first + 1, one.second});
                 those.push(another->begin());
-                those.push(another + 1);
+                one.first++, another++;
+                continue;
             }
+            these.pop();
+            those.pop();
         }
         return true;
     }
