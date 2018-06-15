@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/14
+    Last modified 2018/06/15
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -492,12 +492,12 @@ private:
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
         SymbolHandler element{};
-        std::size_t hash{};
 
         while (!symbols.empty()) {
             std::vector<Expression> nodes{};
             std::unique_ptr<Symbol> symbol{};
             std::string token{};
+            std::size_t hash{};
             bool collapse{optimize};
 
             element = std::move(symbols.front());
@@ -522,8 +522,8 @@ private:
                             element.symbol->arguments(),
                             i
                         };
-                    util::hash_combine(hash, operands.top());
                     collapse = collapse && operands.top()._pruned().empty();
+                    util::hash_combine(hash, operands.top());
                     extract.emplace(std::move(operands.top()));
                     operands.pop();
                 }
@@ -552,7 +552,7 @@ private:
                 Expression(
                     _lexer,
                     variables,
-                    token,
+                    std::move(token),
                     std::move(symbol),
                     std::move(nodes),
                     hash
