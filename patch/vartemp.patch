@@ -76,10 +76,10 @@ index 9ef2a1a..71d4685 100644
  
  template<typename Type>
 diff --git a/include/calculate/node.hpp b/include/calculate/node.hpp
-index b801c48..03cbb8b 100644
+index 9184184..9e60218 100644
 --- a/include/calculate/node.hpp
 +++ b/include/calculate/node.hpp
-@@ -112,7 +112,7 @@ public:
+@@ -113,7 +113,7 @@ public:
          }
  
          template<typename Args>
@@ -89,10 +89,10 @@ index b801c48..03cbb8b 100644
  
              for (auto val = std::begin(vals); val != std::end(vals); ++val) {
 diff --git a/include/calculate/symbol.hpp b/include/calculate/symbol.hpp
-index 53e1dba..e7d8993 100644
+index d4853ec..8521aac 100644
 --- a/include/calculate/symbol.hpp
 +++ b/include/calculate/symbol.hpp
-@@ -51,25 +51,25 @@ private:
+@@ -50,8 +50,8 @@ private:
  public:
      template<
          typename Callable,
@@ -101,7 +101,11 @@ index 53e1dba..e7d8993 100644
 +        typename = std::enable_if_t<util::not_same<Callable, Symbol>::value>,
 +        typename = std::enable_if_t<!std::is_base_of<WrapperConcept, Callable>::value>
      >
-     Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {
+     Symbol(Callable&& callable) :
+             Wrapper{
+@@ -62,20 +62,20 @@ public:
+             }
+     {
          static_assert(
 -            util::not_same_v<Callable, Function<Expression>> ||
 -            util::argc_v<Callable> == 0,

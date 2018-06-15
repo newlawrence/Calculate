@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/06
+    Last modified 2018/06/15
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -20,7 +20,6 @@ template<typename> class Operator;
 template<typename Expression>
 class Symbol : Wrapper<typename Expression::Type, Expression> {
     friend struct std::hash<Symbol>;
-    friend Expression;
 
 public:
     using Type = typename Expression::Type;
@@ -54,7 +53,14 @@ public:
         typename = std::enable_if_t<util::not_same_v<Callable, Symbol>>,
         typename = std::enable_if_t<!util::is_base_of_v<WrapperConcept, Callable>>
     >
-    Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {
+    Symbol(Callable&& callable) :
+            Wrapper{
+                std::forward<Callable>(callable),
+                [](const Expression& expression) noexcept {
+                    return expression._symbol->eval(expression._nodes);
+                }
+            }
+    {
         static_assert(
             util::not_same_v<Callable, Function<Expression>> ||
             util::argc_v<Callable> == 0,

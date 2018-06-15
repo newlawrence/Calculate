@@ -25,22 +25,18 @@ public:
     using Lexer = calculate::BaseLexer<BaseType>;
     using Type = BaseType;
 
-    using Symbol = calculate::Symbol<Node<BaseParser>>;
-    using Variable = calculate::Variable<Node<BaseParser>>;
-    using Constant = calculate::Constant<Node<BaseParser>>;
-    using Function = calculate::Function<Node<BaseParser>>;
-    using Operator = calculate::Operator<Node<BaseParser>>;
-
     using Expression = calculate::Node<BaseParser>;
-    private: using VariableHandler = typename Expression::VariableHandler;
+    using Symbol = calculate::Symbol<Expression>;
+    using Constant = calculate::Constant<Expression>;
+    using Function = calculate::Function<Expression>;
+    using Operator = calculate::Operator<Expression>;
 
+    private: using VariableHandler = typename Expression::VariableHandler;
     public: using SymbolType = typename Symbol::SymbolType;
     public: using Associativity = typename Operator::Associativity;
 
-
 private:
     std::shared_ptr<Lexer> _lexer;
-
 
 public:
     SymbolContainer<Constant, BaseParser> constants;
@@ -86,8 +82,8 @@ private:
 
 
     std::queue<SymbolHandler> _tokenize(
-        const std::string& expression,
-        const std::shared_ptr<VariableHandler>& variables,
+        const std::string& expr,
+        VariableHandler* variables,
         bool infix
     ) const {
         using Associativity = typename Operator::Associativity;
@@ -100,8 +96,8 @@ private:
         decltype(prefixes.begin()) a;
 
         auto tokens = infix ?
-            _lexer->tokenize_infix(expression) :
-            _lexer->tokenize_postfix(expression);
+            _lexer->tokenize_infix(expr) :
+            _lexer->tokenize_postfix(expr);
 
         auto has = [](const auto& cont, const auto& t, auto& it) noexcept {
             return (it = cont.find(t)) != cont.end();
@@ -198,7 +194,7 @@ private:
                 symbols.push({
                     token,
                     SymbolType::CONSTANT,
-                    Variable{variables->at(token)}.clone()
+                    Variable<Node<BaseParser>>{variables->at(token)}.clone()
                 });
         }
         return symbols;
@@ -487,7 +483,7 @@ private:
 
     Expression _build_tree(
         std::queue<SymbolHandler>&& symbols,
-        const std::shared_ptr<VariableHandler>& variables
+        std::shared_ptr<VariableHandler>&& variables
     ) const {
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
@@ -509,8 +505,8 @@ private:
                 element.type == SymbolType::SEPARATOR
             )
                 throw SyntaxError{
-                    "symbol '" + element.token + "' not allowed in "
-                    "postfix notation"
+                    "symbol '" + element.token + "' not allowed "
+                    "in postfix notation"
                 };
 
             if (element.type != SymbolType::CONSTANT) {
@@ -586,9 +582,11 @@ public:
             util::to_vector<std::string>(std::forward<Args>(vars)...),
             _lexer.get()
         );
-        auto symbols = _shunting_yard(_parse_infix(_tokenize(expr, variables, true)));
+        auto symbols = _shunting_yard(
+            _parse_infix(_tokenize(expr, variables.get(), true))
+        );
 
-        return _build_tree(std::move(symbols), variables);
+        return _build_tree(std::move(symbols), std::move(variables));
     }
 
     template<typename... Args>
@@ -597,9 +595,9 @@ public:
             util::to_vector<std::string>(std::forward<Args>(vars)...),
             _lexer.get()
         );
-        auto symbols = _tokenize(expr, variables, false);
+        auto symbols = _tokenize(expr, variables.get(), false);
 
-        return _build_tree(std::move(symbols), variables);
+        return _build_tree(std::move(symbols), std::move(variables));
     }
 
     Expression parse(const std::string& expr) const {

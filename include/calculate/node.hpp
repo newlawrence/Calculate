@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc1
-    Last modified 2018/06/14
+    Last modified 2018/06/15
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -23,6 +23,7 @@ namespace calculate {
 template<typename Parser>
 class Node {
     friend struct std::hash<Node>;
+    friend calculate::Symbol<Node>;
     friend Parser;
 
 public:
@@ -32,11 +33,11 @@ public:
     using Symbol = calculate::Symbol<Node>;
     using SymbolType = typename Symbol::SymbolType;
 
-
-public:
-    using const_iterator = typename std::vector<Node>::const_iterator;
+    using const_iterator =
+        typename std::vector<Node>::const_iterator;
     using const_reverse_iterator =
-            typename std::vector<Node>::const_reverse_iterator;
+        typename std::vector<Node>::const_reverse_iterator;
+
 
     class VariableHandler {
     public:
@@ -261,7 +262,6 @@ private:
         return infix;
     }
 
-
 public:
     Node(const Node& other) noexcept :
             _lexer{other._lexer},
@@ -305,7 +305,11 @@ public:
         swap(one._nodes, another._nodes);
     }
 
-    operator Type() const { return _symbol->eval(_nodes); }
+    operator Type() const {
+        if (_variables->variables.size() > 0)
+            throw ArgumentsMismatch{_variables->variables.size(), 0};
+        return _symbol->eval(_nodes);
+    }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
