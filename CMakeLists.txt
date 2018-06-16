@@ -7,15 +7,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(default_build_type "Release")
-if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
-    set(default_build_type "Debug")
-endif()
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
-        STRING "Choose the type of build." FORCE
-    )
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
-    set(CMAKE_CONFIGURATION_TYPES "Release;Debug")
+set(CMAKE_CONFIGURATION_TYPES "Release;Debug" CACHE STRING "Configurations" FORCE)
+if(NOT CMAKE_BUILD_TYPE)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+        set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
+    else()
+        set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+    endif()
 endif()
 message(STATUS "Setting build type to '${CMAKE_BUILD_TYPE}'")
 
@@ -93,7 +91,7 @@ else()
 endif()
 
 file(GLOB TEST_SOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" test/*.cpp)
-add_custom_target(all_test)
+add_custom_target(make_test)
 if(coverage)
     file(MAKE_DIRECTORY "${coverage_dir}/src/temp")
     add_custom_target(coverage)
@@ -137,13 +135,13 @@ foreach(test_source ${TEST_SOURCES})
     endif()
 
     add_executable(${test_name} "${test_source}")
+    add_dependencies(make_test ${test_name})
     set_target_properties(${test_name}
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY_RELEASE "${test_folder}"
         RUNTIME_OUTPUT_DIRECTORY_DEBUG "${test_folder}"
     )
     add_test(NAME ${test_name} COMMAND "${test_folder}/${test_name}")
-    add_dependencies(all_test ${test_name})
 
     if(coverage)
         set(coverage_name "coverage_${name}")

@@ -33,7 +33,7 @@ install:
 
 script:
   - CC=gcc-5 CXX=g++-5 CV=gcov-5 cmake -H. -Bbuild
-  - cmake --build build --target all_test
+  - cmake --build build --target make_test
   - cmake --build build --target test
   - cmake --build build --target coverage
 
