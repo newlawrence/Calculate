@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc1
-    Last modified 2018/06/09
+    Calculate - Version 2.1.1rc2
+    Last modified 2018/06/26
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -28,7 +28,7 @@ namespace defaults {
 constexpr const char left[] = "(";
 constexpr const char right[] = ")";
 constexpr const char separator[] = ",";
-constexpr const char decimal[] = ".";
+
 
 template<bool>
 constexpr const char* real =
@@ -51,14 +51,17 @@ constexpr const char* complex<false> =
     R"()$)";
 
 template<typename Type>
-constexpr const char* number = real<util::is_integral_v<Type>>;
+constexpr const char* number =
+    real<util::is_integral_v<Type>>;
 
 template<typename Type>
-constexpr const char* number<std::complex<Type>> = complex<util::is_integral_v<Type>>;
+constexpr const char* number<std::complex<Type>> =
+    complex<util::is_integral_v<Type>>;
+
 
 constexpr const char name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
 
-constexpr const char symbol[] = R"(^[^A-Za-z\d.(),_\s]+$)";
+constexpr const char symbol[] = R"(^[^A-Za-z\d(),_\s]+$)";
 
 }
 
@@ -113,8 +116,7 @@ public:
         SYMBOL,
         LEFT,
         RIGHT,
-        SEPARATOR,
-        DECIMAL
+        SEPARATOR
     };
     using TokenHandler = std::pair<std::string, TokenType>;
     using PrefixHandler = std::pair<std::string, std::string>;
@@ -122,7 +124,6 @@ public:
     const std::string left;
     const std::string right;
     const std::string separator;
-    const std::string decimal;
 
     const std::string number;
     const std::string name;
@@ -177,8 +178,7 @@ private:
         tokenizer += "(" + symbol.substr(1, symbol.size() - 2) + ")|";
         tokenizer += "(" + escape(left) + ")|";
         tokenizer += "(" + escape(right) + ")|";
-        tokenizer += "(" + escape(separator) + ")|";
-        tokenizer += "(" + escape(decimal) + ")";
+        tokenizer += "(" + escape(separator) + ")";
         return tokenizer;
     }
 
@@ -234,8 +234,6 @@ private:
                 tokens.emplace_back(std::move(token), TokenType::RIGHT);
             else if (_match(match, TokenType::SEPARATOR))
                 tokens.emplace_back(std::move(token), TokenType::SEPARATOR);
-            else if (_match(match, TokenType::DECIMAL))
-                throw SyntaxError{"orphan decimal mark '" + token + "'"};
             else
                 throw SyntaxError{"not matching token '" + token + "'"};
 
@@ -247,13 +245,12 @@ private:
 
 public:
     BaseLexer(
-        std::string lft, std::string rgt, std::string sep, std::string dec,
+        std::string lft, std::string rgt, std::string sep,
         std::string num, std::string nam, std::string sym
     ) :
             left{std::move(lft)},
             right{std::move(rgt)},
             separator{std::move(sep)},
-            decimal{std::move(dec)},
             number{_adapt_regex(std::move(num))},
             name{_adapt_regex(std::move(nam))},
             symbol{_adapt_regex(std::move(sym))},
@@ -265,14 +262,7 @@ public:
     {
         std::smatch match{};
 
-        if (
-            left == right ||
-            left == separator ||
-            left == decimal ||
-            right == separator ||
-            right == decimal ||
-            separator == decimal
-        )
+        if (left == right || left == separator || right == separator)
             throw LexerError{"tokens must be different"};
 
         if (std::regex_match(" ", _tokenizer_regex))
@@ -286,9 +276,6 @@ public:
         std::regex_search(separator, match, _tokenizer_regex);
         if (!_match(match, TokenType::SEPARATOR))
             throw LexerError{"tokenizer doesn't match separator symbol"};
-        std::regex_search(decimal, match, _tokenizer_regex);
-        if (!_match(match, TokenType::DECIMAL))
-            throw LexerError{"tokenizer doesn't match decimal symbol"};
     }
     BaseLexer(const BaseLexer&) = default;
     virtual ~BaseLexer() = default;
@@ -342,7 +329,7 @@ public:
         std::string num, std::string nam, std::string sym
     ) :
             BaseLexer{
-                std::move(lft), std::move(rgt), std::move(sep), defaults::decimal,
+                std::move(lft), std::move(rgt), std::move(sep),
                 std::move(num), std::move(nam), std::move(sym)
             },
             _istream{},
@@ -391,7 +378,7 @@ public:
         std::string num, std::string nam, std::string sym
     ) :
             BaseLexer{
-                std::move(lft), std::move(rgt), std::move(sep), defaults::decimal,
+                std::move(lft), std::move(rgt), std::move(sep),
                 std::move(num), std::move(nam), std::move(sym)
             },
             _istream{},
