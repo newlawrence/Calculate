@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc2
-    Last modified 2018/06/15
+    Calculate - Version 2.1.1rc3
+    Last modified 2018/06/27
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -193,7 +193,7 @@ class Operator final : public Symbol<Expression> {
 public:
     using Type = typename Expression::Type;
 
-    enum class Associativity {LEFT, RIGHT, BOTH};
+    enum class Associativity {LEFT, RIGHT, FULL};
 
 private:
     std::size_t _precedence;

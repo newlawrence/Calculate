@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc2
-    Last modified 2018/02/10
+    Calculate - Version 2.1.1rc3
+    Last modified 2018/02/27
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -19,7 +19,7 @@ struct BaseError : public std::runtime_error {
     explicit BaseError(std::string what) : runtime_error{std::move(what)} {}
 
     BaseError() :
-            runtime_error{std::string{"Base error: unexpected error"}}
+            runtime_error{"Base error: unexpected error"}
     {}
 };
 

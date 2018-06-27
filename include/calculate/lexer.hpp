@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc2
-    Last modified 2018/06/26
+    Calculate - Version 2.1.1rc3
+    Last modified 2018/06/27
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -59,9 +59,11 @@ constexpr const char* number<std::complex<Type>> =
     complex<util::is_integral_v<Type>>;
 
 
-constexpr const char name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
+constexpr const char name[] =
+    R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
 
-constexpr const char symbol[] = R"(^[^A-Za-z\d(),_\s]+$)";
+constexpr const char symbol[] =
+    R"(^[^A-Za-z\d(),_\s]+$)";
 
 }
 
@@ -92,7 +94,7 @@ Type read(std::istringstream& istream, const std::string& token) {
 }
 
 template<typename Type>
-std::string write(std::ostringstream& ostream, Type value) {
+std::string write(std::ostringstream& ostream, const Type& value) {
     if (std::isnan(value))
         return "NaN";
     if (std::isinf(value))
@@ -234,8 +236,6 @@ private:
                 tokens.emplace_back(std::move(token), TokenType::RIGHT);
             else if (_match(match, TokenType::SEPARATOR))
                 tokens.emplace_back(std::move(token), TokenType::SEPARATOR);
-            else
-                throw SyntaxError{"not matching token '" + token + "'"};
 
             string = match.suffix().str();
             last = tokens.back().second;
@@ -312,7 +312,7 @@ public:
 
     virtual std::shared_ptr<BaseLexer> clone() const noexcept = 0;
     virtual Type to_value(const std::string&) const = 0;
-    virtual std::string to_string(Type) const noexcept = 0;
+    virtual std::string to_string(const Type&) const = 0;
 };
 
 
@@ -356,7 +356,7 @@ public:
         return detail::read<Type>(_istream, token);
     }
 
-    std::string to_string(Type value) const noexcept override {
+    std::string to_string(const Type& value) const override {
         return detail::write<Type>(_ostream, value);
     }
 };
@@ -421,7 +421,7 @@ public:
         };
     }
 
-    std::string to_string(std::complex<Type> value) const noexcept override {
+    std::string to_string(const std::complex<Type>& value) const override {
         Type real{std::real(value)}, imag{std::imag(value)};
         std::string token;
 

@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc2
-    Last modified 2018/06/06
+    Calculate - Version 2.1.1rc3
+    Last modified 2018/06/27
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -128,9 +128,9 @@ public:
         });
 
         operators.insert({
-            {"+", {add<Type>, Precedence::low, Associativity::BOTH}},
+            {"+", {add<Type>, Precedence::low, Associativity::FULL}},
             {"-", {sub<Type>, Precedence::low, Associativity::LEFT}},
-            {"*", {mul<Type>, Precedence::normal, Associativity::BOTH}},
+            {"*", {mul<Type>, Precedence::normal, Associativity::FULL}},
             {"/", {div<Type>, Precedence::normal, Associativity::LEFT}},
             {"%", {static_cast<F2>(std::fmod), Precedence::normal, Associativity::LEFT}},
             {"^", {pow, Precedence::high, Associativity::RIGHT}}
@@ -195,9 +195,9 @@ public:
         });
 
         operators.insert({
-            {"+", {add<Type>, Precedence::low, Associativity::BOTH}},
+            {"+", {add<Type>, Precedence::low, Associativity::FULL}},
             {"-", {sub<Type>, Precedence::low, Associativity::LEFT}},
-            {"*", {mul<Type>, Precedence::normal, Associativity::BOTH}},
+            {"*", {mul<Type>, Precedence::normal, Associativity::FULL}},
             {"/", {div<Type>, Precedence::normal, Associativity::LEFT}},
             {"^", {static_cast<F2>(std::pow), Precedence::high, Associativity::RIGHT}}
         });
