@@ -46,7 +46,8 @@ public:
     private:
         std::size_t _size;
         std::unique_ptr<Type[]> _values;
-        std::pair<std::size_t, std::shared_ptr<VariableHandler>> _temp;
+        std::size_t _refcount;
+        std::shared_ptr<VariableHandler> _copy;
 
         void _update(std::size_t) const {}
 
@@ -64,7 +65,8 @@ public:
                 variables{std::move(keys)},
                 _size{variables.size()},
                 _values{std::make_unique<Type[]>(_size)},
-                _temp{0u, nullptr}
+                _refcount{0u},
+                _copy{nullptr}
         {
             std::unordered_set<std::string> singles{
                 variables.begin(),
@@ -83,22 +85,21 @@ public:
                 variables{std::move(keys)},
                 _size{variables.size()},
                 _values{std::make_unique<Type[]>(_size)},
-                _temp{0u, nullptr}
+                _refcount{0u},
+                _copy{nullptr}
         {}
 
-        std::shared_ptr<VariableHandler> rebuild(
-            std::vector<std::string> keys
-        ) noexcept {
-            ++_temp.first;
-            if (_temp.second)
-                return _temp.second;
-            _temp.second = std::make_shared<VariableHandler>(std::move(keys));
-            return _temp.second;
+        std::shared_ptr<VariableHandler> rebuild(std::vector<std::string> keys) noexcept {
+            ++_refcount;
+            if (_copy)
+                return _copy;
+            _copy = std::make_shared<VariableHandler>(std::move(keys));
+            return _copy;
         }
 
         void reset() noexcept {
-            if (!--_temp.first)
-                _temp.second = nullptr;
+            if (!--_refcount)
+                _copy = nullptr;
         }
 
         std::size_t index(const std::string& token) const {
@@ -108,9 +109,7 @@ public:
             throw UndefinedSymbol{token};
         }
 
-        Type& at(const std::string& token) const {
-            return _values[index(token)];
-        }
+        Type& at(const std::string& token) const { return _values[index(token)]; }
 
         template<typename Args>
         std::enable_if_t<util::is_iterable_v<Args>> update(Args&& vals) {
@@ -168,10 +167,10 @@ private:
     std::vector<std::string> _pruned() const noexcept {
         std::vector<std::string> pruned{};
 
-        auto tokens = _lexer->tokenize_postfix(postfix());
+        auto pairs = _lexer->tokenize_postfix(postfix());
         for (const auto& var : _variables->variables)
-            for (const auto& token : tokens)
-                if (var == token.first) {
+            for (const auto& pair : pairs)
+                if (var == pair.token) {
                     pruned.push_back(var);
                     break;
                 }
@@ -179,8 +178,7 @@ private:
     }
 
     bool _compare(const Node& other) const noexcept {
-        std::stack<std::pair<const_iterator, const_iterator>> these{};
-        std::stack<const_iterator> those{};
+        std::stack<const_iterator> these{}, those{}, endings{};
 
         auto equal = [&](auto left, auto right) {
             try {
@@ -198,22 +196,23 @@ private:
         if (!equal(this, &other))
             return false;
 
-        these.push({this->begin(), this->end()});
+        these.push(this->begin());
         those.push(other.begin());
+        endings.push(this->end());
         while(!these.empty()) {
-            auto& one = these.top();
-            auto& another = those.top();
-
-            if (one.first != one.second) {
-                if (!equal(one.first, another))
+            auto &one = these.top(), &another = those.top();
+            if (one != endings.top()) {
+                if (!equal(one, another))
                     return false;
-                these.push({one.first->begin(), one.first->end()});
+                these.push(one->begin());
                 those.push(another->begin());
-                one.first++, another++;
+                endings.push(one->end());
+                one++, another++;
                 continue;
             }
             these.pop();
             those.pop();
+            endings.pop();
         }
         return true;
     }

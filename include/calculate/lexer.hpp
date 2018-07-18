@@ -120,8 +120,16 @@ public:
         RIGHT,
         SEPARATOR
     };
-    using TokenHandler = std::pair<std::string, TokenType>;
-    using PrefixHandler = std::pair<std::string, std::string>;
+
+    struct TokenHandler {
+        std::string token;
+        TokenType type;
+    };
+
+    struct PrefixHandler {
+        std::string alias;
+        std::string token;
+    };
 
     const std::string left;
     const std::string right;
@@ -188,8 +196,8 @@ private:
     std::vector<TokenHandler> _tokenize(std::string string) const {
         std::vector<TokenHandler> tokens{};
         std::smatch match{};
-        TokenType last{TokenType::LEFT};
 
+        auto last = TokenType::LEFT;
         while (std::regex_search(string, match, _tokenizer_regex)) {
             auto token = match.str();
 
@@ -207,39 +215,39 @@ private:
                         last != TokenType::LEFT &&
                         last != TokenType::SEPARATOR
                     ) {
-                        tokens.emplace_back(std::move(sym), TokenType::SYMBOL);
-                        tokens.emplace_back(std::move(num), TokenType::NUMBER);
+                        tokens.push_back({std::move(sym), TokenType::SYMBOL});
+                        tokens.push_back({std::move(num), TokenType::NUMBER});
                     }
                     else
-                        tokens.emplace_back(sym + num, TokenType::NUMBER);
+                        tokens.push_back({sym + num, TokenType::NUMBER});
                 }
                 else
-                    tokens.emplace_back((nums++)->str(), TokenType::NUMBER);
+                    tokens.push_back({(nums++)->str(), TokenType::NUMBER});
 
                 while (nums != end && syms != end) {
                     auto sym = (syms++)->str(), num = (nums++)->str();
-                    auto back = tokens.back().first;
+                    auto back = tokens.back().token;
                     if (std::regex_search(back, number_regex)) {
-                        tokens.emplace_back(sym, TokenType::SYMBOL);
-                        tokens.emplace_back(num, TokenType::NUMBER);
+                        tokens.push_back({sym, TokenType::SYMBOL});
+                        tokens.push_back({num, TokenType::NUMBER});
                     }
                     else
-                        tokens.back().first = back + sym + num;
+                        tokens.back().token = back + sym + num;
                 }
             }
             else if (_match(match, TokenType::NAME))
-                tokens.emplace_back(std::move(token), TokenType::NAME);
+                tokens.push_back({std::move(token), TokenType::NAME});
             else if (_match(match, TokenType::SYMBOL))
-                tokens.emplace_back(std::move(token), TokenType::SYMBOL);
+                tokens.push_back({std::move(token), TokenType::SYMBOL});
             else if (_match(match, TokenType::LEFT))
-                tokens.emplace_back(std::move(token), TokenType::LEFT);
+                tokens.push_back({std::move(token), TokenType::LEFT});
             else if (_match(match, TokenType::RIGHT))
-                tokens.emplace_back(std::move(token), TokenType::RIGHT);
+                tokens.push_back({std::move(token), TokenType::RIGHT});
             else if (_match(match, TokenType::SEPARATOR))
-                tokens.emplace_back(std::move(token), TokenType::SEPARATOR);
+                tokens.push_back({std::move(token), TokenType::SEPARATOR});
 
             string = match.suffix().str();
-            last = tokens.back().second;
+            last = tokens.back().type;
         }
         return tokens;
     }

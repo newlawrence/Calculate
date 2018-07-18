@@ -139,62 +139,60 @@ private:
                 throw UndefinedSymbol{token};
         };
 
-        for (auto it = tokens.begin(); it != tokens.end(); it++) {
-            auto token = it->first;
-            auto type = it->second;
-            auto next = it + 1;
+        for (auto curr = tokens.begin(); curr != tokens.end(); curr++) {
+            auto next = curr + 1;
 
-            if (type == TokenType::NUMBER) {
+            if (curr->type == TokenType::NUMBER) {
                 auto prefix =
                     next != tokens.end() &&
-                    has(operators, next->first, ope) &&
+                    has(operators, next->token, ope) &&
                     ope->second.associativity() == Associativity::RIGHT;
                 auto suffix =
                     (next != tokens.end() &&
-                    has(suffixes, next->first, sym)) ||
+                    has(suffixes, next->token, sym)) ||
                     (symbols.size() && symbols.back().type == SymbolType::SUFFIX);
 
-                if (infix && (prefix || suffix) && _lexer->prefixed(token)) {
-                    auto splitted = _lexer->split(token);
-                    push_operator(splitted.first);
+                if (infix && (prefix || suffix) && _lexer->prefixed(curr->token)) {
+                    auto splitted = _lexer->split(curr->token);
+                    push_operator(splitted.alias);
                     symbols.push({
-                        splitted.second,
+                        splitted.token,
                         SymbolType::CONSTANT,
-                        Constant{_lexer->to_value(splitted.second)}.clone()
+                        Constant{_lexer->to_value(splitted.token)}.clone()
                     });
                 }
                 else
                     symbols.push({
-                        token,
+                        curr->token,
                         SymbolType::CONSTANT,
-                        Constant{_lexer->to_value(token)}.clone()
+                        Constant{_lexer->to_value(curr->token)}.clone()
                     });
             }
-            else if (type == TokenType::LEFT)
+            else if (curr->type == TokenType::LEFT)
                 symbols.push(_left());
-            else if (type == TokenType::RIGHT)
+            else if (curr->type == TokenType::RIGHT)
                 symbols.push(_right());
-            else if (type == TokenType::SEPARATOR)
+            else if (curr->type == TokenType::SEPARATOR)
                 symbols.push(_separator());
-            else if (type == TokenType::SYMBOL)
-                push_operator(token);
-            else if (type == TokenType::NAME && has(constants, token, con))
+            else if (curr->type == TokenType::SYMBOL)
+                push_operator(curr->token);
+            else if (curr->type == TokenType::NAME && has(constants, curr->token, con))
                 symbols.push({
-                    std::move(token),
+                    std::move(curr->token),
                     SymbolType::CONSTANT,
                     con->second.clone()
                 });
-            else if (type == TokenType::NAME && has(functions, token, fun))
+            else if (curr->type == TokenType::NAME && has(functions, curr->token, fun))
                 symbols.push({
-                    std::move(token),
+                    std::move(curr->token),
                     SymbolType::FUNCTION,
                     fun->second.clone()
                 });
             else
                 symbols.push({
-                    token,
+                    curr->token,
                     SymbolType::CONSTANT,
-                    Variable<Node<BaseParser>>{variables->at(token)}.clone()
+                    Variable<Node<BaseParser>>{variables->at(curr->token)}.clone()
                 });
         }
         return symbols;
@@ -381,13 +379,12 @@ private:
                     else
                         break;
                 }
-                if (
-                    !operations.empty() &&
-                    operations.top().type == SymbolType::LEFT
-                )
+
+                if (!operations.empty() && operations.top().type == SymbolType::LEFT)
                     operations.pop();
                 else
                     throw ParenthesisMismatch{};
+
                 if (apply_function.top()) {
                     if (expected_counter.top() != provided_counter.top())
                         throw ArgumentsMismatch{
@@ -412,11 +409,13 @@ private:
                     else
                         break;
                 }
+
                 if (apply_function.empty() || !apply_function.top())
                     throw SyntaxError{
                         "separator '" + element.token + "' outside function"
                     };
                 provided_counter.top()++;
+
                 if (operations.empty())
                     throw ParenthesisMismatch{};
                 break;
@@ -501,8 +500,8 @@ private:
                 element.type == SymbolType::SEPARATOR
             )
                 throw SyntaxError{
-                    "symbol '" + element.token + "' not allowed "
-                    "in postfix notation"
+                    "symbol '" + element.token + "' "
+                    "not allowed in postfix notation"
                 };
 
             if (element.type != SymbolType::CONSTANT) {
