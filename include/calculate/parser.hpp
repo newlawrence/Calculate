@@ -91,14 +91,14 @@ private:
         decltype(constants.begin()) con;
         decltype(functions.begin()) fun;
         decltype(operators.begin()) ope;
-        decltype(prefixes.begin()) inf;
+        decltype(prefixes.begin()) sym;
 
         auto tokens = infix ?
             _lexer->tokenize_infix(expr) :
             _lexer->tokenize_postfix(expr);
 
-        auto has = [](const auto& cont, const auto& t, auto& it) noexcept {
-            return (it = cont.find(t)) != cont.end();
+        auto has = [](const auto& cont, const auto& token, auto& it) noexcept {
+            return (it = cont.find(token)) != cont.end();
         };
 
         auto push_operator = [&](const auto& token) {
@@ -111,21 +111,21 @@ private:
 
             if (
                 infix && leftmost &&
-                has(prefixes, token, inf) &&
-                has(functions, inf->second, fun)
+                has(prefixes, token, sym) &&
+                has(functions, sym->second, fun)
             )
                 symbols.push({
-                    std::move(inf->second),
+                    std::move(sym->second),
                     SymbolType::PREFIX,
                     fun->second.clone()
                 });
             else if (
                 infix &&
-                has(suffixes, token, inf) &&
-                has(functions, inf->second, fun)
+                has(suffixes, token, sym) &&
+                has(functions, sym->second, fun)
             )
                 symbols.push({
-                    std::move(inf->second),
+                    std::move(sym->second),
                     SymbolType::SUFFIX,
                     fun->second.clone()
                 });
@@ -151,7 +151,7 @@ private:
                     ope->second.associativity() == Associativity::RIGHT;
                 auto suffix =
                     (next != tokens.end() &&
-                    has(suffixes, next->first, inf)) ||
+                    has(suffixes, next->first, sym)) ||
                     (symbols.size() && symbols.back().type == SymbolType::SUFFIX);
 
                 if (infix && (prefix || suffix) && _lexer->prefixed(token)) {
@@ -200,9 +200,7 @@ private:
         return symbols;
     }
 
-    std::queue<SymbolHandler> _parse_infix(
-        std::queue<SymbolHandler>&& symbols
-    ) const {
+    std::queue<SymbolHandler> _parse_infix(std::queue<SymbolHandler>&& symbols) const {
         using Associativity = typename Operator::Associativity;
 
         std::string parsed{};
@@ -347,9 +345,7 @@ private:
         return collected;
     }
 
-    std::queue<SymbolHandler> _shunting_yard(
-        std::queue<SymbolHandler>&& symbols
-    ) const {
+    std::queue<SymbolHandler> _shunting_yard(std::queue<SymbolHandler>&& symbols) const {
         using Associativity = typename Operator::Associativity;
 
         std::queue<SymbolHandler> collected{};
@@ -562,15 +558,9 @@ private:
         }
 
         auto pruned = operands.top()._pruned();
-        for (const auto& variable : variables->variables)
-            if (
-                std::find(
-                    pruned.begin(),
-                    pruned.end(),
-                    variable
-                ) == pruned.end()
-            )
-                throw UnusedSymbol(variable);
+        for (const auto& var : variables->variables)
+            if (std::find(pruned.begin(), pruned.end(), var) == pruned.end())
+                throw UnusedSymbol(var);
         return std::move(operands.top());
     }
 

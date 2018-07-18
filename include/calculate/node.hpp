@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc3
-    Last modified 2018/06/15
+    Last modified 2018/07/18
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -71,11 +71,11 @@ public:
                 variables.end()
             };
 
-            for (const auto &variable : variables) {
-                if (!std::regex_match(variable, lexer->name_regex))
-                    throw UnsuitableName{variable};
-                else if (singles.erase(variable) == 0)
-                    throw RepeatedSymbol{variable};
+            for (const auto &var : variables) {
+                if (!std::regex_match(var, lexer->name_regex))
+                    throw UnsuitableName{var};
+                else if (singles.erase(var) == 0)
+                    throw RepeatedSymbol{var};
             }
         }
 
@@ -166,15 +166,15 @@ private:
     }
 
     std::vector<std::string> _pruned() const noexcept {
-        static const std::regex space{R"(\s)"};
-        std::string pfx{postfix()};
-        std::sregex_token_iterator extractor(pfx.begin(), pfx.end(), space, -1);
-        std::vector<std::string> tokens{extractor, {}};
         std::vector<std::string> pruned{};
 
+        auto tokens = _lexer->tokenize_postfix(postfix());
         for (const auto& var : _variables->variables)
-            if (std::find(tokens.begin(), tokens.end(), var) != tokens.end())
-                pruned.push_back(var);
+            for (const auto& token : tokens)
+                if (var == token.first) {
+                    pruned.push_back(var);
+                    break;
+                }
         return pruned;
     }
 
