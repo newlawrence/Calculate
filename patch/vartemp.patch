@@ -1,9 +1,9 @@
 diff --git a/include/calculate/lexer.hpp b/include/calculate/lexer.hpp
-index 9ef2a1a..71d4685 100644
+index b8ccc10..d7785a5 100644
 --- a/include/calculate/lexer.hpp
 +++ b/include/calculate/lexer.hpp
-@@ -31,30 +31,42 @@ constexpr const char separator[] = ",";
- constexpr const char decimal[] = ".";
+@@ -31,32 +31,42 @@ constexpr const char separator[] = ",";
+ 
  
  template<bool>
 -constexpr const char* real =
@@ -46,20 +46,22 @@ index 9ef2a1a..71d4685 100644
 +};
  
  template<typename Type>
--constexpr const char* number = real<util::is_integral_v<Type>>;
+-constexpr const char* number =
+-    real<util::is_integral_v<Type>>;
 +struct number {
 +    static constexpr const char* value = real<std::is_integral<Type>::value>::value;
 +};
  
  template<typename Type>
--constexpr const char* number<std::complex<Type>> = complex<util::is_integral_v<Type>>;
+-constexpr const char* number<std::complex<Type>> =
+-    complex<util::is_integral_v<Type>>;
 +struct number<std::complex<Type>> {
 +    static constexpr const char* value = complex<std::is_integral<Type>::value>::value;
 +};
  
- constexpr const char name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
  
-@@ -454,13 +466,13 @@ public:
+ constexpr const char name[] =
+@@ -446,13 +456,13 @@ public:
  template<typename Type>
  Lexer<Type> make_lexer() noexcept {
      using namespace defaults;
@@ -76,7 +78,7 @@ index 9ef2a1a..71d4685 100644
  
  template<typename Type>
 diff --git a/include/calculate/node.hpp b/include/calculate/node.hpp
-index 9184184..9e60218 100644
+index c7e346d..8ebc866 100644
 --- a/include/calculate/node.hpp
 +++ b/include/calculate/node.hpp
 @@ -113,7 +113,7 @@ public:
@@ -89,7 +91,7 @@ index 9184184..9e60218 100644
  
              for (auto val = std::begin(vals); val != std::end(vals); ++val) {
 diff --git a/include/calculate/symbol.hpp b/include/calculate/symbol.hpp
-index d4853ec..8521aac 100644
+index 553763f..1301480 100644
 --- a/include/calculate/symbol.hpp
 +++ b/include/calculate/symbol.hpp
 @@ -50,8 +50,8 @@ private:
@@ -130,7 +132,7 @@ index d4853ec..8521aac 100644
      Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
  
 diff --git a/include/calculate/util.hpp b/include/calculate/util.hpp
-index a1df19f..69cdbfe 100644
+index 4aa07c9..c643775 100644
 --- a/include/calculate/util.hpp
 +++ b/include/calculate/util.hpp
 @@ -22,22 +22,6 @@ namespace calculate {
@@ -279,7 +281,7 @@ index a1df19f..69cdbfe 100644
  
  
 diff --git a/include/calculate/wrapper.hpp b/include/calculate/wrapper.hpp
-index 67d867f..d9a2b41 100644
+index bb361f4..9cead46 100644
 --- a/include/calculate/wrapper.hpp
 +++ b/include/calculate/wrapper.hpp
 @@ -83,7 +83,7 @@ class Wrapper {
