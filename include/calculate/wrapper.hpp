@@ -88,7 +88,7 @@ class Wrapper {
 
     std::shared_ptr<WrapperConcept> _wrapper;
 
-    Wrapper(std::shared_ptr<WrapperConcept>&& wrapper) : _wrapper{wrapper} {}
+    Wrapper(std::shared_ptr<WrapperConcept>&& wrapper) : _wrapper{std::move(wrapper)} {}
 
 protected:
     Type eval(const std::vector<Source>& args) const { return _wrapper->eval(args); }

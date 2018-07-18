@@ -278,6 +278,7 @@ public:
             throw LexerError{"tokenizer doesn't match separator symbol"};
     }
     BaseLexer(const BaseLexer&) = default;
+    BaseLexer(BaseLexer&&) = default;
     virtual ~BaseLexer() = default;
 
     BaseLexer& operator=(const BaseLexer&) = delete;

@@ -56,8 +56,6 @@ public:
             optimize{false}
     {}
 
-    ~BaseParser() = default;
-
     const Lexer& lexer() const noexcept { return *_lexer; }
 
 
