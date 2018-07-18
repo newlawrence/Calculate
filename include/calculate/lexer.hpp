@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc3
-    Last modified 2018/06/27
+    Last modified 2018/07/18
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -184,7 +184,8 @@ private:
         return tokenizer;
     }
 
-    std::vector<TokenHandler> _tokenize(std::string string, bool infix) const {
+    template<bool infix>
+    std::vector<TokenHandler> _tokenize(std::string string) const {
         std::vector<TokenHandler> tokens{};
         std::smatch match{};
         TokenType last{TokenType::LEFT};
@@ -277,6 +278,7 @@ public:
         if (!_match(match, TokenType::SEPARATOR))
             throw LexerError{"tokenizer doesn't match separator symbol"};
     }
+
     BaseLexer(const BaseLexer&) = default;
     BaseLexer(BaseLexer&&) = default;
     virtual ~BaseLexer() = default;
@@ -284,12 +286,14 @@ public:
     BaseLexer& operator=(const BaseLexer&) = delete;
     BaseLexer& operator=(BaseLexer&&) = delete;
 
-    std::vector<TokenHandler> tokenize_infix(std::string string) const {
-        return _tokenize(std::move(string), true);
+    template<typename Arg>
+    inline auto tokenize_infix(Arg&& arg) const {
+        return _tokenize<true>(std::forward<Arg>(arg));
     }
 
-    std::vector<TokenHandler> tokenize_postfix(std::string string) const {
-        return _tokenize(std::move(string), false);
+    template<typename Arg>
+    inline auto tokenize_postfix(Arg&& arg) const {
+        return _tokenize<false>(std::forward<Arg>(arg));
     }
 
     bool prefixed(const std::string& token) const noexcept {
