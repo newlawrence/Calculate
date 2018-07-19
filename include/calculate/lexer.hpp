@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc3
-    Last modified 2018/07/18
+    Calculate - Version 2.1.1rc4
+    Last modified 2018/07/19
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -20,7 +20,6 @@
 
 #include "util.hpp"
 
-
 namespace calculate {
 
 namespace defaults {
@@ -29,6 +28,8 @@ constexpr const char left[] = "(";
 constexpr const char right[] = ")";
 constexpr const char separator[] = ",";
 
+constexpr const char symbol[] = R"(^(?:[^A-Za-z\d.(),_\s]|(?:\.(?!\d)))+$)";
+constexpr const char name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
 
 template<bool>
 constexpr const char* real =
@@ -51,30 +52,19 @@ constexpr const char* complex<false> =
     R"()$)";
 
 template<typename Type>
-constexpr const char* number =
-    real<util::is_integral_v<Type>>;
+constexpr const char* number = real<util::is_integral_v<Type>>;
 
 template<typename Type>
-constexpr const char* number<std::complex<Type>> =
-    complex<util::is_integral_v<Type>>;
-
-
-constexpr const char name[] =
-    R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
-
-constexpr const char symbol[] =
-    R"(^[^A-Za-z\d(),_\s]+$)";
+constexpr const char* number<std::complex<Type>> = complex<util::is_integral_v<Type>>;
 
 }
 
 
 namespace detail {
 
-constexpr const char scape[] =
-    {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
+constexpr const char scape[] = {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
 
-constexpr const char split[] =
-    R"(^(?:(?:(.*[^ij])([+\-].+)[ij])|(.*[^ij])|(.+)[ij])$)";
+constexpr const char split[] = R"(^(?:(?:(.*[^ij])([+\-].+)[ij])|(.*[^ij])|(.+)[ij])$)";
 
 
 template<typename Type>
@@ -112,14 +102,7 @@ std::string write(std::ostringstream& ostream, const Type& value) {
 template<typename Type>
 class BaseLexer {
 public:
-    enum class TokenType {
-        NUMBER,
-        NAME,
-        SYMBOL,
-        LEFT,
-        RIGHT,
-        SEPARATOR
-    };
+    enum class TokenType { LEFT, RIGHT, SEPARATOR, SYMBOL, NAME, NUMBER };
 
     struct TokenHandler {
         std::string token;
@@ -135,13 +118,13 @@ public:
     const std::string right;
     const std::string separator;
 
-    const std::string number;
-    const std::string name;
     const std::string symbol;
+    const std::string name;
+    const std::string number;
 
-    const std::regex number_regex;
-    const std::regex name_regex;
     const std::regex symbol_regex;
+    const std::regex name_regex;
+    const std::regex number_regex;
 
 private:
     const std::regex _splitter_regex;
@@ -183,12 +166,12 @@ private:
             return token;
         };
 
-        tokenizer += "(" + number.substr(1, number.size() - 2) + ")|";
-        tokenizer += "(" + name.substr(1, name.size() - 2) + ")|";
-        tokenizer += "(" + symbol.substr(1, symbol.size() - 2) + ")|";
         tokenizer += "(" + escape(left) + ")|";
         tokenizer += "(" + escape(right) + ")|";
-        tokenizer += "(" + escape(separator) + ")";
+        tokenizer += "(" + escape(separator) + ")|";
+        tokenizer += "(" + symbol.substr(1, symbol.size() - 2) + ")|";
+        tokenizer += "(" + name.substr(1, name.size() - 2) + ")|";
+        tokenizer += "(" + number.substr(1, number.size() - 2) + ")";
         return tokenizer;
     }
 
@@ -197,57 +180,42 @@ private:
         std::vector<TokenHandler> tokens{};
         std::smatch match{};
 
+        auto collapse = false;
         auto last = TokenType::LEFT;
         while (std::regex_search(string, match, _tokenizer_regex)) {
             auto token = match.str();
-
-            if (_match(match, TokenType::NUMBER)) {
-                std::sregex_token_iterator
-                    nums{token.begin(), token.end(), _splitter_regex, -1},
-                    syms{token.begin(), token.end(), _splitter_regex},
-                    end{};
-
-                if (nums->str().empty()) {
-                    auto sym = (syms++)->str(), num = ((++nums)++)->str();
-                    if (
-                        infix &&
-                        last != TokenType::SYMBOL &&
-                        last != TokenType::LEFT &&
-                        last != TokenType::SEPARATOR
-                    ) {
-                        tokens.push_back({std::move(sym), TokenType::SYMBOL});
-                        tokens.push_back({std::move(num), TokenType::NUMBER});
-                    }
-                    else
-                        tokens.push_back({sym + num, TokenType::NUMBER});
-                }
-                else
-                    tokens.push_back({(nums++)->str(), TokenType::NUMBER});
-
-                while (nums != end && syms != end) {
-                    auto sym = (syms++)->str(), num = (nums++)->str();
-                    auto back = tokens.back().token;
-                    if (std::regex_search(back, number_regex)) {
-                        tokens.push_back({sym, TokenType::SYMBOL});
-                        tokens.push_back({num, TokenType::NUMBER});
-                    }
-                    else
-                        tokens.back().token = back + sym + num;
-                }
-            }
-            else if (_match(match, TokenType::NAME))
-                tokens.push_back({std::move(token), TokenType::NAME});
-            else if (_match(match, TokenType::SYMBOL))
-                tokens.push_back({std::move(token), TokenType::SYMBOL});
-            else if (_match(match, TokenType::LEFT))
+            if (_match(match, TokenType::LEFT))
                 tokens.push_back({std::move(token), TokenType::LEFT});
             else if (_match(match, TokenType::RIGHT))
                 tokens.push_back({std::move(token), TokenType::RIGHT});
             else if (_match(match, TokenType::SEPARATOR))
                 tokens.push_back({std::move(token), TokenType::SEPARATOR});
+            else if (_match(match, TokenType::SYMBOL))
+                tokens.push_back({std::move(token), TokenType::SYMBOL});
+            else if (_match(match, TokenType::NAME))
+                tokens.push_back({std::move(token), TokenType::NAME});
+            else if (_match(match, TokenType::NUMBER)) {
+                if (collapse) {
+                    auto full = tokens.back().token + token;
+                    if (std::regex_search(full, this->number_regex)) {
+                        tokens.pop_back();
+                        tokens.push_back({full, TokenType::NUMBER});
+                    }
+                    else
+                        tokens.push_back({std::move(token), TokenType::NUMBER});
+                }
+                else
+                    tokens.push_back({std::move(token), TokenType::NUMBER});
+            }
 
-            string = match.suffix().str();
+            collapse = infix && tokens.back().type == TokenType::SYMBOL;
+            collapse = collapse && (
+                last == TokenType::SYMBOL ||
+                last == TokenType::LEFT ||
+                last == TokenType::SEPARATOR
+            );
             last = tokens.back().type;
+            string = match.suffix().str();
         }
         return tokens;
     }
@@ -255,17 +223,17 @@ private:
 public:
     BaseLexer(
         std::string lft, std::string rgt, std::string sep,
-        std::string num, std::string nam, std::string sym
+        std::string sym, std::string nam, std::string num
     ) :
             left{std::move(lft)},
             right{std::move(rgt)},
             separator{std::move(sep)},
-            number{_adapt_regex(std::move(num))},
-            name{_adapt_regex(std::move(nam))},
             symbol{_adapt_regex(std::move(sym))},
-            number_regex{number},
-            name_regex{name},
+            name{_adapt_regex(std::move(nam))},
+            number{_adapt_regex(std::move(num))},
             symbol_regex{symbol},
+            name_regex{name},
+            number_regex{number},
             _splitter_regex{symbol.substr(1, symbol.size() - 2)},
             _tokenizer_regex{_generate_tokenizer()}
     {
@@ -294,22 +262,18 @@ public:
     BaseLexer& operator=(const BaseLexer&) = delete;
     BaseLexer& operator=(BaseLexer&&) = delete;
 
-    template<typename Arg>
-    inline auto tokenize_infix(Arg&& arg) const {
-        return _tokenize<true>(std::forward<Arg>(arg));
-    }
+    template<typename T>
+    inline auto tokenize_infix(T&& t) const { return _tokenize<true>(std::forward<T>(t)); }
 
-    template<typename Arg>
-    inline auto tokenize_postfix(Arg&& arg) const {
-        return _tokenize<false>(std::forward<Arg>(arg));
-    }
+    template<typename T>
+    inline auto tokenize_postfix(T&& t) const { return _tokenize<false>(std::forward<T>(t)); }
 
     bool prefixed(const std::string& token) const noexcept {
         std::sregex_token_iterator
             num{token.begin(), token.end(), _splitter_regex, -1},
             sym{token.begin(), token.end(), _splitter_regex};
 
-        return num->str().empty();
+        return std::regex_search(token, this->number_regex) && num->str().empty();
     };
 
     PrefixHandler split(const std::string& token) const noexcept {
@@ -318,7 +282,7 @@ public:
             sym{token.begin(), token.end(), _splitter_regex},
             end{};
 
-        if (sym == end || num == end || !num->str().empty() || ++num == end)
+        if (!std::regex_search(token, this->number_regex) || !num->str().empty())
             return {"", ""};
         return {*sym, *num};
     }
@@ -339,11 +303,11 @@ class Lexer final : public BaseLexer<Type> {
 public:
     Lexer(
         std::string lft, std::string rgt, std::string sep,
-        std::string num, std::string nam, std::string sym
+        std::string sym, std::string nam, std::string num
     ) :
             BaseLexer{
                 std::move(lft), std::move(rgt), std::move(sep),
-                std::move(num), std::move(nam), std::move(sym)
+                std::move(sym), std::move(nam), std::move(num),
             },
             _istream{},
             _ostream{}
@@ -388,11 +352,11 @@ class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
 public:
     Lexer(
         std::string lft, std::string rgt, std::string sep,
-        std::string num, std::string nam, std::string sym
+        std::string sym, std::string nam, std::string num
     ) :
             BaseLexer{
                 std::move(lft), std::move(rgt), std::move(sep),
-                std::move(num), std::move(nam), std::move(sym)
+                std::move(sym), std::move(nam), std::move(num)
             },
             _istream{},
             _ostream{},
@@ -454,19 +418,19 @@ public:
 template<typename Type>
 Lexer<Type> make_lexer() noexcept {
     using namespace defaults;
-    return {left, right, separator, number<Type>, name, symbol};
+    return {left, right, separator, symbol, name, number<Type>};
 }
 
 template<typename Type>
 Lexer<Type> lexer_from_symbols(std::string lft, std::string rgt, std::string sep) {
     using namespace defaults;
-    return {std::move(lft), std::move(rgt), std::move(sep), number<Type>, name, symbol};
+    return {std::move(lft), std::move(rgt), std::move(sep), symbol, name, number<Type>};
 }
 
 template<typename Type>
 Lexer<Type> lexer_from_regexes(std::string num, std::string nam, std::string sym) {
     using namespace defaults;
-    return {left, right, separator, std::move(num), std::move(nam), std::move(sym)};
+    return {left, right, separator, std::move(sym), std::move(nam), std::move(num)};
 }
 
 }

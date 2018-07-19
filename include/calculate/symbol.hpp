@@ -1,5 +1,5 @@
 /*
-    Calculate - Version 2.1.1rc3
+    Calculate - Version 2.1.1rc4
     Last modified 2018/06/27
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
@@ -17,6 +17,7 @@ namespace calculate {
 template<typename> class Function;
 template<typename> class Operator;
 
+
 template<typename Expression>
 class Symbol : Wrapper<typename Expression::Type, Expression> {
     friend struct std::hash<Symbol>;
@@ -24,16 +25,7 @@ class Symbol : Wrapper<typename Expression::Type, Expression> {
 public:
     using Type = typename Expression::Type;
 
-    enum class SymbolType {
-        LEFT,
-        RIGHT,
-        SEPARATOR,
-        CONSTANT,
-        FUNCTION,
-        OPERATOR,
-        PREFIX,
-        SUFFIX
-    };
+    enum class SymbolType { LEFT, RIGHT, SEPARATOR, CONSTANT, FUNCTION, OPERATOR, PREFIX, SUFFIX };
 
 private:
     using WrapperConcept = calculate::WrapperConcept<Type, Expression>;
@@ -62,13 +54,11 @@ public:
             }
     {
         static_assert(
-            util::not_same_v<Callable, Function<Expression>> ||
-            util::argc_v<Callable> == 0,
+            util::not_same_v<Callable, Function<Expression>> || util::argc_v<Callable> == 0,
             "Functions must have at least one argument"
         );
         static_assert(
-            util::not_same_v<Callable, Operator<Expression>> ||
-            util::argc_v<Callable> == 2,
+            util::not_same_v<Callable, Operator<Expression>> || util::argc_v<Callable> == 2,
             "Operators must have two arguments"
         );
     }
@@ -94,17 +84,13 @@ public:
     }
 
     template<typename Class>
-    bool operator!=(const Class& other) const noexcept {
-        return !operator==(other);
-    }
+    bool operator!=(const Class& other) const noexcept { return !operator==(other); }
 
     using Wrapper::operator();
 
     using Wrapper::eval;
 
-    std::size_t arguments() const noexcept {
-        return static_cast<const Wrapper*>(this)->argc();
-    }
+    std::size_t arguments() const noexcept { return static_cast<const Wrapper*>(this)->argc(); }
 
     virtual SymbolType symbol() const noexcept = 0;
 
@@ -138,9 +124,7 @@ class Constant final : public Symbol<Expression> {
     using Symbol = calculate::Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
-    bool _equal(const Symbol& other) const noexcept override {
-        return (*this)() == other();
-    }
+    bool _equal(const Symbol& other) const noexcept override { return (*this)() == other(); }
 
 public:
     using Type = typename Expression::Type;
@@ -193,7 +177,7 @@ class Operator final : public Symbol<Expression> {
 public:
     using Type = typename Expression::Type;
 
-    enum class Associativity {LEFT, RIGHT, FULL};
+    enum class Associativity { LEFT, RIGHT, FULL };
 
 private:
     std::size_t _precedence;
@@ -201,9 +185,7 @@ private:
 
     bool _equal(const Symbol& other) const noexcept override {
         auto op = static_cast<const Operator&>(other);
-        return
-            _precedence == op._precedence &&
-            _associativity == op._associativity;
+        return _precedence == op._precedence && _associativity == op._associativity;
     }
 
 public:
@@ -241,9 +223,7 @@ namespace std {
 
 template<typename Expression>
 struct hash<calculate::Symbol<Expression>> {
-    size_t operator()(const calculate::Symbol<Expression>& symbol) const {
-        return symbol._hash();
-    }
+    size_t operator()(const calculate::Symbol<Expression>& symbol) const { return symbol._hash(); }
 };
 
 }

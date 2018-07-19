@@ -1,5 +1,5 @@
 /*
-    Calculate - Version 2.1.1rc3
+    Calculate - Version 2.1.1rc4
     Last modified 2018/07/18
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
@@ -38,20 +38,14 @@ class Wrapper {
         Adapter _adapter;
 
         template<std::size_t... indices>
-        Type _eval(
-            const std::vector<Source>& args,
-            std::index_sequence<indices...>
-        ) const {
+        Type _eval(const std::vector<Source>& args, std::index_sequence<indices...>) const {
             if (args.size() != argcount)
                 throw ArgumentsMismatch{argcount, args.size()};
             return _callable(_adapter(args[indices])...);
         }
 
         template<std::size_t... indices>
-        Type _call(
-            const std::vector<Type>& args,
-            std::index_sequence<indices...>
-        ) const {
+        Type _call(const std::vector<Type>& args, std::index_sequence<indices...>) const {
             if (args.size() != argcount)
                 throw ArgumentsMismatch{argcount, args.size()};
             return _callable(args[indices]...);
@@ -172,13 +166,9 @@ public:
         return _wrapper->call(util::to_vector<Type>(std::forward<Args>(args)...));
     }
 
-    bool operator==(const Wrapper& other) const noexcept {
-        return _wrapper == other._wrapper;
-    }
+    bool operator==(const Wrapper& other) const noexcept { return _wrapper == other._wrapper; }
 
-    bool operator!=(const Wrapper& other) const noexcept {
-        return !operator==(other);
-    }
+    bool operator!=(const Wrapper& other) const noexcept { return !operator==(other); }
 };
 
 }
@@ -189,9 +179,7 @@ namespace std {
 template<typename Type, typename Source>
 struct hash<calculate::Wrapper<Type, Source>> {
     size_t operator()(const calculate::Wrapper<Type, Source>& wrapper) const {
-        return hash<std::shared_ptr<calculate::WrapperConcept<Type, Source>>>{}(
-            wrapper._wrapper
-        );
+        return hash<std::shared_ptr<calculate::WrapperConcept<Type, Source>>>{}(wrapper._wrapper);
     }
 };
 

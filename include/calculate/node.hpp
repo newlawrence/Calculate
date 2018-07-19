@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc3
-    Last modified 2018/07/18
+    Calculate - Version 2.1.1rc4
+    Last modified 2018/07/19
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -33,10 +33,8 @@ public:
     using Symbol = calculate::Symbol<Node>;
     using SymbolType = typename Symbol::SymbolType;
 
-    using const_iterator =
-        typename std::vector<Node>::const_iterator;
-    using const_reverse_iterator =
-        typename std::vector<Node>::const_reverse_iterator;
+    using const_iterator = typename std::vector<Node>::const_iterator;
+    using const_reverse_iterator = typename std::vector<Node>::const_reverse_iterator;
 
 
     class VariableHandler {
@@ -68,10 +66,7 @@ public:
                 _refcount{0u},
                 _copy{nullptr}
         {
-            std::unordered_set<std::string> singles{
-                variables.begin(),
-                variables.end()
-            };
+            std::unordered_set<std::string> singles{variables.begin(), variables.end()};
 
             for (const auto &var : variables) {
                 if (!std::regex_match(var, lexer->name_regex))
@@ -157,11 +152,7 @@ private:
             _hash{hash}
     {
         if (_nodes.size() != _symbol->arguments())
-            throw ArgumentsMismatch{
-                _token,
-                _nodes.size(),
-                _symbol->arguments()
-            };
+            throw ArgumentsMismatch{_token, _nodes.size(), _symbol->arguments()};
     }
 
     std::vector<std::string> _pruned() const noexcept {
@@ -250,8 +241,7 @@ private:
             return infix + _lexer->right;
 
         case (SymbolType::OPERATOR):
-            infix += brace(0) + _token + brace(1);
-            return infix;
+            return infix + brace(0) + _token + brace(1);
 
         default:
             if (right && _lexer->prefixed(_token))
@@ -322,9 +312,7 @@ public:
         return _compare(other);
     }
 
-    bool operator!=(const Node& other) const noexcept {
-        return !operator==(other);
-    }
+    bool operator!=(const Node& other) const noexcept { return !operator==(other); }
 
     const Node& operator[](std::size_t index) const { return _nodes[index]; }
 
@@ -369,9 +357,7 @@ public:
         return postfix + _token;
     }
 
-    const std::vector<std::string>& variables() const noexcept {
-        return _variables->variables;
-    }
+    const std::vector<std::string>& variables() const noexcept { return _variables->variables; }
 };
 
 }
@@ -381,9 +367,7 @@ namespace std {
 
 template<typename Parser>
 struct hash<calculate::Node<Parser>> {
-    size_t operator()(const calculate::Node<Parser>& node) const {
-        return node._hash;
-    }
+    size_t operator()(const calculate::Node<Parser>& node) const { return node._hash; }
 };
 
 }
