@@ -1,5 +1,5 @@
 diff --git a/include/calculate/lexer.hpp b/include/calculate/lexer.hpp
-index ca97931..7389287 100644
+index 6e467f5..f5e7066 100644
 --- a/include/calculate/lexer.hpp
 +++ b/include/calculate/lexer.hpp
 @@ -31,32 +31,42 @@ constexpr const char separator[] = ",";
@@ -15,33 +15,33 @@ index ca97931..7389287 100644
  
  template<>
 -constexpr const char* real<false> =
--    R"(^[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))$)";
+-    R"(^[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)(?:[eE][+\-]?\d+)?))$)";
 +struct real<false> {
 +    static constexpr const char* value =
-+        R"(^[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))$)";
++        R"(^[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)(?:[eE][+\-]?\d+)?))$)";
 +};
  
  template<bool>
 -constexpr const char* complex =
--    R"(^(?:(?:(?:[+\-]?\d+)(?:[+\-]?\d+)[ij])|(?:(?:[+\-]?\d+)[ij]?))$)";
+-    R"(^(?:(?:(?:[+\-]?\d+?)(?:[+\-]?\d+?)[ij])|(?:(?:[+\-]?\d+)[ij]?))$)";
 +struct complex {
 +    static constexpr const char* value =
-+        R"(^(?:(?:(?:[+\-]?\d+)(?:[+\-]?\d+)[ij])|(?:(?:[+\-]?\d+)[ij]?))$)";
++        R"(^(?:(?:(?:[+\-]?\d+?)(?:[+\-]?\d+?)[ij])|(?:(?:[+\-]?\d+)[ij]?))$)";
 +};
  
  template<>
 -constexpr const char* complex<false> =
 -    R"(^(?:)"
--    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))))"
--    R"((?:[+\-](?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij])|)"
--    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij]?))"
+-    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*?|\.\d+?)(?:[eE][+\-]?\d+?)?))))"
+-    R"((?:[+\-](?:(?:NaN|Inf)|(?:(?:\d+\.?\d*?|\.\d+?)(?:[eE][+\-]?\d+?)?)))[ij])|)"
+-    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)(?:[eE][+\-]?\d+)?)))[ij]?))"
 -    R"()$)";
 +struct complex<false> {
 +    static constexpr const char* value =
 +        R"(^(?:)"
-+        R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))))"
-+        R"((?:[+\-](?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij])|)"
-+        R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij]?))"
++        R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*?|\.\d+?)(?:[eE][+\-]?\d+?)?))))"
++        R"((?:[+\-](?:(?:NaN|Inf)|(?:(?:\d+\.?\d*?|\.\d+?)(?:[eE][+\-]?\d+?)?)))[ij])|)"
++        R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)(?:[eE][+\-]?\d+)?)))[ij]?))"
 +        R"()$)";
 +};
  
@@ -61,7 +61,7 @@ index ca97931..7389287 100644
  
  
  constexpr const char name[] =
-@@ -454,13 +464,13 @@ public:
+@@ -453,13 +463,13 @@ public:
  template<typename Type>
  Lexer<Type> make_lexer() noexcept {
      using namespace defaults;
@@ -78,7 +78,7 @@ index ca97931..7389287 100644
  
  template<typename Type>
 diff --git a/include/calculate/node.hpp b/include/calculate/node.hpp
-index 45ec997..6f1bab8 100644
+index 97be83d..fe8f818 100644
 --- a/include/calculate/node.hpp
 +++ b/include/calculate/node.hpp
 @@ -112,7 +112,7 @@ public:
@@ -91,7 +91,7 @@ index 45ec997..6f1bab8 100644
  
              for (auto val = std::begin(vals); val != std::end(vals); ++val) {
 diff --git a/include/calculate/symbol.hpp b/include/calculate/symbol.hpp
-index 553763f..1301480 100644
+index c621667..f055766 100644
 --- a/include/calculate/symbol.hpp
 +++ b/include/calculate/symbol.hpp
 @@ -50,8 +50,8 @@ private:
@@ -132,7 +132,7 @@ index 553763f..1301480 100644
      Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
  
 diff --git a/include/calculate/util.hpp b/include/calculate/util.hpp
-index 4aa07c9..c643775 100644
+index bc3e12c..c1e2115 100644
 --- a/include/calculate/util.hpp
 +++ b/include/calculate/util.hpp
 @@ -22,22 +22,6 @@ namespace calculate {
@@ -281,7 +281,7 @@ index 4aa07c9..c643775 100644
  
  
 diff --git a/include/calculate/wrapper.hpp b/include/calculate/wrapper.hpp
-index bb361f4..9cead46 100644
+index 88f2b81..12d0636 100644
 --- a/include/calculate/wrapper.hpp
 +++ b/include/calculate/wrapper.hpp
 @@ -83,7 +83,7 @@ class Wrapper {

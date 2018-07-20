@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc3
-    Last modified 2018/07/18
+    Calculate - Version 2.1.1rc4
+    Last modified 2018/07/20
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -36,18 +36,18 @@ constexpr const char* real =
 
 template<>
 constexpr const char* real<false> =
-    R"(^[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))$)";
+    R"(^[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)(?:[eE][+\-]?\d+)?))$)";
 
 template<bool>
 constexpr const char* complex =
-    R"(^(?:(?:(?:[+\-]?\d+)(?:[+\-]?\d+)[ij])|(?:(?:[+\-]?\d+)[ij]?))$)";
+    R"(^(?:(?:(?:[+\-]?\d+?)(?:[+\-]?\d+?)[ij])|(?:(?:[+\-]?\d+)[ij]?))$)";
 
 template<>
 constexpr const char* complex<false> =
     R"(^(?:)"
-    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?))))"
-    R"((?:[+\-](?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij])|)"
-    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)+(?:[eE][+\-]?\d+)?)))[ij]?))"
+    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*?|\.\d+?)(?:[eE][+\-]?\d+?)?))))"
+    R"((?:[+\-](?:(?:NaN|Inf)|(?:(?:\d+\.?\d*?|\.\d+?)(?:[eE][+\-]?\d+?)?)))[ij])|)"
+    R"((?:(?:[+\-]?(?:(?:NaN|Inf)|(?:(?:\d+\.?\d*|\.\d+)(?:[eE][+\-]?\d+)?)))[ij]?))"
     R"()$)";
 
 template<typename Type>
@@ -63,7 +63,7 @@ constexpr const char name[] =
     R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
 
 constexpr const char symbol[] =
-    R"(^[^A-Za-z\d(),_\s]+$)";
+    R"(^(?:[^A-Za-z\d.(),_\s]|(?:\.(?!\d)))+$)";
 
 }
 
@@ -226,13 +226,12 @@ private:
 
                 while (nums != end && syms != end) {
                     auto sym = (syms++)->str(), num = (nums++)->str();
-                    auto back = tokens.back().token;
-                    if (std::regex_search(back, number_regex)) {
+                    if (std::regex_match(tokens.back().token, number_regex)) {
                         tokens.push_back({sym, TokenType::SYMBOL});
                         tokens.push_back({num, TokenType::NUMBER});
                     }
                     else
-                        tokens.back().token = back + sym + num;
+                        tokens.back().token += sym + num;
                 }
             }
             else if (_match(match, TokenType::NAME))
@@ -364,7 +363,7 @@ public:
     }
 
     Type to_value(const std::string& token) const override {
-        if (!std::regex_search(token, this->number_regex))
+        if (!std::regex_match(token, this->number_regex))
             throw BadCast{token};
         return detail::read<Type>(_istream, token);
     }
@@ -419,10 +418,10 @@ public:
     }
 
     std::complex<Type> to_value(const std::string& token) const override {
+        std::smatch match{};
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
 
-        std::smatch match{};
         std::regex_search(token, match, _splitter);
         if (!match[3].str().empty())
             return {detail::read<Type>(_istream, match[3].str()), Type{}};
