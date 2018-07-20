@@ -1,6 +1,6 @@
 ![Calculate](resource/calculate.svg)
 
-| Version | 2.1.1rc3 |
+| Version | 2.1.1rc4 |
 | ------- | -------- |
 
 ---
