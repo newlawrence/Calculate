@@ -1,5 +1,5 @@
 /*
-    Calculate - Version 2.1.1rc4
+    Calculate - Version 2.1.1rc3
     Last modified 2018/06/09
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
@@ -153,19 +153,21 @@ template<typename T>
 using args_tuple_t = typename detail::Traits<T>::args_tuple_t;
 
 template<typename T>
-constexpr std::size_t argc_v = tuple_size_v<typename detail::Traits<T>::args_tuple_t>;
+constexpr std::size_t argc_v =
+    tuple_size_v<typename detail::Traits<T>::args_tuple_t>;
 
 template<typename T, typename U>
-constexpr bool not_same_v = !is_same_v<std::decay_t<T>, U> && !is_base_of_v<U, std::decay_t<T>>;
+constexpr bool not_same_v =
+    !is_same_v<std::decay_t<T>, U> &&
+    !is_base_of_v<U, std::decay_t<T>>;
 
 
 template<typename T, typename... Args>
 std::vector<T> to_vector(Args&&... args) { return {std::forward<Args>(args)...}; }
 
 template<typename T, typename Args>
-std::enable_if_t<is_iterable_v<Args>, std::vector<T>> to_vector(Args&& args) {
-    return {std::begin(args), std::end(args)};
-}
+std::enable_if_t<is_iterable_v<Args>, std::vector<T>>
+to_vector(Args&& args) { return {std::begin(args), std::end(args)}; }
 
 
 template<class T>

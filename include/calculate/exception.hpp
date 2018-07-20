@@ -1,5 +1,5 @@
 /*
-    Calculate - Version 2.1.1rc4
+    Calculate - Version 2.1.1rc3
     Last modified 2018/02/27
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
@@ -16,9 +16,7 @@
 namespace calculate {
 
 struct BaseError : public std::runtime_error {
-    explicit BaseError(std::string what) :
-            runtime_error{std::move(what)}
-    {}
+    explicit BaseError(std::string what) : runtime_error{std::move(what)} {}
 
     BaseError() :
             runtime_error{"Base error: unexpected error"}
@@ -34,7 +32,9 @@ struct LexerError : BaseError {
 
 struct BadCast : BaseError {
     explicit BadCast(const std::string& token) :
-            BaseError{"Bad cast: cannot perform numeric conversion: '" + token + "'"}
+            BaseError{
+                "Bad cast: cannot perform numeric conversion: '" + token + "'"
+            }
     {}
 };
 
@@ -44,9 +44,9 @@ struct ArgumentsMismatch : BaseError {
 
     ArgumentsMismatch(std::size_t n, std::size_t p) :
             BaseError{
-                "Arguments mismatch: " +
-                std::to_string(n) + " needed argument" + (n == 1 ? "" : "s") + " vs " +
-                std::to_string(p) + " provided"
+                "Arguments mismatch: " + std::to_string(n) +
+                " needed argument" + (n == 1 ? "" : "s") +
+                " vs " + std::to_string(p) + " provided"
             },
             needed{n},
             provided{p}
@@ -54,9 +54,9 @@ struct ArgumentsMismatch : BaseError {
 
     ArgumentsMismatch(const std::string& token, std::size_t n, std::size_t p) :
             BaseError{
-                "Arguments mismatch: '" + token + "' " +
-                std::to_string(n) + " needed argument" + (n == 1 ? "" : "s") + " vs " +
-                std::to_string(p) + " provided"
+                "Arguments mismatch: '" + token + "' " + std::to_string(n) +
+                " needed argument" + (n == 1 ? "" : "s") +
+                " vs " + std::to_string(p) + " provided"
             },
             needed{n},
             provided{p}
@@ -64,15 +64,11 @@ struct ArgumentsMismatch : BaseError {
 };
 
 struct EmptyExpression : BaseError {
-    EmptyExpression() :
-        BaseError{"Empty expression"}
-    {}
+    EmptyExpression() : BaseError{"Empty expression"} {}
 };
 
 struct ParenthesisMismatch : BaseError {
-    ParenthesisMismatch() :
-        BaseError{"Parenthesis mismatch"}
-    {}
+    ParenthesisMismatch() : BaseError{"Parenthesis mismatch"} {}
 };
 
 struct RepeatedSymbol : BaseError {
@@ -85,12 +81,10 @@ struct RepeatedSymbol : BaseError {
 };
 
 struct SyntaxError : BaseError {
+    SyntaxError() : BaseError{"Syntax error"} {}
+
     explicit SyntaxError(const std::string& what) :
             BaseError{"Syntax error: " + what}
-    {}
-
-    SyntaxError() :
-            BaseError{"Syntax error"}
     {}
 };
 
