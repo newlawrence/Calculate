@@ -16,7 +16,9 @@
 namespace calculate {
 
 struct BaseError : public std::runtime_error {
-    explicit BaseError(std::string what) : runtime_error{std::move(what)} {}
+    explicit BaseError(std::string what) :
+            runtime_error{std::move(what)}
+    {}
 
     BaseError() :
             runtime_error{"Base error: unexpected error"}
@@ -32,9 +34,7 @@ struct LexerError : BaseError {
 
 struct BadCast : BaseError {
     explicit BadCast(const std::string& token) :
-            BaseError{
-                "Bad cast: cannot perform numeric conversion: '" + token + "'"
-            }
+            BaseError{"Bad cast: cannot perform numeric conversion: '" + token + "'"}
     {}
 };
 
@@ -64,11 +64,15 @@ struct ArgumentsMismatch : BaseError {
 };
 
 struct EmptyExpression : BaseError {
-    EmptyExpression() : BaseError{"Empty expression"} {}
+    EmptyExpression() :
+            BaseError{"Empty expression"}
+    {}
 };
 
 struct ParenthesisMismatch : BaseError {
-    ParenthesisMismatch() : BaseError{"Parenthesis mismatch"} {}
+    ParenthesisMismatch() :
+            BaseError{"Parenthesis mismatch"}
+    {}
 };
 
 struct RepeatedSymbol : BaseError {
@@ -81,10 +85,12 @@ struct RepeatedSymbol : BaseError {
 };
 
 struct SyntaxError : BaseError {
-    SyntaxError() : BaseError{"Syntax error"} {}
-
     explicit SyntaxError(const std::string& what) :
             BaseError{"Syntax error: " + what}
+    {}
+
+    SyntaxError() :
+            BaseError{"Syntax error"}
     {}
 };
 

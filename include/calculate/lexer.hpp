@@ -58,23 +58,17 @@ template<typename Type>
 constexpr const char* number<std::complex<Type>> =
     complex<util::is_integral_v<Type>>;
 
-
-constexpr const char name[] =
-    R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
-
-constexpr const char symbol[] =
-    R"(^(?:[^A-Za-z\d.(),_\s]|(?:\.(?!\d)))+$)";
+constexpr const char name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
+constexpr const char symbol[] = R"(^(?:[^A-Za-z\d.(),_\s]|(?:\.(?!\d)))+$)";
 
 }
 
 
 namespace detail {
 
-constexpr const char scape[] =
-    {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
+constexpr const char scape[] = {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
 
-constexpr const char split[] =
-    R"(^(?:(?:(.*[^ij])([+\-].+)[ij])|(.*[^ij])|(.+)[ij])$)";
+constexpr const char split[] = R"(^(?:(?:(.*[^ij])([+\-].+)[ij])|(.*[^ij])|(.+)[ij])$)";
 
 
 template<typename Type>
@@ -112,14 +106,7 @@ std::string write(std::ostringstream& ostream, const Type& value) {
 template<typename Type>
 class BaseLexer {
 public:
-    enum class TokenType {
-        NUMBER,
-        NAME,
-        SYMBOL,
-        LEFT,
-        RIGHT,
-        SEPARATOR
-    };
+    enum class TokenType { NUMBER, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR };
 
     struct TokenHandler {
         std::string token;
@@ -131,10 +118,6 @@ public:
         std::string token;
     };
 
-    const std::string left;
-    const std::string right;
-    const std::string separator;
-
     const std::string number;
     const std::string name;
     const std::string symbol;
@@ -142,6 +125,10 @@ public:
     const std::regex number_regex;
     const std::regex name_regex;
     const std::regex symbol_regex;
+
+    const std::string left;
+    const std::string right;
+    const std::string separator;
 
 private:
     const std::regex _splitter_regex;
@@ -253,18 +240,18 @@ private:
 
 public:
     BaseLexer(
-        std::string lft, std::string rgt, std::string sep,
-        std::string num, std::string nam, std::string sym
+        std::string num, std::string nam, std::string sym,
+        std::string lft, std::string rgt, std::string sep
     ) :
-            left{std::move(lft)},
-            right{std::move(rgt)},
-            separator{std::move(sep)},
             number{_adapt_regex(std::move(num))},
             name{_adapt_regex(std::move(nam))},
             symbol{_adapt_regex(std::move(sym))},
             number_regex{number},
             name_regex{name},
             symbol_regex{symbol},
+            left{std::move(lft)},
+            right{std::move(rgt)},
+            separator{std::move(sep)},
             _splitter_regex{symbol.substr(1, symbol.size() - 2)},
             _tokenizer_regex{_generate_tokenizer()}
     {
@@ -337,12 +324,12 @@ class Lexer final : public BaseLexer<Type> {
 
 public:
     Lexer(
-        std::string lft, std::string rgt, std::string sep,
-        std::string num, std::string nam, std::string sym
+        std::string num, std::string nam, std::string sym,
+        std::string lft, std::string rgt, std::string sep
     ) :
             BaseLexer{
-                std::move(lft), std::move(rgt), std::move(sep),
-                std::move(num), std::move(nam), std::move(sym)
+                std::move(num), std::move(nam), std::move(sym),
+                std::move(lft), std::move(rgt), std::move(sep)
             },
             _istream{},
             _ostream{}
@@ -352,7 +339,11 @@ public:
         _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
     }
 
-    Lexer(const Lexer& other) : BaseLexer(other), _istream{}, _ostream{} {
+    Lexer(const Lexer& other) :
+            BaseLexer(other),
+            _istream{},
+            _ostream{}
+    {
         _istream.imbue(std::locale("C"));
         _ostream.imbue(std::locale("C"));
         _ostream << std::setprecision(std::numeric_limits<Type>::max_digits10);
@@ -386,12 +377,12 @@ class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
 
 public:
     Lexer(
-        std::string lft, std::string rgt, std::string sep,
-        std::string num, std::string nam, std::string sym
+        std::string num, std::string nam, std::string sym,
+        std::string lft, std::string rgt, std::string sep
     ) :
             BaseLexer{
-                std::move(lft), std::move(rgt), std::move(sep),
-                std::move(num), std::move(nam), std::move(sym)
+                std::move(num), std::move(nam), std::move(sym),
+                std::move(lft), std::move(rgt), std::move(sep)
             },
             _istream{},
             _ostream{},
@@ -453,19 +444,19 @@ public:
 template<typename Type>
 Lexer<Type> make_lexer() noexcept {
     using namespace defaults;
-    return {left, right, separator, number<Type>, name, symbol};
+    return {number<Type>, name, symbol, left, right, separator};
 }
 
 template<typename Type>
 Lexer<Type> lexer_from_symbols(std::string lft, std::string rgt, std::string sep) {
     using namespace defaults;
-    return {std::move(lft), std::move(rgt), std::move(sep), number<Type>, name, symbol};
+    return {number<Type>, name, symbol, std::move(lft), std::move(rgt), std::move(sep)};
 }
 
 template<typename Type>
 Lexer<Type> lexer_from_regexes(std::string num, std::string nam, std::string sym) {
     using namespace defaults;
-    return {left, right, separator, std::move(num), std::move(nam), std::move(sym)};
+    return {std::move(num), std::move(nam), std::move(sym), left, right, separator};
 }
 
 }

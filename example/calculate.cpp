@@ -23,11 +23,7 @@ namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 template<typename Parser>
-void run(
-    std::string,
-    std::vector<std::string>,
-    const po::variables_map&
-);
+void run(std::string, std::vector<std::string>, const po::variables_map&);
 
 
 int main(int argc, char *argv[]) {
@@ -38,25 +34,13 @@ int main(int argc, char *argv[]) {
 
     po::options_description named_args("Options");
     named_args.add_options()
-        (
-            "expression,e",
-            po::value<std::string>(&string)->required(),
-            "Expression to parse"
-        )
+        ("expression,e", po::value<std::string>(&string)->required(), "Expression to parse")
         ("help,h", "Show this help message")
-        (
-            "var,v",
-            po::value<std::vector<std::string>>(&variables),
-            "Add variable (var:value)"
-        )
+        ("var,v", po::value<std::vector<std::string>>(&variables), "Add variable (var:value)")
         ("postfix,p", "Use postfix parser")
         ("complex,c", "Use complex parser")
         ("optimize,o", "Optimize expression")
-        (
-            "iter,i",
-            po::value<std::size_t>()->default_value(1000),
-            "Performance iterations"
-        )
+        ("iter,i", po::value<std::size_t>()->default_value(1000), "Performance iterations")
         ("analysis,a", "Print analysis")
     ;
     po::positional_options_description positional_args;
@@ -72,8 +56,10 @@ int main(int argc, char *argv[]) {
         );
 
         if (arguments.count("help")) {
-            std::cout << "Usage: " << program.filename() <<
-                " [options] {-e [ --expression ]} <expression>" << std::endl;
+            std::cout <<
+                "Usage: " << program.filename() <<
+                " [options] {-e [ --expression ]} <expression>"
+                << std::endl;
             std::cout << named_args << std::endl;
             return 0;
         }

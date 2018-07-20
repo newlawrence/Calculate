@@ -153,13 +153,10 @@ template<typename T>
 using args_tuple_t = typename detail::Traits<T>::args_tuple_t;
 
 template<typename T>
-constexpr std::size_t argc_v =
-    tuple_size_v<typename detail::Traits<T>::args_tuple_t>;
+constexpr std::size_t argc_v = tuple_size_v<typename detail::Traits<T>::args_tuple_t>;
 
 template<typename T, typename U>
-constexpr bool not_same_v =
-    !is_same_v<std::decay_t<T>, U> &&
-    !is_base_of_v<U, std::decay_t<T>>;
+constexpr bool not_same_v = !is_same_v<std::decay_t<T>, U> && !is_base_of_v<U, std::decay_t<T>>;
 
 
 template<typename T, typename... Args>

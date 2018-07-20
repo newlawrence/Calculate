@@ -1,5 +1,5 @@
 diff --git a/include/calculate/lexer.hpp b/include/calculate/lexer.hpp
-index 6e467f5..f5e7066 100644
+index 550a670..51257ec 100644
 --- a/include/calculate/lexer.hpp
 +++ b/include/calculate/lexer.hpp
 @@ -31,32 +31,42 @@ constexpr const char separator[] = ",";
@@ -59,29 +59,29 @@ index 6e467f5..f5e7066 100644
 +    static constexpr const char* value = complex<std::is_integral<Type>::value>::value;
 +};
  
- 
- constexpr const char name[] =
-@@ -453,13 +463,13 @@ public:
+ constexpr const char name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
+ constexpr const char symbol[] = R"(^(?:[^A-Za-z\d.(),_\s]|(?:\.(?!\d)))+$)";
+@@ -440,13 +450,13 @@ public:
  template<typename Type>
  Lexer<Type> make_lexer() noexcept {
      using namespace defaults;
--    return {left, right, separator, number<Type>, name, symbol};
-+    return {left, right, separator, number<Type>::value, name, symbol};
+-    return {number<Type>, name, symbol, left, right, separator};
++    return {number<Type>::value, name, symbol, left, right, separator,};
  }
  
  template<typename Type>
  Lexer<Type> lexer_from_symbols(std::string lft, std::string rgt, std::string sep) {
      using namespace defaults;
--    return {std::move(lft), std::move(rgt), std::move(sep), number<Type>, name, symbol};
-+    return {std::move(lft), std::move(rgt), std::move(sep), number<Type>::value, name, symbol};
+-    return {number<Type>, name, symbol, std::move(lft), std::move(rgt), std::move(sep)};
++    return {number<Type>::value, name, symbol, std::move(lft), std::move(rgt), std::move(sep)};
  }
  
  template<typename Type>
 diff --git a/include/calculate/node.hpp b/include/calculate/node.hpp
-index 97be83d..fe8f818 100644
+index 878c12e..f509bf8 100644
 --- a/include/calculate/node.hpp
 +++ b/include/calculate/node.hpp
-@@ -112,7 +112,7 @@ public:
+@@ -107,7 +107,7 @@ public:
          Type& at(const std::string& token) const { return _values[index(token)]; }
  
          template<typename Args>
@@ -91,10 +91,10 @@ index 97be83d..fe8f818 100644
  
              for (auto val = std::begin(vals); val != std::end(vals); ++val) {
 diff --git a/include/calculate/symbol.hpp b/include/calculate/symbol.hpp
-index c621667..f055766 100644
+index 015b05e..659a7e9 100644
 --- a/include/calculate/symbol.hpp
 +++ b/include/calculate/symbol.hpp
-@@ -50,8 +50,8 @@ private:
+@@ -41,8 +41,8 @@ private:
  public:
      template<
          typename Callable,
@@ -105,19 +105,17 @@ index c621667..f055766 100644
      >
      Symbol(Callable&& callable) :
              Wrapper{
-@@ -62,20 +62,20 @@ public:
+@@ -53,18 +53,20 @@ public:
              }
      {
          static_assert(
--            util::not_same_v<Callable, Function<Expression>> ||
--            util::argc_v<Callable> == 0,
+-            util::not_same_v<Callable, Function<Expression>> || util::argc_v<Callable> == 0,
 +            util::not_same<Callable, Function<Expression>>::value ||
 +            util::argc<Callable>::value == 0,
              "Functions must have at least one argument"
          );
          static_assert(
--            util::not_same_v<Callable, Operator<Expression>> ||
--            util::argc_v<Callable> == 2,
+-            util::not_same_v<Callable, Operator<Expression>> || util::argc_v<Callable> == 2,
 +            util::not_same<Callable, Operator<Expression>>::value ||
 +            util::argc<Callable>::value == 2,
              "Operators must have two arguments"
@@ -132,7 +130,7 @@ index c621667..f055766 100644
      Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
  
 diff --git a/include/calculate/util.hpp b/include/calculate/util.hpp
-index bc3e12c..c1e2115 100644
+index 71c6067..c1e2115 100644
 --- a/include/calculate/util.hpp
 +++ b/include/calculate/util.hpp
 @@ -22,22 +22,6 @@ namespace calculate {
@@ -240,7 +238,7 @@ index bc3e12c..c1e2115 100644
  
  
  template<typename T, std::size_t argc>
-@@ -147,26 +135,32 @@ template<typename T>
+@@ -147,23 +135,32 @@ template<typename T>
  using result_t = typename detail::Traits<T>::result_t;
  
  template<typename T>
@@ -253,17 +251,14 @@ index bc3e12c..c1e2115 100644
  using args_tuple_t = typename detail::Traits<T>::args_tuple_t;
  
  template<typename T>
--constexpr std::size_t argc_v =
--    tuple_size_v<typename detail::Traits<T>::args_tuple_t>;
+-constexpr std::size_t argc_v = tuple_size_v<typename detail::Traits<T>::args_tuple_t>;
 +struct argc {
 +    static constexpr std::size_t value =
 +        std::tuple_size<typename detail::Traits<T>::args_tuple_t>::value;
 +};
  
  template<typename T, typename U>
--constexpr bool not_same_v =
--    !is_same_v<std::decay_t<T>, U> &&
--    !is_base_of_v<U, std::decay_t<T>>;
+-constexpr bool not_same_v = !is_same_v<std::decay_t<T>, U> && !is_base_of_v<U, std::decay_t<T>>;
 +struct not_same {
 +    static constexpr bool value =
 +        !std::is_same<std::decay_t<T>, U>::value &&
@@ -281,10 +276,10 @@ index bc3e12c..c1e2115 100644
  
  
 diff --git a/include/calculate/wrapper.hpp b/include/calculate/wrapper.hpp
-index 88f2b81..12d0636 100644
+index 0955709..05b005c 100644
 --- a/include/calculate/wrapper.hpp
 +++ b/include/calculate/wrapper.hpp
-@@ -83,7 +83,7 @@ class Wrapper {
+@@ -77,7 +77,7 @@ class Wrapper {
      using ModelType = WrapperModel<
          std::decay_t<Callable>,
          std::decay_t<Adapter>,
@@ -293,8 +288,8 @@ index 88f2b81..12d0636 100644
      >;
  
      std::shared_ptr<WrapperConcept> _wrapper;
-@@ -104,44 +104,44 @@ public:
-             }
+@@ -96,44 +96,44 @@ public:
+             )}
      {
          static_assert(
 -            util::is_copy_constructible_v<Callable>,
@@ -351,7 +346,7 @@ index 88f2b81..12d0636 100644
      >
      Wrapper(Callable&& callable=[]() noexcept { return Type(); }) :
              Wrapper{
-@@ -152,7 +152,7 @@ public:
+@@ -144,7 +144,7 @@ public:
  
      template<
          typename Callable,

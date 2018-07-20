@@ -82,13 +82,9 @@ public:
     using Base::swap;
     using Base::reserve;
 
-    mapped_type& operator[](const key_type& key) {
-        return Base::find(key)->second;
-    }
+    mapped_type& operator[](const key_type& key) { return Base::find(key)->second; }
 
-    mapped_type& operator[](key_type&& key) {
-        return Base::find(std::move(key))->second;
-    }
+    mapped_type& operator[](key_type&& key) { return Base::find(std::move(key))->second; }
 
     template<typename... Args>
     std::pair<iterator, bool> emplace(const std::string& key, Args&&... args) {
@@ -171,13 +167,9 @@ public:
     using Base::swap;
     using Base::reserve;
 
-    mapped_type& operator[](const key_type& key) {
-        return Base::find(key)->second;
-    }
+    mapped_type& operator[](const key_type& key) { return Base::find(key)->second; }
 
-    mapped_type& operator[](key_type&& key) {
-        return Base::find(std::move(key))->second;
-    }
+    mapped_type& operator[](key_type&& key) { return Base::find(std::move(key))->second; }
 
     template<typename Value>
     std::pair<iterator, bool> emplace(const std::string& key, Value&& value) {

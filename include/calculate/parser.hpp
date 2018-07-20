@@ -66,13 +66,9 @@ private:
         std::unique_ptr<Symbol> symbol;
     };
 
-    SymbolHandler _left() const noexcept {
-        return {_lexer->left, SymbolType::LEFT, nullptr};
-    }
+    SymbolHandler _left() const noexcept { return {_lexer->left, SymbolType::LEFT, nullptr}; }
 
-    SymbolHandler _right() const noexcept {
-        return {_lexer->right, SymbolType::RIGHT, nullptr};
-    }
+    SymbolHandler _right() const noexcept { return {_lexer->right, SymbolType::RIGHT, nullptr}; }
 
     SymbolHandler _separator() const noexcept {
         return {_lexer->separator, SymbolType::SEPARATOR, nullptr};
@@ -93,10 +89,6 @@ private:
         decltype(operators.begin()) ope;
         decltype(prefixes.begin()) sym;
 
-        auto tokens = infix ?
-            _lexer->tokenize_infix(expr) :
-            _lexer->tokenize_postfix(expr);
-
         auto has = [](const auto& cont, const auto& token, auto& it) noexcept {
             return (it = cont.find(token)) != cont.end();
         };
@@ -109,21 +101,13 @@ private:
                 previous == SymbolType::OPERATOR ||
                 previous == SymbolType::PREFIX;
 
-            if (
-                infix && leftmost &&
-                has(prefixes, token, sym) &&
-                has(functions, sym->second, fun)
-            )
+            if (infix && leftmost && has(prefixes, token, sym) && has(functions, sym->second, fun))
                 symbols.push({
                     std::move(sym->second),
                     SymbolType::PREFIX,
                     fun->second.clone()
                 });
-            else if (
-                infix &&
-                has(suffixes, token, sym) &&
-                has(functions, sym->second, fun)
-            )
+            else if (infix && has(suffixes, token, sym) && has(functions, sym->second, fun))
                 symbols.push({
                     std::move(sym->second),
                     SymbolType::SUFFIX,
@@ -139,17 +123,16 @@ private:
                 throw UndefinedSymbol{token};
         };
 
+        auto tokens = infix ? _lexer->tokenize_infix(expr) : _lexer->tokenize_postfix(expr);
         for (auto curr = tokens.begin(); curr != tokens.end(); curr++) {
             auto next = curr + 1;
 
             if (curr->type == TokenType::NUMBER) {
                 auto prefix =
-                    next != tokens.end() &&
-                    has(operators, next->token, ope) &&
+                    next != tokens.end() && has(operators, next->token, ope) &&
                     ope->second.associativity() == Associativity::RIGHT;
                 auto suffix =
-                    (next != tokens.end() &&
-                    has(suffixes, next->token, sym)) ||
+                    (next != tokens.end() && has(suffixes, next->token, sym)) ||
                     (symbols.size() && symbols.back().type == SymbolType::SUFFIX);
 
                 if (infix && (prefix || suffix) && _lexer->prefixed(curr->token)) {
@@ -333,8 +316,8 @@ private:
             if (current.token.empty()) {
                 auto n = parsed.rfind(' ', parsed.size() - 5);
                 parsed =
-                    (n == std::string::npos ? "" : parsed.substr(0, n) + " ") +
-                    "'" + get_symbol(previous) + "'";
+                    (n == std::string::npos ? "" :
+                    parsed.substr(0, n) + " ") + "'" + get_symbol(previous) + "'";
             }
             else
                 parsed = parsed.substr(0, parsed.size() - 1);
@@ -411,9 +394,7 @@ private:
                 }
 
                 if (apply_function.empty() || !apply_function.top())
-                    throw SyntaxError{
-                        "separator '" + element.token + "' outside function"
-                    };
+                    throw SyntaxError{"separator '" + element.token + "' outside function"};
                 provided_counter.top()++;
 
                 if (operations.empty())
@@ -499,20 +480,13 @@ private:
                 element.type == SymbolType::RIGHT ||
                 element.type == SymbolType::SEPARATOR
             )
-                throw SyntaxError{
-                    "symbol '" + element.token + "' "
-                    "not allowed in postfix notation"
-                };
+                throw SyntaxError{"'" + element.token + "' not allowed in postfix notation"};
 
             if (element.type != SymbolType::CONSTANT) {
                 nodes.reserve(element.symbol->arguments());
                 for (std::size_t i = 0; i < element.symbol->arguments(); i++) {
                     if (operands.empty())
-                        throw ArgumentsMismatch{
-                            element.token,
-                            element.symbol->arguments(),
-                            i
-                        };
+                        throw ArgumentsMismatch{element.token, element.symbol->arguments(), i};
                     collapse = collapse && operands.top()._pruned().empty();
                     util::hash_combine(hash, operands.top());
                     extract.emplace(std::move(operands.top()));
@@ -571,9 +545,7 @@ public:
             util::to_vector<std::string>(std::forward<Args>(vars)...),
             _lexer.get()
         );
-        auto symbols = _shunting_yard(
-            _parse_infix(_tokenize<true>(expr, variables.get()))
-        );
+        auto symbols = _shunting_yard(_parse_infix(_tokenize<true>(expr, variables.get())));
 
         return _build_tree(std::move(symbols), std::move(variables));
     }
