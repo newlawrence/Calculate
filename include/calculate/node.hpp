@@ -33,7 +33,6 @@ public:
     using Symbol = calculate::Symbol<Node>;
     using SymbolType = typename Symbol::SymbolType;
 
-    using value_type = Type;
     using const_iterator = typename std::vector<Node>::const_iterator;
     using const_reverse_iterator = typename std::vector<Node>::const_reverse_iterator;
 
@@ -159,10 +158,10 @@ private:
     std::vector<std::string> _pruned() const noexcept {
         std::vector<std::string> pruned{};
 
-        auto pairs = _lexer->tokenize_postfix(postfix());
+        auto handlers = _lexer->tokenize_postfix(postfix());
         for (const auto& var : _variables->variables)
-            for (const auto& pair : pairs)
-                if (var == pair.token) {
+            for (const auto& handler : handlers)
+                if (var == handler.token) {
                     pruned.push_back(var);
                     break;
                 }
@@ -218,7 +217,7 @@ private:
         auto brace = [&](std::size_t i) {
             const auto& node = _nodes[i];
             auto po = static_cast<Operator*>(_symbol.get());
-            if (node._symbol->symbol() == SymbolType::OPERATOR) {
+            if (node._symbol->type() == SymbolType::OPERATOR) {
                 auto co = static_cast<Operator*>(node._symbol.get());
                 auto pp = po->precedence();
                 auto cp = co->precedence();
@@ -232,7 +231,7 @@ private:
             return node._infix(r);
         };
 
-        switch (_symbol->symbol()) {
+        switch (_symbol->type()) {
         case (SymbolType::FUNCTION):
             infix += _token + _lexer->left;
             for (auto node = _nodes.begin(); node != _nodes.end(); node++) {
@@ -319,6 +318,8 @@ public:
 
     const Node& at(std::size_t index) const { return _nodes.at(index); }
 
+    std::size_t size() const noexcept { return _nodes.size(); }
+
     const_iterator begin() const noexcept { return _nodes.cbegin(); }
 
     const_iterator end() const noexcept { return _nodes.cend(); }
@@ -344,7 +345,7 @@ public:
 
     const std::string& token() const noexcept { return _token; }
 
-    SymbolType symbol() const noexcept { return _symbol->symbol(); }
+    SymbolType type() const noexcept { return _symbol->type(); }
 
     std::size_t branches() const noexcept { return _nodes.size(); }
 

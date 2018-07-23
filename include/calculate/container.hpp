@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc5
-    Last modified 2018/06/03
+    Last modified 2018/07/23
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -57,7 +57,7 @@ private:
     }
 
     void _validate(const std::string& key, Operator*) const {
-        if (!std::regex_match(key, _lexer->symbol_regex))
+        if (!std::regex_match(key, _lexer->sign_regex))
             throw UnsuitableName{key};
     }
 
@@ -144,7 +144,7 @@ private:
     AliasContainer& operator=(AliasContainer&&) = default;
 
     void _validate(const std::string& key, const std::string& value) const {
-        if (!std::regex_match(key, _lexer->symbol_regex))
+        if (!std::regex_match(key, _lexer->sign_regex))
             throw UnsuitableName{key};
         if (!std::regex_match(value, _lexer->name_regex))
             throw UnsuitableName{value};

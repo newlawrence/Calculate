@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc5
-    Last modified 2018/07/18
+    Last modified 2018/07/23
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -157,7 +157,7 @@ private:
                 symbols.push(_right());
             else if (curr->type == TokenType::SEPARATOR)
                 symbols.push(_separator());
-            else if (curr->type == TokenType::SYMBOL)
+            else if (curr->type == TokenType::SIGN)
                 push_operator(curr->token);
             else if (curr->type == TokenType::NAME && has(constants, curr->token, con))
                 symbols.push({
@@ -178,6 +178,7 @@ private:
                     Variable<Node<BaseParser>>{variables->at(curr->token)}.clone()
                 });
         }
+
         return symbols;
     }
 
@@ -323,6 +324,7 @@ private:
                 parsed = parsed.substr(0, parsed.size() - 1);
             throw SyntaxError{parsed};
         }
+
         return collected;
     }
 
@@ -534,6 +536,7 @@ private:
         for (const auto& var : variables->variables)
             if (std::find(pruned.begin(), pruned.end(), var) == pruned.end())
                 throw UnusedSymbol(var);
+
         return std::move(operands.top());
     }
 

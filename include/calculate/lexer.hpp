@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc5
-    Last modified 2018/07/20
+    Last modified 2018/07/23
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -59,7 +59,7 @@ constexpr const char* number<std::complex<Type>> =
     complex<util::is_integral_v<Type>>;
 
 constexpr const char name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
-constexpr const char symbol[] = R"(^(?:[^A-Za-z\d.(),_\s]|(?:\.(?!\d)))+$)";
+constexpr const char sign[] = R"(^(?:[^A-Za-z\d.(),_\s]|(?:\.(?!\d)))+$)";
 
 }
 
@@ -106,7 +106,7 @@ std::string write(std::ostringstream& ostream, const Type& value) {
 template<typename Type>
 class BaseLexer {
 public:
-    enum class TokenType { NUMBER, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR };
+    enum class TokenType { NUMBER, NAME, SIGN, LEFT, RIGHT, SEPARATOR };
 
     struct TokenHandler {
         std::string token;
@@ -120,11 +120,11 @@ public:
 
     const std::string number;
     const std::string name;
-    const std::string symbol;
+    const std::string sign;
 
     const std::regex number_regex;
     const std::regex name_regex;
-    const std::regex symbol_regex;
+    const std::regex sign_regex;
 
     const std::string left;
     const std::string right;
@@ -172,7 +172,7 @@ private:
 
         tokenizer += "(" + number.substr(1, number.size() - 2) + ")|";
         tokenizer += "(" + name.substr(1, name.size() - 2) + ")|";
-        tokenizer += "(" + symbol.substr(1, symbol.size() - 2) + ")|";
+        tokenizer += "(" + sign.substr(1, sign.size() - 2) + ")|";
         tokenizer += "(" + escape(left) + ")|";
         tokenizer += "(" + escape(right) + ")|";
         tokenizer += "(" + escape(separator) + ")";
@@ -191,40 +191,40 @@ private:
             if (_match(match, TokenType::NUMBER)) {
                 std::sregex_token_iterator
                     nums{token.begin(), token.end(), _splitter_regex, -1},
-                    syms{token.begin(), token.end(), _splitter_regex},
+                    sgns{token.begin(), token.end(), _splitter_regex},
                     end{};
 
                 if (nums->str().empty()) {
-                    auto sym = (syms++)->str(), num = ((++nums)++)->str();
+                    auto sgn = (sgns++)->str(), num = ((++nums)++)->str();
                     if (
                         infix &&
-                        last != TokenType::SYMBOL &&
+                        last != TokenType::SIGN &&
                         last != TokenType::LEFT &&
                         last != TokenType::SEPARATOR
                     ) {
-                        tokens.push_back({std::move(sym), TokenType::SYMBOL});
+                        tokens.push_back({std::move(sgn), TokenType::SIGN});
                         tokens.push_back({std::move(num), TokenType::NUMBER});
                     }
                     else
-                        tokens.push_back({sym + num, TokenType::NUMBER});
+                        tokens.push_back({sgn + num, TokenType::NUMBER});
                 }
                 else
                     tokens.push_back({(nums++)->str(), TokenType::NUMBER});
 
-                while (nums != end && syms != end) {
-                    auto sym = (syms++)->str(), num = (nums++)->str();
+                while (nums != end && sgns != end) {
+                    auto sgn = (sgns++)->str(), num = (nums++)->str();
                     if (std::regex_match(tokens.back().token, number_regex)) {
-                        tokens.push_back({sym, TokenType::SYMBOL});
+                        tokens.push_back({sgn, TokenType::SIGN});
                         tokens.push_back({num, TokenType::NUMBER});
                     }
                     else
-                        tokens.back().token += sym + num;
+                        tokens.back().token += sgn + num;
                 }
             }
             else if (_match(match, TokenType::NAME))
                 tokens.push_back({std::move(token), TokenType::NAME});
-            else if (_match(match, TokenType::SYMBOL))
-                tokens.push_back({std::move(token), TokenType::SYMBOL});
+            else if (_match(match, TokenType::SIGN))
+                tokens.push_back({std::move(token), TokenType::SIGN});
             else if (_match(match, TokenType::LEFT))
                 tokens.push_back({std::move(token), TokenType::LEFT});
             else if (_match(match, TokenType::RIGHT))
@@ -240,19 +240,19 @@ private:
 
 public:
     BaseLexer(
-        std::string num, std::string nam, std::string sym,
+        std::string num, std::string nam, std::string sgn,
         std::string lft, std::string rgt, std::string sep
     ) :
             number{_adapt_regex(std::move(num))},
             name{_adapt_regex(std::move(nam))},
-            symbol{_adapt_regex(std::move(sym))},
+            sign{_adapt_regex(std::move(sgn))},
             number_regex{number},
             name_regex{name},
-            symbol_regex{symbol},
+            sign_regex{sign},
             left{std::move(lft)},
             right{std::move(rgt)},
             separator{std::move(sep)},
-            _splitter_regex{symbol.substr(1, symbol.size() - 2)},
+            _splitter_regex{sign.substr(1, sign.size() - 2)},
             _tokenizer_regex{_generate_tokenizer()}
     {
         std::smatch match{};
@@ -293,7 +293,7 @@ public:
     bool prefixed(const std::string& token) const noexcept {
         std::sregex_token_iterator
             num{token.begin(), token.end(), _splitter_regex, -1},
-            sym{token.begin(), token.end(), _splitter_regex};
+            sgn{token.begin(), token.end(), _splitter_regex};
 
         return num->str().empty();
     };
@@ -301,12 +301,12 @@ public:
     PrefixHandler split(const std::string& token) const noexcept {
         std::sregex_token_iterator
             num{token.begin(), token.end(), _splitter_regex, -1},
-            sym{token.begin(), token.end(), _splitter_regex},
+            sgn{token.begin(), token.end(), _splitter_regex},
             end{};
 
-        if (sym == end || num == end || !num->str().empty() || ++num == end)
+        if (sgn == end || num == end || !num->str().empty() || ++num == end)
             return {"", ""};
-        return {*sym, *num};
+        return {*sgn, *num};
     }
 
     virtual std::shared_ptr<BaseLexer> clone() const noexcept = 0;
@@ -324,11 +324,11 @@ class Lexer final : public BaseLexer<Type> {
 
 public:
     Lexer(
-        std::string num, std::string nam, std::string sym,
+        std::string num, std::string nam, std::string sgn,
         std::string lft, std::string rgt, std::string sep
     ) :
             BaseLexer{
-                std::move(num), std::move(nam), std::move(sym),
+                std::move(num), std::move(nam), std::move(sgn),
                 std::move(lft), std::move(rgt), std::move(sep)
             },
             _istream{},
@@ -377,11 +377,11 @@ class Lexer<std::complex<Type>> final : public BaseLexer<std::complex<Type>> {
 
 public:
     Lexer(
-        std::string num, std::string nam, std::string sym,
+        std::string num, std::string nam, std::string sgn,
         std::string lft, std::string rgt, std::string sep
     ) :
             BaseLexer{
-                std::move(num), std::move(nam), std::move(sym),
+                std::move(num), std::move(nam), std::move(sgn),
                 std::move(lft), std::move(rgt), std::move(sep)
             },
             _istream{},
@@ -444,19 +444,19 @@ public:
 template<typename Type>
 Lexer<Type> make_lexer() noexcept {
     using namespace defaults;
-    return {number<Type>, name, symbol, left, right, separator};
+    return {number<Type>, name, sign, left, right, separator};
 }
 
 template<typename Type>
 Lexer<Type> lexer_from_symbols(std::string lft, std::string rgt, std::string sep) {
     using namespace defaults;
-    return {number<Type>, name, symbol, std::move(lft), std::move(rgt), std::move(sep)};
+    return {number<Type>, name, sign, std::move(lft), std::move(rgt), std::move(sep)};
 }
 
 template<typename Type>
-Lexer<Type> lexer_from_regexes(std::string num, std::string nam, std::string sym) {
+Lexer<Type> lexer_from_regexes(std::string num, std::string nam, std::string sgn) {
     using namespace defaults;
-    return {std::move(num), std::move(nam), std::move(sym), left, right, separator};
+    return {std::move(num), std::move(nam), std::move(sgn), left, right, separator};
 }
 
 }

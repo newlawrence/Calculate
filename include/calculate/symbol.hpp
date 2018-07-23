@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc5
-    Last modified 2018/06/27
+    Last modified 2018/07/23
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -31,7 +31,7 @@ private:
     using Wrapper = calculate::Wrapper<Type, Expression>;
 
     std::size_t _hash() const noexcept {
-        if (symbol() == SymbolType::CONSTANT)
+        if (type() == SymbolType::CONSTANT)
             return std::hash<Type>()(static_cast<const Wrapper&>(*this)());
         return std::hash<Wrapper>()(static_cast<const Wrapper&>(*this));
     }
@@ -75,9 +75,9 @@ public:
         auto& this_wrapper = static_cast<const Wrapper&>(*this);
         auto& other_wrapper = static_cast<const Wrapper&>(other);
 
-        if (symbol() != other.symbol())
+        if (type() != other.type())
             return false;
-        if (symbol() != SymbolType::CONSTANT && this_wrapper != other_wrapper)
+        if (type() != SymbolType::CONSTANT && this_wrapper != other_wrapper)
             return false;
         return this->_equal(other);
     }
@@ -91,7 +91,7 @@ public:
 
     std::size_t arguments() const noexcept { return static_cast<const Wrapper*>(this)->argc(); }
 
-    virtual SymbolType symbol() const noexcept = 0;
+    virtual SymbolType type() const noexcept = 0;
 
     virtual std::unique_ptr<Symbol> clone() const noexcept = 0;
 };
@@ -111,7 +111,7 @@ public:
             Symbol{[&variable]() noexcept { return variable; }}
     {}
 
-    SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
+    SymbolType type() const noexcept override { return SymbolType::CONSTANT; }
 
     std::unique_ptr<Symbol> clone() const noexcept override {
         return std::make_unique<Variable>(*this);
@@ -132,7 +132,7 @@ public:
             Symbol{[value]() noexcept { return value; }}
     {}
 
-    SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
+    SymbolType type() const noexcept override { return SymbolType::CONSTANT; }
 
     std::unique_ptr<Symbol> clone() const noexcept override {
         return std::make_unique<Constant>(*this);
@@ -156,7 +156,7 @@ public:
             Symbol{std::forward<Callable>(callable)}
     {}
 
-    SymbolType symbol() const noexcept override { return SymbolType::FUNCTION; }
+    SymbolType type() const noexcept override { return SymbolType::FUNCTION; }
 
     std::unique_ptr<Symbol> clone() const noexcept override {
         return std::make_unique<Function>(*this);
@@ -199,7 +199,7 @@ public:
             _associativity{associativity}
     {}
 
-    SymbolType symbol() const noexcept override { return SymbolType::OPERATOR; }
+    SymbolType type() const noexcept override { return SymbolType::OPERATOR; }
 
     std::unique_ptr<Symbol> clone() const noexcept override {
         return std::make_unique<Operator>(*this);
