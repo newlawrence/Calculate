@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc4
-    Last modified 2018/07/18
+    Calculate - Version 2.1.1rc5
+    Last modified 2018/07/23
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -33,6 +33,7 @@ public:
     using Symbol = calculate::Symbol<Node>;
     using SymbolType = typename Symbol::SymbolType;
 
+    using value_type = Type;
     using const_iterator = typename std::vector<Node>::const_iterator;
     using const_reverse_iterator = typename std::vector<Node>::const_reverse_iterator;
 
@@ -107,12 +108,12 @@ public:
         Type& at(const std::string& token) const { return _values[index(token)]; }
 
         template<typename Args>
-        std::enable_if_t<util::is_iterable_v<Args>> update(Args&& vals) {
+        std::enable_if_t<util::is_vectorizable_v<Type, Args>> update(Args&& vals) {
             std::size_t i{};
 
-            for (auto val = std::begin(vals); val != std::end(vals); ++val) {
+            for (const auto& val : vals) {
                 if (i < _size)
-                    _values[i] = *val;
+                    _values[i] = val;
                 ++i;
             }
             if (_size != i)
@@ -123,7 +124,7 @@ public:
         void update(Args&&... vals) {
             if (_size != sizeof...(vals))
                 throw ArgumentsMismatch{_size, sizeof...(vals)};
-            _update(0, vals...);
+            _update(0, std::forward<Args>(vals)...);
         }
     };
 

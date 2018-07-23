@@ -1,5 +1,5 @@
 diff --git a/include/calculate/lexer.hpp b/include/calculate/lexer.hpp
-index 550a670..51257ec 100644
+index a914386..a4973ec 100644
 --- a/include/calculate/lexer.hpp
 +++ b/include/calculate/lexer.hpp
 @@ -31,32 +31,42 @@ constexpr const char separator[] = ",";
@@ -61,7 +61,7 @@ index 550a670..51257ec 100644
  
  constexpr const char name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
  constexpr const char symbol[] = R"(^(?:[^A-Za-z\d.(),_\s]|(?:\.(?!\d)))+$)";
-@@ -440,13 +450,13 @@ public:
+@@ -444,13 +454,13 @@ public:
  template<typename Type>
  Lexer<Type> make_lexer() noexcept {
      using namespace defaults;
@@ -78,18 +78,18 @@ index 550a670..51257ec 100644
  
  template<typename Type>
 diff --git a/include/calculate/node.hpp b/include/calculate/node.hpp
-index 878c12e..f509bf8 100644
+index 372743c..c191353 100644
 --- a/include/calculate/node.hpp
 +++ b/include/calculate/node.hpp
-@@ -107,7 +107,7 @@ public:
+@@ -108,7 +108,7 @@ public:
          Type& at(const std::string& token) const { return _values[index(token)]; }
  
          template<typename Args>
--        std::enable_if_t<util::is_iterable_v<Args>> update(Args&& vals) {
-+        std::enable_if_t<util::is_iterable<Args>::value> update(Args&& vals) {
+-        std::enable_if_t<util::is_vectorizable_v<Type, Args>> update(Args&& vals) {
++        std::enable_if_t<util::is_vectorizable<Type, Args>::value> update(Args&& vals) {
              std::size_t i{};
  
-             for (auto val = std::begin(vals); val != std::end(vals); ++val) {
+             for (const auto& val : vals) {
 diff --git a/include/calculate/symbol.hpp b/include/calculate/symbol.hpp
 index 015b05e..659a7e9 100644
 --- a/include/calculate/symbol.hpp
@@ -130,7 +130,7 @@ index 015b05e..659a7e9 100644
      Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
  
 diff --git a/include/calculate/util.hpp b/include/calculate/util.hpp
-index 71c6067..c1e2115 100644
+index 07796a0..a360bde 100644
 --- a/include/calculate/util.hpp
 +++ b/include/calculate/util.hpp
 @@ -22,22 +22,6 @@ namespace calculate {
@@ -156,7 +156,7 @@ index 71c6067..c1e2115 100644
  namespace detail {
  
  using std::begin;
-@@ -68,7 +52,9 @@ struct make_tuple<T, argc, std::index_sequence<indices...>> {
+@@ -74,7 +58,9 @@ struct make_tuple<T, argc, std::index_sequence<indices...>> {
  
  
  template<typename T, typename... Args>
@@ -167,7 +167,7 @@ index 71c6067..c1e2115 100644
  
  template<bool c, typename R, typename... Args>
  struct TraitsHandler {
-@@ -86,58 +72,60 @@ struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
+@@ -92,64 +78,70 @@ struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
  template<typename R, typename... Args>
  struct Traits<
      R(*)(Args...) noexcept,
@@ -232,13 +232,25 @@ index 71c6067..c1e2115 100644
 +    static constexpr bool value = detail::is_iterable<T>(0);
 +};
  
+ template<typename T, typename U>
+-constexpr bool is_subtype_v = detail::is_subtype<T, U>(0);
++struct is_subtype {
++    static constexpr bool value = detail::is_subtype<T, U>(0);
++};
+ 
+ template<typename T, typename U>
+-constexpr bool is_vectorizable_v = is_iterable_v<U> && is_subtype_v<T, U>;
++struct is_vectorizable {
++    static constexpr bool value = is_iterable<U>::value && is_subtype<T, U>::value;
++};
+ 
  template<typename T>
 -constexpr bool is_noexcept_v = detail::is_noexcept_v<T>;
 +using is_noexcept = detail::is_noexcept<T>;
  
  
  template<typename T, std::size_t argc>
-@@ -147,23 +135,32 @@ template<typename T>
+@@ -159,23 +151,32 @@ template<typename T>
  using result_t = typename detail::Traits<T>::result_t;
  
  template<typename T>
@@ -269,11 +281,11 @@ index 71c6067..c1e2115 100644
  template<typename T, typename... Args>
  std::vector<T> to_vector(Args&&... args) { return {std::forward<Args>(args)...}; }
  
- template<typename T, typename Args>
--std::enable_if_t<is_iterable_v<Args>, std::vector<T>>
-+std::enable_if_t<is_iterable<Args>::value, std::vector<T>>
- to_vector(Args&& args) { return {std::begin(args), std::end(args)}; }
- 
+ template<typename T, typename U>
+-std::enable_if_t<is_vectorizable_v<T, U>, std::vector<T>> to_vector(U&& u) {
++std::enable_if_t<is_vectorizable<T, U>::value, std::vector<T>> to_vector(U&& u) {
+     return {std::begin(std::forward<U>(u)), std::end(std::forward<U>(u))};
+ }
  
 diff --git a/include/calculate/wrapper.hpp b/include/calculate/wrapper.hpp
 index 0955709..05b005c 100644

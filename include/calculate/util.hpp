@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc4
-    Last modified 2018/06/09
+    Calculate - Version 2.1.1rc5
+    Last modified 2018/07/23
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -53,6 +53,12 @@ constexpr decltype(
 
 template<typename>
 constexpr bool is_iterable(...) { return false; }
+
+template<typename T, typename U>
+constexpr decltype(T(*begin(std::declval<U&>())), bool{}) is_subtype(int) { return true; }
+
+template<typename, typename>
+constexpr bool is_subtype(...) { return false; }
 
 
 template<typename T, std::size_t>
@@ -136,6 +142,12 @@ struct Traits<
 template<typename T>
 constexpr bool is_iterable_v = detail::is_iterable<T>(0);
 
+template<typename T, typename U>
+constexpr bool is_subtype_v = detail::is_subtype<T, U>(0);
+
+template<typename T, typename U>
+constexpr bool is_vectorizable_v = is_iterable_v<U> && is_subtype_v<T, U>;
+
 template<typename T>
 constexpr bool is_noexcept_v = detail::is_noexcept_v<T>;
 
@@ -162,9 +174,10 @@ constexpr bool not_same_v = !is_same_v<std::decay_t<T>, U> && !is_base_of_v<U, s
 template<typename T, typename... Args>
 std::vector<T> to_vector(Args&&... args) { return {std::forward<Args>(args)...}; }
 
-template<typename T, typename Args>
-std::enable_if_t<is_iterable_v<Args>, std::vector<T>>
-to_vector(Args&& args) { return {std::begin(args), std::end(args)}; }
+template<typename T, typename U>
+std::enable_if_t<is_vectorizable_v<T, U>, std::vector<T>> to_vector(U&& u) {
+    return {std::begin(std::forward<U>(u)), std::end(std::forward<U>(u))};
+}
 
 
 template<class T>
