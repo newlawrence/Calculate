@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc5
-    Last modified 2018/07/23
+    Last modified 2018/07/24
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -172,7 +172,9 @@ constexpr bool not_same_v = !is_same_v<std::decay_t<T>, U> && !is_base_of_v<U, s
 
 
 template<typename T, typename... Args>
-std::vector<T> to_vector(Args&&... args) { return {std::forward<Args>(args)...}; }
+std::vector<T> to_vector(Args&&... args) {
+    return {static_cast<T>(std::forward<Args>(args))...};
+}
 
 template<typename T, typename U>
 std::enable_if_t<is_vectorizable_v<T, U>, std::vector<T>> to_vector(U&& u) {

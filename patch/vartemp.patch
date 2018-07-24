@@ -1,8 +1,8 @@
 diff --git a/include/calculate/lexer.hpp b/include/calculate/lexer.hpp
-index 0f5949d..ffe129a 100644
+index fced784..ffe129a 100644
 --- a/include/calculate/lexer.hpp
 +++ b/include/calculate/lexer.hpp
-@@ -31,32 +31,42 @@ constexpr const char separator[] = ",";
+@@ -31,30 +31,42 @@ constexpr const char separator[] = ",";
  
  
  template<bool>
@@ -46,22 +46,20 @@ index 0f5949d..ffe129a 100644
 +};
  
  template<typename Type>
--constexpr const char* number =
--    real<util::is_integral_v<Type>>;
+-constexpr const char* number = real<util::is_integral_v<Type>>;
 +struct number {
 +    static constexpr const char* value = real<std::is_integral<Type>::value>::value;
 +};
  
  template<typename Type>
--constexpr const char* number<std::complex<Type>> =
--    complex<util::is_integral_v<Type>>;
+-constexpr const char* number<std::complex<Type>> = complex<util::is_integral_v<Type>>;
 +struct number<std::complex<Type>> {
 +    static constexpr const char* value = complex<std::is_integral<Type>::value>::value;
 +};
  
  constexpr const char name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
  constexpr const char sign[] = R"(^(?:[^A-Za-z\d.(),_\s]|(?:\.(?!\d)))+$)";
-@@ -444,13 +454,13 @@ public:
+@@ -442,13 +454,13 @@ public:
  template<typename Type>
  Lexer<Type> make_lexer() noexcept {
      using namespace defaults;
@@ -130,7 +128,7 @@ index 344f4b1..42e1514 100644
      Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
  
 diff --git a/include/calculate/util.hpp b/include/calculate/util.hpp
-index 4752aeb..8ef935f 100644
+index ff2d2fe..bcc908d 100644
 --- a/include/calculate/util.hpp
 +++ b/include/calculate/util.hpp
 @@ -22,22 +22,6 @@ namespace calculate {
@@ -250,7 +248,7 @@ index 4752aeb..8ef935f 100644
  
  
  template<typename T, std::size_t argc>
-@@ -159,23 +151,32 @@ template<typename T>
+@@ -159,16 +151,25 @@ template<typename T>
  using result_t = typename detail::Traits<T>::result_t;
  
  template<typename T>
@@ -279,7 +277,8 @@ index 4752aeb..8ef935f 100644
  
  
  template<typename T, typename... Args>
- std::vector<T> to_vector(Args&&... args) { return {std::forward<Args>(args)...}; }
+@@ -177,7 +178,7 @@ std::vector<T> to_vector(Args&&... args) {
+ }
  
  template<typename T, typename U>
 -std::enable_if_t<is_vectorizable_v<T, U>, std::vector<T>> to_vector(U&& u) {

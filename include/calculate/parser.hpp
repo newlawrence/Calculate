@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc5
-    Last modified 2018/07/23
+    Last modified 2018/07/24
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -516,14 +516,14 @@ private:
             }
 
             operands.emplace(
-                Expression(
+                Expression{
                     _lexer,
                     variables,
                     std::move(token),
                     std::move(symbol),
                     std::move(nodes),
                     hash
-                )
+                }
             );
         }
 

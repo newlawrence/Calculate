@@ -51,12 +51,10 @@ constexpr const char* complex<false> =
     R"()$)";
 
 template<typename Type>
-constexpr const char* number =
-    real<util::is_integral_v<Type>>;
+constexpr const char* number = real<util::is_integral_v<Type>>;
 
 template<typename Type>
-constexpr const char* number<std::complex<Type>> =
-    complex<util::is_integral_v<Type>>;
+constexpr const char* number<std::complex<Type>> = complex<util::is_integral_v<Type>>;
 
 constexpr const char name[] = R"(^[A-Za-z_]+[A-Za-z_\d]*$)";
 constexpr const char sign[] = R"(^(?:[^A-Za-z\d.(),_\s]|(?:\.(?!\d)))+$)";
