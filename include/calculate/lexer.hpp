@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc5
-    Last modified 2018/07/23
+    Calculate - Version 2.1.1rc6
+    Last modified 2018/07/26
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -64,7 +64,7 @@ constexpr const char sign[] = R"(^(?:[^A-Za-z\d.(),_\s]|(?:\.(?!\d)))+$)";
 
 namespace detail {
 
-constexpr const char scape[] = {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', '{'};
+constexpr const char scape[] = {'\\', '.', '^', '$', '*', '+', '?', '(', ')', '[', ']', '{', '}'};
 
 constexpr const char split[] = R"(^(?:(?:(.*[^ij])([+\-].+)[ij])|(.*[^ij])|(.+)[ij])$)";
 
@@ -440,7 +440,7 @@ public:
 
 
 template<typename Type>
-Lexer<Type> make_lexer() noexcept {
+Lexer<Type> lexer_from_defaults() noexcept {
     using namespace defaults;
     return {number<Type>, name, sign, left, right, separator};
 }
