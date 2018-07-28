@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc6
-    Last modified 2018/07/26
+    Calculate - Version 2.1.1rc7
+    Last modified 2018/07/28
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -106,14 +106,14 @@ class BaseLexer {
 public:
     enum class TokenType { NUMBER, NAME, SIGN, LEFT, RIGHT, SEPARATOR };
 
-    struct TokenHandler {
+    struct Token {
         std::string token;
         TokenType type;
     };
 
-    struct PrefixHandler {
-        std::string alias;
-        std::string token;
+    struct PrefixedValue {
+        std::string prefix;
+        std::string value;
     };
 
     const std::string number;
@@ -178,8 +178,8 @@ private:
     }
 
     template<bool infix>
-    std::vector<TokenHandler> _tokenize(std::string string) const {
-        std::vector<TokenHandler> tokens{};
+    std::vector<Token> _tokenize(std::string string) const {
+        std::vector<Token> tokens{};
         std::smatch match{};
 
         auto last = TokenType::LEFT;
@@ -296,7 +296,7 @@ public:
         return num->str().empty();
     };
 
-    PrefixHandler split(const std::string& token) const noexcept {
+    PrefixedValue split(const std::string& token) const noexcept {
         std::sregex_token_iterator
             num{token.begin(), token.end(), _splitter_regex, -1},
             sgn{token.begin(), token.end(), _splitter_regex},
@@ -408,6 +408,7 @@ public:
 
     std::complex<Type> to_value(const std::string& token) const override {
         std::smatch match{};
+
         if (!std::regex_search(token, this->number_regex))
             throw BadCast{token};
 
@@ -440,21 +441,9 @@ public:
 
 
 template<typename Type>
-Lexer<Type> lexer_from_defaults() noexcept {
+Lexer<Type> make_lexer() noexcept {
     using namespace defaults;
     return {number<Type>, name, sign, left, right, separator};
-}
-
-template<typename Type>
-Lexer<Type> lexer_from_symbols(std::string lft, std::string rgt, std::string sep) {
-    using namespace defaults;
-    return {number<Type>, name, sign, std::move(lft), std::move(rgt), std::move(sep)};
-}
-
-template<typename Type>
-Lexer<Type> lexer_from_regexes(std::string num, std::string nam, std::string sgn) {
-    using namespace defaults;
-    return {std::move(num), std::move(nam), std::move(sgn), left, right, separator};
 }
 
 }

@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc6
-    Last modified 2018/07/23
+    Calculate - Version 2.1.1rc7
+    Last modified 2018/07/28
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -158,10 +158,10 @@ private:
     std::vector<std::string> _pruned() const noexcept {
         std::vector<std::string> pruned{};
 
-        auto handlers = _lexer->tokenize_postfix(postfix());
+        auto tokens = _lexer->tokenize_postfix(postfix());
         for (const auto& var : _variables->variables)
-            for (const auto& handler : handlers)
-                if (var == handler.token) {
+            for (const auto& token : tokens)
+                if (var == token.token) {
                     pruned.push_back(var);
                     break;
                 }

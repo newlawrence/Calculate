@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc6
-    Last modified 2018/07/26
+    Calculate - Version 2.1.1rc7
+    Last modified 2018/07/28
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -34,7 +34,9 @@ struct Precedence {
 
 class Parser : public BaseParser<double> {
 public:
-    Parser(const Lexer& lexer=lexer_from_defaults<Type>()) : BaseParser<Type>{lexer} {
+    Parser(const Lexer& lexer=make_lexer<Type>()) :
+            BaseParser<Type>{lexer}
+    {
         using namespace defaults;
         using F1 = Type(*)(Type);
         using F2 = Type(*)(Type, Type);
@@ -136,16 +138,23 @@ public:
             {"^", {pow, Precedence::high, Associativity::RIGHT}}
         });
 
-        prefixes.insert({{"+", "id"}, {"-", "neg"}});
+        prefixes.insert({
+            {"+", "id"},
+            {"-", "neg"}
+        });
 
-        suffixes.insert({{"!", "fact"}});
+        suffixes.insert({
+            {"!", "fact"}
+        });
     }
 };
 
 
 class ComplexParser : public BaseParser<std::complex<double>> {
 public:
-    ComplexParser(const Lexer& lexer=lexer_from_defaults<Type>()) : BaseParser<Type>{lexer} {
+    ComplexParser(const Lexer& lexer=make_lexer<Type>()) :
+            BaseParser<Type>{lexer}
+    {
         using namespace std::complex_literals;
         using namespace defaults;
         using F1 = Type(*)(const Type&);
@@ -202,7 +211,10 @@ public:
             {"^", {static_cast<F2>(std::pow), Precedence::high, Associativity::RIGHT}}
         });
 
-        prefixes.insert({{"+", "id"}, {"-", "neg"}});
+        prefixes.insert({
+            {"+", "id"},
+            {"-", "neg"}
+        });
     }
 };
 

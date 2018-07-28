@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc6
-    Last modified 2018/07/24
+    Calculate - Version 2.1.1rc7
+    Last modified 2018/07/28
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -60,30 +60,23 @@ public:
 
 
 private:
-    struct SymbolHandler {
+    struct SymbolData {
         std::string token;
         SymbolType type;
         std::unique_ptr<Symbol> symbol;
     };
 
-    SymbolHandler _left() const noexcept { return {_lexer->left, SymbolType::LEFT, nullptr}; }
+    SymbolData _left() const noexcept { return {_lexer->left, SymbolType::LEFT, nullptr}; }
 
-    SymbolHandler _right() const noexcept { return {_lexer->right, SymbolType::RIGHT, nullptr}; }
-
-    SymbolHandler _separator() const noexcept {
-        return {_lexer->separator, SymbolType::SEPARATOR, nullptr};
-    }
+    SymbolData _right() const noexcept { return {_lexer->right, SymbolType::RIGHT, nullptr}; }
 
 
     template<bool infix>
-    std::queue<SymbolHandler> _tokenize(
-        const std::string& expr,
-        VariableHandler* variables
-    ) const {
+    std::queue<SymbolData> _tokenize(const std::string& expr, VariableHandler* variables) const {
         using Associativity = typename Operator::Associativity;
         using TokenType = typename Lexer::TokenType;
 
-        std::queue<SymbolHandler> symbols{};
+        std::queue<SymbolData> symbols{};
         decltype(constants.begin()) con;
         decltype(functions.begin()) fun;
         decltype(operators.begin()) ope;
@@ -124,71 +117,71 @@ private:
         };
 
         auto tokens = infix ? _lexer->tokenize_infix(expr) : _lexer->tokenize_postfix(expr);
-        for (auto curr = tokens.begin(); curr != tokens.end(); curr++) {
-            auto next = curr + 1;
+        for (auto current = tokens.begin(); current != tokens.end(); current++) {
+            auto next = current + 1;
 
-            if (curr->type == TokenType::NUMBER) {
-                auto prefix =
+            if (current->type == TokenType::NUMBER) {
+                auto straightened =
                     next != tokens.end() && has(operators, next->token, ope) &&
                     ope->second.associativity() == Associativity::RIGHT;
-                auto suffix =
+                auto suffixed =
                     (next != tokens.end() && has(suffixes, next->token, sym)) ||
                     (symbols.size() && symbols.back().type == SymbolType::SUFFIX);
 
-                if (infix && (prefix || suffix) && _lexer->prefixed(curr->token)) {
-                    auto splitted = _lexer->split(curr->token);
-                    push_operator(splitted.alias);
+                if (infix && (straightened || suffixed) && _lexer->prefixed(current->token)) {
+                    auto prefixed = _lexer->split(current->token);
+                    push_operator(prefixed.prefix);
                     symbols.push({
-                        splitted.token,
+                        prefixed.value,
                         SymbolType::CONSTANT,
-                        Constant{_lexer->to_value(splitted.token)}.clone()
+                        Constant{_lexer->to_value(prefixed.value)}.clone()
                     });
                 }
                 else
                     symbols.push({
-                        curr->token,
+                        current->token,
                         SymbolType::CONSTANT,
-                        Constant{_lexer->to_value(curr->token)}.clone()
+                        Constant{_lexer->to_value(current->token)}.clone()
                     });
             }
-            else if (curr->type == TokenType::LEFT)
+            else if (current->type == TokenType::LEFT)
                 symbols.push(_left());
-            else if (curr->type == TokenType::RIGHT)
+            else if (current->type == TokenType::RIGHT)
                 symbols.push(_right());
-            else if (curr->type == TokenType::SEPARATOR)
-                symbols.push(_separator());
-            else if (curr->type == TokenType::SIGN)
-                push_operator(curr->token);
-            else if (curr->type == TokenType::NAME && has(constants, curr->token, con))
+            else if (current->type == TokenType::SEPARATOR)
+                symbols.push({_lexer->separator, SymbolType::SEPARATOR, nullptr});
+            else if (current->type == TokenType::SIGN)
+                push_operator(current->token);
+            else if (current->type == TokenType::NAME && has(constants, current->token, con))
                 symbols.push({
-                    std::move(curr->token),
+                    std::move(current->token),
                     SymbolType::CONSTANT,
                     con->second.clone()
                 });
-            else if (curr->type == TokenType::NAME && has(functions, curr->token, fun))
+            else if (current->type == TokenType::NAME && has(functions, current->token, fun))
                 symbols.push({
-                    std::move(curr->token),
+                    std::move(current->token),
                     SymbolType::FUNCTION,
                     fun->second.clone()
                 });
             else
                 symbols.push({
-                    curr->token,
+                    current->token,
                     SymbolType::CONSTANT,
-                    Variable<Node<BaseParser>>{variables->at(curr->token)}.clone()
+                    Variable<Node<BaseParser>>{variables->at(current->token)}.clone()
                 });
         }
 
         return symbols;
     }
 
-    std::queue<SymbolHandler> _parse_infix(std::queue<SymbolHandler>&& symbols) const {
+    std::queue<SymbolData> _parse_infix(std::queue<SymbolData>&& symbols) const {
         using Associativity = typename Operator::Associativity;
 
         std::string parsed{};
-        std::queue<SymbolHandler> collected{};
-        SymbolHandler previous{_left()};
-        SymbolHandler current{};
+        std::queue<SymbolData> collected{};
+        SymbolData previous{_left()};
+        SymbolData current{};
         std::stack<bool> automatic{};
 
         auto fill_parenthesis = [&]() noexcept {
@@ -328,13 +321,13 @@ private:
         return collected;
     }
 
-    std::queue<SymbolHandler> _shunting_yard(std::queue<SymbolHandler>&& symbols) const {
+    std::queue<SymbolData> _shunting_yard(std::queue<SymbolData>&& symbols) const {
         using Associativity = typename Operator::Associativity;
 
-        std::queue<SymbolHandler> collected{};
-        std::stack<SymbolHandler> operations{};
-        SymbolHandler element{};
-        SymbolHandler another{};
+        std::queue<SymbolData> collected{};
+        std::stack<SymbolData> operations{};
+        SymbolData element{};
+        SymbolData another{};
 
         std::stack<std::size_t> expected_counter{};
         std::stack<std::size_t> provided_counter{};
@@ -460,12 +453,12 @@ private:
     }
 
     Expression _build_tree(
-        std::queue<SymbolHandler>&& symbols,
+        std::queue<SymbolData>&& symbols,
         std::shared_ptr<VariableHandler>&& variables
     ) const {
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
-        SymbolHandler element{};
+        SymbolData element{};
 
         while (!symbols.empty()) {
             std::vector<Expression> nodes{};
