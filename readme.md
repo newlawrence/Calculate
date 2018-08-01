@@ -5,6 +5,7 @@
 
 ---
 
+[![Download](https://api.bintray.com/packages/newlawrence/calculate/Calculate%3Anewlawrence/images/download.svg)](https://bintray.com/newlawrence/calculate/Calculate%3Anewlawrence/_latestVersion)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/newlawrence/Calculate/blob/7f96b434dd77461f17a71f3fe3025c21b73ed0d0/copying)
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/9L91osmzIBHuSuYN)
 [![Build Status](https://travis-ci.org/newlawrence/Calculate.svg?branch=master)](https://travis-ci.org/newlawrence/Calculate)
@@ -31,12 +32,24 @@ sum(1., 2.);  // returns 3.
 
 ### Requirements
 
-**Calculate** doesn't have any third party depedencies, the library should work with any compiler fully compatible with the **C++14** standard. This is the list of the currently tested compatible compilers:
+**Calculate** doesn't have any third party dependencies, the library should work with any compiler fully compatible with the **C++14** standard. This is the list of the currently tested compatible compilers:
 
 * **gcc** version **5.1** and above.
 * **clang** version **3.7** and above.
 * **msvc** version **19.10** and above.
 * **intel** version **18.0** and above.
+
+### Run tests
+
+**Calculate** is available as a [**Conan**](https://bintray.com/newlawrence/calculate/Calculate%3Anewlawrence) package. To compile and run the tests, both, [**CMake**](https://cmake.org/) and [**Conan**](https://conan.io/) are needed:
+
+```
+mkdir build
+conan install . --install-folder build
+cmake -H. -Bbuild
+cmake --build build --target make_test
+cmake --build build --target test
+```
 
 ### User guide
 
