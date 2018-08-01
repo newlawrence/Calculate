@@ -39,18 +39,6 @@ sum(1., 2.);  // returns 3.
 * **msvc** version **19.10** and above.
 * **intel** version **18.0** and above.
 
-### Run tests
-
-**Calculate** is available as a [**Conan**](https://bintray.com/newlawrence/calculate/Calculate%3Anewlawrence) package. To compile and run the tests, both, [**CMake**](https://cmake.org/) and [**Conan**](https://conan.io/) are needed:
-
-```
-mkdir build
-conan install . --install-folder build
-cmake -H. -Bbuild
-cmake --build build --target make_test
-cmake --build build --target test
-```
-
 ### User guide
 
 Want to try? Check out **Calculate**'s [wiki](https://github.com/newlawrence/Calculate/wiki) to get started.

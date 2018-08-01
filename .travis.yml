@@ -10,28 +10,18 @@ addons:
     packages:
       - g++-5
 
-env:
-  global:
-    - DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
-    - CMAKE_FILE=cmake-3.10.2-Linux-x86_64.tar.gz
-    - CMAKE_URL=http://www.cmake.org/files/v3.10/${CMAKE_FILE}
-
-branches:
-  only:
-    - master
-
-before_install:
-  - mkdir -p ${DEPS_DIR}
+# branches:
+#   only:
+#     - master
 
 install:
-  - wget ${CMAKE_URL} --quiet --no-check-certificate
-  - mkdir -p cmake
-  - tar -xzf ${CMAKE_FILE} -C cmake --strip-components 1
-  - mv cmake ${DEPS_DIR}
-  - export PATH=${DEPS_DIR}/cmake/bin:${PATH}
-  - cmake --version
+  - pip install --user conan
+  - conan
+  - conan --version
 
 script:
+  - mkdir -p build
+  - conan install . -if build -s compiler=gcc -s compiler.version=5 -s compiler.libcxx=libstdc++11
   - CC=gcc-5 CXX=g++-5 CV=gcov-5 cmake -H. -Bbuild
   - cmake --build build --target make_test
   - cmake --build build --target test
