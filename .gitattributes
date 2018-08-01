@@ -11,3 +11,4 @@ copying linguist-vendored
 *.txt linguist-vendored
 *.md linguist-vendored
 *.yml linguist-vendored
+*.py linguist-vendored
