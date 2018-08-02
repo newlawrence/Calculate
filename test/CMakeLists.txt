@@ -34,10 +34,10 @@ if((CMAKE_CXX_COMPILER_ID MATCHES GNU) OR (CMAKE_CXX_COMPILER_ID MATCHES Clang))
     set(gcov_able TRUE)
     if(CMAKE_BUILD_TYPE MATCHES Debug AND GCOV)
         set(coverage TRUE)
-        set(coverage_dir "${CMAKE_BINARY_DIR}/coverage")
+        set(coverage_dir "${CMAKE_BINARY_DIR}/cov")
         file(MAKE_DIRECTORY "${coverage_dir}")
         file(MAKE_DIRECTORY "${coverage_dir}/bin")
-        file(MAKE_DIRECTORY "${coverage_dir}/source")
+        file(MAKE_DIRECTORY "${coverage_dir}/src")
         message(STATUS "Tests: Targets configured for coverage using '${gcov_program}'")
     endif()
 endif()
@@ -68,25 +68,25 @@ endif()
 file(GLOB TEST_SOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" source/*.cpp)
 add_custom_target(make_test)
 if(coverage)
-    file(MAKE_DIRECTORY "${coverage_dir}/source/temp")
+    file(MAKE_DIRECTORY "${coverage_dir}/src/temp")
     add_custom_target(coverage)
     add_custom_command(TARGET coverage POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E echo "Generating gcov sources..."
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${coverage_dir}/source/temp"
-        COMMAND ${CMAKE_COMMAND} -E chdir "${coverage_dir}/source/temp"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${coverage_dir}/src/temp"
+        COMMAND ${CMAKE_COMMAND} -E chdir "${coverage_dir}/src/temp"
             ${GCOV} "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp"
             -o "${coverage_dir}/bin" -p > /dev/null
         COMMAND ${CMAKE_COMMAND} -E copy
-            "${coverage_dir}/source/temp/*Calculate#include*.gcov"
-            "${coverage_dir}/source"
-        COMMAND ${CMAKE_COMMAND} -E remove_directory "${coverage_dir}/source/temp"
+            "${coverage_dir}/src/temp/*Calculate#include*.gcov"
+            "${coverage_dir}/src"
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${coverage_dir}/src/temp"
     )
 
     find_program(LCOV lcov)
     find_program(GENHTML genhtml)
     if(LCOV AND GENHTML)
-        file(MAKE_DIRECTORY "${coverage_dir}/report")
-        set(coverage_info "${coverage_dir}/report/coverage.info")
+        file(MAKE_DIRECTORY "${coverage_dir}/rep")
+        set(coverage_info "${coverage_dir}/rep/coverage.info")
         add_custom_command(TARGET coverage POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E echo "Generating coverage report..."
             COMMAND ${LCOV} -c -d "${coverage_dir}/bin"
@@ -94,7 +94,7 @@ if(coverage)
             COMMAND ${LCOV} -e "${coverage_info}" "*Calculate/include*"
                 -o "${coverage_info}" > /dev/null
             COMMAND ${GENHTML} "${coverage_info}"
-                -o "${coverage_dir}/report" > /dev/null
+                -o "${coverage_dir}/rep" > /dev/null
         )
         message(STATUS "Tests: Enabled coverage report in HTML format")
     endif()
@@ -112,7 +112,7 @@ foreach(test_source ${TEST_SOURCES})
 
     if(coverage)
         set(coverage_name "coverage_${name}")
-        set(binary_dir "${CMAKE_BINARY_DIR}/CMakeFiles/${test_name}.dir/test/")
+        set(binary_dir "${CMAKE_BINARY_DIR}/test/CMakeFiles/${test_name}.dir/source/")
         add_custom_target(${coverage_name}
             COMMAND ${CMAKE_COMMAND} -E copy
                 "${binary_dir}/${name}.cpp.gcda"
