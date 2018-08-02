@@ -7,20 +7,22 @@ class CalculateConan(ConanFile):
     license = 'MIT'
     url = 'https://github.com/newlawrence/Calculate.git'
     description = 'Math Expressions Parser Engine'
-    exports_sources = 'include/*', 'CMakeLists.txt', 'test/*'
+    exports_sources = 'CMakeLists.txt', 'copying', 'include/*', 'test/*'
     generators = 'cmake'
 
-    def requirements(self):
-        self.requires('catch2/[>2.1,<3.0]@bincrafters/stable')
+    def build_requirements(self):
+        self.build_requires('catch2/[>2.1,<3.0]@bincrafters/stable')
 
     def build(self):
         cmake = CMake(self)
+        cmake.definitions['CALCULATE_BUILD_TESTS'] = 'ON'
         cmake.configure()
         cmake.build(['--target', 'make_test'])
         cmake.test()
 
     def package(self):
         self.copy('*.hpp')
+        self.copy('copying', dst='.')
 
     def package_id(self):
         self.info.header_only()

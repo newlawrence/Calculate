@@ -20,9 +20,8 @@ install:
   - conan --version
 
 script:
-  - mkdir -p build
-  - conan install . -if build -s compiler=gcc -s compiler.version=5 -s compiler.libcxx=libstdc++11
-  - CC=gcc-5 CXX=g++-5 CV=gcov-5 cmake -H. -Bbuild
+  - conan install test -if build -s compiler=gcc -s compiler.version=5 -s compiler.libcxx=libstdc++11
+  - CXX=g++-5 CV=gcov-5 cmake -H. -Bbuild -DCALCULATE_BUILD_TESTS=ON
   - cmake --build build --target make_test
   - cmake --build build --target test
   - cmake --build build --target coverage
