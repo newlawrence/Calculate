@@ -9,7 +9,6 @@ if(NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
     endif()
 endif()
-message(STATUS "Tests: Tests enabled for Calculate")
 message(STATUS "Tests: Setting build type to '${CMAKE_BUILD_TYPE}'")
 enable_testing()
 
@@ -19,7 +18,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 include_directories("${CMAKE_SOURCE_DIR}/include")
-include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+include("${CMAKE_BINARY_DIR}/test/conanbuildinfo.cmake")
 conan_basic_setup(TARGETS NO_OUTPUT_DIRS)
 
 set(gcov_program "$ENV{CV}")

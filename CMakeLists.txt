@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.5)
 project(Calculate LANGUAGES CXX VERSION 2.1.1)
 
-if (CALCULATE_BUILD_TESTS)
+if(CALCULATE_BUILD_EXAMPLES)
+    add_subdirectory(example)
+endif()
+
+if(CALCULATE_BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
 endif()

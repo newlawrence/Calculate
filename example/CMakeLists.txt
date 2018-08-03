@@ -1,0 +1,52 @@
+cmake_minimum_required(VERSION 3.5)
+project(Calculate_Tests LANGUAGES CXX)
+
+set(CMAKE_CONFIGURATION_TYPES "Release;Debug" CACHE STRING "Configurations" FORCE)
+if(NOT CMAKE_BUILD_TYPE)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+        set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
+    else()
+        set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+    endif()
+endif()
+message(STATUS "Examples: Setting build type to '${CMAKE_BUILD_TYPE}'")
+enable_testing()
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+include_directories("${CMAKE_SOURCE_DIR}/include")
+include("${CMAKE_BINARY_DIR}/example/conanbuildinfo.cmake")
+conan_basic_setup(TARGETS NO_OUTPUT_DIRS)
+
+if(WIN32 AND NOT MINGW AND NOT MSYS AND NOT CYGWIN)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od /Debug:full")
+else()
+    if(gcov_able)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra -Werror")
+        if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-noexcept-type")
+        elseif(CMAKE_CXX_COMPILER_ID MATCHES Clang)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
+        endif()
+    endif()
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+    if(coverage)
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-elide-constructors")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-inline")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ftest-coverage")
+        set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_STATIC_LINKER_FLAGS_DEBUG} --coverage")
+    endif()
+endif()
+
+add_executable(calculate "${CMAKE_CURRENT_SOURCE_DIR}/source/calculate.cpp")
+target_link_libraries(calculate
+    CONAN_PKG::boost_system
+    CONAN_PKG::boost_filesystem
+    CONAN_PKG::boost_program_options
+)
