@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(Calculate_Tests LANGUAGES CXX)
+project(Calculate_Examples LANGUAGES CXX)
 
 set(CMAKE_CONFIGURATION_TYPES "Release;Debug" CACHE STRING "Configurations" FORCE)
 if(NOT CMAKE_BUILD_TYPE)

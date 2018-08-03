@@ -22,6 +22,12 @@ auto sum = parser.parse("x+y");
 sum(1., 2.);  // returns 3.
 ```
 
+**Calculate** is available as a [conan package](https://bintray.com/newlawrence/calculate/Calculate%3Anewlawrence):
+
+```bash
+conan remote add calculate https://api.bintray.com/conan/newlawrence/calculate
+```
+
 ### Features
 
 * Generic. `double` and `std::complex<double>` parsers included by default.
@@ -30,14 +36,26 @@ sum(1., 2.);  // returns 3.
 * Regex-based customizable lexers.
 * Header-only.
 
-### Requirements
+### Build and test
 
-**Calculate** doesn't have any third party dependencies, the library should work with any compiler fully compatible with the **C++14** standard. This is the list of the currently tested compatible compilers:
+**Calculate** doesn't have any third party dependencies, the library should work with any compiler fully compatible with the **C++14** standard. Currently it has being tested under **gcc (5.1+)**,  **clang (3.7+)**, **msvc (19.10+)** and **intel (18.0+)**.
 
-* **gcc** version **5.1** and above.
-* **clang** version **3.7** and above.
-* **msvc** version **19.10** and above.
-* **intel** version **18.0** and above.
+To build the examples and the tests both, [Conan](https://conan.io/) and [CMake](https://cmake.org/) are required:
+```bash
+# Boost libraries needed to build the example
+conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+
+# Build the example
+conan install example --install-folder build/example
+cmake -H. -Bbuild -DCALCULATE_BUILD_EXAMPLES=ON
+cmake --build build --target calculate
+
+# Build and run the tests
+conan install test --install-folder build/test
+cmake -H. -Bbuild -DCALCULATE_BUILD_TESTS=ON
+cmake --build build --target make_test    # build
+cmake --build build --target test         # run
+```
 
 ### User guide
 
