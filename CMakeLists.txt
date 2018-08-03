@@ -10,6 +10,10 @@ if(CALCULATE_BUILD_TESTS)
     add_subdirectory(test)
 endif()
 
+if(CALCULATE_BUILD_EXAMPLES OR CALCULATE_BUILD_TESTS)
+    message(STATUS "Calculate: Setting build type to '${CMAKE_BUILD_TYPE}'")
+endif()
+
 add_library(Calculate INTERFACE)
 target_include_directories(Calculate
 INTERFACE

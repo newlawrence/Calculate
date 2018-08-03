@@ -9,7 +9,7 @@ if(NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
     endif()
 endif()
-message(STATUS "Tests: Setting build type to '${CMAKE_BUILD_TYPE}'")
+message(STATUS "Calculate: Tests enabled")
 enable_testing()
 
 set(CMAKE_CXX_STANDARD 14)
@@ -37,7 +37,7 @@ if((CMAKE_CXX_COMPILER_ID MATCHES GNU) OR (CMAKE_CXX_COMPILER_ID MATCHES Clang))
         file(MAKE_DIRECTORY "${coverage_dir}")
         file(MAKE_DIRECTORY "${coverage_dir}/bin")
         file(MAKE_DIRECTORY "${coverage_dir}/src")
-        message(STATUS "Tests: Targets configured for coverage using '${gcov_program}'")
+        message(STATUS "Calculate: Targets configured for coverage using '${gcov_program}'")
     endif()
 endif()
 
@@ -95,7 +95,7 @@ if(coverage)
             COMMAND ${GENHTML} "${coverage_info}"
                 -o "${coverage_dir}/rep" > /dev/null
         )
-        message(STATUS "Tests: Enabled coverage report in HTML format")
+        message(STATUS "Calculate: Enabled coverage report in HTML format")
     endif()
 endif()
 
