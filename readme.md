@@ -25,6 +25,7 @@ sum(1., 2.);  // returns 3.
 **Calculate** is available as a [conan package](https://bintray.com/newlawrence/calculate/Calculate%3Anewlawrence):
 
 ```bash
+# Append calculate to Conan's repositories list
 conan remote add calculate https://api.bintray.com/conan/newlawrence/calculate
 ```
 
@@ -41,20 +42,21 @@ conan remote add calculate https://api.bintray.com/conan/newlawrence/calculate
 **Calculate** doesn't have any third party dependencies, the library should work with any compiler fully compatible with the **C++14** standard. Currently it has being tested under **gcc (5.1+)**,  **clang (3.7+)**, **msvc (19.10+)** and **intel (18.0+)**.
 
 To build the examples and the tests both, [Conan](https://conan.io/) and [CMake](https://cmake.org/) are required:
+
 ```bash
-# Boost libraries needed to build the example
+# Boost libraries from Bincrafters needed to build the example
 conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
 
 # Build the example
 conan install example --install-folder build/example
 cmake -H. -Bbuild -DCALCULATE_BUILD_EXAMPLES=ON
-cmake --build build --target calculate
+cmake --build build --target example
 
 # Build and run the tests
 conan install test --install-folder build/test
 cmake -H. -Bbuild -DCALCULATE_BUILD_TESTS=ON
-cmake --build build --target make_test    # build
-cmake --build build --target test         # run
+cmake --build build --target make_test  # build
+cmake --build build --target test       # run
 ```
 
 ### User guide

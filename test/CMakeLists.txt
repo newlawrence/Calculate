@@ -1,124 +1,120 @@
 cmake_minimum_required(VERSION 3.5)
-project(Calculate_Tests LANGUAGES CXX)
+project(Calculate-Tests LANGUAGES CXX)
 
-set(CMAKE_CONFIGURATION_TYPES "Release;Debug" CACHE STRING "Configurations" FORCE)
-if(NOT CMAKE_BUILD_TYPE)
-    if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    set(CMAKE_CONFIGURATION_TYPES "Release;Debug" CACHE STRING "Configurations" FORCE)
+    if(NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
-    else()
-        set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
     endif()
+else()
+    message(STATUS "Calculate: Tests enabled")
 endif()
-message(STATUS "Calculate: Tests enabled")
-enable_testing()
-
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
-include_directories("${CMAKE_SOURCE_DIR}/include")
 include("${CMAKE_BINARY_DIR}/test/conanbuildinfo.cmake")
 conan_basic_setup(TARGETS NO_OUTPUT_DIRS)
+enable_testing()
 
-set(gcov_program "$ENV{CV}")
-if(NOT gcov_program)
-    set(gcov_program gcov)
-endif()
 
-set(gcov_able FALSE)
-set(coverage FALSE)
-find_program(GCOV ${gcov_program})
-if((CMAKE_CXX_COMPILER_ID MATCHES GNU) OR (CMAKE_CXX_COMPILER_ID MATCHES Clang))
-    set(gcov_able TRUE)
-    if(CMAKE_BUILD_TYPE MATCHES Debug AND GCOV)
-        set(coverage TRUE)
-        set(coverage_dir "${CMAKE_BINARY_DIR}/cov")
-        file(MAKE_DIRECTORY "${coverage_dir}")
-        file(MAKE_DIRECTORY "${coverage_dir}/bin")
-        file(MAKE_DIRECTORY "${coverage_dir}/src")
-        message(STATUS "Calculate: Targets configured for coverage using '${gcov_program}'")
-    endif()
-endif()
-
-if(WIN32 AND NOT MINGW AND NOT MSYS AND NOT CYGWIN)
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od /Debug:full")
+if(DEFINED $ENV{CV})
+    find_program(GCOV $ENV{CV})
 else()
-    if(gcov_able)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -Wextra -Werror")
-        if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-noexcept-type")
-        elseif(CMAKE_CXX_COMPILER_ID MATCHES Clang)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
-        endif()
-    endif()
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
-    if(coverage)
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-elide-constructors")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-inline")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ftest-coverage")
-        set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_STATIC_LINKER_FLAGS_DEBUG} --coverage")
-    endif()
+    find_program(GCOV gcov)
 endif()
 
-file(GLOB TEST_SOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" source/*.cpp)
-add_custom_target(make_test)
-if(coverage)
-    file(MAKE_DIRECTORY "${coverage_dir}/src/temp")
+
+set(CALCULATE_BUILD_COVERAGE FALSE)
+if(
+    (CMAKE_CXX_COMPILER_ID MATCHES GNU OR CMAKE_CXX_COMPILER_ID MATCHES Clang) AND
+    CMAKE_BUILD_TYPE MATCHES Debug AND GCOV
+)
+    set(CALCULATE_BUILD_COVERAGE TRUE)
+    set(CALCULATE_COVERAGE_DIR "${CMAKE_BINARY_DIR}/coverage")
+    file(MAKE_DIRECTORY "${CALCULATE_COVERAGE_DIR}")
+    file(MAKE_DIRECTORY "${CALCULATE_COVERAGE_DIR}/bin")
+    file(MAKE_DIRECTORY "${CALCULATE_COVERAGE_DIR}/source")
+    file(MAKE_DIRECTORY "${CALCULATE_COVERAGE_DIR}/source/temp")
     add_custom_target(coverage)
-    add_custom_command(TARGET coverage POST_BUILD
+    message(STATUS "Calculate: Targets configured for coverage using '${GCOV}'")
+
+    add_custom_command(TARGET coverage
+    POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E echo "Generating gcov sources..."
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${coverage_dir}/src/temp"
-        COMMAND ${CMAKE_COMMAND} -E chdir "${coverage_dir}/src/temp"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CALCULATE_COVERAGE_DIR}/source/temp"
+        COMMAND ${CMAKE_COMMAND} -E chdir "${CALCULATE_COVERAGE_DIR}/source/temp"
             ${GCOV} "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp"
-            -o "${coverage_dir}/bin" -p > /dev/null
+            -o "${CALCULATE_COVERAGE_DIR}/bin" -p > /dev/null
         COMMAND ${CMAKE_COMMAND} -E copy
-            "${coverage_dir}/src/temp/*Calculate#include*.gcov"
-            "${coverage_dir}/src"
-        COMMAND ${CMAKE_COMMAND} -E remove_directory "${coverage_dir}/src/temp"
+            "${CALCULATE_COVERAGE_DIR}/source/temp/*Calculate#include*.gcov"
+            "${CALCULATE_COVERAGE_DIR}/source"
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${CALCULATE_COVERAGE_DIR}/source/temp"
     )
 
     find_program(LCOV lcov)
     find_program(GENHTML genhtml)
     if(LCOV AND GENHTML)
-        file(MAKE_DIRECTORY "${coverage_dir}/rep")
-        set(coverage_info "${coverage_dir}/rep/coverage.info")
-        add_custom_command(TARGET coverage POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E echo "Generating coverage report..."
-            COMMAND ${LCOV} -c -d "${coverage_dir}/bin"
+        file(MAKE_DIRECTORY "${CALCULATE_COVERAGE_DIR}/report")
+        set(coverage_info "${CALCULATE_COVERAGE_DIR}/report/coverage.info")
+        add_custom_command(TARGET coverage
+        POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E echo
+                "Generating coverage report..."
+            COMMAND ${LCOV} -c -d "${CALCULATE_COVERAGE_DIR}/bin"
                 -o "${coverage_info}" --gcov-tool ${GCOV} > /dev/null
             COMMAND ${LCOV} -e "${coverage_info}" "*Calculate/include*"
                 -o "${coverage_info}" > /dev/null
             COMMAND ${GENHTML} "${coverage_info}"
-                -o "${coverage_dir}/rep" > /dev/null
+                -o "${CALCULATE_COVERAGE_DIR}/report" > /dev/null
         )
         message(STATUS "Calculate: Enabled coverage report in HTML format")
     endif()
 endif()
 
+
+file(GLOB TEST_SOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" source/*.cpp)
+add_custom_target(make_test)
 foreach(test_source ${TEST_SOURCES})
     get_filename_component(name "${test_source}" NAME_WE)
     set(test_name "test_${name}")
-    set(test_folder "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+    set(test_folder "${CMAKE_BINARY_DIR}/bin")
 
     add_executable(${test_name} "${test_source}")
+    set_target_properties(${test_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${test_folder}")
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+        target_include_directories(${test_name} PRIVATE "${CMAKE_SOURCE_DIR}/../include")
+    else()
+        target_include_directories(${test_name} PRIVATE "${CMAKE_SOURCE_DIR}/include")
+    endif()
+
+    target_compile_features(${test_name} PRIVATE cxx_std_14)
+    target_compile_options(${test_name}
+    PRIVATE
+        "$<$<CXX_COMPILER_ID:GNU>: -pedantic -Wall -Wextra -Werror -Wno-noexcept-type>"
+        "$<$<CXX_COMPILER_ID:Clang>: -pedantic -Wall -Wextra -Werror -Qunused-arguments>"
+    )
+    if(CALCULATE_BUILD_COVERAGE)
+        set_target_properties(${test_name} PROPERTIES LINK_FLAGS --coverage)
+        target_compile_options(${test_name} PRIVATE -O0 -fno-inline -fprofile-arcs -ftest-coverage)
+    endif()
+
     target_link_libraries(${test_name} CONAN_PKG::catch2)
     add_dependencies(make_test ${test_name})
     add_test(NAME ${test_name} COMMAND "${test_folder}/${test_name}")
 
-    if(coverage)
+    if(CALCULATE_BUILD_COVERAGE)
         set(coverage_name "coverage_${name}")
-        set(binary_dir "${CMAKE_BINARY_DIR}/test/CMakeFiles/${test_name}.dir/source/")
+        if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+            set(CALCULATE_GCOV_DIR "${CMAKE_BINARY_DIR}/CMakeFiles/${test_name}.dir/source/")
+        else()
+            set(CALCULATE_GCOV_DIR "${CMAKE_BINARY_DIR}/test/CMakeFiles/${test_name}.dir/source/")
+        endif()
+
         add_custom_target(${coverage_name}
             COMMAND ${CMAKE_COMMAND} -E copy
-                "${binary_dir}/${name}.cpp.gcda"
-                "${coverage_dir}/bin/${name}.gcda"
+                "${CALCULATE_GCOV_DIR}/${name}.cpp.gcda"
+                "${CALCULATE_COVERAGE_DIR}/bin/${name}.gcda"
             COMMAND ${CMAKE_COMMAND} -E copy
-                "${binary_dir}/${name}.cpp.gcno"
-                "${coverage_dir}/bin/${name}.gcno"
+                "${CALCULATE_GCOV_DIR}/${name}.cpp.gcno"
+                "${CALCULATE_COVERAGE_DIR}/bin/${name}.gcno"
         )
         add_dependencies(coverage ${coverage_name})
     endif()
