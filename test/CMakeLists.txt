@@ -21,7 +21,7 @@ conan_basic_setup(TARGETS NO_OUTPUT_DIRS)
 
 
 
-if(DEFINED $ENV{CV})
+if(DEFINED ENV{CV})
     find_program(GCOV $ENV{CV})
 else()
     find_program(GCOV gcov)
