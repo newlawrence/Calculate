@@ -50,7 +50,7 @@ if(
             ${GCOV} "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp"
             -o "${CALCULATE_COVERAGE_DIR}/bin" -p > /dev/null
         COMMAND ${CMAKE_COMMAND} -E copy
-            "${CALCULATE_COVERAGE_DIR}/source/temp/*calculate#include*.gcov"
+            "${CALCULATE_COVERAGE_DIR}/source/temp/*Calculate#include*.gcov"
             "${CALCULATE_COVERAGE_DIR}/source"
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${CALCULATE_COVERAGE_DIR}/source/temp"
     )
@@ -66,7 +66,7 @@ if(
                 "Generating coverage report..."
             COMMAND ${LCOV} -c -d "${CALCULATE_COVERAGE_DIR}/bin"
                 -o "${coverage_info}" --gcov-tool ${GCOV} > /dev/null
-            COMMAND ${LCOV} -e "${coverage_info}" "*calculate/include*"
+            COMMAND ${LCOV} -e "${coverage_info}" "*Calculate/include*"
                 -o "${coverage_info}" > /dev/null
             COMMAND ${GENHTML} "${coverage_info}"
                 -o "${CALCULATE_COVERAGE_DIR}/report" > /dev/null
