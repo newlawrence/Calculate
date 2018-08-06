@@ -8,11 +8,17 @@ if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
         set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
     endif()
 else()
-    message(STATUS "Calculate: Tests enabled")
+    message(STATUS "Calculate: tests enabled")
 endif()
-include("${CMAKE_BINARY_DIR}/test/conanbuildinfo.cmake")
-conan_basic_setup(TARGETS NO_OUTPUT_DIRS)
 enable_testing()
+
+if(EXISTS "${CMAKE_BINARY_DIR}/test/conanbuildinfo.cmake")
+    include("${CMAKE_BINARY_DIR}/test/conanbuildinfo.cmake")
+else()
+    include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+endif()
+conan_basic_setup(TARGETS NO_OUTPUT_DIRS)
+
 
 
 if(DEFINED $ENV{CV})
@@ -34,7 +40,7 @@ if(
     file(MAKE_DIRECTORY "${CALCULATE_COVERAGE_DIR}/source")
     file(MAKE_DIRECTORY "${CALCULATE_COVERAGE_DIR}/source/temp")
     add_custom_target(coverage)
-    message(STATUS "Calculate: Targets configured for coverage using '${GCOV}'")
+    message(STATUS "Calculate: targets configured for coverage using '${GCOV}'")
 
     add_custom_command(TARGET coverage
     POST_BUILD
@@ -44,7 +50,7 @@ if(
             ${GCOV} "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp"
             -o "${CALCULATE_COVERAGE_DIR}/bin" -p > /dev/null
         COMMAND ${CMAKE_COMMAND} -E copy
-            "${CALCULATE_COVERAGE_DIR}/source/temp/*Calculate#include*.gcov"
+            "${CALCULATE_COVERAGE_DIR}/source/temp/*calculate#include*.gcov"
             "${CALCULATE_COVERAGE_DIR}/source"
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${CALCULATE_COVERAGE_DIR}/source/temp"
     )
@@ -60,12 +66,12 @@ if(
                 "Generating coverage report..."
             COMMAND ${LCOV} -c -d "${CALCULATE_COVERAGE_DIR}/bin"
                 -o "${coverage_info}" --gcov-tool ${GCOV} > /dev/null
-            COMMAND ${LCOV} -e "${coverage_info}" "*Calculate/include*"
+            COMMAND ${LCOV} -e "${coverage_info}" "*calculate/include*"
                 -o "${coverage_info}" > /dev/null
             COMMAND ${GENHTML} "${coverage_info}"
                 -o "${CALCULATE_COVERAGE_DIR}/report" > /dev/null
         )
-        message(STATUS "Calculate: Enabled coverage report in HTML format")
+        message(STATUS "Calculate: enabled coverage report in HTML format")
     endif()
 endif()
 
@@ -78,7 +84,12 @@ foreach(test_source ${TEST_SOURCES})
     set(test_folder "${CMAKE_BINARY_DIR}/bin")
 
     add_executable(${test_name} "${test_source}")
-    set_target_properties(${test_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${test_folder}")
+    set_target_properties(${test_name}
+    PROPERTIES
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+        RUNTIME_OUTPUT_DIRECTORY "${test_folder}"
+    )
     if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
         target_include_directories(${test_name} PRIVATE "${CMAKE_SOURCE_DIR}/../include")
     else()
@@ -88,8 +99,8 @@ foreach(test_source ${TEST_SOURCES})
     target_compile_features(${test_name} PRIVATE cxx_std_14)
     target_compile_options(${test_name}
     PRIVATE
-        "$<$<CXX_COMPILER_ID:GNU>: -pedantic -Wall -Wextra -Werror -Wno-noexcept-type>"
-        "$<$<CXX_COMPILER_ID:Clang>: -pedantic -Wall -Wextra -Werror -Qunused-arguments>"
+        $<$<CXX_COMPILER_ID:GNU>: -pedantic -Wall -Wextra -Werror -Wno-noexcept-type>
+        $<$<CXX_COMPILER_ID:Clang>: -pedantic -Wall -Wextra -Werror -Qunused-arguments>
     )
     if(CALCULATE_BUILD_COVERAGE)
         set_target_properties(${test_name} PROPERTIES LINK_FLAGS --coverage)

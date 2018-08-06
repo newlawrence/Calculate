@@ -7,8 +7,14 @@ class CalculateConan(ConanFile):
     license = 'MIT'
     url = 'https://github.com/newlawrence/Calculate.git'
     description = 'Math Expressions Parser Engine'
-    exports_sources = 'CMakeLists.txt', 'copying', 'include/*', 'test/*'
     generators = 'cmake'
+    exports_sources = [
+        'copying',
+        'CMakeLists.txt',
+        'cmake/CalculateConfig.cmake.in',
+        'include/*',
+        'test/*'
+    ]
 
     def build_requirements(self):
         self.build_requires('catch2/[>2.1,<3.0]@bincrafters/stable')
