@@ -11,12 +11,23 @@ else()
     message(STATUS "Calculate: examples enabled")
 endif()
 
+find_package(Boost QUIET)
 if(EXISTS "${CMAKE_BINARY_DIR}/example/conanbuildinfo.cmake")
     include("${CMAKE_BINARY_DIR}/example/conanbuildinfo.cmake")
-else()
+    conan_basic_setup(TARGETS NO_OUTPUT_DIRS)
+    set(CALCULATE_EXAMPLES_USE_CONAN TRUE)
+elseif(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
     include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+    conan_basic_setup(TARGETS NO_OUTPUT_DIRS)
+    set(CALCULATE_EXAMPLES_USE_CONAN TRUE)
+elseif(Boost_FOUND)
+    find_package(Boost REQUIRED COMPONENTS system filesystem program_options)
+    include_directories(${Boost_INCLUDE_DIRS})
+    string(REPLACE ";" "\n       " boost_libraries "${Boost_LIBRARIES}")
+    set(CALCULATE_EXAMPLES_USE_CONAN FALSE)
+else()
+    message(FATAL_ERROR "Calculate: missing Boost libraries")
 endif()
-conan_basic_setup(TARGETS NO_OUTPUT_DIRS)
 
 
 add_executable(example "${CMAKE_CURRENT_SOURCE_DIR}/source/calculate.cpp")
@@ -43,8 +54,12 @@ PRIVATE
     $<$<CXX_COMPILER_ID:Clang>: -pedantic -Wall -Wextra -Werror -Qunused-arguments>
 )
 
-target_link_libraries(example
-    CONAN_PKG::boost_system
-    CONAN_PKG::boost_filesystem
-    CONAN_PKG::boost_program_options
-)
+if(CALCULATE_EXAMPLES_USE_CONAN)
+    target_link_libraries(example
+        CONAN_PKG::boost_system
+        CONAN_PKG::boost_filesystem
+        CONAN_PKG::boost_program_options
+    )
+else()
+    target_link_libraries(example ${Boost_LIBRARIES})
+endif()
