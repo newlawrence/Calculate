@@ -1,5 +1,5 @@
 diff --git a/include/calculate/lexer.hpp b/include/calculate/lexer.hpp
-index c92efd1..1566fb7 100644
+index 9396abd..c3abcbd 100644
 --- a/include/calculate/lexer.hpp
 +++ b/include/calculate/lexer.hpp
 @@ -31,30 +31,42 @@ constexpr const char separator[] = ",";
@@ -69,7 +69,7 @@ index c92efd1..1566fb7 100644
  
  }
 diff --git a/include/calculate/node.hpp b/include/calculate/node.hpp
-index 4c19249..e743097 100644
+index eee7aaf..c9540b6 100644
 --- a/include/calculate/node.hpp
 +++ b/include/calculate/node.hpp
 @@ -107,7 +107,7 @@ public:
@@ -82,7 +82,7 @@ index 4c19249..e743097 100644
  
              for (const auto& val : vals) {
 diff --git a/include/calculate/symbol.hpp b/include/calculate/symbol.hpp
-index 668d765..d8d3aed 100644
+index a341674..f8d4075 100644
 --- a/include/calculate/symbol.hpp
 +++ b/include/calculate/symbol.hpp
 @@ -41,8 +41,8 @@ private:
@@ -121,10 +121,10 @@ index 668d765..d8d3aed 100644
      Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
  
 diff --git a/include/calculate/util.hpp b/include/calculate/util.hpp
-index 7496859..eebf99f 100644
+index 3eb6621..32a04c3 100644
 --- a/include/calculate/util.hpp
 +++ b/include/calculate/util.hpp
-@@ -22,22 +22,6 @@ namespace calculate {
+@@ -22,36 +22,27 @@ namespace calculate {
  
  namespace util {
  
@@ -144,10 +144,37 @@ index 7496859..eebf99f 100644
 -constexpr std::size_t tuple_size_v = std::tuple_size<T>::value;
 -
 -
- namespace detail {
+ template<typename T>
+-constexpr bool is_value_v = !std::is_reference<T>::value;
++struct is_value {
++    static constexpr bool value = !std::is_reference<T>::value;
++};
  
- using std::begin;
-@@ -74,7 +58,9 @@ struct make_tuple<T, argc, std::index_sequence<indices...>> {
+ template<typename T>
+-constexpr bool is_const_reference_v =
+-    std::is_lvalue_reference<T>::value &&
+-    std::is_const<std::remove_reference_t<T>>::value;
++struct is_const_reference {
++    static constexpr bool value =
++        std::is_lvalue_reference<T>::value &&
++        std::is_const<std::remove_reference_t<T>>::value;
++};
+ 
+ template<typename T>
+-constexpr bool is_valid_v = is_value_v<T> || is_const_reference_v<T>;
++struct is_valid {
++    static constexpr bool value =
++        is_value<T>::value || is_const_reference<T>::value;
++};
+ 
+ template<typename T>
+ struct decay {
+-    static_assert(is_valid_v<T>, "Arguments may suffer from side effects");
++    static_assert(is_valid<T>::value, "Arguments may suffer from side effects");
+     using type = std::decay_t<T>;
+ };
+ 
+@@ -95,7 +86,9 @@ struct make_tuple<T, argc, std::index_sequence<indices...>> {
  
  
  template<typename T, typename... Args>
@@ -158,7 +185,7 @@ index 7496859..eebf99f 100644
  
  template<bool c, typename R, typename... Args>
  struct TraitsHandler {
-@@ -92,64 +78,70 @@ struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
+@@ -113,64 +106,70 @@ struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
  template<typename R, typename... Args>
  struct Traits<
      R(*)(Args...) noexcept,
@@ -241,7 +268,7 @@ index 7496859..eebf99f 100644
  
  
  template<typename T, std::size_t argc>
-@@ -159,16 +151,25 @@ template<typename T>
+@@ -180,17 +179,25 @@ template<typename T>
  using result_t = typename detail::Traits<T>::result_t;
  
  template<typename T>
@@ -261,7 +288,8 @@ index 7496859..eebf99f 100644
 +};
  
  template<typename T, typename U>
--constexpr bool not_same_v = !is_same_v<std::decay_t<T>, U> && !is_base_of_v<U, std::decay_t<T>>;
+-constexpr bool not_same_v =
+-    !is_same_v<std::decay_t<T>, U> && !is_base_of_v<U, std::decay_t<T>>;
 +struct not_same {
 +    static constexpr bool value =
 +        !std::is_same<std::decay_t<T>, U>::value &&
@@ -270,7 +298,7 @@ index 7496859..eebf99f 100644
  
  
  template<typename T, typename... Args>
-@@ -177,7 +178,7 @@ std::vector<T> to_vector(Args&&... args) {
+@@ -199,7 +206,7 @@ std::vector<T> to_vector(Args&&... args) {
  }
  
  template<typename T, typename U>
@@ -280,7 +308,7 @@ index 7496859..eebf99f 100644
  }
  
 diff --git a/include/calculate/wrapper.hpp b/include/calculate/wrapper.hpp
-index e44865e..6f02211 100644
+index 75daf8b..92814a9 100644
 --- a/include/calculate/wrapper.hpp
 +++ b/include/calculate/wrapper.hpp
 @@ -77,7 +77,7 @@ class Wrapper {
@@ -315,8 +343,8 @@ index e44865e..6f02211 100644
 +            std::is_same<util::result_t<Callable>, Type>::value,
              "Wrong callable return type"
          );
--        static_assert(util::is_const_v<Callable>, "Non constant callable");
-+        static_assert(util::is_const<Callable>::value, "Non constant callable");
+-        static_assert(util::is_const_v<Callable>, "Callable may have side effects");
++        static_assert(util::is_const<Callable>::value, "Callable may have side effects");
  
          static_assert(
 -            util::is_copy_constructible_v<Adapter>,
@@ -337,8 +365,8 @@ index e44865e..6f02211 100644
 +            std::is_same<util::result_t<Adapter>, Type>::value,
              "Wrong adapter return type"
          );
--        static_assert(util::is_const_v<Adapter>, "Non constant adapter");
-+        static_assert(util::is_const<Adapter>::value, "Non constant adapter");
+-        static_assert(util::is_const_v<Adapter>, "Adapter may have side effects");
++        static_assert(util::is_const<Adapter>::value, "Adapter may have side effects");
      }
  
      template<

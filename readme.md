@@ -1,13 +1,13 @@
 ![Calculate](resource/calculate.svg)
 
-| Version | 2.1.1rc7 |
+| Version | 2.1.1rc8 |
 | ------- | -------- |
 
 ---
 
 [![Download](https://api.bintray.com/packages/newlawrence/calculate/Calculate%3Anewlawrence/images/download.svg)](https://bintray.com/newlawrence/calculate/Calculate%3Anewlawrence/_latestVersion)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/newlawrence/Calculate/blob/7f96b434dd77461f17a71f3fe3025c21b73ed0d0/copying)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/9L91osmzIBHuSuYN)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/2k1ZqOAj7U36X7iY)
 [![Build Status](https://travis-ci.org/newlawrence/Calculate.svg?branch=master)](https://travis-ci.org/newlawrence/Calculate)
 [![codecov](https://codecov.io/gh/newlawrence/Calculate/branch/master/graph/badge.svg)](https://codecov.io/gh/newlawrence/Calculate)
 

@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc7
-    Last modified 2018/07/24
+    Calculate - Version 2.1.1rc8
+    Last modified 2018/08/24
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -36,6 +36,27 @@ constexpr bool is_copy_constructible_v = std::is_copy_constructible<T>::value;
 
 template<typename T>
 constexpr std::size_t tuple_size_v = std::tuple_size<T>::value;
+
+
+template<typename T>
+constexpr bool is_value_v = !std::is_reference<T>::value;
+
+template<typename T>
+constexpr bool is_const_reference_v =
+    std::is_lvalue_reference<T>::value &&
+    std::is_const<std::remove_reference_t<T>>::value;
+
+template<typename T>
+constexpr bool is_valid_v = is_value_v<T> || is_const_reference_v<T>;
+
+template<typename T>
+struct decay {
+    static_assert(is_valid_v<T>, "Arguments may suffer from side effects");
+    using type = std::decay_t<T>;
+};
+
+template<typename T>
+using decay_t = typename decay<T>::type;
 
 
 namespace detail {
@@ -80,7 +101,7 @@ template<bool c, typename R, typename... Args>
 struct TraitsHandler {
     static constexpr bool is_const_v = c;
     using result_t = R;
-    using args_tuple_t = std::tuple<std::decay_t<Args>...>;
+    using args_tuple_t = std::tuple<decay_t<Args>...>;
 };
 
 template<typename T, typename = void>
@@ -168,7 +189,8 @@ template<typename T>
 constexpr std::size_t argc_v = tuple_size_v<typename detail::Traits<T>::args_tuple_t>;
 
 template<typename T, typename U>
-constexpr bool not_same_v = !is_same_v<std::decay_t<T>, U> && !is_base_of_v<U, std::decay_t<T>>;
+constexpr bool not_same_v =
+    !is_same_v<std::decay_t<T>, U> && !is_base_of_v<U, std::decay_t<T>>;
 
 
 template<typename T, typename... Args>

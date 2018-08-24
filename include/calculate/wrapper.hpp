@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc7
-    Last modified 2018/07/18
+    Calculate - Version 2.1.1rc8
+    Last modified 2018/08/24
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -110,7 +110,7 @@ public:
             util::is_same_v<util::result_t<Callable>, Type>,
             "Wrong callable return type"
         );
-        static_assert(util::is_const_v<Callable>, "Non constant callable");
+        static_assert(util::is_const_v<Callable>, "Callable may have side effects");
 
         static_assert(
             util::is_copy_constructible_v<Adapter>,
@@ -127,7 +127,7 @@ public:
             util::is_same_v<util::result_t<Adapter>, Type>,
             "Wrong adapter return type"
         );
-        static_assert(util::is_const_v<Adapter>, "Non constant adapter");
+        static_assert(util::is_const_v<Adapter>, "Adapter may have side effects");
     }
 
     template<
