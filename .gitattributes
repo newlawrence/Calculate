@@ -5,7 +5,8 @@
 .codecov.yml export-ignore
 
 # Exclude files from language statistics
-tool/* linguist-vendored
+example/* linguist-vendored
+test/* linguist-vendored
 copying linguist-vendored
 *.patch linguist-vendored
 *.txt linguist-vendored
