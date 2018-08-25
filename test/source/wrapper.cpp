@@ -177,7 +177,7 @@ SCENARIO( "evaluating wrapper objects", "[evaluation]" ) {
     GIVEN ( "a wrapped callable using a custom adapter" ) {
         auto wrapper = Wrapper{
             [](int n) noexcept { return n; },
-            [](Intermediary i) noexcept { return int{i} + 1; }
+            [](Intermediary i) noexcept { return static_cast<int>(i) + 1; }
         };
 
         WHEN( "it is called the adapter function is not applied" ) {
