@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.1.1rc8
-    Last modified 2018/08/24
+    Calculate - Version 2.1.1rc9
+    Last modified 2018/08/25
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -19,7 +19,7 @@ namespace calculate {
 template<typename Type, typename Source>
 struct WrapperConcept {
     virtual ~WrapperConcept() = default;
-    virtual std::shared_ptr<WrapperConcept> clone() const noexcept = 0;
+    virtual std::shared_ptr<WrapperConcept> clone() const = 0;
     virtual std::size_t argc() const noexcept = 0;
     virtual Type eval(const std::vector<Source>&) const = 0;
     virtual Type call(const std::vector<Type>&) const = 0;
@@ -58,7 +58,7 @@ class Wrapper {
                 _adapter{std::forward<AdapterType>(adapter)}
         {}
 
-        std::shared_ptr<WrapperConcept> clone() const noexcept override {
+        std::shared_ptr<WrapperConcept> clone() const override {
             return std::make_shared<WrapperModel>(*this);
         }
 
@@ -135,10 +135,10 @@ public:
         typename = std::enable_if_t<util::not_same_v<Callable, Wrapper>>,
         typename = std::enable_if_t<!util::is_base_of_v<WrapperConcept, Callable>>
     >
-    Wrapper(Callable&& callable=[]() noexcept { return Type(); }) :
+    Wrapper(Callable&& callable) :
             Wrapper{
                 std::forward<Callable>(callable),
-                [](const Source& x) { return Type{x}; }
+                [](const Source& x) { return static_cast<Type>(x); }
             }
     {}
 
@@ -150,7 +150,24 @@ public:
             _wrapper{std::make_shared<Callable>(std::forward<Callable>(callable))}
     {}
 
-    Wrapper clone() const noexcept { return Wrapper{_wrapper->clone()}; }
+    Wrapper() noexcept : Wrapper{[]() noexcept { return Type(); }} {}
+
+    Wrapper(const Wrapper& other) noexcept = default;
+
+    Wrapper(Wrapper&& other) : _wrapper{std::move(other._wrapper)} {
+        other._wrapper = std::move(Wrapper{}._wrapper);
+    }
+
+    Wrapper& operator=(const Wrapper& other) noexcept = default;
+
+    Wrapper& operator=(Wrapper&& other) noexcept {
+        _wrapper = std::move(other._wrapper), other._wrapper = std::move(Wrapper{}._wrapper);
+        return *this;
+    }
+
+    ~Wrapper() = default;
+
+    Wrapper clone() const { return Wrapper{_wrapper->clone()}; }
 
     std::size_t argc() const noexcept { return _wrapper->argc(); }
 
