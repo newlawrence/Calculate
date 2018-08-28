@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc9
-    Last modified 2018/08/24
+    Last modified 2018/08/28
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -39,7 +39,7 @@ constexpr std::size_t tuple_size_v = std::tuple_size<T>::value;
 
 
 template<typename T>
-constexpr bool is_value_v = !std::is_reference<T>::value;
+constexpr bool is_value_v = !std::is_pointer<T>::value && !std::is_reference<T>::value;
 
 template<typename T>
 constexpr bool is_const_reference_v =

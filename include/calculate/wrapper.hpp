@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc9
-    Last modified 2018/08/25
+    Last modified 2018/08/28
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -28,8 +28,9 @@ struct WrapperConcept {
 
 template<typename Type, typename Source = Type>
 class Wrapper {
-    friend struct std::hash<Wrapper>;
+    static_assert(util::is_value_v<Type>, "Wrapper type is not a value");
 
+    friend struct std::hash<Wrapper>;
     using WrapperConcept = calculate::WrapperConcept<Type, Source>;
 
     template<typename Callable, typename Adapter, std::size_t argcount>
