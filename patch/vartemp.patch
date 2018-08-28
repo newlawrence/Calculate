@@ -121,7 +121,7 @@ index 6a497f4..d50401e 100644
      Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
  
 diff --git a/include/calculate/util.hpp b/include/calculate/util.hpp
-index c7362c5..32b8368 100644
+index 9509895..480c7c3 100644
 --- a/include/calculate/util.hpp
 +++ b/include/calculate/util.hpp
 @@ -22,36 +22,27 @@ namespace calculate {
@@ -145,9 +145,9 @@ index c7362c5..32b8368 100644
 -
 -
  template<typename T>
--constexpr bool is_value_v = !std::is_reference<T>::value;
+-constexpr bool is_value_v = !std::is_pointer<T>::value && !std::is_reference<T>::value;
 +struct is_value {
-+    static constexpr bool value = !std::is_reference<T>::value;
++    static constexpr bool value = !std::is_pointer<T>::value && !std::is_reference<T>::value;
 +};
  
  template<typename T>
@@ -307,10 +307,19 @@ index c7362c5..32b8368 100644
  }
  
 diff --git a/include/calculate/wrapper.hpp b/include/calculate/wrapper.hpp
-index 27df102..7230cbc 100644
+index e961c70..3106a36 100644
 --- a/include/calculate/wrapper.hpp
 +++ b/include/calculate/wrapper.hpp
-@@ -77,7 +77,7 @@ class Wrapper {
+@@ -28,7 +28,7 @@ struct WrapperConcept {
+ 
+ template<typename Type, typename Source = Type>
+ class Wrapper {
+-    static_assert(util::is_value_v<Type>, "Wrapper type is not a value");
++    static_assert(util::is_value<Type>::value, "Wrapper type is not a value");
+ 
+     friend struct std::hash<Wrapper>;
+     using WrapperConcept = calculate::WrapperConcept<Type, Source>;
+@@ -78,7 +78,7 @@ class Wrapper {
      using ModelType = WrapperModel<
          std::decay_t<Callable>,
          std::decay_t<Adapter>,
@@ -319,7 +328,7 @@ index 27df102..7230cbc 100644
      >;
  
      std::shared_ptr<WrapperConcept> _wrapper;
-@@ -96,44 +96,44 @@ public:
+@@ -97,44 +97,44 @@ public:
              )}
      {
          static_assert(
@@ -377,7 +386,7 @@ index 27df102..7230cbc 100644
      >
      Wrapper(Callable&& callable) :
              Wrapper{
-@@ -144,7 +144,7 @@ public:
+@@ -145,7 +145,7 @@ public:
  
      template<
          typename Callable,
