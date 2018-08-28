@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc9
-    Last modified 2018/07/23
+    Last modified 2018/08/28
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -17,17 +17,19 @@
 
 namespace calculate {
 
-template<typename Kind, typename Parser>
+template<typename Parser, typename Kind>
 class SymbolContainer final : std::unordered_map<std::string, Kind> {
     friend Parser;
     using Base = std::unordered_map<std::string, Kind>;
-    using Lexer = typename Parser::Lexer;
 
     using Constant = typename Parser::Constant;
     using Function = typename Parser::Function;
     using Operator = typename Parser::Operator;
 
 public:
+    using Lexer = typename Parser::Lexer;
+    using Type = typename Parser::Type;
+
     using typename Base::key_type;
     using typename Base::mapped_type;
     using typename Base::value_type;
@@ -37,7 +39,7 @@ public:
 private:
     Lexer* _lexer;
 
-    SymbolContainer(Lexer* lexer) : _lexer{lexer} {}
+    explicit SymbolContainer(Lexer* lexer) : _lexer{lexer} {}
 
     SymbolContainer(const SymbolContainer&) = default;
     SymbolContainer(SymbolContainer&&) = default;
@@ -66,6 +68,8 @@ private:
     }
 
 public:
+    const Lexer& lexer() const noexcept { return *_lexer; }
+
     using Base::begin;
     using Base::end;
     using Base::cbegin;
@@ -122,9 +126,11 @@ template<typename Parser>
 class AliasContainer final : std::unordered_map<std::string, std::string> {
     friend Parser;
     using Base = std::unordered_map<std::string, std::string>;
-    using Lexer = typename Parser::Lexer;
 
 public:
+    using Lexer = typename Parser::Lexer;
+    using Type = typename Parser::Type;
+
     using typename Base::key_type;
     using typename Base::mapped_type;
     using typename Base::value_type;
@@ -134,7 +140,7 @@ public:
 private:
     Lexer* _lexer;
 
-    AliasContainer(Lexer* lexer) : _lexer{lexer} {}
+    explicit AliasContainer(Lexer* lexer) : _lexer{lexer} {}
 
     AliasContainer(const AliasContainer&) = default;
     AliasContainer(AliasContainer&&) = default;
@@ -151,6 +157,8 @@ private:
     }
 
 public:
+    const Lexer& lexer() const noexcept { return *_lexer; }
+
     using Base::begin;
     using Base::end;
     using Base::cbegin;

@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc9
-    Last modified 2018/07/28
+    Last modified 2018/08/28
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -35,13 +35,14 @@ public:
     public: using SymbolType = typename Symbol::SymbolType;
     public: using Associativity = typename Operator::Associativity;
 
+
 private:
     std::shared_ptr<Lexer> _lexer;
 
 public:
-    SymbolContainer<Constant, BaseParser> constants;
-    SymbolContainer<Function, BaseParser> functions;
-    SymbolContainer<Operator, BaseParser> operators;
+    SymbolContainer<BaseParser, Constant> constants;
+    SymbolContainer<BaseParser, Function> functions;
+    SymbolContainer<BaseParser, Operator> operators;
     AliasContainer<BaseParser> prefixes;
     AliasContainer<BaseParser> suffixes;
     bool optimize;
