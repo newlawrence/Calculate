@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc9
-    Last modified 2018/08/28
+    Last modified 2018/09/02
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -33,6 +33,9 @@ constexpr bool is_integral_v = std::is_integral<T>::value;
 
 template<typename T>
 constexpr bool is_copy_constructible_v = std::is_copy_constructible<T>::value;
+
+template<typename T>
+constexpr bool is_nothrow_move_constructible_v = std::is_nothrow_move_constructible<T>::value;
 
 template<typename T>
 constexpr std::size_t tuple_size_v = std::tuple_size<T>::value;

@@ -8,18 +8,32 @@
 #include "calculate/wrapper.hpp"
 
 
-class CopyMove {
+class NoThrowObj {
 public:
     const std::size_t copied = 0;
     const std::size_t moved = 0;
 
-    CopyMove() = default;
-    CopyMove(std::size_t cp, std::size_t mv) : copied(cp), moved(mv) {}
-    CopyMove(const CopyMove& other) noexcept : copied{other.copied + 1}, moved{other.moved} {}
-    CopyMove(CopyMove&& other) noexcept : copied(other.copied), moved(other.moved + 1) {}
-    ~CopyMove() = default;
+    NoThrowObj() = default;
+    NoThrowObj(std::size_t cp, std::size_t mv) : copied(cp), moved(mv) {}
+    NoThrowObj(const NoThrowObj& other) : copied{other.copied + 1}, moved{other.moved} {}
+    NoThrowObj(NoThrowObj&& other) noexcept : copied(other.copied), moved(other.moved + 1) {}
+    ~NoThrowObj() = default;
 
-    auto operator()() const noexcept { return CopyMove{copied, moved}; }
+    auto operator()() const noexcept { return NoThrowObj{copied, moved}; }
+};
+
+class ThrowObj {
+public:
+    const std::size_t copied = 0;
+    const std::size_t moved = 0;
+
+    ThrowObj() = default;
+    ThrowObj(std::size_t cp, std::size_t mv) : copied(cp), moved(mv) {}
+    ThrowObj(const ThrowObj& other) : copied{other.copied + 1}, moved{other.moved} {}
+    ThrowObj(ThrowObj&& other) : copied(other.copied), moved(other.moved + 1) {}
+    ~ThrowObj() = default;
+
+    auto operator()() const noexcept { return ThrowObj{copied, moved}; }
 };
 
 class Intermediary {
@@ -33,29 +47,82 @@ public:
 };
 
 
+SCENARIO( "Some static assertions on the Wrapper class", "[assertions]" ) {
+    using Wrapper = calculate::Wrapper<int>;
+
+    static_assert(
+        !std::is_default_constructible<Wrapper>::value,
+        "Wrapper objects must not be default constructible"
+    );
+    static_assert(
+        std::is_copy_constructible<Wrapper>::value,
+        "Wrapper objects must be copy constructible"
+    );
+    static_assert(
+        std::is_nothrow_move_constructible<Wrapper>::value,
+        "Wrapper objects must be no-throw move constructible"
+    );
+    static_assert(
+        std::is_copy_assignable<Wrapper>::value,
+        "Wrapper objects must be copy assignable"
+    );
+    static_assert(
+        std::is_move_assignable<Wrapper>::value,
+        "Wrapper objects must be move assignable"
+    );
+    static_assert(
+        std::is_nothrow_destructible<Wrapper>::value,
+        "Wrapper objects must be no-throw destructible"
+    );
+    static_assert(
+        !std::has_virtual_destructor<Wrapper>::value,
+        "Wrapper objects must not be polymorphic"
+    );
+}
+
 SCENARIO( "construction of a wrapper object", "[construction]" ) {
-    using Wrapper = calculate::Wrapper<CopyMove>;
+    GIVEN( "a no-throw move constructible callable" ) {
+        using Wrapper = calculate::Wrapper<NoThrowObj>;
 
-    GIVEN( "a non temporary callable" ) {
-        auto copy_move = CopyMove{};
-
-        WHEN( "a wrapper is created" ) {
+        WHEN( "a wrapper of a non temporary object is created" ) {
+            auto copy_move = NoThrowObj{};
             auto wrapper = Wrapper{copy_move};
 
-            THEN( "the given callable is copied and not moved" ) {
+            THEN( "the given object is copied and not moved" ) {
                 CHECK( wrapper().copied == 1 );
                 CHECK( wrapper().moved == 0 );
             }
         }
-    }
 
-    GIVEN( "a temporary callable" ) {
-        WHEN( "a wrapper is created" ) {
-            auto wrapper = Wrapper{CopyMove{}};
+        WHEN( "a wrapper of a temporary object is created" ) {
+            auto wrapper = Wrapper{NoThrowObj{}};
 
-            THEN( "the given callable is moved and not copied" ) {
+            THEN( "the given object is moved and not copied" ) {
                 CHECK( wrapper().copied == 0 );
                 CHECK( wrapper().moved == 1 );
+            }
+        }
+    }
+
+    GIVEN( "a throw move constructible callable" ) {
+        using Wrapper = calculate::Wrapper<ThrowObj>;
+
+        WHEN( "a wrapper of a non temporary object is created" ) {
+            auto copy_move = ThrowObj{};
+            auto wrapper = Wrapper{copy_move};
+
+            THEN( "the given object is copied and not moved" ) {
+                CHECK( wrapper().copied == 1 );
+                CHECK( wrapper().moved == 0 );
+            }
+        }
+
+        WHEN( "a wrapper of a temporary object is created" ) {
+            auto wrapper = Wrapper{ThrowObj{}};
+
+            THEN( "the given object is copied and not moved" ) {
+                CHECK( wrapper().copied == 1 );
+                CHECK( wrapper().moved == 0 );
             }
         }
     }
@@ -66,7 +133,7 @@ SCENARIO( "copy and clone of a wrapper object", "[copy]" ) {
     const auto hash = std::hash<Wrapper>{};
 
     GIVEN( "a wrapper object" ) {
-        auto wrapper = Wrapper{};
+        auto wrapper = Wrapper{[]{ return 0; }};
 
         WHEN( "a copy is created" ) {
             auto copy = wrapper;
@@ -90,19 +157,19 @@ SCENARIO( "copy and clone of a wrapper object", "[copy]" ) {
     }
 }
 
-SCENARIO( "moved wrapper objects are safe to move", "[move]" ) {
+SCENARIO( "moved from state wrappers", "[move]" ) {
     using Wrapper = calculate::Wrapper<int>;
 
     GIVEN( "a wrapper object" ) {
-        auto wrapper = Wrapper{};
-        auto args = std::vector<decltype(wrapper())>(wrapper.argc());
+        auto wrapper = Wrapper{[]{ return 0; }};
 
         WHEN( "it is moved" ) {
-            std::move(wrapper);
+            auto other = std::move(wrapper);
+            CHECK( !wrapper.valid() );
 
-            THEN( "it still remains a valid object" ) {
-                REQUIRE_NOTHROW( wrapper(args) );
-                CHECK( wrapper(args) == Wrapper{}(args) );
+            THEN( "it cannot be used again until being reassigned" ) {
+                wrapper = []{ return 0; };
+                CHECK( wrapper.valid() );
             }
         }
     }

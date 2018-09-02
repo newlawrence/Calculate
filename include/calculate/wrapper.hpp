@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc9
-    Last modified 2018/08/28
+    Last modified 2018/09/02
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -35,6 +35,40 @@ class Wrapper {
 
     template<typename Callable, typename Adapter, std::size_t argcount>
     class WrapperModel final : public WrapperConcept {
+        static_assert(
+            util::is_copy_constructible_v<Callable>,
+            "Non copy-constructible callable"
+        );
+        static_assert(
+            util::is_same_v<
+                util::args_tuple_t<Callable>,
+                util::make_tuple_t<Type, util::argc_v<Callable>>
+            >,
+            "Wrong callable arguments types"
+        );
+        static_assert(
+            util::is_same_v<util::result_t<Callable>, Type>,
+            "Wrong callable return type"
+        );
+        static_assert(util::is_const_v<Callable>, "Callable may have side effects");
+
+        static_assert(
+            util::is_copy_constructible_v<Adapter>,
+            "Non copy-constructible adapter"
+        );
+        static_assert(
+            util::is_same_v<
+                util::args_tuple_t<Adapter>,
+                util::make_tuple_t<Source, 1>
+            >,
+            "Wrong adapter arguments types"
+        );
+        static_assert(
+            util::is_same_v<util::result_t<Adapter>, Type>,
+            "Wrong adapter return type"
+        );
+        static_assert(util::is_const_v<Adapter>, "Adapter may have side effects");
+
         Callable _callable;
         Adapter _adapter;
 
@@ -55,8 +89,14 @@ class Wrapper {
     public:
         template<typename CallableType, typename AdapterType>
         WrapperModel(CallableType&& callable, AdapterType&& adapter) :
-                _callable{std::forward<CallableType>(callable)},
-                _adapter{std::forward<AdapterType>(adapter)}
+                _callable{
+                    util::is_nothrow_move_constructible_v<Callable> ?
+                    std::forward<CallableType>(callable) : callable
+                },
+                _adapter{
+                    util::is_nothrow_move_constructible_v<Adapter> ?
+                    std::forward<AdapterType>(adapter) : adapter
+                }
         {}
 
         std::shared_ptr<WrapperConcept> clone() const override {
@@ -95,41 +135,7 @@ public:
                 std::forward<Callable>(callable),
                 std::forward<Adapter>(adapter)
             )}
-    {
-        static_assert(
-            util::is_copy_constructible_v<Callable>,
-            "Non copy-constructible callable"
-        );
-        static_assert(
-            util::is_same_v<
-                util::args_tuple_t<Callable>,
-                util::make_tuple_t<Type, util::argc_v<Callable>>
-            >,
-            "Wrong callable arguments types"
-        );
-        static_assert(
-            util::is_same_v<util::result_t<Callable>, Type>,
-            "Wrong callable return type"
-        );
-        static_assert(util::is_const_v<Callable>, "Callable may have side effects");
-
-        static_assert(
-            util::is_copy_constructible_v<Adapter>,
-            "Non copy-constructible adapter"
-        );
-        static_assert(
-            util::is_same_v<
-                util::args_tuple_t<Adapter>,
-                util::make_tuple_t<Source, 1>
-            >,
-            "Wrong adapter arguments types"
-        );
-        static_assert(
-            util::is_same_v<util::result_t<Adapter>, Type>,
-            "Wrong adapter return type"
-        );
-        static_assert(util::is_const_v<Adapter>, "Adapter may have side effects");
-    }
+    {}
 
     template<
         typename Callable,
@@ -144,29 +150,12 @@ public:
     {}
 
     template<
-        typename Callable,
-        typename = std::enable_if_t<util::is_base_of_v<WrapperConcept, Callable>>
+        typename Model,
+        typename = std::enable_if_t<util::is_base_of_v<WrapperConcept, Model>>
     >
-    Wrapper(Callable&& callable) :
-            _wrapper{std::make_shared<Callable>(std::forward<Callable>(callable))}
-    {}
+    Wrapper(Model&& model) : _wrapper{std::make_shared<Model>(std::forward<Model>(model))} {}
 
-    Wrapper() noexcept : Wrapper{[]() noexcept { return Type(); }} {}
-
-    Wrapper(const Wrapper& other) noexcept = default;
-
-    Wrapper(Wrapper&& other) : _wrapper{std::move(other._wrapper)} {
-        other._wrapper = std::move(Wrapper{}._wrapper);
-    }
-
-    Wrapper& operator=(const Wrapper& other) noexcept = default;
-
-    Wrapper& operator=(Wrapper&& other) noexcept {
-        _wrapper = std::move(other._wrapper), other._wrapper = std::move(Wrapper{}._wrapper);
-        return *this;
-    }
-
-    ~Wrapper() = default;
+    bool valid() { return bool{_wrapper}; }
 
     Wrapper clone() const { return Wrapper{_wrapper->clone()}; }
 
