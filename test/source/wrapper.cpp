@@ -85,8 +85,8 @@ SCENARIO( "construction of a wrapper object", "[construction]" ) {
         using Wrapper = calculate::Wrapper<NoThrowObj>;
 
         WHEN( "a wrapper of a non temporary object is created" ) {
-            auto copy_move = NoThrowObj{};
-            auto wrapper = Wrapper{copy_move};
+            auto callable = NoThrowObj{};
+            auto wrapper = Wrapper{callable};
 
             THEN( "the given object is copied and not moved" ) {
                 CHECK( wrapper().copied == 1 );
@@ -108,8 +108,8 @@ SCENARIO( "construction of a wrapper object", "[construction]" ) {
         using Wrapper = calculate::Wrapper<ThrowObj>;
 
         WHEN( "a wrapper of a non temporary object is created" ) {
-            auto copy_move = ThrowObj{};
-            auto wrapper = Wrapper{copy_move};
+            auto callable = ThrowObj{};
+            auto wrapper = Wrapper{callable};
 
             THEN( "the given object is copied and not moved" ) {
                 CHECK( wrapper().copied == 1 );

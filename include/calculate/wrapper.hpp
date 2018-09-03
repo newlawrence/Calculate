@@ -36,10 +36,6 @@ class Wrapper {
     template<typename Callable, typename Adapter, std::size_t argcount>
     class WrapperModel final : public WrapperConcept {
         static_assert(
-            util::is_copy_constructible_v<Callable>,
-            "Non copy-constructible callable"
-        );
-        static_assert(
             util::is_same_v<
                 util::args_tuple_t<Callable>,
                 util::make_tuple_t<Type, util::argc_v<Callable>>
@@ -52,10 +48,6 @@ class Wrapper {
         );
         static_assert(util::is_const_v<Callable>, "Callable may have side effects");
 
-        static_assert(
-            util::is_copy_constructible_v<Adapter>,
-            "Non copy-constructible adapter"
-        );
         static_assert(
             util::is_same_v<
                 util::args_tuple_t<Adapter>,
@@ -87,16 +79,24 @@ class Wrapper {
         }
 
     public:
-        template<typename CallableType, typename AdapterType>
-        WrapperModel(CallableType&& callable, AdapterType&& adapter) :
-                _callable{
-                    util::is_nothrow_move_constructible_v<Callable> ?
-                    std::forward<CallableType>(callable) : callable
-                },
-                _adapter{
-                    util::is_nothrow_move_constructible_v<Adapter> ?
-                    std::forward<AdapterType>(adapter) : adapter
-                }
+        WrapperModel(const Callable& callable, const Adapter& adapter) :
+                _callable{callable},
+                _adapter{adapter}
+        {}
+
+        WrapperModel(Callable&& callable, const Adapter& adapter) :
+                _callable{std::move_if_noexcept(callable)},
+                _adapter{adapter}
+        {}
+
+        WrapperModel(const Callable& callable, Adapter&& adapter) :
+                _callable{callable},
+                _adapter{std::move_if_noexcept(adapter)}
+        {}
+
+        WrapperModel(Callable&& callable, Adapter&& adapter) :
+                _callable{std::move_if_noexcept(callable)},
+                _adapter{std::move_if_noexcept(adapter)}
         {}
 
         std::shared_ptr<WrapperConcept> clone() const override {
@@ -155,25 +155,25 @@ public:
     >
     Wrapper(Model&& model) : _wrapper{std::make_shared<Model>(std::forward<Model>(model))} {}
 
-    bool valid() { return bool{_wrapper}; }
+    bool operator==(const Wrapper& other) const noexcept { return _wrapper == other._wrapper; }
 
-    Wrapper clone() const { return Wrapper{_wrapper->clone()}; }
-
-    std::size_t argc() const noexcept { return _wrapper->argc(); }
-
-    template<typename... Args>
-    Type eval(Args&&... args) const {
-        return _wrapper->eval(util::to_vector<Source>(std::forward<Args>(args)...));
-    }
+    bool operator!=(const Wrapper& other) const noexcept { return !operator==(other); }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
         return _wrapper->call(util::to_vector<Type>(std::forward<Args>(args)...));
     }
 
-    bool operator==(const Wrapper& other) const noexcept { return _wrapper == other._wrapper; }
+    template<typename... Args>
+    Type eval(Args&&... args) const {
+        return _wrapper->eval(util::to_vector<Source>(std::forward<Args>(args)...));
+    }
 
-    bool operator!=(const Wrapper& other) const noexcept { return !operator==(other); }
+    std::size_t argc() const noexcept { return _wrapper->argc(); }
+
+    Wrapper clone() const { return Wrapper{_wrapper->clone()}; }
+
+    bool valid() const noexcept { return static_cast<bool>(_wrapper); }
 };
 
 }

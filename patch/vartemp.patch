@@ -121,10 +121,10 @@ index 6a497f4..d50401e 100644
      Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
  
 diff --git a/include/calculate/util.hpp b/include/calculate/util.hpp
-index 9509895..480c7c3 100644
+index 3dc4077..af4c158 100644
 --- a/include/calculate/util.hpp
 +++ b/include/calculate/util.hpp
-@@ -22,36 +22,27 @@ namespace calculate {
+@@ -22,39 +22,27 @@ namespace calculate {
  
  namespace util {
  
@@ -137,14 +137,17 @@ index 9509895..480c7c3 100644
 -template<typename T>
 -constexpr bool is_integral_v = std::is_integral<T>::value;
 -
--template<typename T>
+ template<typename T>
 -constexpr bool is_copy_constructible_v = std::is_copy_constructible<T>::value;
+-
+-template<typename T>
+-constexpr bool is_nothrow_move_constructible_v = std::is_nothrow_move_constructible<T>::value;
 -
 -template<typename T>
 -constexpr std::size_t tuple_size_v = std::tuple_size<T>::value;
 -
 -
- template<typename T>
+-template<typename T>
 -constexpr bool is_value_v = !std::is_pointer<T>::value && !std::is_reference<T>::value;
 +struct is_value {
 +    static constexpr bool value = !std::is_pointer<T>::value && !std::is_reference<T>::value;
@@ -174,7 +177,7 @@ index 9509895..480c7c3 100644
      using type = std::decay_t<T>;
  };
  
-@@ -95,7 +86,9 @@ struct make_tuple<T, argc, std::index_sequence<indices...>> {
+@@ -98,7 +86,9 @@ struct make_tuple<T, argc, std::index_sequence<indices...>> {
  
  
  template<typename T, typename... Args>
@@ -185,7 +188,7 @@ index 9509895..480c7c3 100644
  
  template<bool c, typename R, typename... Args>
  struct TraitsHandler {
-@@ -113,64 +106,70 @@ struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
+@@ -116,64 +106,70 @@ struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
  template<typename R, typename... Args>
  struct Traits<
      R(*)(Args...) noexcept,
@@ -268,7 +271,7 @@ index 9509895..480c7c3 100644
  
  
  template<typename T, std::size_t argc>
-@@ -180,16 +179,25 @@ template<typename T>
+@@ -183,16 +179,25 @@ template<typename T>
  using result_t = typename detail::Traits<T>::result_t;
  
  template<typename T>
@@ -297,7 +300,7 @@ index 9509895..480c7c3 100644
  
  
  template<typename T, typename... Args>
-@@ -198,7 +206,7 @@ std::vector<T> to_vector(Args&&... args) {
+@@ -201,7 +206,7 @@ std::vector<T> to_vector(Args&&... args) {
  }
  
  template<typename T, typename U>
@@ -307,7 +310,7 @@ index 9509895..480c7c3 100644
  }
  
 diff --git a/include/calculate/wrapper.hpp b/include/calculate/wrapper.hpp
-index e961c70..3106a36 100644
+index ab982f2..c25c508 100644
 --- a/include/calculate/wrapper.hpp
 +++ b/include/calculate/wrapper.hpp
 @@ -28,7 +28,7 @@ struct WrapperConcept {
@@ -319,23 +322,9 @@ index e961c70..3106a36 100644
  
      friend struct std::hash<Wrapper>;
      using WrapperConcept = calculate::WrapperConcept<Type, Source>;
-@@ -78,7 +78,7 @@ class Wrapper {
-     using ModelType = WrapperModel<
-         std::decay_t<Callable>,
-         std::decay_t<Adapter>,
--        util::argc_v<Callable>
-+        util::argc<Callable>::value
-     >;
- 
-     std::shared_ptr<WrapperConcept> _wrapper;
-@@ -97,44 +97,44 @@ public:
-             )}
-     {
-         static_assert(
--            util::is_copy_constructible_v<Callable>,
-+            std::is_copy_constructible<Callable>::value,
-             "Non copy-constructible callable"
-         );
+@@ -36,30 +36,30 @@ class Wrapper {
+     template<typename Callable, typename Adapter, std::size_t argcount>
+     class WrapperModel final : public WrapperConcept {
          static_assert(
 -            util::is_same_v<
 +            std::is_same<
@@ -355,11 +344,6 @@ index e961c70..3106a36 100644
 +        static_assert(util::is_const<Callable>::value, "Callable may have side effects");
  
          static_assert(
--            util::is_copy_constructible_v<Adapter>,
-+            std::is_copy_constructible<Adapter>::value,
-             "Non copy-constructible adapter"
-         );
-         static_assert(
 -            util::is_same_v<
 +            std::is_same<
                  util::args_tuple_t<Adapter>,
@@ -375,7 +359,19 @@ index e961c70..3106a36 100644
          );
 -        static_assert(util::is_const_v<Adapter>, "Adapter may have side effects");
 +        static_assert(util::is_const<Adapter>::value, "Adapter may have side effects");
-     }
+ 
+         Callable _callable;
+         Adapter _adapter;
+@@ -118,7 +118,7 @@ class Wrapper {
+     using ModelType = WrapperModel<
+         std::decay_t<Callable>,
+         std::decay_t<Adapter>,
+-        util::argc_v<Callable>
++        util::argc<Callable>::value
+     >;
+ 
+     std::shared_ptr<WrapperConcept> _wrapper;
+@@ -139,8 +139,8 @@ public:
  
      template<
          typename Callable,
@@ -386,12 +382,12 @@ index e961c70..3106a36 100644
      >
      Wrapper(Callable&& callable) :
              Wrapper{
-@@ -145,7 +145,7 @@ public:
+@@ -151,7 +151,7 @@ public:
  
      template<
-         typename Callable,
--        typename = std::enable_if_t<util::is_base_of_v<WrapperConcept, Callable>>
-+        typename = std::enable_if_t<std::is_base_of<WrapperConcept, Callable>::value>
+         typename Model,
+-        typename = std::enable_if_t<util::is_base_of_v<WrapperConcept, Model>>
++        typename = std::enable_if_t<std::is_base_of<WrapperConcept, Model>::value>
      >
-     Wrapper(Callable&& callable) :
-             _wrapper{std::make_shared<Callable>(std::forward<Callable>(callable))}
+     Wrapper(Model&& model) : _wrapper{std::make_shared<Model>(std::forward<Model>(model))} {}
+ 
