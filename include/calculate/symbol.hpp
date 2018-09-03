@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc10
-    Last modified 2018/07/23
+    Last modified 2018/09/03
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -52,7 +52,7 @@ public:
     {
         static_assert(
             util::not_same_v<Callable, Function<Expression>> || util::argc_v<Callable> == 0,
-            "Functions must have at least one argument"
+            "Functions must have one argument at least"
         );
         static_assert(
             util::not_same_v<Callable, Operator<Expression>> || util::argc_v<Callable> == 2,
@@ -91,7 +91,7 @@ public:
 
     virtual SymbolType type() const noexcept = 0;
 
-    virtual std::unique_ptr<Symbol> clone() const noexcept = 0;
+    virtual std::unique_ptr<Symbol> clone() const = 0;
 };
 
 
@@ -111,7 +111,7 @@ public:
 
     SymbolType type() const noexcept override { return SymbolType::CONSTANT; }
 
-    std::unique_ptr<Symbol> clone() const noexcept override {
+    std::unique_ptr<Symbol> clone() const override {
         return std::make_unique<Variable>(*this);
     }
 };
@@ -130,13 +130,13 @@ public:
             Symbol{[value]() noexcept { return value; }}
     {}
 
+    operator Type() const { return Symbol::operator()(); }
+
     SymbolType type() const noexcept override { return SymbolType::CONSTANT; }
 
-    std::unique_ptr<Symbol> clone() const noexcept override {
+    std::unique_ptr<Symbol> clone() const override {
         return std::make_unique<Constant>(*this);
     }
-
-    operator Type() const { return Symbol::operator()(); }
 };
 
 template<typename Expression>
@@ -154,15 +154,15 @@ public:
             Symbol{std::forward<Callable>(callable)}
     {}
 
-    SymbolType type() const noexcept override { return SymbolType::FUNCTION; }
-
-    std::unique_ptr<Symbol> clone() const noexcept override {
-        return std::make_unique<Function>(*this);
-    }
-
     template<typename... Args>
     Type operator()(Args&&... args) const {
         return Symbol::operator()(std::forward<Args>(args)...);
+    }
+
+    SymbolType type() const noexcept override { return SymbolType::FUNCTION; }
+
+    std::unique_ptr<Symbol> clone() const override {
+        return std::make_unique<Function>(*this);
     }
 };
 
@@ -197,12 +197,6 @@ public:
             _associativity{associativity}
     {}
 
-    SymbolType type() const noexcept override { return SymbolType::OPERATOR; }
-
-    std::unique_ptr<Symbol> clone() const noexcept override {
-        return std::make_unique<Operator>(*this);
-    }
-
     template<typename... Args>
     Type operator()(Args&&... args) const {
         return Symbol::operator()(std::forward<Args>(args)...);
@@ -211,6 +205,12 @@ public:
     std::size_t precedence() const noexcept { return _precedence; }
 
     Associativity associativity() const noexcept { return _associativity; }
+
+    SymbolType type() const noexcept override { return SymbolType::OPERATOR; }
+
+    std::unique_ptr<Symbol> clone() const override {
+        return std::make_unique<Operator>(*this);
+    }
 };
 
 }

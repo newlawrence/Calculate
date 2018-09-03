@@ -1,5 +1,5 @@
 diff --git a/include/calculate/lexer.hpp b/include/calculate/lexer.hpp
-index 170afdc..037bdb9 100644
+index 2d6f3de..a7166ed 100644
 --- a/include/calculate/lexer.hpp
 +++ b/include/calculate/lexer.hpp
 @@ -31,30 +31,42 @@ constexpr const char separator[] = ",";
@@ -69,7 +69,7 @@ index 170afdc..037bdb9 100644
  
  }
 diff --git a/include/calculate/node.hpp b/include/calculate/node.hpp
-index f4973a7..4ec6943 100644
+index 2671eb4..7b893c0 100644
 --- a/include/calculate/node.hpp
 +++ b/include/calculate/node.hpp
 @@ -107,7 +107,7 @@ public:
@@ -82,7 +82,7 @@ index f4973a7..4ec6943 100644
  
              for (const auto& val : vals) {
 diff --git a/include/calculate/symbol.hpp b/include/calculate/symbol.hpp
-index 6a497f4..d50401e 100644
+index d20bb2c..9636797 100644
 --- a/include/calculate/symbol.hpp
 +++ b/include/calculate/symbol.hpp
 @@ -41,8 +41,8 @@ private:
@@ -103,7 +103,7 @@ index 6a497f4..d50401e 100644
 -            util::not_same_v<Callable, Function<Expression>> || util::argc_v<Callable> == 0,
 +            util::not_same<Callable, Function<Expression>>::value ||
 +            util::argc<Callable>::value == 0,
-             "Functions must have at least one argument"
+             "Functions must have one argument at least"
          );
          static_assert(
 -            util::not_same_v<Callable, Operator<Expression>> || util::argc_v<Callable> == 2,
@@ -121,7 +121,7 @@ index 6a497f4..d50401e 100644
      Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
  
 diff --git a/include/calculate/util.hpp b/include/calculate/util.hpp
-index 3dc4077..af4c158 100644
+index a807bae..4d7e22a 100644
 --- a/include/calculate/util.hpp
 +++ b/include/calculate/util.hpp
 @@ -22,39 +22,27 @@ namespace calculate {
@@ -310,7 +310,7 @@ index 3dc4077..af4c158 100644
  }
  
 diff --git a/include/calculate/wrapper.hpp b/include/calculate/wrapper.hpp
-index ab982f2..c25c508 100644
+index c278160..e7ea92b 100644
 --- a/include/calculate/wrapper.hpp
 +++ b/include/calculate/wrapper.hpp
 @@ -28,7 +28,7 @@ struct WrapperConcept {
