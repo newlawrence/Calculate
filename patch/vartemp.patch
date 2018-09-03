@@ -121,10 +121,10 @@ index d20bb2c..9636797 100644
      Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
  
 diff --git a/include/calculate/util.hpp b/include/calculate/util.hpp
-index a807bae..4d7e22a 100644
+index 3e7d87b..4d7e22a 100644
 --- a/include/calculate/util.hpp
 +++ b/include/calculate/util.hpp
-@@ -22,39 +22,27 @@ namespace calculate {
+@@ -22,36 +22,27 @@ namespace calculate {
  
  namespace util {
  
@@ -137,17 +137,14 @@ index a807bae..4d7e22a 100644
 -template<typename T>
 -constexpr bool is_integral_v = std::is_integral<T>::value;
 -
- template<typename T>
--constexpr bool is_copy_constructible_v = std::is_copy_constructible<T>::value;
--
 -template<typename T>
--constexpr bool is_nothrow_move_constructible_v = std::is_nothrow_move_constructible<T>::value;
+-constexpr bool is_copy_constructible_v = std::is_copy_constructible<T>::value;
 -
 -template<typename T>
 -constexpr std::size_t tuple_size_v = std::tuple_size<T>::value;
 -
 -
--template<typename T>
+ template<typename T>
 -constexpr bool is_value_v = !std::is_pointer<T>::value && !std::is_reference<T>::value;
 +struct is_value {
 +    static constexpr bool value = !std::is_pointer<T>::value && !std::is_reference<T>::value;
@@ -177,7 +174,7 @@ index a807bae..4d7e22a 100644
      using type = std::decay_t<T>;
  };
  
-@@ -98,7 +86,9 @@ struct make_tuple<T, argc, std::index_sequence<indices...>> {
+@@ -95,7 +86,9 @@ struct make_tuple<T, argc, std::index_sequence<indices...>> {
  
  
  template<typename T, typename... Args>
@@ -188,7 +185,7 @@ index a807bae..4d7e22a 100644
  
  template<bool c, typename R, typename... Args>
  struct TraitsHandler {
-@@ -116,64 +106,70 @@ struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
+@@ -113,64 +106,70 @@ struct Traits<std::function<R(Args...)>> : TraitsHandler<true, R, Args...> {};
  template<typename R, typename... Args>
  struct Traits<
      R(*)(Args...) noexcept,
@@ -271,7 +268,7 @@ index a807bae..4d7e22a 100644
  
  
  template<typename T, std::size_t argc>
-@@ -183,16 +179,25 @@ template<typename T>
+@@ -180,16 +179,25 @@ template<typename T>
  using result_t = typename detail::Traits<T>::result_t;
  
  template<typename T>
@@ -300,7 +297,7 @@ index a807bae..4d7e22a 100644
  
  
  template<typename T, typename... Args>
-@@ -201,7 +206,7 @@ std::vector<T> to_vector(Args&&... args) {
+@@ -198,7 +206,7 @@ std::vector<T> to_vector(Args&&... args) {
  }
  
  template<typename T, typename U>
@@ -310,7 +307,7 @@ index a807bae..4d7e22a 100644
  }
  
 diff --git a/include/calculate/wrapper.hpp b/include/calculate/wrapper.hpp
-index c278160..e7ea92b 100644
+index 6d371b2..e26a9d3 100644
 --- a/include/calculate/wrapper.hpp
 +++ b/include/calculate/wrapper.hpp
 @@ -28,7 +28,7 @@ struct WrapperConcept {
@@ -362,7 +359,7 @@ index c278160..e7ea92b 100644
  
          Callable _callable;
          Adapter _adapter;
-@@ -118,7 +118,7 @@ class Wrapper {
+@@ -104,7 +104,7 @@ class Wrapper {
      using ModelType = WrapperModel<
          std::decay_t<Callable>,
          std::decay_t<Adapter>,
@@ -371,7 +368,7 @@ index c278160..e7ea92b 100644
      >;
  
      std::shared_ptr<WrapperConcept> _wrapper;
-@@ -139,8 +139,8 @@ public:
+@@ -125,8 +125,8 @@ public:
  
      template<
          typename Callable,
@@ -382,7 +379,7 @@ index c278160..e7ea92b 100644
      >
      Wrapper(Callable&& callable) :
              Wrapper{
-@@ -151,7 +151,7 @@ public:
+@@ -137,7 +137,7 @@ public:
  
      template<
          typename Model,

@@ -8,32 +8,18 @@
 #include "calculate/wrapper.hpp"
 
 
-class NoThrowObj {
+class CopyMove {
 public:
     const std::size_t copied = 0;
     const std::size_t moved = 0;
 
-    NoThrowObj() = default;
-    NoThrowObj(std::size_t cp, std::size_t mv) : copied(cp), moved(mv) {}
-    NoThrowObj(const NoThrowObj& other) : copied{other.copied + 1}, moved{other.moved} {}
-    NoThrowObj(NoThrowObj&& other) noexcept : copied(other.copied), moved(other.moved + 1) {}
-    ~NoThrowObj() = default;
+    CopyMove() = default;
+    CopyMove(std::size_t cp, std::size_t mv) noexcept : copied(cp), moved(mv) {}
+    CopyMove(const CopyMove& other) noexcept : copied{other.copied + 1}, moved{other.moved} {}
+    CopyMove(CopyMove&& other) noexcept : copied(other.copied), moved(other.moved + 1) {}
+    ~CopyMove() = default;
 
-    auto operator()() const noexcept { return NoThrowObj{copied, moved}; }
-};
-
-class ThrowObj {
-public:
-    const std::size_t copied = 0;
-    const std::size_t moved = 0;
-
-    ThrowObj() = default;
-    ThrowObj(std::size_t cp, std::size_t mv) : copied(cp), moved(mv) {}
-    ThrowObj(const ThrowObj& other) : copied{other.copied + 1}, moved{other.moved} {}
-    ThrowObj(ThrowObj&& other) : copied(other.copied), moved(other.moved + 1) {}
-    ~ThrowObj() = default;
-
-    auto operator()() const noexcept { return ThrowObj{copied, moved}; }
+    auto operator()() const noexcept { return CopyMove{copied, moved}; }
 };
 
 class Intermediary {
@@ -81,11 +67,11 @@ SCENARIO( "Some static assertions on the Wrapper class", "[assertions]" ) {
 }
 
 SCENARIO( "construction of a wrapper object", "[construction]" ) {
-    GIVEN( "a no-throw move constructible callable" ) {
-        using Wrapper = calculate::Wrapper<NoThrowObj>;
+    GIVEN( "a copyable and movable callable class" ) {
+        using Wrapper = calculate::Wrapper<CopyMove>;
 
         WHEN( "a wrapper of a non temporary object is created" ) {
-            auto callable = NoThrowObj{};
+            auto callable = CopyMove{};
             auto wrapper = Wrapper{callable};
 
             THEN( "the given object is copied and not moved" ) {
@@ -95,34 +81,11 @@ SCENARIO( "construction of a wrapper object", "[construction]" ) {
         }
 
         WHEN( "a wrapper of a temporary object is created" ) {
-            auto wrapper = Wrapper{NoThrowObj{}};
+            auto wrapper = Wrapper{CopyMove{}};
 
             THEN( "the given object is moved and not copied" ) {
                 CHECK( wrapper().copied == 0 );
                 CHECK( wrapper().moved == 1 );
-            }
-        }
-    }
-
-    GIVEN( "a throw move constructible callable" ) {
-        using Wrapper = calculate::Wrapper<ThrowObj>;
-
-        WHEN( "a wrapper of a non temporary object is created" ) {
-            auto callable = ThrowObj{};
-            auto wrapper = Wrapper{callable};
-
-            THEN( "the given object is copied and not moved" ) {
-                CHECK( wrapper().copied == 1 );
-                CHECK( wrapper().moved == 0 );
-            }
-        }
-
-        WHEN( "a wrapper of a temporary object is created" ) {
-            auto wrapper = Wrapper{ThrowObj{}};
-
-            THEN( "the given object is copied and not moved" ) {
-                CHECK( wrapper().copied == 1 );
-                CHECK( wrapper().moved == 0 );
             }
         }
     }

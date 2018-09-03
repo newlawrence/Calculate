@@ -35,9 +35,6 @@ template<typename T>
 constexpr bool is_copy_constructible_v = std::is_copy_constructible<T>::value;
 
 template<typename T>
-constexpr bool is_nothrow_move_constructible_v = std::is_nothrow_move_constructible<T>::value;
-
-template<typename T>
 constexpr std::size_t tuple_size_v = std::tuple_size<T>::value;
 
 

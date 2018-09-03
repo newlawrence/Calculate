@@ -79,24 +79,10 @@ class Wrapper {
         }
 
     public:
-        WrapperModel(const Callable& callable, const Adapter& adapter) :
-                _callable{callable},
-                _adapter{adapter}
-        {}
-
-        WrapperModel(Callable&& callable, const Adapter& adapter) :
-                _callable{std::move_if_noexcept(callable)},
-                _adapter{adapter}
-        {}
-
-        WrapperModel(const Callable& callable, Adapter&& adapter) :
-                _callable{callable},
-                _adapter{std::move_if_noexcept(adapter)}
-        {}
-
-        WrapperModel(Callable&& callable, Adapter&& adapter) :
-                _callable{std::move_if_noexcept(callable)},
-                _adapter{std::move_if_noexcept(adapter)}
+        template<typename CallableType, typename AdapterType>
+        WrapperModel(CallableType&& callable, AdapterType&& adapter) :
+                _callable{std::forward<CallableType>(callable)},
+                _adapter{std::forward<AdapterType>(adapter)}
         {}
 
         std::shared_ptr<WrapperConcept> clone() const override {
