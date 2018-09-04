@@ -121,7 +121,7 @@ class Constant final : public Symbol<Expression> {
     using Symbol = calculate::Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
-    bool _equal(const Symbol& other) const noexcept override { return (*this)() == other(); }
+    bool _equal(const Symbol& other) const noexcept override { return Type{*this} == other(); }
 
 public:
     using Type = typename Expression::Type;
