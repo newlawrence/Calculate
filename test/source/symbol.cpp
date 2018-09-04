@@ -62,6 +62,17 @@ SCENARIO( "constants usage", "[usage][constant]" ) {
         THEN( "they can be converted implicitly" ) {
             auto check = [](int i) -> bool { return i == 0; };
             CHECK( check(Constant{0}) );
+            CHECK( c1 + 1 == 2 );
+            CHECK( c1 - 1 == 0 );
+            CHECK( c1 * 2 == 2 );
+            CHECK( c1 / 2 == 0 );
+            CHECK( c1 % 3 == 1 );
+            CHECK( c2 == 2 );
+            CHECK( c2 != 0 );
+            CHECK( c2 > 1 );
+            CHECK( c2 < 3 );
+            CHECK( c2 >= 0 );
+            CHECK( c2 <= 4 );
         }
     }
 }

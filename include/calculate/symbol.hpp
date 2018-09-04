@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc10
-    Last modified 2018/09/03
+    Last modified 2018/09/04
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -131,6 +131,19 @@ public:
     {}
 
     operator Type() const { return Symbol::operator()(); }
+
+    template<typename U> bool operator==(U value) const { return Type{*this} == value; }
+    template<typename U> bool operator!=(U value) const { return Type{*this} != value; }
+    template<typename U> bool operator>(U value) const { return Type{*this} > value; }
+    template<typename U> bool operator<(U value) const { return Type{*this} < value; }
+    template<typename U> bool operator>=(U value) const { return Type{*this} >= value; }
+    template<typename U> bool operator<=(U value) const { return Type{*this} <= value; }
+
+    template<typename U> auto operator+(U value) const { return Type{*this} + value; }
+    template<typename U> auto operator-(U value) const { return Type{*this} - value; }
+    template<typename U> auto operator*(U value) const { return Type{*this} * value; }
+    template<typename U> auto operator/(U value) const { return Type{*this} / value; }
+    template<typename U> auto operator%(U value) const { return Type{*this} % value; }
 
     SymbolType type() const noexcept override { return SymbolType::CONSTANT; }
 
