@@ -33,37 +33,16 @@ public:
 };
 
 
-SCENARIO( "Some static assertions on the Wrapper class", "[assertions]" ) {
+SCENARIO( "some static assertions on the Wrapper class", "[assertions]" ) {
     using Wrapper = calculate::Wrapper<int>;
 
-    static_assert(
-        !std::is_default_constructible<Wrapper>::value,
-        "Wrapper objects must not be default constructible"
-    );
-    static_assert(
-        std::is_copy_constructible<Wrapper>::value,
-        "Wrapper objects must be copy constructible"
-    );
-    static_assert(
-        std::is_nothrow_move_constructible<Wrapper>::value,
-        "Wrapper objects must be no-throw move constructible"
-    );
-    static_assert(
-        std::is_copy_assignable<Wrapper>::value,
-        "Wrapper objects must be copy assignable"
-    );
-    static_assert(
-        std::is_move_assignable<Wrapper>::value,
-        "Wrapper objects must be move assignable"
-    );
-    static_assert(
-        std::is_nothrow_destructible<Wrapper>::value,
-        "Wrapper objects must be no-throw destructible"
-    );
-    static_assert(
-        !std::has_virtual_destructor<Wrapper>::value,
-        "Wrapper objects must not be polymorphic"
-    );
+    static_assert(!std::is_default_constructible<Wrapper>::value, "");
+    static_assert(std::is_copy_constructible<Wrapper>::value, "");
+    static_assert(std::is_nothrow_move_constructible<Wrapper>::value, "");
+    static_assert(std::is_copy_assignable<Wrapper>::value, "");
+    static_assert(std::is_move_assignable<Wrapper>::value, "");
+    static_assert(std::is_nothrow_destructible<Wrapper>::value, "");
+    static_assert(!std::has_virtual_destructor<Wrapper>::value, "");
 }
 
 SCENARIO( "construction of a wrapper object", "[construction]" ) {
