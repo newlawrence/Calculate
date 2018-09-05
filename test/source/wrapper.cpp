@@ -70,14 +70,14 @@ SCENARIO( "construction of a wrapper object", "[construction]" ) {
     }
 }
 
-SCENARIO( "copy and clone of a wrapper object", "[copy]" ) {
+SCENARIO( "copy wrapper objects", "[copy]" ) {
     using Wrapper = calculate::Wrapper<int>;
     const auto hash = std::hash<Wrapper>{};
 
     GIVEN( "a wrapper object" ) {
         auto wrapper = Wrapper{[]{ return 0; }};
 
-        WHEN( "a copy is created" ) {
+        WHEN( "a shallow copy is performed" ) {
             auto copy = wrapper;
 
             THEN( "they share the wrapped callable" ) {
@@ -87,13 +87,13 @@ SCENARIO( "copy and clone of a wrapper object", "[copy]" ) {
             }
         }
 
-        WHEN( "a clone is created" ) {
-            auto clone = wrapper.clone();
+        WHEN( "a deep copy is performed" ) {
+            auto copy = wrapper.copy();
 
             THEN( "they don't share the wrapped callable" ) {
-                CHECK( !(wrapper == clone) );
-                CHECK( wrapper != clone );
-                CHECK( hash(wrapper) != hash(clone) );
+                CHECK( !(wrapper == copy) );
+                CHECK( wrapper != copy );
+                CHECK( hash(wrapper) != hash(copy) );
             }
         }
     }

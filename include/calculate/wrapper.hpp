@@ -1,6 +1,6 @@
 /*
     Calculate - Version 2.1.1rc10
-    Last modified 2018/09/03
+    Last modified 2018/09/05
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -157,7 +157,7 @@ public:
 
     std::size_t argc() const noexcept { return _wrapper->argc(); }
 
-    Wrapper clone() const { return Wrapper{_wrapper->clone()}; }
+    Wrapper copy() const { return Wrapper{_wrapper->clone()}; }
 
     bool valid() const noexcept { return static_cast<bool>(_wrapper); }
 };
