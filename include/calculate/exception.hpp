@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.0.0
-    Last modified 2018/02/10
+    Calculate - Version 2.1.1rc10
+    Last modified 2018/02/27
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -16,9 +16,12 @@
 namespace calculate {
 
 struct BaseError : public std::runtime_error {
-    explicit BaseError(std::string what) : runtime_error{std::move(what)} {}
+    explicit BaseError(std::string what) :
+            runtime_error{std::move(what)}
+    {}
+
     BaseError() :
-            runtime_error{std::string{"Base error: unexpected error"}}
+            runtime_error{"Base error: unexpected error"}
     {}
 };
 
@@ -31,15 +34,14 @@ struct LexerError : BaseError {
 
 struct BadCast : BaseError {
     explicit BadCast(const std::string& token) :
-            BaseError{
-                "Bad cast: cannot perform numeric conversion: '" + token + "'"
-            }
+            BaseError{"Bad cast: cannot perform numeric conversion: '" + token + "'"}
     {}
 };
 
 struct ArgumentsMismatch : BaseError {
     const std::size_t needed;
     const std::size_t provided;
+
     ArgumentsMismatch(std::size_t n, std::size_t p) :
             BaseError{
                 "Arguments mismatch: " + std::to_string(n) +
@@ -49,6 +51,7 @@ struct ArgumentsMismatch : BaseError {
             needed{n},
             provided{p}
     {}
+
     ArgumentsMismatch(const std::string& token, std::size_t n, std::size_t p) :
             BaseError{
                 "Arguments mismatch: '" + token + "' " + std::to_string(n) +
@@ -61,15 +64,20 @@ struct ArgumentsMismatch : BaseError {
 };
 
 struct EmptyExpression : BaseError {
-    EmptyExpression() : BaseError{"Empty expression"} {}
+    EmptyExpression() :
+            BaseError{"Empty expression"}
+    {}
 };
 
 struct ParenthesisMismatch : BaseError {
-    ParenthesisMismatch() : BaseError{"Parenthesis mismatch"} {}
+    ParenthesisMismatch() :
+            BaseError{"Parenthesis mismatch"}
+    {}
 };
 
 struct RepeatedSymbol : BaseError {
     const std::string token;
+
     explicit RepeatedSymbol(const std::string& t) :
             BaseError{"Repeated symbol: '" + t + "'"},
             token{t}
@@ -77,14 +85,18 @@ struct RepeatedSymbol : BaseError {
 };
 
 struct SyntaxError : BaseError {
-    SyntaxError() : BaseError{"Syntax error"} {}
     explicit SyntaxError(const std::string& what) :
             BaseError{"Syntax error: " + what}
+    {}
+
+    SyntaxError() :
+            BaseError{"Syntax error"}
     {}
 };
 
 struct UndefinedSymbol : BaseError {
     const std::string token;
+
     explicit UndefinedSymbol(const std::string& t) :
             BaseError{"Undefined symbol: '" + t + "'"},
             token{t}
@@ -93,6 +105,7 @@ struct UndefinedSymbol : BaseError {
 
 struct UnsuitableName : BaseError {
     const std::string token;
+
     explicit UnsuitableName(const std::string& t) :
             BaseError{"Unsuitable symbol name: '" + t + "'"},
             token{t}
@@ -101,8 +114,10 @@ struct UnsuitableName : BaseError {
 
 struct UnusedSymbol : BaseError {
     const std::string token;
+
     explicit UnusedSymbol(const std::string& t) :
-            BaseError{"Unused symbol: '" + t + "'"}, token{t}
+            BaseError{"Unused symbol: '" + t + "'"},
+            token{t}
     {}
 };
 

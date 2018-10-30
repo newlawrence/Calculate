@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.0.0
-    Last modified 2018/02/07
+    Calculate - Version 2.1.1rc10
+    Last modified 2018/09/04
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -20,34 +20,18 @@ template<typename> class Operator;
 template<typename Expression>
 class Symbol : Wrapper<typename Expression::Type, Expression> {
     friend struct std::hash<Symbol>;
-    friend Expression;
 
 public:
     using Type = typename Expression::Type;
 
-    enum class SymbolType : int {
-        LEFT=0,
-        RIGHT,
-        SEPARATOR,
-        CONSTANT,
-        FUNCTION,
-        OPERATOR
-    };
+    enum class SymbolType { LEFT, RIGHT, SEPARATOR, CONSTANT, FUNCTION, OPERATOR, PREFIX, SUFFIX };
 
 private:
     using WrapperConcept = calculate::WrapperConcept<Type, Expression>;
     using Wrapper = calculate::Wrapper<Type, Expression>;
 
-    template<typename Callable>
-    struct Inspect {
-        static constexpr bool not_self =
-            detail::NotSame<Callable, Symbol>::value;
-        static constexpr bool is_model =
-            std::is_base_of<WrapperConcept, Callable>::value;
-    };
-
     std::size_t _hash() const noexcept {
-        if (symbol() == SymbolType::CONSTANT)
+        if (type() == SymbolType::CONSTANT)
             return std::hash<Type>()(static_cast<const Wrapper&>(*this)());
         return std::hash<Wrapper>()(static_cast<const Wrapper&>(*this));
     }
@@ -57,31 +41,30 @@ private:
 public:
     template<
         typename Callable,
-        typename = std::enable_if_t<Inspect<Callable>::not_self>,
-        typename = std::enable_if_t<!Inspect<Callable>::is_model>
+        typename = std::enable_if_t<util::not_same_v<Callable, Symbol>>,
+        typename = std::enable_if_t<!util::is_base_of_v<WrapperConcept, Callable>>
     >
     Symbol(Callable&& callable) :
-            Wrapper{std::forward<Callable>(callable), &Expression::evaluate}
+            Wrapper{
+                std::forward<Callable>(callable),
+                [](const Expression& e) noexcept { return e._symbol->eval(e._nodes); }
+            }
     {
         static_assert(
-            detail::NotSame<Callable, Function<Expression>>::value ||
-            detail::Argc<Callable>::value > 0,
-            "Functions must have at least one argument"
+            util::not_same_v<Callable, Function<Expression>> || util::argc_v<Callable> == 0,
+            "Functions must have one argument at least"
         );
         static_assert(
-            detail::NotSame<Callable, Operator<Expression>>::value ||
-            detail::Argc<Callable>::value == 2,
+            util::not_same_v<Callable, Operator<Expression>> || util::argc_v<Callable> == 2,
             "Operators must have two arguments"
         );
-	}
+    }
 
     template<
         typename Callable,
-        typename = std::enable_if_t<Inspect<Callable>::is_model>
+        typename = std::enable_if_t<util::is_base_of_v<WrapperConcept, Callable>>
     >
-    Symbol(Callable&& callable) :
-            Wrapper{std::forward<Callable>(callable)}
-    {}
+    Symbol(Callable&& callable) : Wrapper{std::forward<Callable>(callable)} {}
 
     virtual ~Symbol() = default;
 
@@ -90,27 +73,25 @@ public:
         auto& this_wrapper = static_cast<const Wrapper&>(*this);
         auto& other_wrapper = static_cast<const Wrapper&>(other);
 
-        if (symbol() != other.symbol())
+        if (type() != other.type())
             return false;
-        if (symbol() != SymbolType::CONSTANT && this_wrapper != other_wrapper)
+        if (type() != SymbolType::CONSTANT && this_wrapper != other_wrapper)
             return false;
         return this->_equal(other);
     }
 
     template<typename Class>
-    bool operator!=(const Class& other) const noexcept {
-        return !operator==(other);
-    }
+    bool operator!=(const Class& other) const noexcept { return !operator==(other); }
 
     using Wrapper::operator();
 
-    std::size_t arguments() const noexcept {
-        return static_cast<const Wrapper*>(this)->argc();
-    }
+    using Wrapper::eval;
 
-    virtual SymbolType symbol() const noexcept = 0;
+    std::size_t arguments() const noexcept { return static_cast<const Wrapper*>(this)->argc(); }
 
-    virtual std::unique_ptr<Symbol> clone() const noexcept = 0;
+    virtual SymbolType type() const noexcept = 0;
+
+    virtual std::unique_ptr<Symbol> clone() const = 0;
 };
 
 
@@ -128,9 +109,9 @@ public:
             Symbol{[&variable]() noexcept { return variable; }}
     {}
 
-    SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
+    SymbolType type() const noexcept override { return SymbolType::CONSTANT; }
 
-    std::unique_ptr<Symbol> clone() const noexcept override {
+    std::unique_ptr<Symbol> clone() const override {
         return std::make_unique<Variable>(*this);
     }
 };
@@ -140,9 +121,7 @@ class Constant final : public Symbol<Expression> {
     using Symbol = calculate::Symbol<Expression>;
     using SymbolType = typename Symbol::SymbolType;
 
-    bool _equal(const Symbol& other) const noexcept override {
-        return (*this)() == other();
-    }
+    bool _equal(const Symbol& other) const noexcept override { return Type{*this} == other(); }
 
 public:
     using Type = typename Expression::Type;
@@ -151,15 +130,26 @@ public:
             Symbol{[value]() noexcept { return value; }}
     {}
 
-    SymbolType symbol() const noexcept override { return SymbolType::CONSTANT; }
-
-    std::unique_ptr<Symbol> clone() const noexcept override {
-        return std::make_unique<Constant>(*this);
-    }
-
     operator Type() const { return Symbol::operator()(); }
 
-    operator Type() { return Symbol::operator()(); }
+    template<typename U> bool operator==(U value) const { return Type{*this} == value; }
+    template<typename U> bool operator!=(U value) const { return Type{*this} != value; }
+    template<typename U> bool operator>(U value) const { return Type{*this} > value; }
+    template<typename U> bool operator<(U value) const { return Type{*this} < value; }
+    template<typename U> bool operator>=(U value) const { return Type{*this} >= value; }
+    template<typename U> bool operator<=(U value) const { return Type{*this} <= value; }
+
+    template<typename U> auto operator+(U value) const { return Type{*this} + value; }
+    template<typename U> auto operator-(U value) const { return Type{*this} - value; }
+    template<typename U> auto operator*(U value) const { return Type{*this} * value; }
+    template<typename U> auto operator/(U value) const { return Type{*this} / value; }
+    template<typename U> auto operator%(U value) const { return Type{*this} % value; }
+
+    SymbolType type() const noexcept override { return SymbolType::CONSTANT; }
+
+    std::unique_ptr<Symbol> clone() const override {
+        return std::make_unique<Constant>(*this);
+    }
 };
 
 template<typename Expression>
@@ -177,15 +167,15 @@ public:
             Symbol{std::forward<Callable>(callable)}
     {}
 
-    SymbolType symbol() const noexcept override { return SymbolType::FUNCTION; }
-
-    std::unique_ptr<Symbol> clone() const noexcept override {
-        return std::make_unique<Function>(*this);
-    }
-
     template<typename... Args>
     Type operator()(Args&&... args) const {
         return Symbol::operator()(std::forward<Args>(args)...);
+    }
+
+    SymbolType type() const noexcept override { return SymbolType::FUNCTION; }
+
+    std::unique_ptr<Symbol> clone() const override {
+        return std::make_unique<Function>(*this);
     }
 };
 
@@ -197,51 +187,43 @@ class Operator final : public Symbol<Expression> {
 public:
     using Type = typename Expression::Type;
 
-    enum class Associativity : int {LEFT=0, RIGHT, BOTH};
+    enum class Associativity {LEFT, RIGHT, FULL};
 
 private:
-    std::string _alias;
     std::size_t _precedence;
     Associativity _associativity;
 
     bool _equal(const Symbol& other) const noexcept override {
         auto op = static_cast<const Operator&>(other);
-        return
-            _alias == op._alias &&
-            _precedence == op._precedence &&
-            _associativity == op._associativity;
+        return _precedence == op._precedence && _associativity == op._associativity;
     }
 
 public:
     template<typename Callable>
     Operator(
         Callable&& callable,
-        std::string alias,
         std::size_t precedence,
         Associativity associativity
     ) :
             Symbol{std::forward<Callable>(callable)},
-            _alias{std::move(alias)},
             _precedence{precedence},
             _associativity{associativity}
     {}
-
-    SymbolType symbol() const noexcept override { return SymbolType::OPERATOR; }
-
-    std::unique_ptr<Symbol> clone() const noexcept override {
-        return std::make_unique<Operator>(*this);
-    }
 
     template<typename... Args>
     Type operator()(Args&&... args) const {
         return Symbol::operator()(std::forward<Args>(args)...);
     }
 
-    const std::string& alias() const noexcept { return _alias; }
-
     std::size_t precedence() const noexcept { return _precedence; }
 
     Associativity associativity() const noexcept { return _associativity; }
+
+    SymbolType type() const noexcept override { return SymbolType::OPERATOR; }
+
+    std::unique_ptr<Symbol> clone() const override {
+        return std::make_unique<Operator>(*this);
+    }
 };
 
 }
@@ -251,9 +233,7 @@ namespace std {
 
 template<typename Expression>
 struct hash<calculate::Symbol<Expression>> {
-    size_t operator()(const calculate::Symbol<Expression>& symbol) const {
-        return symbol._hash();
-    }
+    size_t operator()(const calculate::Symbol<Expression>& symbol) const { return symbol._hash(); }
 };
 
 }

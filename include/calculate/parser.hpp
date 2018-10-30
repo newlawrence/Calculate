@@ -1,6 +1,6 @@
 /*
-    Calculate - Version 2.0.0
-    Last modified 2018/03/01
+    Calculate - Version 2.1.1rc10
+    Last modified 2018/08/28
     Released under MIT license
     Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
 */
@@ -10,10 +10,9 @@
 #define __CALCULATE_PARSER_HPP__
 
 #include <algorithm>
-#include <limits>
 #include <queue>
-#include <string>
 
+#include "container.hpp"
 #include "lexer.hpp"
 #include "node.hpp"
 
@@ -26,15 +25,13 @@ public:
     using Lexer = calculate::BaseLexer<BaseType>;
     using Type = BaseType;
 
-    using Symbol = calculate::Symbol<Node<BaseParser>>;
-    using Variable = calculate::Variable<Node<BaseParser>>;
-    using Constant = calculate::Constant<Node<BaseParser>>;
-    using Function = calculate::Function<Node<BaseParser>>;
-    using Operator = calculate::Operator<Node<BaseParser>>;
-
     using Expression = calculate::Node<BaseParser>;
-    private: using VariableHandler = typename Expression::VariableHandler;
+    using Symbol = calculate::Symbol<Expression>;
+    using Constant = calculate::Constant<Expression>;
+    using Function = calculate::Function<Expression>;
+    using Operator = calculate::Operator<Expression>;
 
+    private: using VariableHandler = typename Expression::VariableHandler;
     public: using SymbolType = typename Symbol::SymbolType;
     public: using Associativity = typename Operator::Associativity;
 
@@ -42,126 +39,153 @@ public:
 private:
     std::shared_ptr<Lexer> _lexer;
 
-
 public:
-    SymbolContainer<Constant, BaseParser> constants;
-    SymbolContainer<Function, BaseParser> functions;
-    SymbolContainer<Operator, BaseParser> operators;
+    SymbolContainer<BaseParser, Constant> constants;
+    SymbolContainer<BaseParser, Function> functions;
+    SymbolContainer<BaseParser, Operator> operators;
+    AliasContainer<BaseParser> prefixes;
+    AliasContainer<BaseParser> suffixes;
+    bool optimize;
 
     BaseParser(const Lexer& lexer) :
             _lexer{lexer.clone()},
             constants{_lexer.get()},
             functions{_lexer.get()},
-            operators{_lexer.get()}
+            operators{_lexer.get()},
+            prefixes{_lexer.get()},
+            suffixes{_lexer.get()},
+            optimize{false}
     {}
 
-    BaseParser(std::shared_ptr<Lexer> lexer) :
-            _lexer{std::move(lexer)},
-            constants{_lexer.get()},
-            functions{_lexer.get()},
-            operators{_lexer.get()}
-    {}
-
-    virtual ~BaseParser() = default;
-
-    std::shared_ptr<Lexer> lexer() const noexcept { return _lexer; }
+    const Lexer& lexer() const noexcept { return *_lexer; }
 
 
 private:
-    struct SymbolHandler {
+    struct SymbolData {
         std::string token;
         SymbolType type;
         std::unique_ptr<Symbol> symbol;
     };
 
-    SymbolHandler _left() const noexcept {
-        return {_lexer->left, SymbolType::LEFT, nullptr};
-    }
+    SymbolData _left() const noexcept { return {_lexer->left, SymbolType::LEFT, nullptr}; }
 
-    SymbolHandler _right() const noexcept {
-        return {_lexer->right, SymbolType::RIGHT, nullptr};
-    }
-
-    SymbolHandler _separator() const noexcept {
-        return {_lexer->separator, SymbolType::SEPARATOR, nullptr};
-    }
+    SymbolData _right() const noexcept { return {_lexer->right, SymbolType::RIGHT, nullptr}; }
 
 
-    std::queue<SymbolHandler> _tokenize(
-        std::string expression,
-        const std::shared_ptr<VariableHandler>& variables
-    ) const {
-        enum Group {NUMBER=1, NAME, SYMBOL, LEFT, RIGHT, SEPARATOR, DECIMAL};
-        std::queue<SymbolHandler> symbols{};
-        std::smatch match{};
+    template<bool infix>
+    std::queue<SymbolData> _tokenize(const std::string& expr, VariableHandler* variables) const {
+        using Associativity = typename Operator::Associativity;
+        using TokenType = typename Lexer::TokenType;
 
-        auto is = [&match](auto group) { return !match[group].str().empty(); };
-        auto has = [&match](const auto& container, auto& founded) {
-            return (founded = container.find(match.str())) != container.end();
+        std::queue<SymbolData> symbols{};
+        decltype(constants.begin()) con;
+        decltype(functions.begin()) fun;
+        decltype(operators.begin()) ope;
+        decltype(prefixes.begin()) sym;
+
+        auto has = [](const auto& cont, const auto& token, auto& it) noexcept {
+            return (it = cont.find(token)) != cont.end();
         };
 
-        decltype(constants.begin()) found_constant;
-        decltype(functions.begin()) found_function;
-        decltype(operators.begin()) found_operator;
+        auto push_operator = [&](const auto& token) {
+            auto previous = symbols.empty() ? SymbolType::LEFT : symbols.back().type;
+            auto leftmost =
+                previous == SymbolType::LEFT ||
+                previous == SymbolType::SEPARATOR ||
+                previous == SymbolType::OPERATOR ||
+                previous == SymbolType::PREFIX;
 
-        while (std::regex_search(expression, match, _lexer->tokenizer_regex)) {
-            auto token = match.str();
-            if (is(Group::DECIMAL))
-                throw SyntaxError{"orphan decimal mark '" + token + "'"};
-            else if (is(Group::LEFT))
-                symbols.push(_left());
-            else if (is(Group::RIGHT))
-                symbols.push(_right());
-            else if (is(Group::SEPARATOR))
-                symbols.push(_separator());
-            else if (is(Group::NAME) && has(constants, found_constant))
+            if (infix && leftmost && has(prefixes, token, sym) && has(functions, sym->second, fun))
                 symbols.push({
-                    token,
-                    SymbolType::CONSTANT,
-                    found_constant->second.clone()
+                    std::move(sym->second),
+                    SymbolType::PREFIX,
+                    fun->second.clone()
                 });
-            else if (is(Group::NAME) && has(functions, found_function))
+            else if (infix && has(suffixes, token, sym) && has(functions, sym->second, fun))
                 symbols.push({
-                    token,
-                    SymbolType::FUNCTION,
-                    found_function->second.clone()
+                    std::move(sym->second),
+                    SymbolType::SUFFIX,
+                    fun->second.clone()
                 });
-            else if (is(Group::SYMBOL) && has(operators, found_operator))
+            else if (has(operators, token, ope))
                 symbols.push({
-                    token,
+                    std::move(token),
                     SymbolType::OPERATOR,
-                    found_operator->second.clone()
+                    ope->second.clone()
                 });
-            else if (is(Group::NUMBER))
-                symbols.push({
-                    token,
-                    SymbolType::CONSTANT,
-                    Constant{_lexer->to_value(token)}.clone()
-                });
-            else {
-                symbols.push({
-                    token,
-                    SymbolType::CONSTANT,
-                    Variable{variables->at(token)}.clone()
-                });
+            else
+                throw UndefinedSymbol{token};
+        };
+
+        auto tokens = infix ? _lexer->tokenize_infix(expr) : _lexer->tokenize_postfix(expr);
+        for (auto current = tokens.begin(); current != tokens.end(); current++) {
+            auto next = current + 1;
+
+            if (current->type == TokenType::NUMBER) {
+                auto straightened =
+                    next != tokens.end() && has(operators, next->token, ope) &&
+                    ope->second.associativity() == Associativity::RIGHT;
+                auto suffixed =
+                    (next != tokens.end() && has(suffixes, next->token, sym)) ||
+                    (symbols.size() && symbols.back().type == SymbolType::SUFFIX);
+
+                if (infix && (straightened || suffixed) && _lexer->prefixed(current->token)) {
+                    auto prefixed = _lexer->split(current->token);
+                    push_operator(prefixed.prefix);
+                    symbols.push({
+                        prefixed.value,
+                        SymbolType::CONSTANT,
+                        Constant{_lexer->to_value(prefixed.value)}.clone()
+                    });
+                }
+                else
+                    symbols.push({
+                        current->token,
+                        SymbolType::CONSTANT,
+                        Constant{_lexer->to_value(current->token)}.clone()
+                    });
             }
-            expression = match.suffix().str();
+            else if (current->type == TokenType::LEFT)
+                symbols.push(_left());
+            else if (current->type == TokenType::RIGHT)
+                symbols.push(_right());
+            else if (current->type == TokenType::SEPARATOR)
+                symbols.push({_lexer->separator, SymbolType::SEPARATOR, nullptr});
+            else if (current->type == TokenType::SIGN)
+                push_operator(current->token);
+            else if (current->type == TokenType::NAME && has(constants, current->token, con))
+                symbols.push({
+                    std::move(current->token),
+                    SymbolType::CONSTANT,
+                    con->second.clone()
+                });
+            else if (current->type == TokenType::NAME && has(functions, current->token, fun))
+                symbols.push({
+                    std::move(current->token),
+                    SymbolType::FUNCTION,
+                    fun->second.clone()
+                });
+            else
+                symbols.push({
+                    current->token,
+                    SymbolType::CONSTANT,
+                    Variable<Node<BaseParser>>{variables->at(current->token)}.clone()
+                });
         }
+
         return symbols;
     }
 
-    std::queue<SymbolHandler> _parse_infix(
-        std::queue<SymbolHandler>&& symbols
-    ) const {
+    std::queue<SymbolData> _parse_infix(std::queue<SymbolData>&& symbols) const {
         using Associativity = typename Operator::Associativity;
 
         std::string parsed{};
-        std::queue<SymbolHandler> collected{};
-        SymbolHandler previous{_left()};
-        SymbolHandler current{};
+        std::queue<SymbolData> collected{};
+        SymbolData previous{_left()};
+        SymbolData current{};
         std::stack<bool> automatic{};
 
-        auto fill_parenthesis = [&]() {
+        auto fill_parenthesis = [&]() noexcept {
             while (!automatic.empty()) {
                 if (automatic.top()) {
                     collected.push(_right());
@@ -173,14 +197,30 @@ private:
             }
         };
 
-        auto collect_symbol = [&](bool original=true) {
+        auto get_symbol = [&](const auto& handler) noexcept {
+            if (handler.type == SymbolType::PREFIX) {
+                for (const auto& prefix : prefixes)
+                    if (prefix.second == handler.token)
+                        return prefix.first;
+            }
+            else if (handler.type == SymbolType::SUFFIX) {
+                for (const auto& suffix : suffixes)
+                    if (suffix.second == handler.token)
+                        return suffix.first;
+            }
+            return handler.token;
+        };
+
+        auto collect_symbol = [&](bool log=true) {
             switch (previous.type) {
             case (SymbolType::RIGHT):
             case (SymbolType::CONSTANT):
+            case (SymbolType::SUFFIX):
                 if (
                     current.type == SymbolType::RIGHT ||
                     current.type == SymbolType::SEPARATOR ||
-                    current.type == SymbolType::OPERATOR
+                    current.type == SymbolType::OPERATOR ||
+                    current.type == SymbolType::SUFFIX
                 )
                     break;
                 else
@@ -191,12 +231,14 @@ private:
                 if (
                     current.type == SymbolType::CONSTANT ||
                     current.type == SymbolType::LEFT ||
-                    current.type == SymbolType::FUNCTION
+                    current.type == SymbolType::FUNCTION ||
+                    current.type == SymbolType::PREFIX
                 )
                     break;
                 else
                     throw SyntaxError{};
             case (SymbolType::FUNCTION):
+            case (SymbolType::PREFIX):
                 if (current.type == SymbolType::LEFT)
                     break;
                 else
@@ -204,25 +246,27 @@ private:
             }
 
             if (
+                previous.type == SymbolType::RIGHT ||
                 previous.type == SymbolType::CONSTANT ||
-                previous.type == SymbolType::RIGHT
+                previous.type == SymbolType::SUFFIX
             ) {
-                auto cop = static_cast<Operator*>(current.symbol.get());
-                if (
+                auto co = static_cast<Operator*>(current.symbol.get());
+                auto not_right =
                     current.type != SymbolType::OPERATOR ||
-                    cop->associativity() != Associativity::RIGHT
-                )
+                    co->associativity() != Associativity::RIGHT;
+                not_right = not_right && current.type != SymbolType::SUFFIX;
+                if (not_right)
                     fill_parenthesis();
             }
 
-            if (original && current.type == SymbolType::LEFT)
+            if (log && current.type == SymbolType::LEFT)
                 automatic.push(false);
             else if (current.type == SymbolType::RIGHT)
                 if (!automatic.empty() && !automatic.top())
                     automatic.pop();
 
-            if (original)
-                parsed += current.token + " ";
+            if (log)
+                parsed += get_symbol(current) + " ";
             previous = {current.token, current.type, nullptr};
             collected.push(std::move(current));
         };
@@ -235,77 +279,56 @@ private:
                 current = std::move(symbols.front());
                 symbols.pop();
 
-                if (current.type != SymbolType::OPERATOR)
+                if (current.type != SymbolType::PREFIX)
                     collect_symbol();
                 else {
-                    auto cop = static_cast<Operator*>(current.symbol.get());
-                    if (cop->alias().empty())
-                        collect_symbol();
-                    else if (symbols.empty())
+                    if (symbols.empty())
                         throw SyntaxError{};
-                    else {
-                        switch (previous.type) {
-                        case (SymbolType::LEFT):
-                        case (SymbolType::SEPARATOR):
-                        case (SymbolType::OPERATOR):
-                            parsed += current.token + " ";
-                            current = {
-                                cop->alias(),
-                                SymbolType::FUNCTION,
-                                functions.at(cop->alias()).clone()
-                            };
-                            collect_symbol(false);
-                            current = _left();
-                            automatic.push(true);
-                            collect_symbol(false);
-                            break;
-                        default:
-                            collect_symbol();
-                        }
-                    }
+                    collect_symbol(true);
+                    current = _left();
+                    automatic.push(true);
+                    collect_symbol(false);
                 }
             }
-            current = {"", SymbolType::CONSTANT, nullptr};
 
             if (
+                previous.type == SymbolType::RIGHT ||
                 previous.type == SymbolType::CONSTANT ||
-                previous.type == SymbolType::RIGHT
+                previous.type == SymbolType::SUFFIX
             )
                 fill_parenthesis();
             else
                 throw SyntaxError{};
         }
         catch (const SyntaxError&) {
-            parsed +="'" + current.token + "' ";
+            parsed +="'" + get_symbol(current) + "' ";
             while (!symbols.empty()) {
                 current = std::move(symbols.front());
                 symbols.pop();
-                parsed += current.token + " ";
+                parsed += get_symbol(current) + " ";
             }
 
             if (current.token.empty()) {
                 auto n = parsed.rfind(' ', parsed.size() - 5);
-                if (n == std::string::npos)
-                    parsed = "'" + previous.token + "'";
-                else
-                    parsed = parsed.substr(0, n) + " '" + previous.token + "'";
+                parsed =
+                    (n == std::string::npos ? "" :
+                    parsed.substr(0, n) + " ") + "'" + get_symbol(previous) + "'";
             }
             else
                 parsed = parsed.substr(0, parsed.size() - 1);
             throw SyntaxError{parsed};
         }
+
         return collected;
     }
 
-    std::queue<SymbolHandler> _shunting_yard(
-        std::queue<SymbolHandler>&& symbols
-    ) const {
+    std::queue<SymbolData> _shunting_yard(std::queue<SymbolData>&& symbols) const {
         using Associativity = typename Operator::Associativity;
 
-        std::queue<SymbolHandler> collected{};
-        std::stack<SymbolHandler> operations{};
-        SymbolHandler element{};
-        SymbolHandler another{};
+        std::queue<SymbolData> collected{};
+        std::stack<SymbolData> operations{};
+        SymbolData element{};
+        SymbolData another{};
 
         std::stack<std::size_t> expected_counter{};
         std::stack<std::size_t> provided_counter{};
@@ -335,13 +358,12 @@ private:
                     else
                         break;
                 }
-                if (
-                    !operations.empty() &&
-                    operations.top().type == SymbolType::LEFT
-                )
+
+                if (!operations.empty() && operations.top().type == SymbolType::LEFT)
                     operations.pop();
                 else
                     throw ParenthesisMismatch{};
+
                 if (apply_function.top()) {
                     if (expected_counter.top() != provided_counter.top())
                         throw ArgumentsMismatch{
@@ -366,20 +388,22 @@ private:
                     else
                         break;
                 }
+
                 if (apply_function.empty() || !apply_function.top())
-                    throw SyntaxError{
-                        "separator '" + element.token + "' outside function"
-                    };
+                    throw SyntaxError{"separator '" + element.token + "' outside function"};
                 provided_counter.top()++;
+
                 if (operations.empty())
                     throw ParenthesisMismatch{};
                 break;
 
             case (SymbolType::CONSTANT):
+            case (SymbolType::SUFFIX):
                 collected.push(std::move(element));
                 break;
 
             case (SymbolType::FUNCTION):
+            case (SymbolType::PREFIX):
                 expected_counter.push(element.symbol->arguments());
                 provided_counter.push(1);
                 was_function = true;
@@ -391,19 +415,20 @@ private:
                     auto& another = operations.top();
                     if (another.type == SymbolType::LEFT)
                         break;
-                    else if (another.type == SymbolType::FUNCTION) {
+                    else if (
+                        another.type == SymbolType::FUNCTION ||
+                        another.type == SymbolType::PREFIX
+                    ) {
                         collected.push(std::move(another));
                         operations.pop();
                         break;
                     }
                     else {
-                        auto eop = static_cast<Operator*>(element.symbol.get());
-                        auto aop = static_cast<Operator*>(another.symbol.get());
-                        auto l1 =
-                            eop->associativity() !=
-                            Associativity::RIGHT;
-                        auto p1 = eop->precedence();
-                        auto p2 = aop->precedence();
+                        auto eo = static_cast<Operator*>(element.symbol.get());
+                        auto ao = static_cast<Operator*>(another.symbol.get());
+                        auto l1 = eo->associativity() != Associativity::RIGHT;
+                        auto p1 = eo->precedence();
+                        auto p2 = ao->precedence();
                         if ((l1 && (p1 <= p2)) || (!l1 && (p1 < p2))) {
                             collected.push(std::move(another));
                             operations.pop();
@@ -429,15 +454,20 @@ private:
     }
 
     Expression _build_tree(
-        std::queue<SymbolHandler>&& symbols,
-        const std::shared_ptr<VariableHandler>& variables
+        std::queue<SymbolData>&& symbols,
+        std::shared_ptr<VariableHandler>&& variables
     ) const {
         std::stack<Expression> operands{};
         std::stack<Expression> extract{};
-        SymbolHandler element{};
-        std::size_t hash{};
+        SymbolData element{};
 
         while (!symbols.empty()) {
+            std::vector<Expression> nodes{};
+            std::unique_ptr<Symbol> symbol{};
+            std::string token{};
+            std::size_t hash{};
+            bool collapse{optimize};
+
             element = std::move(symbols.front());
             symbols.pop();
 
@@ -446,37 +476,15 @@ private:
                 element.type == SymbolType::RIGHT ||
                 element.type == SymbolType::SEPARATOR
             )
-                throw SyntaxError{
-                    "symbol '" + element.token + "' not allowed in "
-                    "postfix notation"
-                };
+                throw SyntaxError{"'" + element.token + "' not allowed in postfix notation"};
 
-            else if (element.type == SymbolType::CONSTANT) {
-                util::hash_combine(hash, *(element.symbol));
-                operands.emplace(
-                    Expression(
-                        _lexer,
-                        variables,
-                        element.token,
-                        std::move(element.symbol),
-                        {},
-                        hash
-                    )
-                );
-            }
-
-            else {
-                std::vector<Expression> nodes{};
-                util::hash_combine(hash, *(element.symbol));
+            if (element.type != SymbolType::CONSTANT) {
                 nodes.reserve(element.symbol->arguments());
-
                 for (std::size_t i = 0; i < element.symbol->arguments(); i++) {
                     if (operands.empty())
-                        throw ArgumentsMismatch{
-                            element.token,
-                            element.symbol->arguments(),
-                            i
-                        };
+                        throw ArgumentsMismatch{element.token, element.symbol->arguments(), i};
+                    collapse = collapse && operands.top()._pruned().empty();
+                    util::hash_combine(hash, operands.top());
                     extract.emplace(std::move(operands.top()));
                     operands.pop();
                 }
@@ -484,17 +492,33 @@ private:
                     nodes.emplace_back(std::move(extract.top()));
                     extract.pop();
                 }
-                operands.emplace(
-                    Expression(
-                        _lexer,
-                        variables,
-                        element.token,
-                        std::move(element.symbol),
-                        std::move(nodes),
-                        hash
-                    )
-                );
             }
+            else
+                collapse = false;
+
+            util::hash_combine(hash, *(element.symbol));
+            if (collapse) {
+                symbol = Constant{element.symbol->eval(nodes)}.clone();
+                token = _lexer->to_string(symbol->eval());
+                nodes.clear();
+                hash = std::size_t{};
+                util::hash_combine(hash, *symbol);
+            }
+            else {
+                symbol = std::move(element.symbol);
+                token = std::move(element.token);
+            }
+
+            operands.emplace(
+                Expression{
+                    _lexer,
+                    variables,
+                    std::move(token),
+                    std::move(symbol),
+                    std::move(nodes),
+                    hash
+                }
+            );
         }
 
         if (operands.size() > 1) {
@@ -503,55 +527,43 @@ private:
         }
 
         auto pruned = operands.top()._pruned();
-        for (const auto& variable : variables->variables)
-            if (
-                std::find(
-                    pruned.begin(),
-                    pruned.end(),
-                    variable
-                ) == pruned.end()
-            )
-                throw UnusedSymbol(variable);
+        for (const auto& var : variables->variables)
+            if (std::find(pruned.begin(), pruned.end(), var) == pruned.end())
+                throw UnusedSymbol(var);
+
         return std::move(operands.top());
     }
 
 
 public:
-    Type to_value(const std::string& expression) const {
-        return from_infix(expression);
-    }
-
-    std::string to_string(Type value) const {
-        return _lexer->to_string(value);
-    }
-
     template<typename... Args>
     Expression from_infix(const std::string& expr, Args&&... vars) const {
         auto variables = std::make_shared<VariableHandler>(
             util::to_vector<std::string>(std::forward<Args>(vars)...),
-            *_lexer
+            _lexer.get()
         );
-        auto postfix = _shunting_yard(_parse_infix(_tokenize(expr, variables)));
+        auto symbols = _shunting_yard(_parse_infix(_tokenize<true>(expr, variables.get())));
 
-        return _build_tree(std::move(postfix), variables);
+        return _build_tree(std::move(symbols), std::move(variables));
     }
 
     template<typename... Args>
     Expression from_postfix(const std::string& expr, Args&&... vars) const {
         auto variables = std::make_shared<VariableHandler>(
             util::to_vector<std::string>(std::forward<Args>(vars)...),
-            *_lexer
+            _lexer.get()
         );
+        auto symbols = _tokenize<false>(expr, variables.get());
 
-        return _build_tree(_tokenize(expr, variables), variables);
+        return _build_tree(std::move(symbols), std::move(variables));
     }
 
-    Expression parse(const std::string& expression) const {
+    Expression parse(const std::string& expr) const {
         std::vector<std::string> vars{};
 
         while (true) {
             try {
-                return from_infix(expression, vars);
+                return from_infix(expr, vars);
             }
             catch (const UndefinedSymbol& exception) {
                 vars.emplace_back(exception.token);
@@ -560,21 +572,6 @@ public:
                 throw UndefinedSymbol{exception.token};
             }
         }
-    }
-
-    Expression optimize(const Expression& node) const noexcept {
-        auto vars = node._pruned();
-        if (vars.empty())
-            return from_infix(to_string(from_postfix(node.postfix())));
-
-        auto postfix = std::string{};
-        auto variables =
-            std::make_shared<VariableHandler>(std::move(vars), *_lexer);
-        for (const auto& branch : node._nodes)
-            postfix += optimize(branch).postfix() + " ";
-        postfix += node.token();
-
-        return _build_tree(_tokenize(postfix, variables), variables);
     }
 };
 

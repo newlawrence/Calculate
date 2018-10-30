@@ -1,11 +1,3 @@
-/*
-    Calculate - Version 2.0.0
-    Last modified 2018/02/07
-    Released under MIT license
-    Copyright (c) 2016-2018 Alberto Lorenzo <alorenzo.md@gmail.com>
-*/
-
-
 #include <exception>
 #include <chrono>
 #include <limits>
@@ -23,11 +15,7 @@ namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 template<typename Parser>
-void run(
-    std::string,
-    std::vector<std::string>,
-    const po::variables_map&
-);
+void run(std::string, std::vector<std::string>, const po::variables_map&);
 
 
 int main(int argc, char *argv[]) {
@@ -38,25 +26,13 @@ int main(int argc, char *argv[]) {
 
     po::options_description named_args("Options");
     named_args.add_options()
-        (
-            "expression,e",
-            po::value<std::string>(&string)->required(),
-            "Expression to parse"
-        )
+        ("expression,e", po::value<std::string>(&string)->required(), "Expression to parse")
         ("help,h", "Show this help message")
-        (
-            "var,v",
-            po::value<std::vector<std::string>>(&variables),
-            "Add variable (var:value)"
-        )
+        ("var,v", po::value<std::vector<std::string>>(&variables), "Add variable (var:value)")
         ("postfix,p", "Use postfix parser")
         ("complex,c", "Use complex parser")
         ("optimize,o", "Optimize expression")
-        (
-            "iter,i",
-            po::value<std::size_t>()->default_value(1000),
-            "Performance iterations"
-        )
+        ("iter,i", po::value<std::size_t>()->default_value(1000), "Performance iterations")
         ("analysis,a", "Print analysis")
     ;
     po::positional_options_description positional_args;
@@ -72,17 +48,19 @@ int main(int argc, char *argv[]) {
         );
 
         if (arguments.count("help")) {
-            std::cout << "Usage: " << program.filename() <<
-                " [options] {-e [ --expression ]} <expression>" << std::endl;
+            std::cout <<
+                "Usage: " << program.filename() <<
+                " [options] {-e [ --expression ]} <expression>"
+                << std::endl;
             std::cout << named_args << std::endl;
             return 0;
         }
         po::notify(arguments);
 
         if (arguments.count("complex"))
-            run<calculate::DefaultComplexParser>(string, variables, arguments);
+            run<calculate::ComplexParser>(string, variables, arguments);
         else
-            run<calculate::DefaultParser>(string, variables, arguments);
+            run<calculate::Parser>(string, variables, arguments);
     }
     catch (const po::error& error) {
         std::cerr << "Command line error: " << error.what() << std::endl;
@@ -104,12 +82,16 @@ void run(
 ) {
     using Type = typename Parser::Type;
 
-    Parser parser{};
-
     std::chrono::steady_clock::time_point begin;
-    std::chrono::steady_clock::time_point::rep build_time, opt_time, eval_time;
+    std::chrono::steady_clock::time_point::rep build_time, eval_time;
     std::size_t iterations = arguments["iter"].as<std::size_t>();
     Type result;
+
+    auto parser = Parser{};
+    auto& lexer = parser.lexer();
+
+    if (arguments.count("optimize"))
+        parser.optimize = true;
 
     std::vector<Type> values;
     if (arguments.count("var")) {
@@ -117,7 +99,7 @@ void run(
             auto sep = var.find(":");
             if (sep == 0 || sep > var.size() - 2)
                 throw po::error("bad variable input '" + var + "'");
-            values.push_back(parser.to_value(var.substr(sep + 1, var.size())));
+            values.push_back(lexer.to_value(var.substr(sep + 1, var.size())));
             var = var.substr(0, sep);
         }
     }
@@ -136,18 +118,6 @@ void run(
         ).count() / iterations;
     }
 
-    if (arguments.count("optimize")) {
-        function = parser.optimize(function);
-        if (arguments.count("analysis")) {
-            begin = std::chrono::steady_clock::now();
-            for (std::size_t i = 0; i < iterations; i++)
-                parser.optimize(function);
-            opt_time = std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::steady_clock::now() - begin
-            ).count() / iterations;
-        }
-    }
-
     result = function(values);
     if (arguments.count("analysis")) {
         begin = std::chrono::steady_clock::now();
@@ -159,8 +129,8 @@ void run(
     }
 
     if (arguments.count("analysis")) {
-        std::cout << "Infix notation:    " << function.infix() << "\n";
-        std::cout << "Postfix notation:  " << function.postfix() << "\n";
+        std::cout << "Infix notation:   " << function.infix() << "\n";
+        std::cout << "Postfix notation: " << function.postfix() << "\n";
         if (arguments.count("var")) {
             std::cout << "Variables:         ";
             for (const auto& var : variables)
@@ -168,16 +138,14 @@ void run(
             std::cout << "\n";
             std::cout << "Values:            ";
             for (const auto& val : values)
-                std::cout << parser.to_string(val) << " ";
+                std::cout << lexer.to_string(val) << " ";
             std::cout << "\n";
         }
-        std::cout << "Result:            " << parser.to_string(result) << "\n";
-        std::cout << "Iterations:        " << iterations << "\n";
-        std::cout << "Building time:     " << build_time << " us" << "\n";
-        if (arguments.count("optimize"))
-            std::cout << "Optimization time: " << opt_time << " us" << "\n";
-        std::cout << "Evaluation time:   " << eval_time << " ns" << std::endl;
+        std::cout << "Result:           " << lexer.to_string(result) << "\n";
+        std::cout << "Iterations:       " << iterations << "\n";
+        std::cout << "Building time:    " << build_time << " us" << "\n";
+        std::cout << "Evaluation time:  " << eval_time << " ns" << std::endl;
     }
     else
-        std::cout << parser.to_string(result) << std::endl;
+        std::cout << lexer.to_string(result) << std::endl;
 }
