@@ -55,11 +55,7 @@ PRIVATE
 )
 
 if(CALCULATE_EXAMPLES_USE_CONAN)
-    target_link_libraries(example
-        CONAN_PKG::boost_system
-        CONAN_PKG::boost_filesystem
-        CONAN_PKG::boost_program_options
-    )
+    target_link_libraries(example CONAN_PKG::boost)
 else()
     target_link_libraries(example ${Boost_LIBRARIES})
 endif()

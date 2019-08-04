@@ -116,7 +116,7 @@ foreach(test_source ${TEST_SOURCES})
     endif()
 
     if(CALCULATE_TESTS_USE_CONAN)
-        target_link_libraries(${test_name} CONAN_PKG::catch2)
+        target_link_libraries(${test_name} CONAN_PKG::Catch2)
     else()
         target_link_libraries(${test_name} Catch2::Catch2)
     endif()

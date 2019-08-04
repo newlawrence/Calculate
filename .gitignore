@@ -4,6 +4,9 @@ build*/
 # Jet Brains
 .idea/
 
+# Microsoft
+.vscode/
+
 # MacOS
 .DS_Store
 .AppleDouble

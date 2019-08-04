@@ -17,7 +17,7 @@ class CalculateConan(ConanFile):
     ]
 
     def build_requirements(self):
-        self.build_requires('catch2/[>2.1,<3.0]@bincrafters/stable')
+        self.build_requires('Catch2/2.9.1@catchorg/stable')
 
     def build(self):
         cmake = CMake(self)

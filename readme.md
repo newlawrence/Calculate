@@ -39,14 +39,11 @@ conan remote add calculate https://api.bintray.com/conan/newlawrence/calculate
 
 ### Build and test
 
-**Calculate** doesn't have any third party dependencies, the library should work with any compiler fully compatible with the **C++14** standard. Currently it has being tested under **gcc (5.1+)**,  **clang (3.7+)**, **msvc (19.10+)** and **intel (18.0+)**.
+**Calculate** doesn't have any third party dependencies, the library should work with any compiler fully compatible with the **C++14** standard. Currently it has being tested under **gcc (5.2+)**,  **clang (3.7+)**, **msvc (19.10+)** and **intel (18.0+)**.
 
 The examples and tests need [CMake](https://cmake.org/) to be built. [Conan](https://conan.io/) can be used to handle the dependencies:
 
 ```bash
-# Boost libraries from Bincrafters
-conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-
 # Build the example (Boost libraries needed)
 conan install example --install-folder build/example
 cmake -H. -Bbuild -DCALCULATE_BUILD_EXAMPLES=ON

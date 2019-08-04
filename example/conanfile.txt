@@ -1,12 +1,5 @@
 [requires]
-boost_system/1.65.1@bincrafters/stable
-boost_filesystem/1.65.1@bincrafters/stable
-boost_program_options/1.65.1@bincrafters/stable
+boost/1.70.0@conan/stable
 
 [generators]
 cmake
-
-[options]
-boost_system:shared=False
-boost_filesystem:shared=False
-boost_program_options:shared=False
